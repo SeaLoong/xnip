@@ -85,7 +85,7 @@ fn apply_three_formats_produce_equivalent_results() {
             _ => unreachable!(),
         };
         let body = match fmt {
-            "native" => format!(r#"replace {} 2 "B""#, target_str),
+            "native" => format!(r#"replace {target_str} 2 "B""#),
             "json" => serde_json::to_string(&serde_json::json!([
                 {"op": "replace", "file": target_str, "lines": "2", "text": "B"}
             ]))
