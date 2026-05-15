@@ -1,0 +1,130 @@
+name: release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: build (${{ matrix.target }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-musl
+            os: ubuntu-latest
+            cross: true
+          - target: aarch64-unknown-linux-musl
+            os: ubuntu-latest
+            cross: true
+          - target: x86_64-apple-darwin
+            os: macos-latest
+            cross: false
+          - target: aarch64-apple-darwin
+            os: macos-latest
+            cross: false
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+            cross: false
+          - target: aarch64-pc-windows-msvc
+            os: windows-latest
+            cross: false
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@1.95
+        with:
+          targets: ${{ matrix.target }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
+
+      - name: Install cross
+        if: matrix.cross == true
+        run: cargo install cross --locked
+
+      - name: Build
+        shell: bash
+        run: |
+          if [ "${{ matrix.cross }}" = "true" ]; then
+            cross build --release --target ${{ matrix.target }} --bin xnip
+          else
+            cargo build --release --target ${{ matrix.target }} --bin xnip
+          fi
+
+      - name: Package
+        id: package
+        shell: bash
+        run: |
+          set -eu
+          version="${GITHUB_REF_NAME:-dev}"
+          target="${{ matrix.target }}"
+          stem="xnip-${version}-${target}"
+          cd target/${target}/release
+          if [[ "${target}" == *windows* ]]; then
+            7z a "${stem}.zip" xnip.exe
+            asset="${stem}.zip"
+          else
+            tar czf "${stem}.tar.gz" xnip
+            asset="${stem}.tar.gz"
+          fi
+          # SHA256
+          if command -v shasum >/dev/null 2>&1; then
+            shasum -a 256 "${asset}" > "${asset}.sha256"
+          else
+            sha256sum "${asset}" > "${asset}.sha256"
+          fi
+          echo "asset=${asset}" >> "$GITHUB_OUTPUT"
+          echo "asset_path=target/${target}/release/${asset}" >> "$GITHUB_OUTPUT"
+          echo "sha_path=target/${target}/release/${asset}.sha256" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: xnip-${{ matrix.target }}
+          path: |
+            ${{ steps.package.outputs.asset_path }}
+            ${{ steps.package.outputs.sha_path }}
+
+      - name: Upload to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ${{ steps.package.outputs.asset_path }}
+            ${{ steps.package.outputs.sha_path }}
+
+  publish-integrations:
+    name: publish integrations
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.95
+      - uses: Swatinem/rust-cache@v2
+      - name: Sync integrations from docs/SKILL.md
+        run: cargo run -p xtask -- sync-integrations
+      - name: Package per-platform integration assets
+        shell: bash
+        run: |
+          set -eu
+          mkdir -p dist
+          for d in integrations/*/; do
+            name=$(basename "$d")
+            if [ -x "$d/package.sh" ]; then
+              ( cd "$d" && ./package.sh "../../dist" )
+            fi
+          done
+      - name: Upload integration assets to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
