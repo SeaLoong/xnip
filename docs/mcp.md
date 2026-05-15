@@ -1,83 +1,76 @@
 # MCP Server (`xnip mcp`)
 
-`xnip mcp` 启动一个遵循 [Model Context Protocol](https://modelcontextprotocol.io/) 的
-**stdio server**，把 xnip 的 8 个能力（peek / find / replace / insert / move /
-indent / apply / doctor）作为结构化工具暴露给 LLM agent，避免 agent 通过 shell
-拼参数调用 cli 时出现的引号转义、退出码解读、stdout/stderr 混淆等问题。
+`xnip mcp` starts a [Model Context Protocol](https://modelcontextprotocol.io/) **stdio server** that exposes xnip's 8 capabilities (peek / find / replace / insert / move / indent / apply / doctor) as structured tools to LLM agents — eliminating the quote-escaping, exit-code parsing, and stdout/stderr confusion that comes with shell invocations.
 
-## 何时用 MCP，何时直接用 CLI
+## When to use MCP vs CLI
 
-| 场景 | 推荐 |
+| Scenario | Recommended |
 |---|---|
-| Agent / LLM 集成（Claude Desktop、Cursor、Cline、Continue、Zed 等） | **MCP** |
-| 终端手动操作、shell 脚本、CI 流水线 | CLI |
-| 想用 `--dry-run` / `--check` / `--revert` / `--json` | CLI（MCP 不暴露这些） |
-| 需要 `--text-stdin` / `apply --from-stdin` / op 内 `@-` | CLI（MCP 进程的 stdin 已被协议占用） |
+| Agent / LLM integration (Claude Desktop, Cursor, Cline, Continue, Zed, …) | **MCP** |
+| Manual terminal use, shell scripts, CI pipelines | CLI |
+| Need `--dry-run` / `--check` / `--revert` / `--json` | CLI (not exposed via MCP) |
+| Need `--text-stdin` / `apply --from-stdin` / op-level `@-` | CLI (MCP process stdin is occupied by the protocol) |
 
-二者**共享同一份 core 实现**，行为完全一致。
+Both paths **share the same core implementation** and behave identically.
 
-## 启动
+## Starting the server
 
 ```sh
 xnip mcp
-# 该进程不打印任何提示，等待 client 通过 stdin 喂入 JSON-RPC 帧。
-# Ctrl-D（关闭 stdin）或 client 主动关闭即退出。
+# The process prints nothing. It waits for the client to feed JSON-RPC frames via stdin.
+# Exit: Ctrl-D (close stdin) or client disconnect.
 ```
 
-无任何子参数。所有"调用"都来自 MCP client 通过 stdio 发送的 `initialize` /
-`tools/list` / `tools/call` 等请求。
+No sub-arguments. All "calls" arrive as `initialize` / `tools/list` / `tools/call` requests from the MCP client over stdio.
 
-## 工具清单
+## Tool list
 
-8 个工具，名称与 cli 子命令 1:1 对应：
+8 tools, named 1:1 after CLI subcommands:
 
-| MCP Tool | CLI 对应 | 类型 |
+| MCP Tool | CLI equivalent | Type |
 |---|---|---|
-| `xnip_peek` | `xnip peek` | 只读 |
-| `xnip_find` | `xnip find` | 只读 |
-| `xnip_replace` | `xnip replace` | 写（原子） |
-| `xnip_insert` | `xnip insert` | 写（原子） |
-| `xnip_move` | `xnip move` | 写（原子） |
-| `xnip_indent` | `xnip indent` | 写（原子） |
-| `xnip_apply` | `xnip apply` | 写（两阶段批量） |
-| `xnip_doctor` | `xnip doctor` | 辅助 |
+| `xnip_peek` | `xnip peek` | read-only |
+| `xnip_find` | `xnip find` | read-only |
+| `xnip_replace` | `xnip replace` | write (atomic) |
+| `xnip_insert` | `xnip insert` | write (atomic) |
+| `xnip_move` | `xnip move` | write (atomic) |
+| `xnip_indent` | `xnip indent` | write (atomic) |
+| `xnip_apply` | `xnip apply` | write (two-phase batch) |
+| `xnip_doctor` | `xnip doctor` | diagnostic |
 
-每个工具的输入 schema 字段名与 cli flag **同名同义**（去掉 `--` 与连字符转下划线）。
-例如 cli 的 `--match-line` 在 MCP 中是 `match_line`。
+Input schema field names match CLI flags 1:1 (strip `--`, convert hyphens to underscores). For example, `--match-line` becomes `match_line`.
 
-### 与 CLI 的差异
+### Differences from CLI
 
-MCP **不暴露**以下 cli flag（理由见下文）：
+MCP does **not** expose these flags:
 
-- `--dry-run`：MCP 直接返回结果文本，LLM 拿到结构化 reply 比拿 unified diff 更易消费
-- `--check`：MCP 用 `Err(McpError)` 表达校验失败，比退出码更直接
-- `--revert`：cli 便利特性；LLM 可以直接构造反向编辑（成本极低）
-- `--json`：MCP 本身就是结构化 JSON 协议，重复
-- `--text-stdin` / `apply --from-stdin` / op 内 `@-`：MCP 进程的 stdin 被协议占用
+- `--dry-run` — MCP returns the result text directly; structured reply is easier for LLMs to consume than a unified diff
+- `--check` — MCP uses `Err(McpError)` to express validation failure, which is more direct than an exit code
+- `--revert` — CLI convenience feature; LLMs can construct the inverse edit directly at negligible cost
+- `--json` — MCP is already a structured JSON protocol; redundant
+- `--text-stdin` / `apply --from-stdin` / op-level `@-` — MCP process stdin is occupied by the protocol
 
-MCP **保留**：
+MCP **retains**:
 
-- `was` / `was_file`（写命令）：长会话中文件可能被外部改动，并发保护必备
-- `backup`（写命令）：用户安全旁路，按需开启 `.bak` 副本
-- `manifest_text`（`xnip_apply` 专属）：行内清单文本，适合 LLM 直接生成短清单
-  而无需先写到文件
+- `was` / `was_file` (write commands) — files may be modified externally during a long session; concurrency guard is essential
+- `backup` (write commands) — opt-in `.bak` copy as a safety escape hatch
+- `manifest_text` (`xnip_apply` only) — inline manifest text, ideal for LLMs generating short manifests without writing a file first
 
-## 错误语义
+## Error semantics
 
-tool 调用失败时返回 JSON-RPC `error` 对象（而不是 `result.isError=true`）：
+Tool call failures return a JSON-RPC `error` object (not `result.isError=true`):
 
-| 场景 | error.code | 含义 |
+| Scenario | error.code | Meaning |
 |---|---|---|
-| 参数缺失 / 互斥 / 类型不合法 | `-32602` (`invalid_params`) | 用户输入错误，应当修正参数重试 |
-| 定位失败 / `was` 不匹配 / pattern 未命中 | `-32600` (`invalid_request`) | 状态前提不满足，可能需要先 peek 看现状 |
-| 文件 IO 故障 / `apply` 阶段二部分提交 | `-32603` (`internal_error`) | 系统级错误，需人介入 |
+| Missing / conflicting / invalid-type params | `-32602` (`invalid_params`) | User input error; fix the args and retry |
+| Locator not found / `was` mismatch / pattern no match | `-32600` (`invalid_request`) | Precondition not met; may need to `xnip_peek` current state first |
+| File IO failure / `apply` phase-2 partial commit | `-32603` (`internal_error`) | System-level error; human intervention needed |
 
-## 调用示例
+## Client configuration
 
 ### Claude Desktop / Claude Code
 
-`~/Library/Application Support/Claude/claude_desktop_config.json`（macOS）或项目根
-`.mcp.json`（Claude Code）：
+`~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or project-root `.mcp.json` (Claude Code):
 
 ```json
 {
@@ -92,7 +85,7 @@ tool 调用失败时返回 JSON-RPC `error` 对象（而不是 `result.isError=t
 
 ### Cursor
 
-`.cursor/mcp.json`（项目）或 `~/.cursor/mcp.json`（全局）：
+`.cursor/mcp.json` (project) or `~/.cursor/mcp.json` (global):
 
 ```json
 {
@@ -104,11 +97,11 @@ tool 调用失败时返回 JSON-RPC `error` 对象（而不是 `result.isError=t
 
 ### Cline / Continue
 
-界面 → 设置 → MCP → 添加 server：command=`xnip`, args=`["mcp"]`。
+UI → Settings → MCP → Add server: command=`xnip`, args=`["mcp"]`.
 
 ### Zed
 
-`~/.config/zed/settings.json`：
+`~/.config/zed/settings.json`:
 
 ```json
 {
@@ -118,7 +111,7 @@ tool 调用失败时返回 JSON-RPC `error` 对象（而不是 `result.isError=t
 }
 ```
 
-### 手动调试（无 client，纯 shell）
+### Manual debug (shell only, no client)
 
 ```sh
 printf '%s\n%s\n%s\n' \
@@ -128,11 +121,11 @@ printf '%s\n%s\n%s\n' \
   | xnip mcp
 ```
 
-应看到 `serverInfo: {name: "xnip", version: "..."}` 与 8 个工具的列表。
+You should see `serverInfo: {name: "xnip", version: "..."}` followed by a list of 8 tools.
 
-## 工具示例（典型 LLM 调用形态）
+## Tool call examples
 
-### `xnip_peek`：先看再改
+### `xnip_peek` — read before editing
 
 ```json
 {
@@ -144,7 +137,7 @@ printf '%s\n%s\n%s\n' \
 }
 ```
 
-### `xnip_replace`：带并发保护的精确替换
+### `xnip_replace` — precise edit with concurrency guard
 
 ```json
 {
@@ -158,9 +151,9 @@ printf '%s\n%s\n%s\n' \
 }
 ```
 
-`was` 当前 12-14 行字面比对失败 → 返回 `invalid_request` 错误，文件不会被修改。
+If `was` does not match lines 12-14 literally → returns `invalid_request` error; file is not modified.
 
-### `xnip_apply`：批量原子提交
+### `xnip_apply` — atomic batch commit
 
 ```json
 {
@@ -173,30 +166,24 @@ printf '%s\n%s\n%s\n' \
 }
 ```
 
-阶段一全部 op 校验 + 暂存；任一失败 → 不写任何文件返回错误。
-全部 OK → 阶段二依次原子 rename 提交；中途失败回滚已提交的部分（`backup=true` 时
-通过 `.bak` 还原）。
+Phase 1: all ops are validated and staged; any failure → no file is written, error returned.
+Phase 2: atomic renames committed sequentially; partial failure rolls back already-committed files (via `.bak` when `backup=true`).
 
-## 故障排查
+## Troubleshooting
 
-| 现象 | 排查 |
+| Symptom | Fix |
 |---|---|
-| client 报 "Failed to connect" | `which xnip`；client 配置里 `command` 必须是绝对路径或在 client 的 PATH 中 |
-| `tools/list` 返回 0 个工具 | 升级到 v0.1.0+；旧版本无 MCP 子命令 |
-| `xnip_apply` 报 "manifest contains op content `@-`" | MCP 不读进程 stdin；改用 `text` 字面或 `text_file` |
-| 替换写入但 LLM 看不到变化 | 让 LLM 调用 `xnip_peek` 重新读取；不要让 LLM 把工具回执文本当作"最终文件状态" |
+| Client reports "Failed to connect" | Run `which xnip`; the `command` in client config must be an absolute path or be on the client's `PATH` |
+| `tools/list` returns 0 tools | Upgrade to v0.1.0+; older versions have no `mcp` subcommand |
+| `xnip_apply` reports "manifest contains op content `@-`" | MCP does not read process stdin; use inline `text` or `text_file` instead |
+| Edit written but LLM sees no change | Have the LLM call `xnip_peek` to re-read; do not let the LLM treat tool reply text as "current file state" |
 
-## 内部架构
+## Internal architecture
 
-`xnip mcp` 与 `xnip <其它子命令>` **共享同一二进制、同一 core**。MCP 工具 handler
-是 cli 层的"平行前端"——直接调 `core::ops::*` / `apply::commit::*`，**不**通过
-shell 调起子进程或抓取 cli stdout。这意味着：
+`xnip mcp` and `xnip <other subcommands>` **share the same binary and the same core**. The MCP tool handlers are a "parallel frontend" to the CLI layer — they call `core::ops::*` / `apply::commit::*` directly; they do **not** spawn a subprocess or scrape CLI stdout. This means:
 
-- bug 修复在 core 层一处即可同时反馈到两端
-- 行为一致性由共用代码保证（同一字节透传、同一 atomic write、同一 was 校验）
-- 二进制大小约比纯 cli 大 ~9MB（rmcp + tokio 全家桶代价），但仅当 `xnip mcp`
-  实际启动时才创建 tokio runtime，其它 cli 路径零运行时开销
+- A core-layer bug fix is immediately reflected in both paths
+- Behavioral consistency is guaranteed by shared code (same byte passthrough, same atomic write, same `was` check)
+- Binary size is ~9 MB larger than CLI-only (cost of rmcp + tokio), but the tokio runtime is only created when `xnip mcp` actually starts — zero runtime overhead for all other CLI paths
 
-依赖：`rmcp 1.7`（官方 Rust SDK）+ `tokio 1`（`rt, macros, io-std`）+
-`schemars 1.0`（自动生成 tool input JsonSchema）。MSRV 1.95（受 rmcp / schemars
-间接依赖及 Cargo.lock 解析结果约束）。
+Dependencies: `rmcp 1.7` (official Rust SDK) + `tokio 1` (`rt, macros, io-std`) + `schemars 1.0` (auto-generates tool input JsonSchema). MSRV 1.95 (constrained by rmcp / schemars transitive dependencies and Cargo.lock resolution).

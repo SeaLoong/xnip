@@ -1,22 +1,20 @@
+[中文](./README.zh.md) | English
+
 # xnip
 
-> Precise text editing CLI for LLM agents.
+> Precise text editing CLI for LLM agents — ≥ 70% token reduction.
 
-xnip 把 LLM agent 的「读一段 → 生成新一段 → 整段替换」压缩为「文件路径 + 位置 + 新内容」一条命令，token 消耗降低 ≥ 70%。
+xnip compresses the LLM agent "read section → generate new section → replace" loop into a single command: **file path + position + new content**.
 
-- 单一 Rust 静态二进制，全平台分发
-- 7 个子命令：`peek` / `find` / `replace` / `insert` / `move` / `indent` / `apply`
-- `apply` 接受三种格式（原生紧凑 / JSON / YAML）的批量编辑清单
-- 原子提交、可预览（`--dry-run`）、参数对称可逆（`--revert`）
-- **`xnip mcp`**：内置 [Model Context Protocol](https://modelcontextprotocol.io/) stdio server，与 Claude Desktop / Cursor / Cline / Continue / Zed 等插拔即用
+- Single static Rust binary, works on all platforms
+- 9 commands: `peek` / `find` / `replace` / `insert` / `move` / `indent` / `apply` / `mcp` / `doctor`
+- `apply` accepts three formats (native compact / JSON / YAML) for atomic batch edits
+- Atomic writes, `--dry-run` preview, symmetric `--revert`
+- **`xnip mcp`**: built-in [Model Context Protocol](https://modelcontextprotocol.io/) stdio server for Claude Desktop / Cursor / Cline / Continue / Zed
 
-## 状态
+## Install
 
-✅ **v0.1.0**：代码就绪（305 测试全过、`clippy --pedantic -D warnings` / `fmt --check` 全绿）；待打 tag 发布 6 个跨平台二进制。设计规范见 [`PLAN.md`](./PLAN.md)，版本历史见 [`CHANGELOG.md`](./CHANGELOG.md)。
-
-## 安装
-
-### 从源码安装（当前可用）
+### From source
 
 ```sh
 git clone https://github.com/SeaLoong/xnip
@@ -24,7 +22,7 @@ cd xnip
 cargo install --path .
 ```
 
-### 二进制发版后
+### Prebuilt binaries
 
 ```sh
 # macOS / Linux
@@ -33,59 +31,119 @@ curl -fsSL https://github.com/SeaLoong/xnip/releases/latest/download/install.sh 
 # Windows
 iwr -useb https://github.com/SeaLoong/xnip/releases/latest/download/install.ps1 | iex
 
-# 任何装 Rust 的平台
+# Any platform with Rust
 cargo install xnip
 ```
 
-## 快速上手
+## Quick start
 
 ```sh
-# 看第 30-45 行
+# Show lines 30-45
 xnip peek src/Foo.vue --lines 30-45
 
-# 找匹配位置
+# Locate matches
 xnip find --pattern '^const PORT' src/Foo.vue
 
-# 替换某行（先预览）
+# Replace a line (preview first)
 xnip replace src/Foo.vue --lines 30 --text "const X = 1;" --dry-run
 
-# 跨文件改常量名
+# Cross-file constant rename
 xnip replace --files-from list.txt --pattern OLD_NAME --repl NEW_NAME
 
-# 批量原子编辑
+# Atomic batch edit
 xnip apply edits.txt
 ```
 
-详见 [`docs/SKILL.md`](./docs/SKILL.md) 与 [`docs/examples.md`](./docs/examples.md)。
+See [`docs/SKILL.md`](./docs/SKILL.md) and [`docs/examples.md`](./docs/examples.md) for the full reference.
 
-## 与 LLM agent 集成
+## Integrating with LLM agents
 
-两条互补路径：
+xnip offers two integration paths. Both can be active simultaneously.
 
-1. **如果你的 agent 支持 [Model Context Protocol](https://modelcontextprotocol.io/)**（如 Claude Desktop / Claude Code / Cursor / Cline / Continue / Zed）：
+### Path A — MCP (structured tool protocol)
 
-   ```json
-   { "mcpServers": { "xnip": { "command": "xnip", "args": ["mcp"] } } }
-   ```
+Best for agents with native MCP support. The agent calls 8 structured tools directly — no shell quoting, no exit-code handling.
 
-   加入配置后重启，8 个工具会出现在 agent 工具面板中。完整手册：[`docs/mcp.md`](./docs/mcp.md)。
+First, verify xnip is on your PATH: `xnip doctor`
 
-2. **你的 agent 靠 system prompt / skill 注入**（如 Aider / GitHub Copilot / AGENTS.md 生态）：
+Then add it to your agent's config:
 
-   拷贝对应的集成包（见 `integrations/`），中间 agent 会主动调用 `xnip <subcmd>`。
+**Claude Desktop**
 
-两者可以同时启用。
+Edit `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows), then restart:
 
-## 设计
+```json
+{
+  "mcpServers": {
+    "xnip": { "command": "xnip", "args": ["mcp"] }
+  }
+}
+```
 
-- 项目无关：不感知项目结构、不读项目配置、不假设语言
-- 跨平台一致：所有平台跑同一份编译产物
-- 机器友好：stderr 给人，stdout 给机器；可选 `--json` NDJSON
-- 原子写入：tmpfile 同目录 → 校验 → atomic rename；默认 **不** 写 `.bak`（依赖 git；`--backup` 启用）
-- 参数对称可逆：`--revert` 用同样参数反向执行；不可逆即报错
+**Claude Code**
 
-完整设计见 [`PLAN.md`](./PLAN.md)。
+Create `.mcp.json` in your project root:
+
+```json
+{
+  "mcpServers": {
+    "xnip": { "command": "xnip", "args": ["mcp"] }
+  }
+}
+```
+
+**Cursor**
+
+Create `.cursor/mcp.json` in your project (or `~/.cursor/mcp.json` globally). A ready-to-copy file is at [`integrations/cursor/mcp.json`](./integrations/cursor/mcp.json):
+
+```json
+{
+  "mcpServers": {
+    "xnip": { "command": "xnip", "args": ["mcp"] }
+  }
+}
+```
+
+**Cline / Continue**
+
+UI → Settings → MCP → Add server → command: `xnip`, args: `["mcp"]`
+
+**Zed**
+
+Add to `~/.config/zed/settings.json`:
+
+```json
+{
+  "context_servers": {
+    "xnip": { "command": { "path": "xnip", "args": ["mcp"] } }
+  }
+}
+```
+
+After restarting your client, 8 tools appear in the agent panel: `xnip_peek`, `xnip_find`, `xnip_replace`, `xnip_insert`, `xnip_move`, `xnip_indent`, `xnip_apply`, `xnip_doctor`. Full MCP reference: [`docs/mcp.md`](./docs/mcp.md).
+
+### Path B — Skill / prompt injection
+
+Best for agents driven by system prompts or instructions files. Copy the snippet for your agent and drop it in the right place — the agent then autonomously invokes `xnip <subcommand>` for file edits.
+
+| Agent | Source file | Where to put it |
+|-------|-------------|-----------------|
+| **GitHub Copilot** | [`integrations/copilot/xnip.md`](./integrations/copilot/xnip.md) | Append to `.github/copilot-instructions.md` in your project |
+| **Aider** | [`integrations/aider/CONVENTIONS.md`](./integrations/aider/CONVENTIONS.md) | Merge into your project's `CONVENTIONS.md` |
+| **Claude Code** | [`integrations/claude-code/SKILL.md`](./integrations/claude-code/SKILL.md) | Copy to `.claude/skills/xnip.md` in your project |
+| **AGENTS.md** (Codex, etc.) | [`integrations/agents-md/AGENTS.md`](./integrations/agents-md/AGENTS.md) | Append to your project's `AGENTS.md` |
+| **Any other agent** | [`integrations/generic/SKILL.md`](./integrations/generic/SKILL.md) | Paste into the agent's system prompt or custom instructions |
+
+## Design
+
+- **Project-agnostic** — no project config, no language detection, no assumptions about structure
+- **Cross-platform** — same binary on macOS / Linux / Windows
+- **Machine-friendly** — stderr for humans, stdout for machines; optional `--json` NDJSON
+- **Atomic writes** — tmpfile in same dir → validate → atomic rename; `.bak` is opt-in (`--backup`)
+- **Symmetric revert** — `--revert` inverts the same args; non-invertible ops error out
+
+Full design spec: [`PLAN.md`](./PLAN.md) · Version history: [`CHANGELOG.md`](./CHANGELOG.md)
 
 ## License
 
-MIT — 见 [`LICENSE`](./LICENSE)。
+MIT — see [`LICENSE`](./LICENSE).
