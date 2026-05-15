@@ -68,21 +68,37 @@ fn apply_yaml_single_replace() {
 #[test]
 fn apply_three_formats_produce_equivalent_results() {
     // PLAN G6：三格式等价性验证（独立运行三次，比较最终文件内容）
-    fn run_one(fmt: &str, body: &str) -> Vec<u8> {
+    //
+    // 注意：不能用简单字符串替换把路径嵌入 JSON/YAML 模板。
+    // Windows 路径含反斜杠（如 C:\Users\...\x.txt），直接替换后 \U、\x 等
+    // 在 JSON 中是无效转义序列，在 YAML 双引号字符串中会被误解析为转义序列，
+    // 导致三种 parser 依次失败。各格式须用对应序列化器安全编码路径。
+    fn run_one(fmt: &str) -> Vec<u8> {
         let dir = tempfile::tempdir().unwrap();
         let target = dir.path().join("x.txt");
         std::fs::write(&target, b"a\nb\nc\nd\n").unwrap();
+        let target_str = target.to_str().unwrap();
         let manifest_name = match fmt {
             "native" => "edits.txt",
             "json" => "edits.json",
             "yaml" => "edits.yaml",
             _ => unreachable!(),
         };
-        let m = write_manifest(
-            dir.path(),
-            manifest_name,
-            &body.replace("__TARGET__", target.to_str().unwrap()),
-        );
+        let body = match fmt {
+            "native" => format!(r#"replace {} 2 "B""#, target_str),
+            "json" => serde_json::to_string(&serde_json::json!([
+                {"op": "replace", "file": target_str, "lines": "2", "text": "B"}
+            ]))
+            .unwrap(),
+            "yaml" => {
+                // serde_yaml 会对路径中的反斜杠正确转义
+                let path_yaml = serde_yaml::to_string(target_str).unwrap();
+                let path_yaml = path_yaml.trim_end();
+                format!("- op: replace\n  file: {path_yaml}\n  lines: \"2\"\n  text: B\n")
+            }
+            _ => unreachable!(),
+        };
+        let m = write_manifest(dir.path(), manifest_name, &body);
         Command::cargo_bin("xnip")
             .unwrap()
             .args(["apply", m.to_str().unwrap()])
@@ -91,16 +107,9 @@ fn apply_three_formats_produce_equivalent_results() {
         std::fs::read(&target).unwrap()
     }
 
-    let native_body = r#"replace __TARGET__ 2 "B""#.to_string();
-    let json_body = serde_json::json!([
-        {"op":"replace","file":"__TARGET__","lines":"2","text":"B"}
-    ])
-    .to_string();
-    let yaml_body = "- op: replace\n  file: __TARGET__\n  lines: \"2\"\n  text: B\n".to_string();
-
-    let n = run_one("native", &native_body);
-    let j = run_one("json", &json_body);
-    let y = run_one("yaml", &yaml_body);
+    let n = run_one("native");
+    let j = run_one("json");
+    let y = run_one("yaml");
     assert_eq!(n, j, "native vs json must produce same result");
     assert_eq!(j, y, "json vs yaml must produce same result");
     assert_eq!(n, b"a\nB\nc\nd\n");
