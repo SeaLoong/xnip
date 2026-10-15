@@ -8,23 +8,29 @@ use std::path::PathBuf;
 #[serde(deny_unknown_fields)]
 #[allow(clippy::struct_excessive_bools)]
 pub struct Args {
+    /// Target path; create requires an absent path, other operations an existing file.
     pub file: PathBuf,
     /// replace (default), create (must not exist), or delete (regular files only).
     #[serde(default)]
     pub operation: Operation,
     /// Exact old block; for delete, optional expected whole-file content.
     pub old: Option<String>,
+    /// File containing exact old bytes (mutually exclusive with old).
     pub old_file: Option<PathBuf>,
     /// Replacement/new file bytes. Empty string is allowed.
     pub text: Option<String>,
+    /// File containing new bytes (mutually exclusive with text).
     pub text_file: Option<PathBuf>,
+    /// Explicitly replace every non-overlapping match instead of requiring uniqueness.
     #[serde(default)]
     pub all: bool,
     /// Return a diff without writing, including for create/delete.
     #[serde(default)]
     pub dry_run: bool,
+    /// Validate without writing or returning a diff; conflicts with dry_run.
     #[serde(default)]
     pub check: bool,
+    /// Save original bytes to <file>.bak before replacement or deletion.
     #[serde(default)]
     pub backup: bool,
 }

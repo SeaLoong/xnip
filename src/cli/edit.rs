@@ -10,6 +10,7 @@ use crate::output::exit;
 #[derive(Debug, ClapArgs)]
 #[allow(clippy::struct_excessive_bools)]
 pub struct Args {
+    /// Target path; must exist unless --create is used.
     pub file: PathBuf,
     /// Create a missing file, including parent directories; never overwrite.
     #[arg(long, conflicts_with_all = ["delete", "old", "old_file", "all"])]
@@ -20,13 +21,16 @@ pub struct Args {
     /// Exact old block to replace (not a regex).
     #[arg(long, conflicts_with = "old_file")]
     pub old: Option<String>,
+    /// Read the exact old block from a file (whole-file content for delete).
     #[arg(long)]
     pub old_file: Option<PathBuf>,
     /// New bytes; empty text deletes the matched block.
     #[arg(long, conflicts_with_all = ["text_file", "text_stdin"])]
     pub text: Option<String>,
+    /// Read new bytes from a file, without newline conversion.
     #[arg(long, conflicts_with = "text_stdin")]
     pub text_file: Option<PathBuf>,
+    /// Read new bytes from stdin, including an empty stream.
     #[arg(long)]
     pub text_stdin: bool,
     /// Replace all non-overlapping matches; default requires a unique match.
@@ -35,8 +39,10 @@ pub struct Args {
     /// Print a diff without changing files or creating directories.
     #[arg(long, conflicts_with = "check")]
     pub dry_run: bool,
+    /// Validate without changing files or printing a diff.
     #[arg(long)]
     pub check: bool,
+    /// Save original content to <file>.bak before replacement or deletion.
     #[arg(long)]
     pub backup: bool,
 }
