@@ -67,7 +67,7 @@ pub enum MovePosition {
 
 /// 内部统一的 op 表示。三个 parser 的目标。
 ///
-/// 不提供 `Clone`。需要复制时使用 [`commit::clone_with_target`] 手动 clone（因
+/// 不提供 `Clone`。内部复制使用 `commit::clone_with_target` 手动 clone（因
 /// `Locator` 含不例年 Clone 的字段设计，避免隐藏 clone 代价）。
 #[derive(Debug)]
 pub enum Op {
