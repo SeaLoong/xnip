@@ -13,6 +13,7 @@ use crate::output::exit;
 
 mod apply;
 pub mod common;
+mod edit;
 mod find;
 mod indent;
 mod insert;
@@ -50,6 +51,8 @@ pub struct Cli {
 
 #[derive(Debug, Subcommand)]
 pub enum Command {
+    /// Create a file, replace an exact text block, or delete a file.
+    Edit(edit::Args),
     /// Print numbered lines in a range (read-only).
     Peek(peek::Args),
     /// Search and locate matches (read-only).
@@ -116,6 +119,7 @@ where
     };
 
     let code = match command {
+        Command::Edit(a) => edit::run(a)?,
         Command::Peek(a) => peek::run(a)?,
         Command::Find(a) => find::run(a)?,
         Command::Replace(a) => replace::run(a)?,

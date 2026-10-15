@@ -1,47 +1,11 @@
-# Conventions — xnip
+# xnip editing conventions
 
-When editing files, **prefer `xnip` CLI** over inline read-modify-write. It avoids repeating unchanged lines in line-level edits.
+Use xnip as the normal text-file editing interface when it supports the intended operation. Respect explicit user tool choices. Reuse known context; read missing context only when needed, without a mandatory doctor/peek/find sequence.
 
-## Always use xnip when
+For known text blocks, use `xnip edit FILE --old-file OLD --text-file NEW`: matching is literal and must be unique unless `--all` is intentional. `edit --create` creates missing files; `edit --delete` deletes regular files. `--dry-run`/`--check` are available in CLI and the `xnip_edit` MCP tool. These capabilities require the development build; v0.1.1 uses the older replace/insert commands.
 
-- Replacing or deleting a known line range → `xnip replace <file> --lines a-b --text '...'`
-- Editing by content anchor → `xnip replace <file> --match-line '^pat' --text '...'`
-- Renaming across a file → `xnip replace <file> --pattern '\bOLD\b' --repl NEW`
-- Editing a block between markers → `xnip replace <file> --between-re '^fn foo'..'^}' --inclusive --text-file snippet.txt`
-- Inserting / moving / re-indenting → `xnip insert | xnip move | xnip indent`
-- Validated batch edits → `xnip apply edits.txt`
+Use line/anchor commands for those locations, and `apply` for disjoint edits to existing files. Search and semantic analysis remain separate tasks; use repository/language tools as appropriate. Whole-file rename and general patch import are not yet supported, so use a suitable tool rather than a risky delete/create workaround.
 
-## Always pair writes with safety
+Do not install software or register MCP merely because these instructions are loaded. On an unavailable capability, use an existing editor and report the limitation. Batch commits are per-file; inspect committed paths after exit 4 instead of blindly retrying. Byte preconditions are not locks; Git/backups provide exact recovery.
 
-- `--was-file expected.txt` to assert the original region — fail-fast on drift
-- `--dry-run` to preview before commit
-- `--check` to validate the plan without writing
-
-## apply manifest tips
-
-- One op per line in **native** format; `#` comments allowed
-- Or use **JSON / YAML** for tools that already emit them
-- `apply --check` returns exit 3 for execution validation failures; parse/IO errors use 1/2 (no targets modified)
-- `apply --json` emits NDJSON events on stdout
-
-## Locator quick-ref
-
-- `--lines 30` / `--lines 30-45`
-- `--match-line '<regex>' [--occurrence N]`
-- `--between 'BEGIN'..'END' [--inclusive]`
-- `--between-re '^fn foo'..'^}' [--inclusive]`
-- `--pattern '<regex>'` (replace only)
-
-## Exit codes
-
-- `0` success
-- `1` user error
-- `2` IO error
-- `3` `--was` / `--check` failed
-- `4` `apply` phase-2 partial commit
-
-## MCP server (alternative)
-
-If your aider deployment runs alongside an MCP-aware client (e.g. you also use Cursor or Claude Desktop on the same project), register `xnip mcp` there: `{"mcpServers": {"xnip": {"command": "xnip", "args": ["mcp"]}}}`. Aider itself shells out to the cli and does not need this; the MCP server simply provides the same 8 capabilities to other clients on the same machine.
-
-Batch commits are atomic per file. There is no automatic rollback after a phase-2 failure; inspect the committed paths and restore from Git or backups before retrying. Use disjoint line ranges, do not mix pattern and line edits on one file, and run moves separately from other edits to that file. `was` is supported for line-based replacement only and does not lock out concurrent writers.
+Read the [agent guide](https://github.com/SeaLoong/xnip/blob/master/docs/SKILL.md) and relevant references only as needed.

@@ -94,12 +94,32 @@ fn bench_find(c: &mut Criterion) {
     group.finish();
 }
 
+fn bench_literal_edit(c: &mut Criterion) {
+    let body = make_lines(10_000);
+    let mut group = c.benchmark_group("edit_literal_10k");
+    group.bench_function("unique_block", |b| {
+        b.iter(|| {
+            black_box(
+                xnip::core::edit::replace_exact(
+                    black_box(&body),
+                    b"line 5000: lorem ipsum dolor sit amet\n",
+                    b"replacement\n",
+                    false,
+                )
+                .unwrap(),
+            );
+        });
+    });
+    group.finish();
+}
+
 criterion_group!(
     benches,
     bench_replace_range,
     bench_replace_pattern,
     bench_indent,
     bench_diff,
-    bench_find
+    bench_find,
+    bench_literal_edit
 );
 criterion_main!(benches);

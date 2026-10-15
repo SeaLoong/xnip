@@ -7,7 +7,7 @@
 xnip 把 LLM agent 的「读一段 → 生成新一段 → 整段替换」压缩为「文件路径 + 位置 + 新内容」一条命令。
 
 - 单一 Rust 二进制，支持 macOS、Linux 和 Windows 的发布目标
-- 9 个子命令：`peek` / `find` / `replace` / `insert` / `move` / `indent` / `apply` / `mcp` / `doctor`
+- 开发分支 10 个子命令：`edit` / `peek` / `find` / `replace` / `insert` / `move` / `indent` / `apply` / `mcp` / `doctor`
 - `apply` 接受三种格式（原生紧凑 / JSON / YAML）的批量编辑，逐文件原子写入
 - 原子提交、可预览（`--dry-run`）、受限反向操作（`--revert`）
 - **`xnip mcp`**：内置 [Model Context Protocol](https://modelcontextprotocol.io/) stdio server，与 Claude Desktop / Cursor / Cline / Continue / Zed 等插拔即用
@@ -41,6 +41,15 @@ cargo install --git https://github.com/SeaLoong/xnip --tag v0.1.1 --locked xnip
 
 支持平台、指定版本、PATH 设置、校验及卸载详见 [安装说明](docs/installation.md)。当前通过 GitHub Release 分发，不提供未经发布验证的 crates.io 安装命令。
 
+## 默认编辑入口
+
+开发分支新增 `xnip edit` / `xnip_edit`：创建文件、按唯一字面文本块替换、删除普通文件，并支持预览和检查。已发布的 v0.1.1 不含此命令，新能力需从当前源码构建。详见 [edit 手册](docs/edit.md)。
+
+```sh
+xnip edit config.txt --old 'PORT=8080' --text 'PORT=3000'
+xnip edit src/new.txt --create --text-file content.txt
+```
+
 ## 快速上手
 
 ```sh
@@ -64,81 +73,28 @@ xnip apply edits.txt
 
 ## 集成到 LLM Agent
 
-xnip 提供两条集成路径，可同时启用。
+xnip 的目标是成为默认文本编辑入口。skill 负责选择合适的编辑操作，复用已有上下文，不要求每次修改都执行 doctor/peek/find。仓库搜索和语义分析仍使用对应工具，再由 xnip 落实文本修改。
 
-### 路径 A — MCP（结构化工具协议）
+### 安装编辑 skill
 
-适用于原生支持 MCP 的 agent。agent 直接调用 8 个结构化工具，无需处理 shell 引号转义或退出码。
+使用生成的 [Codex/GitHub skill](.github/skills/xnip-editing/SKILL.md) 或 [Claude Code skill](integrations/claude-code/SKILL.md)，并一起复制 `references` 目录。入口只保留默认编辑流程，详细清单、示例和错误说明按需读取。
 
-首先确认 xnip 在 PATH 中：`xnip doctor`
+| 客户端 | 集成文件 | 放置位置 |
+|---|---|---|
+| Codex | `.github/skills/xnip-editing/` | 用户技能目录 `~/.codex/skills/xnip-editing/` |
+| Claude Code | `integrations/claude-code/` | `.claude/skills/xnip/` |
+| Cursor | [规则](integrations/cursor/xnip.mdc) | 项目规则，保持 `alwaysApply: false` |
+| Copilot | [简短指令](integrations/copilot/xnip.md) | 项目指令 |
+| Aider | [约定](integrations/aider/CONVENTIONS.md) | 项目约定 |
+| 其他 agent | [通用 skill](integrations/generic/SKILL.md) | 编辑任务使用，同时保留 references |
 
-然后将 xnip 加入 agent 的 MCP 配置：
+[AGENTS.md 片段](integrations/agents-md/AGENTS.md) 提供精简的项目级入口，无需将整本手册反复放入上下文。
 
-**Claude Desktop**
+### 选择 CLI 或 MCP
 
-编辑 `~/Library/Application Support/Claude/claude_desktop_config.json`（macOS）或 `%APPDATA%\Claude\claude_desktop_config.json`（Windows），然后重启：
+CLI 复用现有 shell；MCP 通过结构化 old/text 参数减少引号和多行转义问题。两者都可承担默认编辑流程，注册 MCP 是独立的安装配置动作。开发版提供 9 个工具，其中 `xnip_edit` 支持预览和检查，其他 MCP 写工具会直接提交；已发布 v0.1.1 为原来的 8 个工具。
 
-```json
-{
-  "mcpServers": {
-    "xnip": { "command": "xnip", "args": ["mcp"] }
-  }
-}
-```
-
-**Claude Code**
-
-在项目根目录创建 `.mcp.json`：
-
-```json
-{
-  "mcpServers": {
-    "xnip": { "command": "xnip", "args": ["mcp"] }
-  }
-}
-```
-
-**Cursor**
-
-在项目目录创建 `.cursor/mcp.json`，或全局使用 `~/.cursor/mcp.json`。可直接复制 [`integrations/cursor/mcp.json`](./integrations/cursor/mcp.json)：
-
-```json
-{
-  "mcpServers": {
-    "xnip": { "command": "xnip", "args": ["mcp"] }
-  }
-}
-```
-
-**Cline / Continue**
-
-界面 → 设置 → MCP → 添加 server → command: `xnip`，args: `["mcp"]`
-
-**Zed**
-
-在 `~/.config/zed/settings.json` 中添加：
-
-```json
-{
-  "context_servers": {
-    "xnip": { "command": { "path": "xnip", "args": ["mcp"] } }
-  }
-}
-```
-
-重启客户端后，8 个工具出现在 agent 工具面板：`xnip_peek`、`xnip_find`、`xnip_replace`、`xnip_insert`、`xnip_move`、`xnip_indent`、`xnip_apply`、`xnip_doctor`。完整 MCP 手册：[`docs/mcp.md`](./docs/mcp.md)。
-
-### 路径 B — Skill / prompt 注入
-
-适用于通过 system prompt 或指令文件驱动的 agent。把对应 snippet 放到指定位置后，agent 会自主调用 `xnip <子命令>` 完成文件编辑。
-
-| Agent | 仓库中的源文件 | 放置位置 |
-|-------|--------------|---------|
-| **GitHub Copilot** | [`integrations/copilot/xnip.md`](./integrations/copilot/xnip.md) | 追加到项目的 `.github/copilot-instructions.md` |
-| **Aider** | [`integrations/aider/CONVENTIONS.md`](./integrations/aider/CONVENTIONS.md) | 合并到项目的 `CONVENTIONS.md` |
-| **Claude Code** | [`integrations/claude-code/SKILL.md`](./integrations/claude-code/SKILL.md) | 复制到项目的 `.claude/skills/xnip/SKILL.md` |
-| **AGENTS.md**（Codex 等） | [`integrations/agents-md/AGENTS.md`](./integrations/agents-md/AGENTS.md) | 追加到项目的 `AGENTS.md` |
-| **其他 agent** | [`integrations/generic/SKILL.md`](./integrations/generic/SKILL.md) | 粘贴到 agent 的 system prompt 或自定义指令中 |
+客户端配置统一维护在 [MCP 手册](docs/mcp.md)。读取 skill 不等于需要自动注册新的 MCP 服务。
 
 ## 设计理念
 

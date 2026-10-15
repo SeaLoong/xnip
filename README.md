@@ -7,7 +7,7 @@
 xnip compresses the LLM agent "read section → generate new section → replace" loop into a single command: **file path + position + new content**.
 
 - Standalone Rust binary for supported macOS, Linux and Windows targets
-- 9 commands: `peek` / `find` / `replace` / `insert` / `move` / `indent` / `apply` / `mcp` / `doctor`
+- 10 commands on the development branch: `edit` / `peek` / `find` / `replace` / `insert` / `move` / `indent` / `apply` / `mcp` / `doctor`
 - `apply` accepts three formats (native compact / JSON / YAML) for validated batch edits with per-file atomic writes
 - Atomic writes, `--dry-run` preview, constrained `--revert`
 - **`xnip mcp`**: built-in [Model Context Protocol](https://modelcontextprotocol.io/) stdio server for Claude Desktop / Cursor / Cline / Continue / Zed
@@ -41,6 +41,15 @@ cargo install --git https://github.com/SeaLoong/xnip --tag v0.1.1 --locked xnip
 
 See [installation and troubleshooting](docs/installation.md) for platform selection, version pinning, PATH setup, checksums and removal. The GitHub release is the distribution channel; crates.io installation is not currently advertised.
 
+## Default editing entry point
+
+The development branch adds `xnip edit` / `xnip_edit`: create missing files, replace unique literal blocks, delete regular files, and preview/check each operation. Published v0.1.1 does not contain this command; build this checkout for the new capability. See [the edit reference](docs/edit.md).
+
+```sh
+xnip edit config.txt --old 'PORT=8080' --text 'PORT=3000'
+xnip edit src/new.txt --create --text-file content.txt
+```
+
 ## Quick start
 
 ```sh
@@ -64,81 +73,28 @@ Start with the [runnable tutorial](docs/cli.md), then consult the [agent guide](
 
 ## Integrating with LLM agents
 
-xnip offers two integration paths. Both can be active simultaneously.
+xnip is intended to serve as the normal text editing interface. Its skill chooses the appropriate operation and reuses known context, rather than requiring a doctor/peek/find sequence before every write. Repository discovery and semantic analysis remain separate from applying text edits.
 
-### Path A — MCP (structured tool protocol)
+### Install the editing skill
 
-Best for agents with native MCP support. The agent calls 8 structured tools directly — no shell quoting, no exit-code handling.
+Use the generated [Codex/GitHub skill](.github/skills/xnip-editing/SKILL.md) or [Claude Code skill](integrations/claude-code/SKILL.md), including its `references` directory. The entrypoint covers the default workflow; detailed manifests, examples and errors are loaded only when needed.
 
-First, verify xnip is on your PATH: `xnip doctor`
+| Client | Integration | Placement |
+|---|---|---|
+| Codex | `.github/skills/xnip-editing/` | User skill directory (`~/.codex/skills/xnip-editing/`) |
+| Claude Code | `integrations/claude-code/` | `.claude/skills/xnip/` |
+| Cursor | [rule](integrations/cursor/xnip.mdc) | Project rule, with automatic always-on injection disabled |
+| Copilot | [short instruction](integrations/copilot/xnip.md) | Project instructions |
+| Aider | [convention](integrations/aider/CONVENTIONS.md) | Project conventions |
+| Other agents | [generic skill](integrations/generic/SKILL.md) | Load for editing tasks; include its references |
 
-Then add it to your agent's config:
+The [AGENTS.md snippet](integrations/agents-md/AGENTS.md) is a compact project-level alternative. Avoid duplicating the full manual in every prompt.
 
-**Claude Desktop**
+### Choose CLI or MCP
 
-Edit `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows), then restart:
+CLI uses an existing shell capability. MCP is useful when structured old/new text avoids shell quoting; its registration is an explicit setup choice. Both can implement the same default editing workflow. The development server exposes nine tools; `xnip_edit` supports preview/check, while other MCP write tools commit immediately. The published v0.1.1 server exposes the original eight tools.
 
-```json
-{
-  "mcpServers": {
-    "xnip": { "command": "xnip", "args": ["mcp"] }
-  }
-}
-```
-
-**Claude Code**
-
-Create `.mcp.json` in your project root:
-
-```json
-{
-  "mcpServers": {
-    "xnip": { "command": "xnip", "args": ["mcp"] }
-  }
-}
-```
-
-**Cursor**
-
-Create `.cursor/mcp.json` in your project (or `~/.cursor/mcp.json` globally). A ready-to-copy file is at [`integrations/cursor/mcp.json`](./integrations/cursor/mcp.json):
-
-```json
-{
-  "mcpServers": {
-    "xnip": { "command": "xnip", "args": ["mcp"] }
-  }
-}
-```
-
-**Cline / Continue**
-
-UI → Settings → MCP → Add server → command: `xnip`, args: `["mcp"]`
-
-**Zed**
-
-Add to `~/.config/zed/settings.json`:
-
-```json
-{
-  "context_servers": {
-    "xnip": { "command": { "path": "xnip", "args": ["mcp"] } }
-  }
-}
-```
-
-After restarting your client, 8 tools appear in the agent panel: `xnip_peek`, `xnip_find`, `xnip_replace`, `xnip_insert`, `xnip_move`, `xnip_indent`, `xnip_apply`, `xnip_doctor`. Full MCP reference: [`docs/mcp.md`](./docs/mcp.md).
-
-### Path B — Skill / prompt injection
-
-Best for agents driven by system prompts or instructions files. Copy the snippet for your agent and drop it in the right place — the agent then autonomously invokes `xnip <subcommand>` for file edits.
-
-| Agent | Source file | Where to put it |
-|-------|-------------|-----------------|
-| **GitHub Copilot** | [`integrations/copilot/xnip.md`](./integrations/copilot/xnip.md) | Append to `.github/copilot-instructions.md` in your project |
-| **Aider** | [`integrations/aider/CONVENTIONS.md`](./integrations/aider/CONVENTIONS.md) | Merge into your project's `CONVENTIONS.md` |
-| **Claude Code** | [`integrations/claude-code/SKILL.md`](./integrations/claude-code/SKILL.md) | Copy to `.claude/skills/xnip/SKILL.md` in your project |
-| **AGENTS.md** (Codex, etc.) | [`integrations/agents-md/AGENTS.md`](./integrations/agents-md/AGENTS.md) | Append to your project's `AGENTS.md` |
-| **Any other agent** | [`integrations/generic/SKILL.md`](./integrations/generic/SKILL.md) | Paste into the agent's system prompt or custom instructions |
+Client configurations are maintained in the [MCP reference](docs/mcp.md). Neither installing a skill nor reading its instructions requires automatically registering another MCP server.
 
 ## Design
 

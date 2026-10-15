@@ -1,0 +1,93 @@
+use std::io::{Read, Write};
+use std::path::PathBuf;
+
+use anyhow::Result;
+use clap::Args as ClapArgs;
+
+use crate::core::edit::{EditError, Operation, Request, execute, payload};
+use crate::output::exit;
+
+#[derive(Debug, ClapArgs)]
+#[allow(clippy::struct_excessive_bools)]
+pub struct Args {
+    pub file: PathBuf,
+    /// Create a missing file, including parent directories; never overwrite.
+    #[arg(long, conflicts_with_all = ["delete", "old", "old_file", "all"])]
+    pub create: bool,
+    /// Delete a regular file; old/old-file optionally checks its entire contents.
+    #[arg(long, conflicts_with_all = ["text", "text_file", "text_stdin", "all"])]
+    pub delete: bool,
+    /// Exact old block to replace (not a regex).
+    #[arg(long, conflicts_with = "old_file")]
+    pub old: Option<String>,
+    #[arg(long)]
+    pub old_file: Option<PathBuf>,
+    /// New bytes; empty text deletes the matched block.
+    #[arg(long, conflicts_with_all = ["text_file", "text_stdin"])]
+    pub text: Option<String>,
+    #[arg(long, conflicts_with = "text_stdin")]
+    pub text_file: Option<PathBuf>,
+    #[arg(long)]
+    pub text_stdin: bool,
+    /// Replace all non-overlapping matches; default requires a unique match.
+    #[arg(long)]
+    pub all: bool,
+    /// Print a diff without changing files or creating directories.
+    #[arg(long, conflicts_with = "check")]
+    pub dry_run: bool,
+    #[arg(long)]
+    pub check: bool,
+    #[arg(long)]
+    pub backup: bool,
+}
+
+pub fn run(args: Args) -> Result<u8> {
+    let operation = if args.create {
+        Operation::Create
+    } else if args.delete {
+        Operation::Delete
+    } else {
+        Operation::Replace
+    };
+    let mut text = payload(args.text, args.text_file)?;
+    if args.text_stdin {
+        let mut bytes = Vec::new();
+        std::io::stdin().read_to_end(&mut bytes)?;
+        text = Some(bytes);
+    }
+    let request = Request {
+        operation,
+        text,
+        old: payload(args.old, args.old_file)?,
+        all: args.all,
+        check: args.check,
+        dry_run: args.dry_run,
+        backup: args.backup,
+    };
+    match execute(&args.file, &request) {
+        Ok(outcome) => {
+            if args.dry_run {
+                std::io::stdout()
+                    .lock()
+                    .write_all(outcome.diff.as_bytes())?;
+            }
+            crate::note!(
+                "xnip edit: {} {operation:?} {} (changed={}, replacements={})",
+                if args.check || args.dry_run {
+                    "validated"
+                } else {
+                    "completed"
+                },
+                args.file.display(),
+                outcome.changed,
+                outcome.replacements
+            );
+            Ok(exit::SUCCESS)
+        }
+        Err(EditError::Check(message)) => {
+            eprintln!("xnip edit: {message}");
+            Ok(exit::CHECK)
+        }
+        Err(error) => Err(error.into()),
+    }
+}

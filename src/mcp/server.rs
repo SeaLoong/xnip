@@ -53,7 +53,16 @@ impl Default for XnipServer {
 
 #[tool_router]
 impl XnipServer {
-    // === 8 个 tool 的实际实现委托给 super::tools::* ===
+    // === 9 个 tool 的实际实现委托给 super::tools::* ===
+    #[rmcp::tool(
+        description = "Create a file, replace an exact literal text block, or delete a regular file. Replacement requires unique old text unless all=true. Supports dry_run/check without writes, including create/delete, and optional backups. Existing context may suffice; no mandatory read-before-edit call."
+    )]
+    async fn xnip_edit(
+        &self,
+        params: rmcp::handler::server::wrapper::Parameters<tools::edit::Args>,
+    ) -> Result<rmcp::model::CallToolResult, McpError> {
+        tools::edit::run(params.0)
+    }
     // 为什么 description 直写而不用模块常量:
     // rmcp 的 #[tool] 属性宏要求 description = 字面字符串，
     // 不接受路径表达式(如 tools::peek::DESCRIPTION)。
@@ -152,12 +161,7 @@ impl ServerHandler for XnipServer {
 
 /// 顶层指令文本：告诉 LLM 这个 server 是什么、有哪些约定。
 /// 越精炼越好——LLM 上下文宝贵，不写废话。
-const INSTRUCTIONS: &str = r"xnip — precise text editing for LLM agents.
-
-All tools operate on local file paths (relative to current working directory) \
-and use 1-based closed-interval line numbers. Use `xnip_peek` first to inspect a \
-file before editing; use `xnip_find` to locate edit anchors. Write tools (replace/ \
-insert/move/indent/apply) commit atomically; pass `was`/`was_file` to check expected original bytes, or `backup=true` to keep a `.bak` sidecar.";
+const INSTRUCTIONS: &str = "xnip edits local files using 1-based inclusive line numbers or exact text. Use xnip_edit for file creation, unique literal block replacement, deletion and non-writing previews/checks. Reuse known context; inspect only what is needed for a reliable edit. Other write tools commit immediately. Batch writes commit per file and do not automatically roll back. Expected-content checks are not locks; backup=true preserves a .bak sidecar.";
 
 /// 启动 stdio MCP server 并阻塞至连接关闭。
 ///

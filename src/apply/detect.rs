@@ -46,14 +46,18 @@ pub fn parse_auto(src: &str, path: Option<&Path>) -> Result<Vec<Op>> {
     let preferred = preferred_from_ext(path);
     let order = order_for(preferred);
 
-    let mut last_err: Option<anyhow::Error> = None;
+    let mut first_err: Option<anyhow::Error> = None;
     for fmt in order {
         match parse_with(src, fmt) {
             Ok(ops) => return Ok(ops),
-            Err(e) => last_err = Some(e.context(format!("attempt with {fmt:?}"))),
+            Err(e) => {
+                if first_err.is_none() {
+                    first_err = Some(e.context(format!("attempt with {fmt:?}")));
+                }
+            }
         }
     }
-    Err(last_err
+    Err(first_err
         .unwrap_or_else(|| anyhow::anyhow!("no parser succeeded"))
         .context("auto-detect failed across native/json/yaml"))
 }
@@ -73,11 +77,11 @@ fn preferred_from_ext(path: Option<&Path>) -> Format {
     }
 }
 
-fn order_for(preferred: Format) -> Vec<Format> {
+fn order_for(preferred: Format) -> [Format; 3] {
     match preferred {
-        Format::Json => vec![Format::Json, Format::Yaml, Format::Native],
-        Format::Yaml => vec![Format::Yaml, Format::Json, Format::Native],
-        Format::Native => vec![Format::Native, Format::Json, Format::Yaml],
+        Format::Json => [Format::Json, Format::Yaml, Format::Native],
+        Format::Yaml => [Format::Yaml, Format::Json, Format::Native],
+        Format::Native => [Format::Native, Format::Json, Format::Yaml],
     }
 }
 
@@ -170,5 +174,12 @@ mod tests {
         let err = parse_auto(src, None).unwrap_err();
         let msg = format!("{err:#}");
         assert!(msg.to_lowercase().contains("auto-detect"));
+    }
+
+    #[test]
+    fn auto_preserves_schema_error_from_preferred_parser() {
+        let source = r#"[{"op":"replace","file":"a","lines":1,"text":"x","wsa":"old"}]"#;
+        let error = parse_auto(source, Some(Path::new("edits.json"))).unwrap_err();
+        assert!(format!("{error:#}").contains("unknown field `wsa`"));
     }
 }

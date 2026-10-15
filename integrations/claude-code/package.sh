@@ -13,6 +13,6 @@ mkdir -p "$OUT_DIR"
 # Use this script's directory as the working root.
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-tar -czf "${OUT_DIR}/xnip-claude-code-skill.tar.gz" -C "${HERE}" SKILL.md
+tar -czf "${OUT_DIR}/xnip-claude-code-skill.tar.gz" -C "${HERE}" SKILL.md references
 
 echo "Packaged: ${OUT_DIR}/xnip-claude-code-skill.tar.gz"

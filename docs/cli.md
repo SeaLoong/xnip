@@ -1,6 +1,6 @@
 # CLI usage
 
-xnip edits existing files using explicit line ranges or anchors. Line numbers are 1-based and ranges include both endpoints. Use `xnip COMMAND --help` for every option and its default.
+The development branch uses [xnip edit](edit.md) for creation, exact block replacement and file deletion; published v0.1.1 provides line/anchor editing of existing files. Line numbers are 1-based and ranges include both endpoints. Use `xnip COMMAND --help` for every option and its default.
 
 ## A runnable first edit
 
@@ -35,6 +35,7 @@ The preview prints the complete proposed file; only the second replace writes. T
 
 | Command | Typical use | Output |
 |---|---|---|
+| `edit FILE --old OLD --text NEW` | Exact block replacement; `--create` and `--delete` handle whole files | Status or dry-run diff |
 | `peek FILE --lines 3-8` | Inspect a range; `--all` reads every line | Numbered lines |
 | `find FILE... --pattern RE` | Search explicit files | `path:line:column`, byte-based columns |
 | `replace FILE --lines 3 --text TEXT` | Replace a line; empty text deletes it | Status on stderr |
@@ -59,7 +60,7 @@ Line edits use LF separators and do not automatically convert new text to the ta
 
 ## Preview and validation
 
-All standalone write commands support `--check` and `--dry-run`. Check validates without writing. A single-file dry run prints the complete proposed contents; an apply dry run prints unified diffs. `--backup` appends `.bak` to the full target name and replaces an existing backup. `--quiet` suppresses success notices, `--no-color` disables ANSI output, and `--trace` adds diagnostics on stderr.
+`edit` and `replace` support `--check`; the older insert/move/indent commands currently offer `--dry-run` without a separate check flag. Check validates without writing. `edit` and `apply` dry runs print unified diffs; other single-file dry runs print the complete proposed contents. `--backup` appends `.bak` to the full target name and replaces an existing backup. `--quiet` suppresses success notices, `--no-color` disables ANSI output, and `--trace` adds diagnostics on stderr.
 
 For line-based replacement, use `--was-file expected.txt` to compare the original range exactly, including line endings. `--was` provides the same comparison with a literal shell argument. Pattern replacement rejects these preconditions instead of ignoring them. A precondition is not a file lock; avoid simultaneous external writers.
 

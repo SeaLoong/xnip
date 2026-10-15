@@ -1,117 +1,48 @@
 ---
 name: xnip
-description: Precise text editing CLI for LLM agents. Use it instead of "read-then-replace" to reduce repeated context and replacement text. Provides 7 editing commands (peek, find, replace, insert, move, indent, apply) with anchor-based locators and atomic writes, plus an MCP stdio server (`xnip mcp`) exposing the same operations as 8 structured tools.
+description: Use xnip as the primary text-file editing interface for code and configuration changes, including creation, exact block replacement, deletion, line edits and validated batches. Search and semantic analysis still use their appropriate tools.
 ---
 
-# xnip — Skill
+# Edit text files with xnip
 
-> Precise text editing CLI. Use **xnip** instead of "read-then-replace" to reduce repeated context and replacement text.
+Use xnip as the normal editing entry point when it supports the requested operation. Respect an explicit user choice of another tool. Choose an operation that expresses the intended change directly; do not introduce extra tool calls just to follow a sequence.
 
-## When to use xnip
+## Default editing flow
 
-Reach for `xnip` whenever you need to:
-
-1. **Show specific lines** of a file → `xnip peek <file> --lines a-b`
-2. **Locate** something across files → `xnip find <files...> --pattern '<regex>'`
-3. **Edit a known line range** → `xnip replace <file> --lines a-b --text '...'`
-4. **Edit by anchor (regex/line content)** → `xnip replace <file> --match-line '^const PORT' --text '...'`
-5. **Insert / move / re-indent** → `xnip insert | xnip move | xnip indent`
-6. **Apply many edits after validation** → `xnip apply edits.json`
-
-Do **not** use xnip when you only need to read a small file you've already loaded.
-
-## Commands
-
-| Command   | What it does                           | Read or Write |
-|-----------|----------------------------------------|---------------|
-| `peek`    | Print numbered lines (range / regex / all) | read     |
-| `find`    | Search and emit `path:line[:col]`      | read          |
-| `replace` | Replace or delete a region             | write         |
-| `insert`  | Insert before/after a single anchor    | write         |
-| `move`    | Move a line block                      | write         |
-| `indent`  | Adjust indentation / tab↔space         | write         |
-| `apply`   | Validate and apply many ops              | write         |
-
-## Locators for replace and insert
-
-- `--lines 30` or `--lines 30-45`
-- `--match-line '<regex>' [--occurrence N]`
-- `--between 'BEGIN'..'END' [--inclusive]`
-- `--between-re '^fn foo'..'^}' [--inclusive]`
-- `--pattern '<regex>'` (replace only)
-
-## Content sources
-
-- `--text "..."` — literal shell argument (use a file or stdin for portable newlines)
-- `--text-stdin` — from stdin
-- `--text-file <path>` — from file
-- `--text ""` — delete the located region
-- `--repl "..."` — for `--pattern` only; supports `$1`
-
-## Safety knobs
-
-- `--was-file expected.txt` (or `--was` with actual expected bytes) — guard against drift
-- `--dry-run` — preview new content (or unified diff for apply)
-- `--check` — validate without writing; inspect the documented exit code
-- `--backup` — write `<file>.bak` before atomic rename (default off)
-
-## apply: prefer this for batch edits
+Use existing context to form the edit. Read only missing context needed to identify the right target; there is no mandatory `doctor → peek → find` prelude. For a known old text block, use `edit` rather than recalculating line numbers or inventing a regex.
 
 ```sh
-xnip apply edits.txt          # auto-detect format
-xnip apply edits.json         # JSON manifest
-xnip apply edits.yaml         # YAML manifest
-xnip apply --from-stdin < ... # piped manifest
-xnip apply edits.txt --dry-run
-xnip apply edits.txt --check
-xnip apply edits.txt --json   # NDJSON event stream
+# Exact block replacement, unique match required
+xnip edit config.txt --old 'PORT=8080' --text 'PORT=3000'
+# Create a missing file and parent directories; existing paths are rejected
+xnip edit src/new-file.txt --create --text-file content.txt
+# Delete a whole file, optionally checking all its original bytes
+xnip edit obsolete.txt --delete --old-file expected.txt --backup
 ```
 
-## Exit codes
+`edit` is currently a development-branch capability; released v0.1.1 lacks it. Check `xnip --help` once if the installed capabilities are unknown. On older versions use `replace`/`insert` for supported edits, or an existing editor for missing operations; do not claim a command succeeded when it is unavailable.
 
-- `0` success
-- `1` user error (bad args / locator not found)
-- `2` IO error
-- `3` validation failure (`--was` / `--check`)
-- `4` apply phase-2 partial commit
+Literal replacement preserves bytes, line endings and EOF exactly. `--old` and `--text` supply inline strings; CLI arguments do not decode `\n`. Use inline MCP `old`/`text` for known blocks; use payload files or `--text-stdin` when content size or shell quoting warrants them. Do not create payload files for every small edit. No match fails; multiple matches (including overlaps) fail unless `--all` is intentional. Add surrounding context to disambiguate; do not silently widen a replacement.
 
-## Recipes
+Use `--dry-run` when a diff will resolve uncertainty and `--check` for validation without writing. `xnip_edit` exposes both flags over MCP too. A preview/check result is not a committed edit. An identical replacement skips writing. Verify the relevant outcome without routinely rereading unchanged files.
 
-```sh
-# show a window for context
-xnip peek src/foo.rs --lines 30-50
+## Specialized operations
 
-# rename across a file
-xnip replace src/foo.rs --pattern '\bMAX_RETRIES\b' --repl MAX_TRIES
+- Known line or marker ranges: `replace --lines`, `--match-line`, `--between` or `--between-re`; `--was-file` can check original range bytes.
+- Insert at a single-line anchor: `insert`; reorder an existing block: `move`; adjust indentation: `indent`.
+- Independent edits to existing files: `apply`. Read [manifest syntax and ordering](references/apply-format.md) when building a batch. It does not yet support create/delete or arbitrary dependent edit sequences.
+- Locate missing context with `peek`/`find`, or repository search for unknown files. Text matching does not establish symbol scope; use language analysis for semantic refactors, then apply the intended text changes.
 
-# replace a function body without trusting line numbers
-xnip replace src/foo.rs \
-  --between-re '^pub fn old\('..'^}' --inclusive \
-  --text-file ./snippets/new_old.rs
+Whole-file rename, general patch-format import, binary/document editing and filesystem metadata preservation are not covered by `edit`. Use an appropriate existing tool for those operations; do not emulate them with risky delete/create chains.
 
-# validated multi-file edit
-cat <<'EOF' | xnip apply --from-stdin
-replace src/foo.rs 30 "const PORT = 3000;"
-replace src/bar.rs =/^const PORT/ "const PORT = 3000;"
-EOF
-```
+## Failure and recovery
 
-## MCP server (preferred when available)
+Use Git/backups for exact recovery; `--revert` is a limited inverse, not an undo log. `.bak` is appended to the full target name and replaces an existing backup. Expected-content checks are not locks against concurrent writers. Create never overwrites an existing path; delete refuses symbolic links and directories.
 
-If you are running inside Claude Desktop / Claude Code (or any MCP-aware client), prefer the `xnip mcp` server over shelling out: tool calls receive structured JSON arguments, eliminating quote/escape pitfalls.
+Batches commit per file. Exit 4 may mean earlier files changed: inspect reported paths before retrying; there is no automatic rollback. A missing/ambiguous literal block is exit 3. For other failures or scripting behavior, consult [exit codes](references/error-codes.md).
 
-Register in `~/Library/Application Support/Claude/claude_desktop_config.json` (Claude Desktop) or project `.mcp.json` (Claude Code):
+## Interface and references
 
-```json
-{
-  "mcpServers": {
-    "xnip": { "command": "xnip", "args": ["mcp"] }
-  }
-}
-```
+Use the configured interface. CLI supports shell workflows and payload stdin; MCP avoids shell quoting. Only `xnip_edit` currently exposes MCP preview/check; the other MCP write tools commit immediately. Loading this skill does not authorize installing software or changing MCP configuration.
 
-8 tools become available: `xnip_peek` / `xnip_find` / `xnip_replace` / `xnip_insert` / `xnip_move` / `xnip_indent` / `xnip_apply` / `xnip_doctor`. Their argument names match the cli flags 1:1 (e.g. cli `--match-line` → MCP `match_line`).
-
-Differences from cli (intentional): no `--dry-run` / `--check` / `--revert` / `--json` (use `Err` semantics or read the file back); no `--text-stdin` / `apply --from-stdin` (stdin is occupied by the MCP protocol—use `text_file` or `manifest_text` instead). `was` / `was_file` are available for line-based replacement; `backup` is available on write tools.
-
-Batch commits are atomic per file. There is no automatic rollback after a phase-2 failure; inspect the committed paths and restore from Git or backups before retrying. Use disjoint line ranges, do not mix pattern and line edits on one file, and run moves separately from other edits to that file. `was` is supported for line-based replacement only and does not lock out concurrent writers.
+Read [examples](references/examples.md) for a relevant command recipe, [CLI details](https://github.com/SeaLoong/xnip/blob/master/docs/cli.md) for options, and [MCP details](https://github.com/SeaLoong/xnip/blob/master/docs/mcp.md) for structured fields. Load references only when needed.

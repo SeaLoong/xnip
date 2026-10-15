@@ -1,53 +1,13 @@
-# AGENTS.md — xnip section
+# xnip editing workflow
 
-> Drop this snippet into your project's `AGENTS.md` (or append to an existing one). Any agent that reads `AGENTS.md` will pick this up.
+Project instruction snippet for teams using xnip as their default text editor.
 
-## Editing files
+Use xnip as the normal text-file editing interface when it supports the intended operation. Respect explicit user tool choices. Reuse known context; read missing context only when needed, without a mandatory doctor/peek/find sequence.
 
-Prefer the `xnip` CLI for non-trivial file edits. It encodes "path + locator + new bytes" in a single command, avoiding repeated unchanged text in replacements.
+For known text blocks, use `xnip edit FILE --old-file OLD --text-file NEW`: matching is literal and must be unique unless `--all` is intentional. `edit --create` creates missing files; `edit --delete` deletes regular files. `--dry-run`/`--check` are available in CLI and the `xnip_edit` MCP tool. These capabilities require the development build; v0.1.1 uses the older replace/insert commands.
 
-### Commands
+Use line/anchor commands for those locations, and `apply` for disjoint edits to existing files. Search and semantic analysis remain separate tasks; use repository/language tools as appropriate. Whole-file rename and general patch import are not yet supported, so use a suitable tool rather than a risky delete/create workaround.
 
-- `xnip peek <file> --lines a-b` — print numbered lines
-- `xnip find <files...> --pattern '<regex>'` — locate matches
-- `xnip replace <file> [Locator] [Content]` — replace or delete a region
-- `xnip insert <file> [Locator] --position before|after [Content]` — single-anchor insert
-- `xnip move <file> --from-lines a-b --to N [--position before|after]` — move a block
-- `xnip indent <file> [--lines a-b | --all] (--add N | --remove N | --tabs-to-spaces N | --spaces-to-tabs N)` — adjust indentation
-- `xnip apply <manifest>` — validate and apply many edits
+Do not install software or register MCP merely because these instructions are loaded. On an unavailable capability, use an existing editor and report the limitation. Batch commits are per-file; inspect committed paths after exit 4 instead of blindly retrying. Byte preconditions are not locks; Git/backups provide exact recovery.
 
-### Locators (write commands; pick exactly one)
-
-- `--lines 30` / `--lines 30-45`
-- `--match-line '<regex>' [--occurrence N]`
-- `--between 'BEGIN'..'END' [--inclusive]`
-- `--between-re '^fn foo'..'^}' [--inclusive]`
-- `--pattern '<regex>'` (replace only)
-
-### Content sources
-
-- `--text "literal\n"` (literal shell argument; use stdin or a file for newlines)
-- `--text-stdin` (from stdin)
-- `--text-file <path>` (from file)
-- `--text ""` to delete the located region
-- `--repl "..."` for `--pattern` only; supports `$1`
-
-### Safety
-
-- `--was-file expected.txt` (or `--was` with actual expected bytes) to assert original content
-- `--dry-run` previews; `--check` validates; both never modify files
-- `--backup` writes `<file>.bak` before atomic rename (default: off)
-
-### Atomic batch
-
-For 2+ edits, use `xnip apply` with a manifest in native / JSON / YAML. Group by file, sort by line desc, two-phase commit. See `docs/apply-format.md`.
-
-### Exit codes
-
-`0` success · `1` user error · `2` IO · `3` validation · `4` apply phase-2 partial commit
-
-### MCP server (alternative)
-
-If the agent runs inside an MCP-aware client (Claude Desktop / Code, Cursor, Cline, Continue, Zed, ...), prefer registering `xnip mcp` as an MCP server: `{"mcpServers": {"xnip": {"command": "xnip", "args": ["mcp"]}}}`. 8 structured tools become available (`xnip_peek` / `xnip_find` / `xnip_replace` / `xnip_insert` / `xnip_move` / `xnip_indent` / `xnip_apply` / `xnip_doctor`) with the same field names as the cli flags. Note that MCP does not expose `--dry-run` / `--check` / `--revert` / `--json` and cannot consume process stdin (use `text_file` / `manifest_text` instead).
-
-Batch commits are atomic per file. There is no automatic rollback after a phase-2 failure; inspect the committed paths and restore from Git or backups before retrying. Use disjoint line ranges, do not mix pattern and line edits on one file, and run moves separately from other edits to that file. `was` is supported for line-based replacement only and does not lock out concurrent writers.
+Read the [agent guide](https://github.com/SeaLoong/xnip/blob/master/docs/SKILL.md) and relevant references only as needed.

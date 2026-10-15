@@ -78,7 +78,7 @@ jobs:
         env:
           RUSTDOCFLAGS: "-D warnings"
       - run: cargo run --locked -p xtask -- sync-integrations
-      - run: git diff --exit-code -- integrations/generic/SKILL.md .github/skills/xnip-editing
+      - run: git diff --exit-code -- integrations/generic integrations/claude-code .github/skills/xnip-editing
       - run: sh -n install.sh
       - run: python3 tests/install_sh.py
 

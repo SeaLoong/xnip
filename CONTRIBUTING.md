@@ -36,7 +36,7 @@ After changing the agent guide or references, run:
 cargo run --locked -p xtask -- sync-integrations
 ```
 
-This generates the generic and GitHub skills and copied references. Other integration templates are maintained in their own styles; keep their command examples consistent with the CLI. Add changes to the Unreleased section of `CHANGELOG.md`.
+This generates the generic, GitHub and Claude skills plus their copied references from `docs/SKILL.md`. Short project instruction templates are maintained in their own styles; keep their command examples consistent with the CLI. Add changes to the Unreleased section of `CHANGELOG.md`.
 
 ## Pull requests and releases
 

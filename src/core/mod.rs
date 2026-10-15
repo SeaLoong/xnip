@@ -3,6 +3,7 @@
 pub mod atomic;
 pub mod content;
 pub mod diff;
+pub mod edit;
 pub mod location;
 pub mod ops;
 pub mod revert;

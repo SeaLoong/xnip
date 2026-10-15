@@ -4,6 +4,10 @@ User-visible changes are recorded here. Versions follow Semantic Versioning; com
 
 ## [Unreleased]
 
+- Add `edit` and `xnip_edit` as the primary editing entry point: create missing files without overwrite, replace exact blocks with unique-match guards, delete regular files, and preview/check across CLI and MCP. Preserve literal bytes and skip unchanged replacements.
+- Rework the editing skill around replacing the default text editor while reusing known context; generate generic/GitHub/Claude variants and package their on-demand references. Document capability gaps and development/release differences.
+- Preserve the preferred manifest parser's diagnostic on failed auto-detection instead of masking a JSON/YAML schema error with an unrelated fallback error.
+
 - Fix `xnip_doctor` hanging in a persistent Windows MCP session by capturing terminal status before the protocol reader starts; add an end-to-end test that keeps stdin open across requests.
 
 ## [0.1.1] - 2026-10-15

@@ -1648,6 +1648,7 @@ dependencies = [
  "clap",
  "criterion",
  "is-terminal",
+ "memchr",
  "nu-ansi-term",
  "predicates",
  "rayon",

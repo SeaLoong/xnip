@@ -115,6 +115,8 @@ and apply share core algorithms, while interface validation and output handling 
 
 ## Persistence and operational limits
 
+`core::edit` implements creation, literal block replacement and regular-file deletion, shared by CLI edit and MCP xnip_edit. Literal replacement uses memmem matching rather than regex escaping. Create uses no-clobber persistence; exact replacements detect ambiguity and avoid unnecessary writes. Preview/check are computed without creating directories.
+
 Both individual edits and `apply` use `core::atomic::prepare_write` to stage and sync data while preserving permissions. `apply` canonicalizes target paths before grouping, so relative/absolute paths and symlinks to one target share one staged file. Symbolic links remain intact. Backup names append `.bak`; backup paths that are also batch targets are rejected.
 
 This is a validation-then-commit pipeline, not a filesystem transaction. Phase-2 errors can leave earlier files committed; no automatic rollback or crash journal is provided. File data is synced before replacement, but parent directories are not synced; full power-loss durability is not guaranteed. Concurrent external writers are not locked out. Ownership, ACLs, extended attributes and hard-link identity are not preserved by replacement. These require a separate platform-specific design before stronger guarantees can be advertised.
@@ -122,6 +124,21 @@ This is a validation-then-commit pipeline, not a filesystem transaction. Phase-2
 Read and edit paths currently load complete files into memory. `find` now bounds retained hits and scans line offsets incrementally; literal regex replacement scans matches once. `apply --check` and `--dry-run` avoid temporary-file writes, and parallelism is bounded. Repeated operations on the same large file still allocate complete buffers; streaming or a shared line index is a future optimization that needs benchmarks and explicit edit-order semantics.
 
 MCP shares the write core and has stdio protocol tests. Its synchronous file work runs on a single runtime thread; large requests can delay other requests and cancellation. Deploy with a trusted local client and an appropriate working directory. Workspace sandboxing and resource limits are not provided by xnip.
+
+## Default editor capability coverage
+
+| Capability | Current behavior | Remaining work |
+|---|---|---|
+| New files and directories | `edit --create`, no overwrite; preview creates nothing | Optional file-mode selection |
+| Known-context replacement | Unique literal blocks, explicit all, byte-preserving payloads | General patch-format ingestion |
+| File deletion | Regular files, optional whole-file precondition and backup | Integrate file lifecycle operations into batch planning |
+| Line/anchor transformations | Existing replace/insert/move/indent operations | Consistent newline policy across legacy line-based operations |
+| Editor previews | CLI diff and `xnip_edit` MCP preview/check | Preview support on legacy MCP batch/range tools |
+| Rename | No whole-file rename command | No-clobber rename with failure reporting, not a create/delete workaround |
+| Batch editing | Validation before per-file commits for existing files | Explicit dependency/order semantics for mixed operations |
+| Recovery and concurrency | Backups, preconditions, detected-change checks | Transaction journal/rollback and stronger concurrency guarantees |
+
+The next capability priorities are rename and patch-format import, followed by a shared batch plan that can include create/delete. These need explicit failure and ordering contracts; merely instructing an agent to chain existing commands would not supply those guarantees. Semantic symbol discovery and binary/document formats remain responsibilities of their dedicated analysis or format tools.
 
 ## Validation and performance
 

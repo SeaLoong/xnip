@@ -13,6 +13,13 @@ agents should branch on them rather than parsing stderr text.
 
 ## Exit-code reference per command
 
+### `edit` (development branch)
+
+- `0` committed, previewed, checked or unchanged
+- `1` invalid arguments/operation or unsupported target type
+- `2` IO/persistence failure
+- `3` existing create target, missing/ambiguous old block, failed deletion precondition or detected concurrent change
+
 ### `peek`
 
 - `0` printed the requested range

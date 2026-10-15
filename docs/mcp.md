@@ -1,14 +1,15 @@
 # MCP Server (`xnip mcp`)
 
-`xnip mcp` starts a [Model Context Protocol](https://modelcontextprotocol.io/) **stdio server** that exposes xnip's 8 capabilities (peek / find / replace / insert / move / indent / apply / doctor) as structured tools to LLM agents — eliminating the quote-escaping, exit-code parsing, and stdout/stderr confusion that comes with shell invocations.
+`xnip mcp` starts a [Model Context Protocol](https://modelcontextprotocol.io/) **stdio server** that exposes xnip's 9 development-branch capabilities (edit / peek / find / replace / insert / move / indent / apply / doctor) as structured tools to LLM agents — eliminating the quote-escaping, exit-code parsing, and stdout/stderr confusion that comes with shell invocations.
 
 ## When to use MCP vs CLI
 
 | Scenario | Recommended |
 |---|---|
-| Agent / LLM integration (Claude Desktop, Cursor, Cline, Continue, Zed, …) | **MCP** |
+| Default editing with structured old/new content and an existing MCP connection | MCP |
 | Manual terminal use, shell scripts, CI pipelines | CLI |
-| Need `--dry-run` / `--check` / `--revert` / `--json` | CLI (not exposed via MCP) |
+| Create/delete or exact block replacement with preview/check | `xnip_edit` or CLI `edit` on the development build |
+| Line/range/batch previews, revert or NDJSON | CLI |
 | Need `--text-stdin` / `apply --from-stdin` / op-level `@-` | CLI (MCP process stdin is occupied by the protocol) |
 
 Both paths share core editing algorithms. Input fields, error handling and available preview modes differ as described below.
@@ -21,14 +22,17 @@ xnip mcp
 # Exit: Ctrl-D (close stdin) or client disconnect.
 ```
 
+For the primary editing workflow use [xnip_edit](edit.md#mcp); it accepts literal old/new blocks and supports preview/check without writes. Reuse context already available rather than issuing a mandatory peek before every edit.
+
 No sub-arguments. All "calls" arrive as `initialize` / `tools/list` / `tools/call` requests from the MCP client over stdio.
 
 ## Tool list
 
-8 tools, named 1:1 after CLI subcommands:
+The development branch has 9 tools; released v0.1.1 has 8 and does not include `xnip_edit`. Names correspond to CLI subcommands:
 
 | MCP Tool | CLI equivalent | Type |
 |---|---|---|
+| `xnip_edit` | `xnip edit` | create / exact block replace / delete; optional preview/check |
 | `xnip_peek` | `xnip peek` | read-only |
 | `xnip_find` | `xnip find` | read-only |
 | `xnip_replace` | `xnip replace` | write (atomic) |
@@ -42,9 +46,9 @@ Input schema field names match CLI flags 1:1 (strip `--`, convert hyphens to und
 
 ### Differences from CLI
 
-MCP does **not** expose these flags:
+The older tools do **not** expose the following top-level flags; `xnip_edit` is the exception for `dry_run` and `check`:
 
-- `--dry-run` — not available; MCP write tools commit immediately after validation. Use the CLI for previews.
+- `--dry-run` — not available on older tools; the older MCP write tools commit immediately after validation. Use the CLI for previews.
 - `--check` — not available; use CLI check mode when validation must not write.
 - `--revert` — no top-level tool argument. An `xnip_apply` manifest may contain supported `revert` modifiers, with the same limitations as CLI apply.
 - `--json` — MCP is already a structured JSON protocol; redundant
@@ -121,7 +125,7 @@ printf '%s\n%s\n%s\n' \
   | xnip mcp
 ```
 
-You should see `serverInfo: {name: "xnip", version: "..."}` followed by a list of 8 tools.
+You should see `serverInfo: {name: "xnip", version: "..."}` followed by a list of the tools supported by that build.
 
 ## Tool call examples
 

@@ -2,7 +2,7 @@
 //!
 //! 这里**不依赖 rmcp client**——直接对子进程喂裸 JSON-RPC 帧，验证：
 //! 1. `initialize` 握手返回正确 `serverInfo`（name/version 来自 xnip 自身而非 rmcp）
-//! 2. `tools/list` 返回 8 个我们注册的工具
+//! 2. `tools/list` 返回 9 个我们注册的工具
 //! 3. `tools/call xnip_peek` 实际工作：行号格式 + 字节透传
 //! 4. `tools/call xnip_replace` + `was` 校验失败时返回 JSON-RPC error 且文件未改动
 
@@ -84,7 +84,7 @@ fn doctor_responds_while_stdin_remains_open() {
     )
     .unwrap();
     input.flush().unwrap();
-    assert_eq!(response(3)["result"]["tools"].as_array().unwrap().len(), 8);
+    assert_eq!(response(3)["result"]["tools"].as_array().unwrap().len(), 9);
     drop(input);
     drop(server);
     reader.join().unwrap();
@@ -142,11 +142,12 @@ fn initialize_returns_xnip_server_info() {
 }
 
 #[test]
-fn tools_list_returns_eight_tools() {
+fn tools_list_returns_nine_tools() {
     let out = run_mcp(&frames(&[
         r#"{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}"#,
     ]));
     for name in [
+        "xnip_edit",
         "xnip_peek",
         "xnip_find",
         "xnip_replace",
@@ -220,4 +221,39 @@ fn tool_call_xnip_replace_writes_atomically() {
     let out = run_mcp(&frames(&[&call]));
     assert!(out.contains(r#""isError":false"#), "expected ok in: {out}");
     assert_eq!(std::fs::read(&file).unwrap(), b"alpha\nBETA\ngamma\n");
+}
+
+#[test]
+fn edit_tool_can_preview_create_and_exact_replace() {
+    let dir = tempfile::tempdir().unwrap();
+    let file = dir.path().join("nested/new.txt");
+    for dry_run in [true, false] {
+        let call = serde_json::json!({"jsonrpc":"2.0","id":2,"method":"tools/call","params":{
+            "name":"xnip_edit", "arguments":{"file":file,"operation":"create","text":"old\nline","dry_run":dry_run}
+        }}).to_string();
+        let output = run_mcp(&frames(&[&call]));
+        assert!(output.contains(r#""isError":false"#), "{output}");
+        assert_eq!(file.exists(), !dry_run);
+    }
+    for dry_run in [true, false] {
+        let call = serde_json::json!({"jsonrpc":"2.0","id":2,"method":"tools/call","params":{
+            "name":"xnip_edit", "arguments":{"file":file,"old":"old\nline","text":"new\nblock\nend","dry_run":dry_run}
+        }}).to_string();
+        let output = run_mcp(&frames(&[&call]));
+        assert!(output.contains(r#""isError":false"#), "{output}");
+        assert_eq!(
+            std::fs::read(&file).unwrap(),
+            if dry_run {
+                b"old\nline".as_slice()
+            } else {
+                b"new\nblock\nend".as_slice()
+            }
+        );
+    }
+    let call = serde_json::json!({"jsonrpc":"2.0","id":2,"method":"tools/call","params":{
+        "name":"xnip_edit", "arguments":{"file":file,"operation":"delete","old":"wrong"}
+    }})
+    .to_string();
+    assert!(run_mcp(&frames(&[&call])).contains(r#""error":{"code":-32600"#));
+    assert!(file.exists());
 }

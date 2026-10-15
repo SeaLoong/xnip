@@ -1,7 +1,7 @@
 //! `xnip_replace` 工具：替换/删除一段区域。
 //!
 //! 与 cli `xnip replace` 行为一致（PLAN §6.7.3），但**不暴露 dry-run/check/revert**——
-//! 这些是 cli 便利特性，对 LLM 直接构造正向编辑没价值。
+//! 需要精确文本块编辑及预览时可使用 `xnip_edit`；范围预览仍通过 CLI。
 //!
 //! 保留 `was`/`was_file`（并发保护）与 `backup`（用户安全旁路）。
 
