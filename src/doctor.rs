@@ -10,8 +10,23 @@
 //! 输出格式：人类可读（默认）；JSON（`--json`）后续接入 `output::json`。
 
 use std::io::Write;
+use std::sync::OnceLock;
 
 use is_terminal::IsTerminal;
+
+static STDIO_STATUS: OnceLock<[bool; 3]> = OnceLock::new();
+
+/// Capture before a protocol reader starts holding the stdin lock on Windows.
+/// The process's standard streams remain unchanged for the server lifetime.
+pub(crate) fn capture_stdio_status() -> [bool; 3] {
+    *STDIO_STATUS.get_or_init(|| {
+        [
+            std::io::stdin().is_terminal(),
+            std::io::stdout().is_terminal(),
+            std::io::stderr().is_terminal(),
+        ]
+    })
+}
 
 /// 把 doctor 报告写到 `out`（通常是 stdout）。
 ///
@@ -31,9 +46,10 @@ pub fn report<W: Write>(mut out: W) -> std::io::Result<()> {
         Err(e) => writeln!(out, "  cwd-writable: err ({e})")?,
     }
 
-    writeln!(out, "  stdin-tty:  {}", std::io::stdin().is_terminal())?;
-    writeln!(out, "  stdout-tty: {}", std::io::stdout().is_terminal())?;
-    writeln!(out, "  stderr-tty: {}", std::io::stderr().is_terminal())?;
+    let [stdin_tty, stdout_tty, stderr_tty] = capture_stdio_status();
+    writeln!(out, "  stdin-tty:  {stdin_tty}")?;
+    writeln!(out, "  stdout-tty: {stdout_tty}")?;
+    writeln!(out, "  stderr-tty: {stderr_tty}")?;
 
     Ok(())
 }

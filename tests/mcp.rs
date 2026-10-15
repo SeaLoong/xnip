@@ -11,6 +11,85 @@ use std::process::{Command, Stdio};
 
 use assert_cmd::cargo::CommandCargoExt;
 
+#[test]
+fn doctor_responds_while_stdin_remains_open() {
+    use std::io::{BufRead, BufReader};
+    use std::sync::mpsc;
+    use std::time::Duration;
+
+    struct Server(std::process::Child);
+    impl Drop for Server {
+        fn drop(&mut self) {
+            let _ = self.0.kill();
+            let _ = self.0.wait();
+        }
+    }
+    let mut server = Server(
+        Command::cargo_bin("xnip")
+            .unwrap()
+            .arg("mcp")
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::null())
+            .spawn()
+            .unwrap(),
+    );
+    let mut input = server.0.stdin.take().unwrap();
+    let output = server.0.stdout.take().unwrap();
+    let (tx, rx) = mpsc::channel();
+    let reader = std::thread::spawn(move || {
+        for line in BufReader::new(output).lines() {
+            if tx.send(line.unwrap()).is_err() {
+                break;
+            }
+        }
+    });
+    let response = |id: u64| -> serde_json::Value {
+        loop {
+            let line = rx
+                .recv_timeout(Duration::from_secs(10))
+                .expect("MCP response timed out with stdin still open");
+            let value: serde_json::Value = serde_json::from_str(&line).unwrap();
+            if value["id"].as_u64() == Some(id) {
+                return value;
+            }
+        }
+    };
+    input.write_all(frames(&[]).as_bytes()).unwrap();
+    input.flush().unwrap();
+    assert!(response(1).get("result").is_some());
+    writeln!(
+        input,
+        "{}",
+        serde_json::json!({
+            "jsonrpc":"2.0","id":2,"method":"tools/call",
+            "params":{"name":"xnip_doctor","arguments":{}}
+        })
+    )
+    .unwrap();
+    input.flush().unwrap();
+    let doctor = response(2);
+    assert!(
+        doctor["result"]["content"][0]["text"]
+            .as_str()
+            .unwrap()
+            .contains("stdin-tty:  false")
+    );
+    writeln!(
+        input,
+        "{}",
+        serde_json::json!({
+            "jsonrpc":"2.0","id":3,"method":"tools/list","params":{}
+        })
+    )
+    .unwrap();
+    input.flush().unwrap();
+    assert_eq!(response(3)["result"]["tools"].as_array().unwrap().len(), 8);
+    drop(input);
+    drop(server);
+    reader.join().unwrap();
+}
+
 /// 构造一组 JSON-RPC 帧（initialize → notifications/initialized → 用户给的额外帧）。
 fn frames(extras: &[&str]) -> String {
     let mut s = String::new();

@@ -4,6 +4,8 @@ User-visible changes are recorded here. Versions follow Semantic Versioning; com
 
 ## [Unreleased]
 
+- Fix `xnip_doctor` hanging in a persistent Windows MCP session by capturing terminal status before the protocol reader starts; add an end-to-end test that keeps stdin open across requests.
+
 ## [0.1.1] - 2026-10-15
 
 First public release of xnip, a CLI and MCP stdio server for precise local text editing. The earlier v0.1.0 tag was an unpublished release candidate; no GitHub Release was published for it.

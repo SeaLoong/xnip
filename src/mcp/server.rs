@@ -36,6 +36,9 @@ pub struct XnipServer {
 
 impl XnipServer {
     pub fn new() -> Self {
+        // Probe handles before Tokio starts its blocking stdin reader. Doing
+        // this inside xnip_doctor can wait forever on a live Windows pipe.
+        crate::doctor::capture_stdio_status();
         Self {
             tool_router: Self::tool_router(),
         }
