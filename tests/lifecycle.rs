@@ -403,3 +403,15 @@ fn unified_same_paths_in_a_directory_are_not_mistaken_for_git_prefixes() {
     assert_eq!(fs::read(dir.path().join("a/file")).unwrap(), b"new\n");
     assert_eq!(fs::read(dir.path().join("file")).unwrap(), b"unrelated\n");
 }
+
+#[cfg(windows)]
+#[test]
+fn backup_case_alias_is_rejected_before_any_input_is_overwritten() {
+    let dir = tempfile::tempdir().unwrap();
+    fs::write(dir.path().join("a"), b"one").unwrap();
+    fs::write(dir.path().join("A.BAK"), b"two").unwrap();
+    apply(dir.path(),"json",r#"[{"op":"edit","file":"a","old":"one","text":"ONE"},{"op":"edit","file":"A.BAK","old":"two","text":"TWO"}]"#)
+        .arg("--backup").assert().code(3);
+    assert_eq!(fs::read(dir.path().join("a")).unwrap(), b"one");
+    assert_eq!(fs::read(dir.path().join("A.BAK")).unwrap(), b"two");
+}

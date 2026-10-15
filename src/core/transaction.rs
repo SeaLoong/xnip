@@ -317,7 +317,12 @@ impl Plan {
         }
         if backup {
             for path in changes.keys() {
-                if self.entries.contains_key(&atomic::bak_path(path)) {
+                let backup_path = normalize(&atomic::bak_path(path))?;
+                if self
+                    .entries
+                    .keys()
+                    .any(|candidate| same_path(candidate, &backup_path))
+                {
                     bail!("backup path is also a plan input: {}", path.display());
                 }
             }
