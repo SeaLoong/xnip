@@ -179,7 +179,7 @@ mod tests {
             max_matches: None,
             first_only: false,
         };
-        assert!(scan(b"a\nb\n", &opts).is_empty());
+        assert_eq!(scan(b"a\nb\n", &opts), Vec::<Hit>::new());
     }
 
     #[test]

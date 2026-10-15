@@ -12,14 +12,14 @@ When editing files, prefer the `xnip` CLI. It encodes "path + locator + new byte
 | Search for a token | `xnip find <files...> --pattern '<regex>'` |
 | Replace a known line range | `xnip replace <file> --lines a-b --text '...'` |
 | Edit by anchor | `xnip replace <file> --match-line '^pat' --text '...'` |
-| Edit a block between markers | `xnip replace <file> --between-re '^fn foo' '^}' --inclusive --text-file snippet.txt` |
+| Edit a block between markers | `xnip replace <file> --between-re '^fn foo'..'^}' --inclusive --text-file snippet.txt` |
 | Rename across a file | `xnip replace <file> --pattern '\bOLD\b' --repl NEW` |
 | Insert / move / re-indent | `xnip insert | xnip move | xnip indent` |
-| Many edits atomically | `xnip apply edits.txt` (or `.json` / `.yaml`) |
+| Validate many edits | `xnip apply edits.txt` (or `.json` / `.yaml`) |
 
 ## Always pair with safety
 
-- `--was 'expected\n'` to detect drift before writing
+- `--was-file expected.txt` to detect drift before writing
 - `--dry-run` to preview new content (or unified diff for `apply`)
 - `--check` to validate without writing
 
@@ -46,3 +46,5 @@ xnip apply edits.txt --json   # NDJSON event stream
 ## MCP server (alternative)
 
 GitHub Copilot Chat (VS Code) and the Copilot CLI shell out to commands directly, so this prompt is enough. If you also use an MCP-aware editor on the same project (Cursor / Claude Desktop / Cline / Continue / Zed), you can additionally register `xnip mcp` there: `{"mcpServers": {"xnip": {"command": "xnip", "args": ["mcp"]}}}`. The MCP server exposes 8 structured tools (`xnip_peek` / `xnip_find` / `xnip_replace` / `xnip_insert` / `xnip_move` / `xnip_indent` / `xnip_apply` / `xnip_doctor`) backed by the same code as the cli.
+
+Batch commits are atomic per file. There is no automatic rollback after a phase-2 failure; inspect the committed paths and restore from Git or backups before retrying. Use disjoint line ranges, do not mix pattern and line edits on one file, and run moves separately from other edits to that file. `was` is supported for line-based replacement only and does not lock out concurrent writers.

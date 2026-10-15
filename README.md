@@ -9,12 +9,12 @@ xnip compresses the LLM agent "read section → generate new section → replace
 - Standalone Rust binary for supported macOS, Linux and Windows targets
 - 9 commands: `peek` / `find` / `replace` / `insert` / `move` / `indent` / `apply` / `mcp` / `doctor`
 - `apply` accepts three formats (native compact / JSON / YAML) for validated batch edits with per-file atomic writes
-- Atomic writes, `--dry-run` preview, symmetric `--revert`
+- Atomic writes, `--dry-run` preview, constrained `--revert`
 - **`xnip mcp`**: built-in [Model Context Protocol](https://modelcontextprotocol.io/) stdio server for Claude Desktop / Cursor / Cline / Continue / Zed
 
 ## Install
 
-Requires Rust **1.89+**. Source installation is available now.
+Prebuilt binaries do not require Rust. Building from source requires **Rust 1.89+**.
 
 ### From source
 
@@ -24,9 +24,9 @@ cd xnip
 cargo install --path . --locked
 ```
 
-### Prebuilt binaries (after the first release)
+### Prebuilt binaries
 
-The repository currently has no published GitHub release. These commands become available after a version tag is published with the release workflow. The crates.io command additionally requires publishing the crate.
+Download from [GitHub Releases](https://github.com/SeaLoong/xnip/releases), or use the installers below. Both verify the archive SHA256 before installation.
 
 ```sh
 # macOS / Linux
@@ -35,9 +35,11 @@ curl -fsSL https://github.com/SeaLoong/xnip/releases/latest/download/install.sh 
 # Windows
 iwr -useb https://github.com/SeaLoong/xnip/releases/latest/download/install.ps1 | iex
 
-# Any platform with Rust
-cargo install xnip --locked
+# Any platform with Rust, directly from the release tag
+cargo install --git https://github.com/SeaLoong/xnip --tag v0.1.0 --locked
 ```
+
+See [installation and troubleshooting](docs/installation.md) for platform selection, version pinning, PATH setup, checksums and removal. The GitHub release is the distribution channel; crates.io installation is not currently advertised.
 
 ## Quick start
 
@@ -58,7 +60,7 @@ printf '%s\n' 'replace --files-from list.txt s/OLD_NAME/NEW_NAME/g' | xnip apply
 xnip apply edits.txt
 ```
 
-See [`docs/SKILL.md`](./docs/SKILL.md) and [`docs/examples.md`](./docs/examples.md) for the full reference.
+Start with the [runnable tutorial](docs/cli.md), then consult the [agent guide](docs/SKILL.md), [examples](docs/examples.md), [manifest reference](docs/apply-format.md) and [exit codes](docs/error-codes.md).
 
 ## Integrating with LLM agents
 
@@ -134,19 +136,19 @@ Best for agents driven by system prompts or instructions files. Copy the snippet
 |-------|-------------|-----------------|
 | **GitHub Copilot** | [`integrations/copilot/xnip.md`](./integrations/copilot/xnip.md) | Append to `.github/copilot-instructions.md` in your project |
 | **Aider** | [`integrations/aider/CONVENTIONS.md`](./integrations/aider/CONVENTIONS.md) | Merge into your project's `CONVENTIONS.md` |
-| **Claude Code** | [`integrations/claude-code/SKILL.md`](./integrations/claude-code/SKILL.md) | Copy to `.claude/skills/xnip.md` in your project |
+| **Claude Code** | [`integrations/claude-code/SKILL.md`](./integrations/claude-code/SKILL.md) | Copy to `.claude/skills/xnip/SKILL.md` in your project |
 | **AGENTS.md** (Codex, etc.) | [`integrations/agents-md/AGENTS.md`](./integrations/agents-md/AGENTS.md) | Append to your project's `AGENTS.md` |
 | **Any other agent** | [`integrations/generic/SKILL.md`](./integrations/generic/SKILL.md) | Paste into the agent's system prompt or custom instructions |
 
 ## Design
 
 - **Project-agnostic** — no project config, no language detection, no assumptions about structure
-- **Cross-platform** — same binary on macOS / Linux / Windows
+- **Cross-platform** — the same commands, with a native binary for each OS and architecture
 - **Machine-friendly** — stderr for humans, stdout for machines; optional `--json` NDJSON
 - **Atomic writes** — tmpfile in same dir → validate → atomic rename; `.bak` is opt-in (`--backup`)
 - **Symmetric revert** — `--revert` supports constrained inverse operations; see the limitations below
 
-Full design spec: [`PLAN.md`](./PLAN.md) · Version history: [`CHANGELOG.md`](./CHANGELOG.md)
+Historical design plan: [`PLAN.md`](./PLAN.md) · Version history: [`CHANGELOG.md`](./CHANGELOG.md)
 
 ## License
 
@@ -178,3 +180,5 @@ cargo run --locked -p xtask -- sync-integrations
 Use `python3 tests/install_sh.py` on Linux/macOS, or build with `cargo build --locked` and run `./tests/install_ps1.ps1` in PowerShell. Installer tests use local archives and mock HTTP, including checksum-failure recovery.
 
 Before publishing, update the package version and changelog, run CI, and push a matching `vX.Y.Z` tag. Release CI checks the tag against Cargo metadata, builds six targets, and publishes all archives, SHA256 sidecars, installers and integration packages only after all builds succeed. Manual workflow runs build artifacts without publishing. Publishing to crates.io is a separate maintainer action (`cargo publish --locked`). See [architecture and remaining limits](docs/architecture.md).
+
+Contributor workflow: [CONTRIBUTING.md](CONTRIBUTING.md). Maintainer release procedure: [docs/releasing.md](docs/releasing.md).

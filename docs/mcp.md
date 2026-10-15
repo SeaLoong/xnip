@@ -11,7 +11,7 @@
 | Need `--dry-run` / `--check` / `--revert` / `--json` | CLI (not exposed via MCP) |
 | Need `--text-stdin` / `apply --from-stdin` / op-level `@-` | CLI (MCP process stdin is occupied by the protocol) |
 
-Both paths **share the same core implementation** and behave identically.
+Both paths share core editing algorithms. Input fields, error handling and available preview modes differ as described below.
 
 ## Starting the server
 
@@ -44,15 +44,15 @@ Input schema field names match CLI flags 1:1 (strip `--`, convert hyphens to und
 
 MCP does **not** expose these flags:
 
-- `--dry-run` — MCP returns the result text directly; structured reply is easier for LLMs to consume than a unified diff
-- `--check` — MCP uses `Err(McpError)` to express validation failure, which is more direct than an exit code
-- `--revert` — CLI convenience feature; LLMs can construct the inverse edit directly at negligible cost
+- `--dry-run` — not available; MCP write tools commit immediately after validation. Use the CLI for previews.
+- `--check` — not available; use CLI check mode when validation must not write.
+- `--revert` — no top-level tool argument. An `xnip_apply` manifest may contain supported `revert` modifiers, with the same limitations as CLI apply.
 - `--json` — MCP is already a structured JSON protocol; redundant
 - `--text-stdin` / `apply --from-stdin` / op-level `@-` — MCP process stdin is occupied by the protocol
 
 MCP **retains**:
 
-- `was` / `was_file` (write commands) — files may be modified externally during a long session; concurrency guard is essential
+- `was` / `was_file` (`xnip_replace`, line-based mode only) — check the original bytes; this is not a filesystem lock
 - `backup` (write commands) — opt-in `.bak` copy as a safety escape hatch
 - `manifest_text` (`xnip_apply` only) — inline manifest text, ideal for LLMs generating short manifests without writing a file first
 
@@ -137,7 +137,7 @@ You should see `serverInfo: {name: "xnip", version: "..."}` followed by a list o
 }
 ```
 
-### `xnip_replace` — precise edit with concurrency guard
+### `xnip_replace` — precise edit with expected content
 
 ```json
 {
@@ -159,7 +159,7 @@ If `was` does not match lines 12-14 literally → returns `invalid_request` erro
 {
   "name": "xnip_apply",
   "arguments": {
-    "manifest_text": "replace src/a.rs lines 30-32 text=\"...\"\ninsert src/b.rs lines 1 position=before text=\"// header\\n\"\n",
+    "manifest_text": "replace src/a.rs 30-32 \"...\"\ninsert src/b.rs 1 before \"// header\\n\"\n",
     "format": "native",
     "backup": true
   }
@@ -173,8 +173,8 @@ Phase 2: atomic renames committed sequentially. Failure reports already-committe
 
 | Symptom | Fix |
 |---|---|
-| Client reports "Failed to connect" | Run `which xnip`; the `command` in client config must be an absolute path or be on the client's `PATH` |
-| `tools/list` returns 0 tools | Upgrade to v0.1.0+; older versions have no `mcp` subcommand |
+| Client reports "Failed to connect" | Run `command -v xnip` (POSIX) or `Get-Command xnip` (PowerShell); the `command` in client config must be an absolute path or be on the client's `PATH` |
+| `tools/list` returns 0 tools | Run `xnip --version`, check the configured executable path, and restart the client |
 | `xnip_apply` reports "manifest contains op content `@-`" | MCP does not read process stdin; use inline `text` or `text_file` instead |
 | Edit written but LLM sees no change | Have the LLM call `xnip_peek` to re-read; do not let the LLM treat tool reply text as "current file state" |
 
@@ -183,7 +183,13 @@ Phase 2: atomic renames committed sequentially. Failure reports already-committe
 `xnip mcp` and `xnip <other subcommands>` **share the same binary and the same core**. The MCP tool handlers are a "parallel frontend" to the CLI layer — they call `core::ops::*` / `apply::commit::*` directly; they do **not** spawn a subprocess or scrape CLI stdout. This means:
 
 - A core-layer bug fix is immediately reflected in both paths
-- Behavioral consistency is guaranteed by shared code (same byte passthrough, same atomic write, same `was` check)
-- Binary size is ~9 MB larger than CLI-only (cost of rmcp + tokio), but the tokio runtime is only created when `xnip mcp` actually starts — zero runtime overhead for all other CLI paths
+- Shared core operations and end-to-end tests cover byte transformations and file writes
+- The Tokio runtime is created only for `xnip mcp`; binary size varies with target and build settings
 
 Dependencies: `rmcp 1.7` (official Rust SDK) + `tokio 1` (`rt, macros, io-std`) + `schemars 1.2` (auto-generates tool input JsonSchema). MSRV 1.89 (required by the YAML parser).
+
+## Working directory and trust
+
+Relative paths are resolved from the server process working directory, which is chosen by the client. Configure that directory in the client when supported, or send absolute paths. `xnip_doctor` can check whether the current directory is writable. The server does not confine access to a repository and uses the launching user's permissions.
+
+For batch edits, direct targets resolve against the working directory; manifest-relative payloads and file lists follow the [apply path rules](apply-format.md#paths-and-edit-ordering). A phase-2 error can leave files committed. Preserve the returned path list and inspect files before retrying; blindly replaying a partially committed manifest can apply an operation twice.

@@ -9,12 +9,12 @@ xnip 把 LLM agent 的「读一段 → 生成新一段 → 整段替换」压缩
 - 单一 Rust 二进制，支持 macOS、Linux 和 Windows 的发布目标
 - 9 个子命令：`peek` / `find` / `replace` / `insert` / `move` / `indent` / `apply` / `mcp` / `doctor`
 - `apply` 接受三种格式（原生紧凑 / JSON / YAML）的批量编辑，逐文件原子写入
-- 原子提交、可预览（`--dry-run`）、参数对称可逆（`--revert`）
+- 原子提交、可预览（`--dry-run`）、受限反向操作（`--revert`）
 - **`xnip mcp`**：内置 [Model Context Protocol](https://modelcontextprotocol.io/) stdio server，与 Claude Desktop / Cursor / Cline / Continue / Zed 等插拔即用
 
 ## 安装
 
-需要 Rust **1.89+**；目前可直接使用源码安装。
+预构建二进制不需要安装 Rust；源码构建需要 **Rust 1.89+**。
 
 ### 从源码安装
 
@@ -24,9 +24,9 @@ cd xnip
 cargo install --path . --locked
 ```
 
-### 预构建二进制（首次发布后可用）
+### 预构建二进制
 
-仓库目前没有已发布的 GitHub Release。以下下载命令需要先通过发布流程发布版本标签；crates.io 安装还需维护者单独发布 crate。
+可以从 [GitHub Releases](https://github.com/SeaLoong/xnip/releases) 下载，也可以使用下方安装器。两种安装器都会在安装前验证压缩包的 SHA256。
 
 ```sh
 # macOS / Linux
@@ -35,9 +35,11 @@ curl -fsSL https://github.com/SeaLoong/xnip/releases/latest/download/install.sh 
 # Windows
 iwr -useb https://github.com/SeaLoong/xnip/releases/latest/download/install.ps1 | iex
 
-# 任何装 Rust 的平台
-cargo install xnip --locked
+# 任何装 Rust 的平台：从正式版本标签安装
+cargo install --git https://github.com/SeaLoong/xnip --tag v0.1.0 --locked
 ```
+
+支持平台、指定版本、PATH 设置、校验及卸载详见 [安装说明](docs/installation.md)。当前通过 GitHub Release 分发，不提供未经发布验证的 crates.io 安装命令。
 
 ## 快速上手
 
@@ -58,7 +60,7 @@ printf '%s\n' 'replace --files-from list.txt s/OLD_NAME/NEW_NAME/g' | xnip apply
 xnip apply edits.txt
 ```
 
-详见 [`docs/SKILL.md`](./docs/SKILL.md) 与 [`docs/examples.md`](./docs/examples.md)。
+可先运行 [入门教程](docs/cli.md)，再查阅 [Agent 指南](docs/SKILL.md)、[示例](docs/examples.md)、[清单格式](docs/apply-format.md) 和 [退出码](docs/error-codes.md)。
 
 ## 集成到 LLM Agent
 
@@ -134,19 +136,19 @@ xnip 提供两条集成路径，可同时启用。
 |-------|--------------|---------|
 | **GitHub Copilot** | [`integrations/copilot/xnip.md`](./integrations/copilot/xnip.md) | 追加到项目的 `.github/copilot-instructions.md` |
 | **Aider** | [`integrations/aider/CONVENTIONS.md`](./integrations/aider/CONVENTIONS.md) | 合并到项目的 `CONVENTIONS.md` |
-| **Claude Code** | [`integrations/claude-code/SKILL.md`](./integrations/claude-code/SKILL.md) | 复制到项目的 `.claude/skills/xnip.md` |
+| **Claude Code** | [`integrations/claude-code/SKILL.md`](./integrations/claude-code/SKILL.md) | 复制到项目的 `.claude/skills/xnip/SKILL.md` |
 | **AGENTS.md**（Codex 等） | [`integrations/agents-md/AGENTS.md`](./integrations/agents-md/AGENTS.md) | 追加到项目的 `AGENTS.md` |
 | **其他 agent** | [`integrations/generic/SKILL.md`](./integrations/generic/SKILL.md) | 粘贴到 agent 的 system prompt 或自定义指令中 |
 
 ## 设计理念
 
 - **项目无关**：不感知项目结构、不读项目配置、不假设语言
-- **跨平台一致**：所有平台跑同一份编译产物
+- **跨平台一致**：各平台使用对应的原生二进制，命令行为保持一致
 - **机器友好**：stderr 给人，stdout 给机器；可选 `--json` NDJSON
 - **原子写入**：tmpfile 同目录 → 校验 → atomic rename；默认不写 `.bak`（`--backup` 启用）
 - **参数对称可逆**：`--revert` 支持受限的反向操作，具体限制见下文
 
-完整设计规范：[`PLAN.md`](./PLAN.md) · 版本历史：[`CHANGELOG.md`](./CHANGELOG.md)
+历史设计计划：[`PLAN.md`](./PLAN.md) · 版本历史：[`CHANGELOG.md`](./CHANGELOG.md)
 
 ## License
 
@@ -177,3 +179,5 @@ cargo run --locked -p xtask -- sync-integrations
 Linux/macOS 安装器测试：`python3 tests/install_sh.py`。Windows 先运行 `cargo build --locked`，再在 PowerShell 运行 `./tests/install_ps1.ps1`。测试使用本地压缩包和模拟 HTTP，不会下载正式发布包。
 
 发布前更新版本与变更记录，通过 CI 后推送与 Cargo 版本一致的 `vX.Y.Z` 标签。发布流程会先检查并构建六个平台，全部成功后统一发布压缩包、SHA256、安装器和集成包。手动触发仅构建产物。crates.io 由维护者单独执行 `cargo publish --locked`。更多说明见 [架构文档](docs/architecture.md)。
+
+参与开发见 [CONTRIBUTING.md](CONTRIBUTING.md)，维护者发布步骤见 [docs/releasing.md](docs/releasing.md)。

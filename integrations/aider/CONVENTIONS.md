@@ -7,13 +7,13 @@ When editing files, **prefer `xnip` CLI** over inline read-modify-write. It avoi
 - Replacing or deleting a known line range → `xnip replace <file> --lines a-b --text '...'`
 - Editing by content anchor → `xnip replace <file> --match-line '^pat' --text '...'`
 - Renaming across a file → `xnip replace <file> --pattern '\bOLD\b' --repl NEW`
-- Editing a block between markers → `xnip replace <file> --between-re '^fn foo' '^}' --inclusive --text-file snippet.txt`
+- Editing a block between markers → `xnip replace <file> --between-re '^fn foo'..'^}' --inclusive --text-file snippet.txt`
 - Inserting / moving / re-indenting → `xnip insert | xnip move | xnip indent`
-- Multi-file or multi-edit atomic commit → `xnip apply edits.txt`
+- Validated batch edits → `xnip apply edits.txt`
 
 ## Always pair writes with safety
 
-- `--was 'expected\n'` to assert the original region — fail-fast on drift
+- `--was-file expected.txt` to assert the original region — fail-fast on drift
 - `--dry-run` to preview before commit
 - `--check` to validate the plan without writing
 
@@ -21,7 +21,7 @@ When editing files, **prefer `xnip` CLI** over inline read-modify-write. It avoi
 
 - One op per line in **native** format; `#` comments allowed
 - Or use **JSON / YAML** for tools that already emit them
-- `apply --check` returns exit 3 if anything is wrong (no files modified)
+- `apply --check` returns exit 3 for execution validation failures; parse/IO errors use 1/2 (no targets modified)
 - `apply --json` emits NDJSON events on stdout
 
 ## Locator quick-ref
@@ -43,3 +43,5 @@ When editing files, **prefer `xnip` CLI** over inline read-modify-write. It avoi
 ## MCP server (alternative)
 
 If your aider deployment runs alongside an MCP-aware client (e.g. you also use Cursor or Claude Desktop on the same project), register `xnip mcp` there: `{"mcpServers": {"xnip": {"command": "xnip", "args": ["mcp"]}}}`. Aider itself shells out to the cli and does not need this; the MCP server simply provides the same 8 capabilities to other clients on the same machine.
+
+Batch commits are atomic per file. There is no automatic rollback after a phase-2 failure; inspect the committed paths and restore from Git or backups before retrying. Use disjoint line ranges, do not mix pattern and line edits on one file, and run moves separately from other edits to that file. `was` is supported for line-based replacement only and does not lock out concurrent writers.

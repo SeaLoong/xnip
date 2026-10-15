@@ -6,15 +6,15 @@ The format is auto-detected by:
 
 1. `--format <native|json|yaml>` (explicit)
 2. File extension (`.json`/`.json5` → JSON, `.yaml`/`.yml` → YAML, otherwise native)
-3. Fallback chain JSON → YAML → native if extension hint fails
+3. Try the preferred format first, then each remaining format (native → JSON → YAML, JSON → YAML → native, or YAML → JSON → native)
 
-stdin defaults to **native**.
+stdin first tries **native**, then JSON and YAML. Use `--format` to get format-specific validation errors. A `.json5` suffix is only a JSON hint; JSON5 syntax is not supported.
 
 ---
 
 ## 1. Native (recommended; smallest token footprint)
 
-One operation per line. `#` starts a comment. Blank lines are skipped.
+One operation per line. Lines beginning with `#` after optional whitespace are comments; avoid trailing inline comments. Blank lines are skipped.
 
 ```
 <op> <file | --files-from path> <locator> [<modifier>...] [<content>] [<named-modifier>...]
@@ -25,7 +25,7 @@ One operation per line. `#` starts a comment. Blank lines are skipped.
 - Quoted strings `"..."` may contain spaces; C-style escapes inside: `\n` `\t` `\r` `\\` `\"`
 - Unquoted tokens are split by whitespace
 - `@<path>` reads content from a file
-- `@-` reads from apply's stdin (sequentially per `@-` token)
+- `@-` reads from apply's stdin (at most once per manifest)
 - `@@` is a literal `@`
 - `""` is the empty string (delete)
 
@@ -83,7 +83,7 @@ move   src/Foo.vue 10-20 100
 indent src/Foo.vue 30-45 +2
 indent src/Foo.vue 1-99  t2s:4
 
-# revert (forward then back; only --pattern is strictly invertible)
+# limited literal reversal; use backups for exact recovery
 replace src/Foo.vue revert s/OLD/NEW/g
 ```
 

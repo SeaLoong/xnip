@@ -32,7 +32,7 @@ Do **not** use xnip when you only need to read a small file you've already loade
 | `indent`  | Adjust indentation / tab↔space         | write         |
 | `apply`   | Validate and apply many ops              | write         |
 
-## Locators (write commands accept exactly one)
+## Locators for replace and insert
 
 - `--lines 30` or `--lines 30-45`
 - `--match-line '<regex>' [--occurrence N]`
@@ -42,7 +42,7 @@ Do **not** use xnip when you only need to read a small file you've already loade
 
 ## Content sources
 
-- `--text "..."` — literal (use `\n` for newlines)
+- `--text "..."` — literal shell argument (use a file or stdin for portable newlines)
 - `--text-stdin` — from stdin
 - `--text-file <path>` — from file
 - `--text ""` — delete the located region
@@ -50,9 +50,9 @@ Do **not** use xnip when you only need to read a small file you've already loade
 
 ## Safety knobs
 
-- `--was "expected\n"` / `--was-file <path>` — guard against drift
+- `--was-file expected.txt` (or `--was` with actual expected bytes) — guard against drift
 - `--dry-run` — preview new content (or unified diff for apply)
-- `--check` — validate without writing; exit 3 on failure
+- `--check` — validate without writing; inspect the documented exit code
 - `--backup` — write `<file>.bak` before atomic rename (default off)
 
 ## apply: prefer this for batch edits
@@ -89,7 +89,7 @@ xnip replace src/foo.rs \
   --between-re '^pub fn old\('..'^}' --inclusive \
   --text-file ./snippets/new_old.rs
 
-# atomic multi-file edit
+# validated multi-file edit
 cat <<'EOF' | xnip apply --from-stdin
 replace src/foo.rs 30 "const PORT = 3000;"
 replace src/bar.rs =/^const PORT/ "const PORT = 3000;"
@@ -112,4 +112,6 @@ Register in `~/Library/Application Support/Claude/claude_desktop_config.json` (C
 
 8 tools become available: `xnip_peek` / `xnip_find` / `xnip_replace` / `xnip_insert` / `xnip_move` / `xnip_indent` / `xnip_apply` / `xnip_doctor`. Their argument names match the cli flags 1:1 (e.g. cli `--match-line` → MCP `match_line`).
 
-Differences from cli (intentional): no `--dry-run` / `--check` / `--revert` / `--json` (use `Err` semantics or read the file back); no `--text-stdin` / `apply --from-stdin` (stdin is occupied by the MCP protocol—use `text_file` or `manifest_text` instead). `was` / `was_file` / `backup` are all retained.
+Differences from cli (intentional): no `--dry-run` / `--check` / `--revert` / `--json` (use `Err` semantics or read the file back); no `--text-stdin` / `apply --from-stdin` (stdin is occupied by the MCP protocol—use `text_file` or `manifest_text` instead). `was` / `was_file` are available for line-based replacement; `backup` is available on write tools.
+
+Batch commits are atomic per file. There is no automatic rollback after a phase-2 failure; inspect the committed paths and restore from Git or backups before retrying. Use disjoint line ranges, do not mix pattern and line edits on one file, and run moves separately from other edits to that file. `was` is supported for line-based replacement only and does not lock out concurrent writers.

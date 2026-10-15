@@ -55,7 +55,7 @@ Do **not** use xnip when you only need to read a small file you've already loade
 
 ## Safety knobs
 
-- `--was "expected\n"` / `--was-file <path>` — check expected original bytes (not a file lock)
+- `--was-file expected.txt` (or `--was` with actual expected bytes) — check expected original bytes (not a file lock)
 - `--dry-run` — print new content (or unified diff for `apply`) without writing
 - `--check` — validate without writing (`apply` prints `OK`; `--json` emits events)
 - `--backup` — write `<file>.bak` before atomic rename (default: off; rely on git)
@@ -75,7 +75,7 @@ xnip apply edits.txt --check    # validate only, exit 3 on failure
 xnip apply edits.txt --json     # emit NDJSON event stream on stdout
 ```
 
-See [`apply-format.md`](./references/apply-format.md) for the full manifest schema.
+See the [manifest reference](https://github.com/SeaLoong/xnip/blob/master/docs/apply-format.md) for the full manifest schema.
 
 Batch commits are atomic per file, not across files. On exit 4, inspect committed paths and recover from Git or backups; there is no automatic rollback. Do not mix pattern and line edits on one file; a move must be its file's only operation.
 
@@ -130,4 +130,4 @@ If the host agent supports [Model Context Protocol](https://modelcontextprotocol
 }
 ```
 
-Tools: `xnip_peek` / `xnip_find` / `xnip_replace` / `xnip_insert` / `xnip_move` / `xnip_indent` / `xnip_apply` / `xnip_doctor`. Argument names mirror cli flags 1:1 (`--match-line` → `match_line`, etc.). MCP does **not** expose `--dry-run` / `--check` / `--revert` / `--json` (use `Err` / re-read patterns instead) and cannot consume process stdin (use `text_file` or `manifest_text`). See `docs/mcp.md`.
+Tools: `xnip_peek` / `xnip_find` / `xnip_replace` / `xnip_insert` / `xnip_move` / `xnip_indent` / `xnip_apply` / `xnip_doctor`. Argument names mirror cli flags 1:1 (`--match-line` → `match_line`, etc.). MCP does **not** expose top-level `--dry-run` / `--check` / `--revert` / `--json`; its write tools commit immediately. Use CLI previews and consult the MCP reference for manifest-level revert and cannot consume process stdin (use `text_file` or `manifest_text`). See `docs/mcp.md`.

@@ -98,6 +98,22 @@ jobs:
           echo "asset_path=target/${target}/release/${asset}" >> "$GITHUB_OUTPUT"
           echo "sha_path=target/${target}/release/${asset}.sha256" >> "$GITHUB_OUTPUT"
 
+      - name: Smoke test native release binary
+        shell: bash
+        run: |
+          set -eu
+          target="${{ matrix.target }}"
+          case "$target" in
+            x86_64-unknown-linux-musl|aarch64-apple-darwin)
+              "target/$target/release/xnip" --version
+              "target/$target/release/xnip" doctor
+              ;;
+            x86_64-pc-windows-msvc)
+              "target/$target/release/xnip.exe" --version
+              "target/$target/release/xnip.exe" doctor
+              ;;
+          esac
+
       - uses: actions/upload-artifact@v4
         with:
           name: xnip-${{ matrix.target }}

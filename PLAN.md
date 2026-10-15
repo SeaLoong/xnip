@@ -1,3 +1,5 @@
+> Historical design proposal. This document preserves original goals and planned milestones, including features or guarantees that were not implemented. For the released behavior, use [README](README.md), [CLI usage](docs/cli.md), [apply semantics](docs/apply-format.md) and [architecture limits](docs/architecture.md). In particular, multi-file rollback and universal symmetric undo are not release guarantees.
+
 # xnip — Design Specification
 
 ## 1. Metadata

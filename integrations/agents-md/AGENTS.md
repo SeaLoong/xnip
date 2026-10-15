@@ -34,7 +34,7 @@ Prefer the `xnip` CLI for non-trivial file edits. It encodes "path + locator + n
 
 ### Safety
 
-- `--was "expected\n"` / `--was-file <path>` to assert original content
+- `--was-file expected.txt` (or `--was` with actual expected bytes) to assert original content
 - `--dry-run` previews; `--check` validates; both never modify files
 - `--backup` writes `<file>.bak` before atomic rename (default: off)
 
@@ -49,3 +49,5 @@ For 2+ edits, use `xnip apply` with a manifest in native / JSON / YAML. Group by
 ### MCP server (alternative)
 
 If the agent runs inside an MCP-aware client (Claude Desktop / Code, Cursor, Cline, Continue, Zed, ...), prefer registering `xnip mcp` as an MCP server: `{"mcpServers": {"xnip": {"command": "xnip", "args": ["mcp"]}}}`. 8 structured tools become available (`xnip_peek` / `xnip_find` / `xnip_replace` / `xnip_insert` / `xnip_move` / `xnip_indent` / `xnip_apply` / `xnip_doctor`) with the same field names as the cli flags. Note that MCP does not expose `--dry-run` / `--check` / `--revert` / `--json` and cannot consume process stdin (use `text_file` / `manifest_text` instead).
+
+Batch commits are atomic per file. There is no automatic rollback after a phase-2 failure; inspect the committed paths and restore from Git or backups before retrying. Use disjoint line ranges, do not mix pattern and line edits on one file, and run moves separately from other edits to that file. `was` is supported for line-based replacement only and does not lock out concurrent writers.

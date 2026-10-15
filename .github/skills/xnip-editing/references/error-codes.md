@@ -17,6 +17,7 @@ agents should branch on them rather than parsing stderr text.
 
 - `0` printed the requested range
 - `1` locator not found / out-of-bounds / no range given
+- `2` file or output IO failure
 
 ### `find`
 
@@ -43,11 +44,12 @@ agents should branch on them rather than parsing stderr text.
 - `1` manifest parse error
 - `2` IO error reading manifest or expanding `--files-from`
 - `3` phase-1 failure (no file modified)
-- `4` phase-2 partial commit (some renames done, then failure)
+- `4` phase-2 commit failure (zero or more earlier files committed; inspect the reported list)
 
 ### `doctor`
 
-- `0` always (informational)
+- `0` report written (including diagnostic failures such as a non-writable directory)
+- `2` output IO failure
 
 ## Notes on `apply --json`
 
@@ -58,3 +60,5 @@ When `--json` is set on `apply`, execution-phase errors are emitted on stdout as
 ```
 
 `kind` is one of `phase1`, `phase2`, `io`. The exit code still follows the table above.
+
+`--check` is not a universal exit-code override: malformed CLI arguments and unresolved single-command locators still return 1; IO failures return 2. Batch phase-1 failures return 3. With `--max-matches 0`, find emits no hits and returns 1 unless an input IO failure requires 2.

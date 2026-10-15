@@ -262,7 +262,10 @@ fn scan_limits_hits_in_both_modes_and_handles_zero() {
         assert_eq!(hits.len(), 2);
         assert_eq!(hits[1].line, 2);
         opts.max_matches = Some(0);
-        assert!(scan(b"x\n", &opts).is_empty());
+        assert_eq!(
+            scan(b"x\n", &opts),
+            Vec::<xnip::core::ops::find::Hit>::new()
+        );
     }
 }
 

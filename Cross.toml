@@ -1,0 +1,2 @@
+[build.env]
+passthrough = ["XNIP_BUILD_COMMIT"]
