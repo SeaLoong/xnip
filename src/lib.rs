@@ -9,7 +9,6 @@
 //! - [`output`]：人类向输出 / NDJSON / 退出码常量
 //! - [`doctor`]：环境自检
 //!
-//! M0 阶段各模块均为占位骨架。
 
 #![doc(html_root_url = "https://docs.rs/xnip/0.1.0")]
 

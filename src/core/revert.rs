@@ -56,8 +56,25 @@ impl Direction {
 ///
 /// 这是 PLAN.md §6.8 表里描述的最简单 case，不涉及 `--was` 校验。
 /// 调用方需自行处理 regex 的特殊字符转义（pattern 字段不再 take 字面 B 而是 `regex::escape(B)`）。
-pub fn invert_pattern_replacement(pattern: &str, repl: &str) -> (String, String) {
-    (regex::escape(repl), pattern.to_string())
+pub fn invert_pattern_replacement(
+    pattern: &str,
+    repl: &str,
+) -> Result<(String, String), RevertError> {
+    if pattern.is_empty()
+        || repl.is_empty()
+        || repl.contains('$')
+        || pattern.chars().any(|c| {
+            matches!(
+                c,
+                '.' | '^' | '$' | '*' | '+' | '?' | '(' | ')' | '[' | ']' | '{' | '}' | '\\' | '|'
+            )
+        })
+    {
+        return Err(RevertError::NotInvertible(
+            "pattern revert requires a nonempty literal pattern and nonempty replacement without capture expansions; restore from backup for regex edits".into(),
+        ));
+    }
+    Ok((regex::escape(repl), pattern.to_string()))
 }
 
 #[cfg(test)]
@@ -78,7 +95,7 @@ mod tests {
 
     #[test]
     fn invert_pattern_swaps_and_escapes() {
-        let (p, r) = invert_pattern_replacement("OLD_NAME", "NEW.NAME");
+        let (p, r) = invert_pattern_replacement("OLD_NAME", "NEW.NAME").unwrap();
         // NEW.NAME 中的 . 被 escape；旧 pattern 作为新 replacement 字面化
         assert_eq!(p, r"NEW\.NAME");
         assert_eq!(r, "OLD_NAME");
@@ -87,8 +104,8 @@ mod tests {
     #[test]
     fn invert_pattern_double_invert_round_trips_for_safe_strings() {
         // 对 [A-Za-z_] 这种 regex-safe 串，二次反转回到原输入
-        let (p1, r1) = invert_pattern_replacement("OLD", "NEW");
-        let (p2, r2) = invert_pattern_replacement(&p1, &r1);
+        let (p1, r1) = invert_pattern_replacement("OLD", "NEW").unwrap();
+        let (p2, r2) = invert_pattern_replacement(&p1, &r1).unwrap();
         assert_eq!(p2, "OLD");
         assert_eq!(r2, "NEW");
     }

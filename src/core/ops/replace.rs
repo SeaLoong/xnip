@@ -110,15 +110,33 @@ pub fn replace_pattern(
     // regex::bytes::Regex 的 `replacen` limit=0 表示全部
     let limit = match count {
         Count::All => 0,
+        Count::First(0) => return (content.to_vec(), 0),
         Count::First(n) => n,
     };
-    // 先数命中以便返回 n_replaced
-    let n_replaced = match count {
-        Count::All => re.find_iter(content).count(),
-        Count::First(n) => re.find_iter(content).take(n).count(),
-    };
+    if !replacement.contains('$') {
+        let mut out = Vec::with_capacity(content.len());
+        let mut cursor = 0;
+        let mut replaced = 0;
+        for hit in re
+            .find_iter(content)
+            .take(if limit == 0 { usize::MAX } else { limit })
+        {
+            out.extend_from_slice(&content[cursor..hit.start()]);
+            out.extend_from_slice(replacement.as_bytes());
+            cursor = hit.end();
+            replaced += 1;
+        }
+        out.extend_from_slice(&content[cursor..]);
+        return (out, replaced);
+    }
+    let mut n_replaced = 0;
     let new_bytes = re
-        .replacen(content, limit, replacement.as_bytes())
+        .replacen(content, limit, |caps: &regex::bytes::Captures<'_>| {
+            n_replaced += 1;
+            let mut expanded = Vec::new();
+            caps.expand(replacement.as_bytes(), &mut expanded);
+            expanded
+        })
         .into_owned();
     (new_bytes, n_replaced)
 }

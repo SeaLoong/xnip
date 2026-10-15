@@ -62,7 +62,7 @@ pub struct Args {
 
 #[allow(clippy::needless_pass_by_value)]
 pub fn run(a: Args) -> Result<u8> {
-    let bytes = content::load_path(&a.file).map_err(|e| anyhow::anyhow!("{e}"))?;
+    let bytes = content::load_path(&a.file)?;
 
     // 1) 范围
     let total_lines = split_lines(&bytes).len();
@@ -126,19 +126,15 @@ pub fn run(a: Args) -> Result<u8> {
         op
     };
 
-    let new_bytes =
-        apply_indent(&bytes, start, end, effective_op).map_err(|e| anyhow::anyhow!("{e}"))?;
+    let new_bytes = apply_indent(&bytes, start, end, effective_op)?;
 
     if a.dry_run {
         use std::io::Write;
-        std::io::stdout()
-            .lock()
-            .write_all(&new_bytes)
-            .map_err(|e| anyhow::anyhow!("{e}"))?;
+        std::io::stdout().lock().write_all(&new_bytes)?;
         return Ok(exit::SUCCESS);
     }
 
-    atomic::atomic_write(&a.file, &new_bytes, a.backup).map_err(|e| anyhow::anyhow!("{e}"))?;
+    atomic::atomic_write(&a.file, &new_bytes, a.backup)?;
     let op_desc = match effective_op {
         IndentOp::Add(n) => format!("+{n} space(s)"),
         IndentOp::Remove(n) => format!("-{n} space(s)"),

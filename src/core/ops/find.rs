@@ -12,8 +12,6 @@ use regex::Regex;
 use regex::bytes::Regex as ByteRegex;
 use thiserror::Error;
 
-use crate::core::location::split_lines;
-
 #[derive(Debug)]
 pub enum FindMode<'a> {
     /// 整行命中正则；col 字段始终为 0。
@@ -46,45 +44,45 @@ pub enum FindError {
 
 /// 在单个文件字节流里搜索，返回所有命中。
 pub fn scan(content: &[u8], opts: &FindOpts<'_>) -> Vec<Hit> {
-    let lines = split_lines(content);
+    let cap =
+        if opts.first_only { 1 } else { usize::MAX }.min(opts.max_matches.unwrap_or(usize::MAX));
     let mut out = Vec::new();
+    if cap == 0 {
+        return out;
+    }
     match opts.mode {
         FindMode::MatchLine(re) => {
-            for (idx, line) in lines.iter().enumerate() {
-                let s = String::from_utf8_lossy(line);
-                if re.is_match(&s) {
+            for (idx, line) in content.split_inclusive(|b| *b == b'\n').enumerate() {
+                let line = line.strip_suffix(b"\n").unwrap_or(line);
+                if re.is_match(&String::from_utf8_lossy(line)) {
                     out.push(Hit {
                         line: idx + 1,
                         col: 0,
                     });
-                    if opts.first_only {
+                    if out.len() == cap {
                         break;
                     }
                 }
             }
         }
         FindMode::Pattern(re) => {
-            // 跨行：在 content 全字节里找命中，再把 absolute byte offset 映射到 line+col
-            let mut line_starts: Vec<usize> = Vec::with_capacity(lines.len() + 1);
-            line_starts.push(0);
-            for (i, b) in content.iter().enumerate() {
-                if *b == b'\n' {
-                    line_starts.push(i + 1);
+            // Matches arrive in offset order. Scan each preceding byte only once,
+            // without allocating a line index for the entire file.
+            let mut cursor = 0;
+            let mut line = 1;
+            let mut line_start = 0;
+            for m in re.find_iter(content).take(cap) {
+                for (i, byte) in content[cursor..m.start()].iter().enumerate() {
+                    if *byte == b'\n' {
+                        line += 1;
+                        line_start = cursor + i + 1;
+                    }
                 }
-            }
-            for m in re.find_iter(content) {
-                let off = m.start();
-                // line index via binary search
-                let line_idx = match line_starts.binary_search(&off) {
-                    Ok(i) => i,
-                    Err(i) => i - 1,
-                };
-                let line = line_idx + 1;
-                let col = off - line_starts[line_idx] + 1;
-                out.push(Hit { line, col });
-                if opts.first_only {
-                    break;
-                }
+                cursor = m.start();
+                out.push(Hit {
+                    line,
+                    col: m.start() - line_start + 1,
+                });
             }
         }
     }

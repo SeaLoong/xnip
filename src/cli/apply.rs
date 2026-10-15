@@ -41,7 +41,7 @@ pub struct Args {
     pub backup: bool,
 
     /// 以 NDJSON 事件流输出运行进度（stdout 一行一事件）。
-    #[arg(long, default_value_t = false)]
+    #[arg(long, default_value_t = false, conflicts_with = "dry_run")]
     pub json: bool,
 
     /// 阶段一并行处理的文件数上限（0/1 = 单线程）。
@@ -151,9 +151,6 @@ pub fn run(a: Args) -> Result<u8> {
                         affected_files: files.iter().map(|p| p.display().to_string()).collect(),
                     },
                 );
-                if a.check {
-                    println!("OK");
-                }
                 return Ok(exit::SUCCESS);
             }
             Err(e) => {

@@ -1,11 +1,11 @@
 ---
 name: xnip
-description: Precise text editing CLI for LLM agents. Use it instead of "read-then-replace" to cut tokens by ≥ 70%. Provides 7 editing commands (peek, find, replace, insert, move, indent, apply) with anchor-based locators and atomic writes, plus an MCP stdio server (`xnip mcp`) exposing the same operations as 8 structured tools.
+description: Precise text editing CLI for LLM agents. Use it instead of "read-then-replace" to reduce repeated context and replacement text. Provides 7 editing commands (peek, find, replace, insert, move, indent, apply) with anchor-based locators and atomic writes, plus an MCP stdio server (`xnip mcp`) exposing the same operations as 8 structured tools.
 ---
 
 # xnip — Skill
 
-> Precise text editing CLI. Use **xnip** instead of "read-then-replace" to cut tokens by ≥ 70%.
+> Precise text editing CLI. Use **xnip** instead of "read-then-replace" to reduce repeated context and replacement text.
 
 ## When to use xnip
 
@@ -16,7 +16,7 @@ Reach for `xnip` whenever you need to:
 3. **Edit a known line range** → `xnip replace <file> --lines a-b --text '...'`
 4. **Edit by anchor (regex/line content)** → `xnip replace <file> --match-line '^const PORT' --text '...'`
 5. **Insert / move / re-indent** → `xnip insert | xnip move | xnip indent`
-6. **Apply many edits atomically** → `xnip apply edits.json`
+6. **Apply many edits after validation** → `xnip apply edits.json`
 
 Do **not** use xnip when you only need to read a small file you've already loaded.
 
@@ -30,7 +30,7 @@ Do **not** use xnip when you only need to read a small file you've already loade
 | `insert`  | Insert before/after a single anchor    | write         |
 | `move`    | Move a line block                      | write         |
 | `indent`  | Adjust indentation / tab↔space         | write         |
-| `apply`   | Apply many ops atomically              | write         |
+| `apply`   | Validate and apply many ops              | write         |
 
 ## Locators (write commands accept exactly one)
 
@@ -86,7 +86,7 @@ xnip replace src/foo.rs --pattern '\bMAX_RETRIES\b' --repl MAX_TRIES
 
 # replace a function body without trusting line numbers
 xnip replace src/foo.rs \
-  --between-re '^pub fn old\(' '^}' --inclusive \
+  --between-re '^pub fn old\('..'^}' --inclusive \
   --text-file ./snippets/new_old.rs
 
 # atomic multi-file edit

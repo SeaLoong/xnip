@@ -10,7 +10,8 @@ use serde::Deserialize;
 
 use crate::core::atomic;
 use crate::core::content;
-use crate::core::location::{Locator, resolve};
+use crate::core::location::Locator;
+use crate::core::ops::insert::resolve_anchor as resolve;
 use crate::core::ops::insert::{Position, insert_at};
 
 use super::common::{ContentInput, LocatorInput, err_to_internal, locate_to_mcp_err};

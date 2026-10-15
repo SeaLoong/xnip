@@ -46,7 +46,7 @@ pub fn parse(src: &str) -> Result<Vec<Op>> {
 
 /// 中间结构：与 JSON schema 一一对应；松散接受多种字段写法。
 #[derive(Debug, Deserialize)]
-#[serde(rename_all = "kebab-case")]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
 struct RawOp {
     op: String,
 
@@ -222,10 +222,11 @@ impl RawOp {
         Ok(OpContent::None)
     }
 
-    fn position(&self) -> MovePosition {
+    fn position(&self) -> Result<MovePosition> {
         match self.where_.as_deref() {
-            Some("before") => MovePosition::Before,
-            _ => MovePosition::After,
+            Some("before") => Ok(MovePosition::Before),
+            None | Some("after") => Ok(MovePosition::After),
+            Some(other) => bail!("invalid `where`: {other}; expected before or after"),
         }
     }
 
@@ -264,7 +265,7 @@ impl RawOp {
     fn to_insert(self) -> Result<Op> {
         let target = self.target()?;
         let locator = self.locator()?;
-        let position = self.position();
+        let position = self.position()?;
         let content = self.content(false)?;
         if matches!(content, OpContent::None) {
             bail!("insert requires content");
@@ -282,7 +283,7 @@ impl RawOp {
         let target = self.target()?;
         let from = self.locator()?;
         let to = self.to.context("move requires `to` line number")?;
-        let position = self.position();
+        let position = self.position()?;
         Ok(Op::Move {
             target,
             from,

@@ -8,12 +8,12 @@ End-to-end recipes covering common editing scenarios.
 xnip replace src/config.rs --lines 30 --text 'const PORT: u16 = 3000;'
 ```
 
-With safety check:
+With safety check (the expected file must include the original newline):
 
 ```sh
 xnip replace src/config.rs --lines 30 \
   --text 'const PORT: u16 = 3000;' \
-  --was 'const PORT: u16 = 8080;\n'
+  --was-file ./snippets/old-port.txt
 ```
 
 ## 2. Delete a range
@@ -34,7 +34,7 @@ xnip replace src/Foo.vue \
 
 ```sh
 xnip replace src/lib.rs \
-  --between-re '^pub fn old\(' '^}' --inclusive \
+  --between-re '^pub fn old\('..'^}' --inclusive \
   --text-file ./snippets/new_old.rs
 ```
 
@@ -58,13 +58,13 @@ Revert:
 xnip replace src/Foo.rs --pattern OLD --repl NEW --revert
 ```
 
-## 6. Insert an import after the last `import` line
+## 6. Insert an import after a known `import` line
 
 ```sh
-# uses --occurrence 99 with a fallback if your file has fewer imports
+# Inspect matches first; select an occurrence that exists.
 xnip insert src/main.ts \
   --match-line '^import ' \
-  --occurrence 99 \
+  --occurrence 1 \
   --position after \
   --text "import { ref } from 'vue';"
 ```
@@ -85,7 +85,7 @@ xnip indent src/foo.go --lines 1-99 --tabs-to-spaces 4
 xnip indent src/foo.go --lines 30-45 --add 2
 ```
 
-## 9. Atomic batch with `apply` (native format)
+## 9. Validated batch with `apply` (native format)
 
 `edits.txt`:
 
@@ -102,7 +102,7 @@ xnip apply edits.txt --check       # validate, no write
 xnip apply edits.txt               # commit
 ```
 
-## 10. Atomic batch with `apply` (JSON, agent-friendly)
+## 10. Validated batch with `apply` (JSON, agent-friendly)
 
 ```json
 [

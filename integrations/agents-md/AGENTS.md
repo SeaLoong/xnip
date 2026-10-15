@@ -4,7 +4,7 @@
 
 ## Editing files
 
-Prefer the `xnip` CLI for non-trivial file edits. It encodes "path + locator + new bytes" in a single command, saving ≥ 70% tokens versus reading the file and emitting a full replacement.
+Prefer the `xnip` CLI for non-trivial file edits. It encodes "path + locator + new bytes" in a single command, avoiding repeated unchanged text in replacements.
 
 ### Commands
 
@@ -14,7 +14,7 @@ Prefer the `xnip` CLI for non-trivial file edits. It encodes "path + locator + n
 - `xnip insert <file> [Locator] --position before|after [Content]` — single-anchor insert
 - `xnip move <file> --from-lines a-b --to N [--position before|after]` — move a block
 - `xnip indent <file> [--lines a-b | --all] (--add N | --remove N | --tabs-to-spaces N | --spaces-to-tabs N)` — adjust indentation
-- `xnip apply <manifest>` — apply many edits atomically
+- `xnip apply <manifest>` — validate and apply many edits
 
 ### Locators (write commands; pick exactly one)
 
@@ -26,7 +26,7 @@ Prefer the `xnip` CLI for non-trivial file edits. It encodes "path + locator + n
 
 ### Content sources
 
-- `--text "literal\n"` (literal; `\n` works)
+- `--text "literal\n"` (literal shell argument; use stdin or a file for newlines)
 - `--text-stdin` (from stdin)
 - `--text-file <path>` (from file)
 - `--text ""` to delete the located region

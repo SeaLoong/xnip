@@ -55,7 +55,7 @@ pub struct Args {
 #[allow(clippy::needless_pass_by_value)]
 pub fn run(a: Args) -> Result<u8> {
     // 1) 读原文件
-    let bytes = content::load_path(&a.file).map_err(|e| anyhow::anyhow!("{e}"))?;
+    let bytes = content::load_path(&a.file)?;
 
     // 2) 解析 Locator
     let loc = a.locator.into_locator()?;
@@ -69,6 +69,9 @@ pub fn run(a: Args) -> Result<u8> {
     // 4) 分两路：pattern 模式 vs range 模式
     match loc {
         Locator::Pattern { regex, count } => {
+            if a.was.is_some() || a.was_file.is_some() {
+                bail!("--was/--was-file are only supported for line-based replacement");
+            }
             // pattern 模式必须配 --repl
             let repl = content_src.as_replacement().ok_or_else(|| {
                 anyhow::anyhow!(
@@ -78,7 +81,7 @@ pub fn run(a: Args) -> Result<u8> {
 
             // revert：将 pattern/repl 反转（参数对称）
             let (effective_pat, effective_repl) = if a.revert {
-                let (p, r) = crate::core::revert::invert_pattern_replacement(regex.as_str(), repl);
+                let (p, r) = crate::core::revert::invert_pattern_replacement(regex.as_str(), repl)?;
                 (p, r)
             } else {
                 (regex.as_str().to_string(), repl.to_string())
@@ -130,10 +133,9 @@ pub fn run(a: Args) -> Result<u8> {
                 if content_src.as_replacement().is_some() {
                     bail!("`--repl` is only valid with `--pattern`");
                 }
-                let forward_text =
-                    content::load(&content_src).map_err(|e| anyhow::anyhow!("{e}"))?;
+                let forward_text = content::load(&content_src)?;
                 // revert pre-condition: 当前 locator 区域应等于 forward 写入的 text
-                let r = resolve(&loc, &bytes).map_err(|e| anyhow::anyhow!("{e}"))?;
+                let r = resolve(&loc, &bytes)?;
                 let actual = extract_lines(&bytes, r.start_line, r.end_line);
                 // forward_text 在 forward 路径里被作为 payload，可能不带换行；
                 // 写入文件后会在区段尾部由 replace_range 接合换行。
@@ -151,15 +153,14 @@ pub fn run(a: Args) -> Result<u8> {
                     );
                     return Ok(exit::CHECK);
                 }
-                let new_bytes = replace_range(&bytes, r.start_line, r.end_line, &was_bytes)
-                    .map_err(|e| anyhow::anyhow!("{e}"))?;
+                let new_bytes = replace_range(&bytes, r.start_line, r.end_line, &was_bytes)?;
                 if a.check {
                     return Ok(exit::SUCCESS);
                 }
                 return commit_or_dry_run(&a.file, &new_bytes, a.dry_run, a.backup);
             }
 
-            let r = resolve(&loc, &bytes).map_err(|e| anyhow::anyhow!("{e}"))?;
+            let r = resolve(&loc, &bytes)?;
 
             // --was / --was-file 校验
             if let Some(expected) = expected_was(a.was.as_ref(), a.was_file.as_ref())? {
@@ -177,10 +178,9 @@ pub fn run(a: Args) -> Result<u8> {
             if content_src.as_replacement().is_some() {
                 bail!("`--repl` is only valid with `--pattern`");
             }
-            let payload = content::load(&content_src).map_err(|e| anyhow::anyhow!("{e}"))?;
+            let payload = content::load(&content_src)?;
 
-            let new_bytes = replace_range(&bytes, r.start_line, r.end_line, &payload)
-                .map_err(|e| anyhow::anyhow!("{e}"))?;
+            let new_bytes = replace_range(&bytes, r.start_line, r.end_line, &payload)?;
 
             if a.check {
                 return Ok(exit::SUCCESS);
@@ -218,13 +218,10 @@ fn commit_or_dry_run(
 ) -> Result<u8> {
     if dry_run {
         use std::io::Write;
-        std::io::stdout()
-            .lock()
-            .write_all(new_bytes)
-            .map_err(|e| anyhow::anyhow!("{e}"))?;
+        std::io::stdout().lock().write_all(new_bytes)?;
         return Ok(exit::SUCCESS);
     }
-    atomic::atomic_write(path, new_bytes, backup).map_err(|e| anyhow::anyhow!("{e}"))?;
+    atomic::atomic_write(path, new_bytes, backup)?;
     crate::note!(
         "xnip replace: wrote {} ({} byte(s))",
         path.display(),

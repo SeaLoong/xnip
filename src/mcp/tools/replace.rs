@@ -62,6 +62,12 @@ pub fn run(a: Args) -> Result<CallToolResult, McpError> {
     // 4) 分两路：pattern vs range
     let new_bytes = match loc {
         Locator::Pattern { regex, count } => {
+            if a.was.is_some() || a.was_file.is_some() {
+                return Err(McpError::invalid_params(
+                    "was/was_file are only supported for line-based replacement",
+                    None,
+                ));
+            }
             let repl = content_src.as_replacement().ok_or_else(|| {
                 McpError::invalid_params("`pattern` requires `repl`; got `text`/`text_file`", None)
             })?;

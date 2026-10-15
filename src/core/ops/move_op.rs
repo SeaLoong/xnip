@@ -103,8 +103,12 @@ pub fn move_lines(
     };
 
     // Step 4: 插入
-    insert_at(&after_remove, adjusted_to, position, &payload)
-        .map_err(|e| MoveError::Internal(format!("{e}")))
+    let mut result = insert_at(&after_remove, adjusted_to, position, &payload)
+        .map_err(|e| MoveError::Internal(format!("{e}")))?;
+    if !content.ends_with(b"\n") && result.ends_with(b"\n") {
+        result.pop();
+    }
+    Ok(result)
 }
 
 /// 计算 forward `move from [S, E] to T pos` 的反向参数。
@@ -145,6 +149,11 @@ pub fn reverse_params(
         });
     }
     let len = from_end - from_start + 1;
+    if (to_line == from_start - 1 && pos == Position::After)
+        || (to_line.checked_sub(1) == Some(from_end) && pos == Position::Before)
+    {
+        return Ok((from_start, from_end, to_line, pos));
+    }
 
     let (block_lo, block_hi);
     let (target, target_pos);

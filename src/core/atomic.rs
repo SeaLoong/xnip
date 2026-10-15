@@ -4,7 +4,7 @@
 //!
 //! - **同目录 tmpfile**：保证 rename 在同一文件系统下原子（POSIX & NTFS）
 //! - **fsync**：写入后调用 `sync_all`，避免 crash 后 tmpfile 数据不完整
-//! - **可选 `.bak`**：默认不写；`make_bak == true` 时复制到 `target.with_extension("bak")`，
+//! - **可选 `.bak`**：默认不写；`make_bak == true` 时复制到 `bak_path(target)`，
 //!   覆盖式（不带 `.bak.1` / `.bak.2`），失败则不进入 rename
 //! - **失败安全**：tmpfile drop 时自动删除，不留半成品
 
@@ -43,12 +43,58 @@ pub enum AtomicError {
 ///
 /// - 在 `target.parent()` 同目录创建临时文件，保证 rename 原子
 /// - 调 `sync_all` 强制刷盘
-/// - `make_bak == true` 且 `target` 存在时，先复制为 `target.with_extension("bak")`
+/// - `make_bak == true` 且 `target` 存在时，先复制为 `bak_path(target)`
 /// - 任一步失败：tmpfile 自动删除；若已写出 `.bak` 不主动删除（用户保留）
 ///
 /// # Errors
 /// 见 [`AtomicError`]。
 pub fn atomic_write(target: &Path, new_content: &[u8], make_bak: bool) -> Result<(), AtomicError> {
+    // Follow an existing symlink rather than replacing the link itself.
+    let resolved;
+    let target = if fs::symlink_metadata(target).is_ok_and(|m| m.file_type().is_symlink()) {
+        resolved = fs::canonicalize(target).map_err(|source| AtomicError::Io {
+            path: target.to_path_buf(),
+            source,
+        })?;
+        resolved.as_path()
+    } else {
+        target
+    };
+    let tmp = prepare_write(target, new_content)?;
+    if make_bak && target.exists() {
+        backup(target)?;
+    }
+    tmp.persist(target).map_err(|e| AtomicError::Persist {
+        path: target.to_path_buf(),
+        source: e.error,
+    })?;
+    Ok(())
+}
+
+/// Stage and sync bytes while preserving existing permissions. Shared by batch writes.
+pub fn prepare_write(target: &Path, new_content: &[u8]) -> Result<NamedTempFile, AtomicError> {
+    let metadata = match fs::metadata(target) {
+        Ok(m) => Some(m),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => None,
+        Err(source) => {
+            return Err(AtomicError::Io {
+                path: target.to_path_buf(),
+                source,
+            });
+        }
+    };
+    if metadata
+        .as_ref()
+        .is_some_and(|m| m.permissions().readonly())
+    {
+        return Err(AtomicError::Io {
+            path: target.to_path_buf(),
+            source: std::io::Error::new(
+                std::io::ErrorKind::PermissionDenied,
+                "target is read-only",
+            ),
+        });
+    }
     let dir = target
         .parent()
         .filter(|p| !p.as_os_str().is_empty())
@@ -67,35 +113,61 @@ pub fn atomic_write(target: &Path, new_content: &[u8], make_bak: bool) -> Result
         path: target.to_path_buf(),
         source: e,
     })?;
+    if let Some(metadata) = metadata {
+        tmp.as_file()
+            .set_permissions(metadata.permissions())
+            .map_err(|source| AtomicError::Io {
+                path: target.to_path_buf(),
+                source,
+            })?;
+    }
     tmp.as_file().sync_all().map_err(|e| AtomicError::Io {
         path: target.to_path_buf(),
         source: e,
     })?;
 
-    // Phase 2: optional .bak (before rename so a failure here aborts cleanly)
-    if make_bak && target.exists() {
-        let bak = bak_path(target);
-        fs::copy(target, &bak).map_err(|e| AtomicError::Backup {
-            path: bak,
-            source: e,
-        })?;
-    }
-
-    // Phase 3: atomic rename
-    tmp.persist(target).map_err(|e| AtomicError::Persist {
-        path: target.to_path_buf(),
-        source: e.error,
-    })?;
-
-    Ok(())
+    Ok(tmp)
 }
 
-/// `<target>.bak` 路径（覆盖式同名）。
-///
-/// 注意 `Path::with_extension` 会替换原扩展名（例如 `foo.rs` → `foo.bak`）；
-/// 这与 PLAN.md §7.3.2 描述一致，且容易触发"已存在文件被覆盖"的预期。
+/// Append `.bak` without discarding the original extension.
 pub fn bak_path(target: &Path) -> PathBuf {
-    target.with_extension("bak")
+    let mut name = target.as_os_str().to_os_string();
+    name.push(".bak");
+    PathBuf::from(name)
+}
+
+/// Stage backups too: never truncate an existing backup or follow its symlink.
+pub fn backup(target: &Path) -> Result<(), AtomicError> {
+    let bak = bak_path(target);
+    if fs::symlink_metadata(&bak).is_ok_and(|m| m.file_type().is_symlink()) {
+        return Err(AtomicError::Backup {
+            path: bak,
+            source: std::io::Error::other("backup path is a symlink"),
+        });
+    }
+    let bytes = fs::read(target).map_err(|source| AtomicError::Backup {
+        path: target.to_path_buf(),
+        source,
+    })?;
+    let tmp = prepare_write(&bak, &bytes)?;
+    tmp.as_file()
+        .set_permissions(
+            fs::metadata(target)
+                .map_err(|source| AtomicError::Io {
+                    path: target.to_path_buf(),
+                    source,
+                })?
+                .permissions(),
+        )
+        .map_err(|source| AtomicError::Io {
+            path: bak.clone(),
+            source,
+        })?;
+    tmp.persist(&bak).map_err(|e| AtomicError::Backup {
+        path: bak,
+        source: e.error,
+    })?;
+    Ok(())
 }
 
 #[cfg(test)]
@@ -164,25 +236,12 @@ mod tests {
 
     #[test]
     fn relative_path_in_cwd_works() {
-        // 用 tempdir 作为 cwd 避免污染仓库
-        let dir = tempdir().unwrap();
-        let _guard = WorkingDir::set(dir.path());
-        atomic_write(Path::new("rel.txt"), b"x", false).unwrap();
-        assert_eq!(fs::read(dir.path().join("rel.txt")).unwrap(), b"x");
-    }
-
-    /// 临时切换 cwd 的 RAII guard。仅测试用，单线程内安全。
-    struct WorkingDir(PathBuf);
-    impl WorkingDir {
-        fn set(p: &Path) -> Self {
-            let prev = std::env::current_dir().unwrap();
-            std::env::set_current_dir(p).unwrap();
-            WorkingDir(prev)
-        }
-    }
-    impl Drop for WorkingDir {
-        fn drop(&mut self) {
-            let _ = std::env::set_current_dir(&self.0);
-        }
+        // Avoid mutating the process-wide working directory in a parallel test suite.
+        let cwd = std::env::current_dir().unwrap();
+        let dir = tempfile::tempdir_in(&cwd).unwrap();
+        let target = dir.path().join("rel.txt");
+        let relative = target.strip_prefix(&cwd).unwrap();
+        atomic_write(relative, b"x", false).unwrap();
+        assert_eq!(fs::read(target).unwrap(), b"x");
     }
 }

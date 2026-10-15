@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Repair latest-version installation, release asset names, POSIX shell compatibility, SHA256 verification and Windows temporary-file cleanup. Release all assets together only after checks and all builds succeed.
+- Preserve file permissions and existing symlinks during writes; sync staged batch writes. Append `.bak` instead of replacing the original extension, and reject backups that collide with batch targets.
+- Merge path aliases before batch preparation, resolve anchors against original bytes, reject ambiguous mixed edit modes, and fail validation on zero-match pattern edits.
+- Keep `apply --json --check` valid NDJSON; reject mixing JSON events with dry-run diffs. Reject misspelled JSON/YAML fields and invalid insertion positions.
+- Fix insertion into empty files, line concatenation at unterminated EOF, and move/revert round trips including adjacent no-ops.
+- Print help for an empty invocation, preserve IO error exit codes, reject unsupported regex inversions, and remove process-global cwd changes from tests.
+- Upgrade anyhow and crossbeam-epoch past RustSec advisories. Replace deprecated serde_yaml/unsafe-libyaml with serde-saphyr; minimum Rust is now **1.89**.
+- Correct unsupported CLI examples, rollback claims, shell-newline guidance and unmeasured token-saving claims. Document remaining filesystem, revert and MCP limits.
+
+### Performance
+
+- Bound find hit collection by the requested cap and compute line positions incrementally.
+- Perform pattern replacement and match counting in one pass; skip temporary-file writes for check/dry-run and cap batch worker counts.
+- Add limited/unlimited 100K-line search benchmarks and installer/safety regression checks.
+
 ### Added
 
 - **MCP server (`xnip mcp`)**: in-process [Model Context Protocol](https://modelcontextprotocol.io/)

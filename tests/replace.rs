@@ -210,7 +210,7 @@ fn replace_backup_writes_bak_when_flag_set() {
         .assert()
         .success();
     assert_eq!(common::read(&path), b"X\nb\n");
-    let bak = path.with_extension("bak");
+    let bak = xnip::core::atomic::bak_path(&path);
     assert!(bak.exists(), "expected .bak to be created with --backup");
     assert_eq!(common::read(&bak), b"a\nb\n");
 }

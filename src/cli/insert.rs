@@ -10,7 +10,8 @@ use clap::ValueEnum;
 
 use crate::core::atomic;
 use crate::core::content;
-use crate::core::location::{Locator, resolve};
+use crate::core::location::Locator;
+use crate::core::ops::insert::resolve_anchor as resolve;
 use crate::core::ops::insert::{Position, insert_at};
 use crate::output::exit;
 
@@ -64,14 +65,14 @@ pub struct Args {
 #[allow(clippy::needless_pass_by_value, clippy::naive_bytecount)]
 pub fn run(a: Args) -> Result<u8> {
     // 1) 读原文件
-    let bytes = content::load_path(&a.file).map_err(|e| anyhow::anyhow!("{e}"))?;
+    let bytes = content::load_path(&a.file)?;
 
     // 2) 解析 Locator → 必须是单行（区间走 replace）
     let loc = a.locator.into_locator()?;
     if matches!(loc, Locator::Pattern { .. }) {
         bail!("`insert` does not accept --pattern; use `replace` for pattern-based edits");
     }
-    let r = resolve(&loc, &bytes).map_err(|e| anyhow::anyhow!("{e}"))?;
+    let r = resolve(&loc, &bytes)?;
     if r.start_line != r.end_line {
         bail!(
             "`insert` requires a single-line anchor; got range {}-{}. Use `replace` for range edits.",
@@ -88,7 +89,7 @@ pub fn run(a: Args) -> Result<u8> {
     if content_src.as_replacement().is_some() {
         bail!("`insert` does not accept --repl; use --text / --text-stdin / --text-file");
     }
-    let payload = content::load(&content_src).map_err(|e| anyhow::anyhow!("{e}"))?;
+    let payload = content::load(&content_src)?;
 
     // 4) 计算新内容
     let new_bytes = if a.revert {
@@ -126,24 +127,19 @@ pub fn run(a: Args) -> Result<u8> {
             );
             return Ok(exit::CHECK);
         }
-        crate::core::ops::replace::replace_range(&bytes, del_start, del_end, b"")
-            .map_err(|e| anyhow::anyhow!("{e}"))?
+        crate::core::ops::replace::replace_range(&bytes, del_start, del_end, b"")?
     } else {
-        insert_at(&bytes, r.start_line, a.position.into(), &payload)
-            .map_err(|e| anyhow::anyhow!("{e}"))?
+        insert_at(&bytes, r.start_line, a.position.into(), &payload)?
     };
 
     // 5) dry-run / 写盘
     if a.dry_run {
         use std::io::Write;
-        std::io::stdout()
-            .lock()
-            .write_all(&new_bytes)
-            .map_err(|e| anyhow::anyhow!("{e}"))?;
+        std::io::stdout().lock().write_all(&new_bytes)?;
         return Ok(exit::SUCCESS);
     }
 
-    atomic::atomic_write(&a.file, &new_bytes, a.backup).map_err(|e| anyhow::anyhow!("{e}"))?;
+    atomic::atomic_write(&a.file, &new_bytes, a.backup)?;
     crate::note!(
         "xnip insert: wrote {} ({} byte(s))",
         a.file.display(),

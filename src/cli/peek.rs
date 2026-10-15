@@ -86,7 +86,7 @@ pub fn run(a: Args) -> Result<u8> {
         _ => None,
     };
 
-    let bytes = content::load_path(&a.file).map_err(|e| anyhow::anyhow!("{e}"))?;
+    let bytes = content::load_path(&a.file)?;
     let opts = PeekOpts { range, max_lines };
 
     let stdout = std::io::stdout();

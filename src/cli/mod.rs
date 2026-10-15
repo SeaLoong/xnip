@@ -63,7 +63,7 @@ pub enum Command {
     Move(move_op::Args),
     /// Adjust indentation / tab-space conversion (write).
     Indent(indent::Args),
-    /// Apply a batch of edits atomically (write).
+    /// Validate a batch, then atomically replace each file (write).
     Apply(apply::Args),
     /// Run as a Model Context Protocol (MCP) server over stdio.
     Mcp(mcp::Args),
@@ -109,7 +109,9 @@ where
 
     let Some(command) = cli.command else {
         // 没有子命令 → 打 help 退成功（保持 M0 行为）
-        let _ = Cli::try_parse_from(["xnip", "--help"]);
+        use clap::CommandFactory;
+        Cli::command().print_help()?;
+        println!();
         return Ok(ExitCode::SUCCESS);
     };
 

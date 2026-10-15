@@ -6,13 +6,17 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  checks:
+    uses: ./.github/workflows/ci.yml
+
   build:
+    needs: checks
     name: build (${{ matrix.target }})
     strategy:
       fail-fast: false
@@ -40,7 +44,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: dtolnay/rust-toolchain@1.95
+      - uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
 
@@ -50,15 +54,17 @@ jobs:
 
       - name: Install cross
         if: matrix.cross == true
-        run: cargo install cross --locked
+        run: cargo install cross --version 0.2.5 --locked
 
       - name: Build
         shell: bash
+        env:
+          XNIP_BUILD_COMMIT: ${{ github.sha }}
         run: |
           if [ "${{ matrix.cross }}" = "true" ]; then
-            cross build --release --target ${{ matrix.target }} --bin xnip
+            cross build --locked --release --target ${{ matrix.target }} --bin xnip
           else
-            cargo build --release --target ${{ matrix.target }} --bin xnip
+            cargo build --locked --release --target ${{ matrix.target }} --bin xnip
           fi
 
       - name: Package
@@ -66,15 +72,20 @@ jobs:
         shell: bash
         run: |
           set -eu
-          version="${GITHUB_REF_NAME:-dev}"
+          version="v$(cargo metadata --no-deps --format-version 1 | python3 -c 'import json,sys; print(next(p["version"] for p in json.load(sys.stdin)["packages"] if p["name"] == "xnip"))')"
+          if [[ "$GITHUB_REF" == refs/tags/* && "$GITHUB_REF_NAME" != "$version" ]]; then
+            echo "Tag $GITHUB_REF_NAME does not match package $version" >&2
+            exit 1
+          fi
           target="${{ matrix.target }}"
           stem="xnip-${version}-${target}"
           cd target/${target}/release
+          cp ../../../LICENSE ../../../README.md .
           if [[ "${target}" == *windows* ]]; then
-            7z a "${stem}.zip" xnip.exe
+            7z a "${stem}.zip" xnip.exe LICENSE README.md
             asset="${stem}.zip"
           else
-            tar czf "${stem}.tar.gz" xnip
+            tar czf "${stem}.tar.gz" xnip LICENSE README.md
             asset="${stem}.tar.gz"
           fi
           # SHA256
@@ -94,37 +105,39 @@ jobs:
             ${{ steps.package.outputs.asset_path }}
             ${{ steps.package.outputs.sha_path }}
 
-      - name: Upload to GitHub Release
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            ${{ steps.package.outputs.asset_path }}
-            ${{ steps.package.outputs.sha_path }}
-
-  publish-integrations:
-    name: publish integrations
+  publish:
+    name: publish complete release
     needs: build
+    permissions:
+      contents: write
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@1.95
+      - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - name: Sync integrations from docs/SKILL.md
-        run: cargo run -p xtask -- sync-integrations
+        run: cargo run --locked -p xtask -- sync-integrations
       - name: Package per-platform integration assets
         shell: bash
         run: |
           set -eu
           mkdir -p dist
           for d in integrations/*/; do
-            name=$(basename "$d")
-            if [ -x "$d/package.sh" ]; then
-              ( cd "$d" && ./package.sh "../../dist" )
+            if [ -f "$d/package.sh" ]; then
+              ( cd "$d" && bash ./package.sh "../../dist" )
             fi
           done
-      - name: Upload integration assets to release
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: xnip-*
+          path: dist
+          merge-multiple: true
+      - name: Include installers
+        run: cp install.sh install.ps1 dist/
+      - name: Publish complete release
         uses: softprops/action-gh-release@v2
         with:
           files: dist/*
+          fail_on_unmatched_files: true
+          generate_release_notes: true

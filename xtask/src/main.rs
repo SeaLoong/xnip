@@ -1,7 +1,7 @@
 //! `cargo xtask` — 仓库级辅助任务。
 //!
 //! 子命令：
-//! - `sync-integrations` — 把 `docs/SKILL.md` 复制到 `integrations/generic/SKILL.md`。
+//! - `sync-integrations` — 同步 generic 和 GitHub skill 及其参考文档。
 //!   其它 integration（claude-code/cursor/aider/copilot/agents-md）保留各自风格的人工维护版本。
 //!
 //! 用法：`cargo run -p xtask -- <subcommand>`
@@ -26,10 +26,7 @@ fn main() -> ExitCode {
 }
 
 fn sync_integrations() -> ExitCode {
-    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").map_or_else(
-        |_| std::env::current_dir().unwrap(),
-        std::path::PathBuf::from,
-    );
+    let manifest_dir = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     // xtask manifest dir 是 xtask/，仓库根是上一级
     let repo_root = manifest_dir.parent().map_or_else(
         || std::path::PathBuf::from("."),
@@ -52,5 +49,28 @@ fn sync_integrations() -> ExitCode {
         return ExitCode::from(1);
     }
     eprintln!("xtask: synced {} → {}", src.display(), dst.display());
+    let skill_dir = repo_root.join(".github/skills/xnip-editing");
+    let result = (|| -> std::io::Result<()> {
+        std::fs::create_dir_all(skill_dir.join("references"))?;
+        let body = std::fs::read_to_string(&src)?
+            .replace("(./apply-format.md)", "(./references/apply-format.md)");
+        std::fs::write(
+            skill_dir.join("SKILL.md"),
+            format!(
+                "---\nname: xnip-editing\ndescription: Precise text edits with xnip CLI, batch validation and per-file atomic writes.\n---\n\n{body}"
+            ),
+        )?;
+        for name in ["apply-format.md", "error-codes.md", "examples.md"] {
+            std::fs::copy(
+                repo_root.join("docs").join(name),
+                skill_dir.join("references").join(name),
+            )?;
+        }
+        Ok(())
+    })();
+    if let Err(e) = result {
+        eprintln!("xtask: GitHub skill sync failed: {e}");
+        return ExitCode::from(1);
+    }
     ExitCode::SUCCESS
 }

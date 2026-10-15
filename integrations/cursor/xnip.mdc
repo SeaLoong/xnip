@@ -6,7 +6,7 @@ alwaysApply: false
 
 # xnip — Cursor Rule
 
-Use `xnip` CLI for any non-trivial file edit. It compresses "read-then-replace" into "path + locator + new bytes", saving ≥ 70% tokens on line-level ops.
+Use `xnip` CLI for any non-trivial file edit. It compresses "read-then-replace" into "path + locator + new bytes", avoiding repeated unchanged text.
 
 ## Decision rules
 
@@ -14,10 +14,10 @@ Use `xnip` CLI for any non-trivial file edit. It compresses "read-then-replace" 
 - Need to **find** something → `xnip find <files...> --pattern '<regex>'`
 - Need to **edit a known line range** → `xnip replace <file> --lines a-b --text '...'`
 - Need to **edit by anchor** → `xnip replace <file> --match-line '^const PORT' --text '...'`
-- Need to **edit a block bounded by markers** → `xnip replace <file> --between-re '^fn foo' '^}' --inclusive --text-file ./snippet.txt`
+- Need to **edit a block bounded by markers** → `xnip replace <file> --between-re '^fn foo'..'^}' --inclusive --text-file ./snippet.txt`
 - Need to **rename across a file** → `xnip replace <file> --pattern '\bOLD\b' --repl NEW`
 - Need to **insert / move / re-indent** → `xnip insert | xnip move | xnip indent`
-- Need to **apply many edits atomically** → `xnip apply edits.txt`
+- Need to **validate and apply many edits** → `xnip apply edits.txt`
 
 ## Locators
 
@@ -29,7 +29,7 @@ Use `xnip` CLI for any non-trivial file edit. It compresses "read-then-replace" 
 
 ## Content
 
-- `--text "literal\n"` (literal, supports `\n`)
+- `--text "literal\n"` (literal shell argument; use a file or stdin for newlines)
 - `--text-stdin` (read from stdin)
 - `--text-file <path>` (read from file)
 - `--text ""` to delete
@@ -52,7 +52,7 @@ xnip apply edits.txt --check
 xnip apply edits.txt --json   # NDJSON event stream
 ```
 
-JSON schema:
+Independent JSON operation examples (use separate manifests for pattern/line edits or moves on the same file):
 
 ```json
 [

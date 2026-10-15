@@ -1,12 +1,12 @@
 //! 两阶段提交执行器（PLAN §6.9.5）：
 //!
 //! 1. **格式识别 + 解析**（在 cli 层完成）→ 内部统一 op 列表
-//! 2. **按文件分组**：把 `FilesFrom` 展开后，每个绝对/相对路径独立一组
+//! 2. **按文件分组**：把 `FilesFrom` 展开后，按规范化目标路径分组
 //! 3. **组内排序**：起始行号降序；锚点定位先 resolve 再排
 //! 4. **阶段一**：每文件 read → 顺序应用所有 op → 写同目录 tmpfile
 //! 5. **阶段二**：所有 tmpfile OK 后逐个 atomic rename；可选 `--backup`
 //!
-//! 失败回滚见 PLAN.md §6.9.5。
+//! 阶段一失败不会提交；阶段二失败报告已提交路径，不自动回滚。
 
 use std::collections::BTreeMap;
 use std::path::PathBuf;
@@ -26,7 +26,7 @@ use crate::core::ops::replace::{replace_pattern, replace_range};
 /// 执行选项。
 #[derive(Debug, Clone, Default)]
 pub struct ExecOpts {
-    /// `true` 时只跑阶段一（生成 tmpfile）后立即清理，不修改文件。
+    /// `true` 时只校验内存中的结果，不创建 tmpfile 或修改文件。
     pub check: bool,
     /// `true` 时跑阶段一，把 unified diff 写到 stdout，不修改文件。
     pub dry_run: bool,
@@ -88,7 +88,21 @@ pub fn execute(ops: Vec<Op>, opts: &ExecOpts) -> Result<Vec<PathBuf>, ExecError>
             Target::File(p) => p.clone(),
             Target::FilesFrom(_) => unreachable!("FilesFrom expanded above"),
         };
-        groups.entry(path).or_default().push(op);
+        let canonical = std::fs::canonicalize(&path).map_err(|e| ExecError::Phase1 {
+            path: path.clone(),
+            msg: format!("resolve target failed: {e}"),
+        })?;
+        groups.entry(canonical).or_default().push(op);
+    }
+    if opts.backup {
+        for path in groups.keys() {
+            if groups.contains_key(&crate::core::atomic::bak_path(path)) {
+                return Err(ExecError::Phase1 {
+                    path: path.clone(),
+                    msg: "backup path is also an edit target".into(),
+                });
+            }
+        }
     }
 
     // Step 3+4: 阶段一 — 每文件顺序 apply，写 tmpfile
@@ -98,13 +112,16 @@ pub fn execute(ops: Vec<Op>, opts: &ExecOpts) -> Result<Vec<PathBuf>, ExecError>
     let prepared: Vec<Phase1Out> = match opts.parallel {
         Some(n) if n >= 2 => {
             use rayon::prelude::*;
-            let pool = rayon::ThreadPoolBuilder::new()
-                .num_threads(n)
-                .build()
-                .map_err(|e| ExecError::Phase1 {
-                    path: PathBuf::new(),
-                    msg: format!("rayon pool: {e}"),
-                })?;
+            let pool =
+                rayon::ThreadPoolBuilder::new()
+                    .num_threads(n.min(entries.len().max(1)).min(
+                        std::thread::available_parallelism().map_or(1, std::num::NonZero::get),
+                    ))
+                    .build()
+                    .map_err(|e| ExecError::Phase1 {
+                        path: PathBuf::new(),
+                        msg: format!("rayon pool: {e}"),
+                    })?;
             pool.install(|| {
                 entries
                     .par_iter()
@@ -136,7 +153,7 @@ pub fn execute(ops: Vec<Op>, opts: &ExecOpts) -> Result<Vec<PathBuf>, ExecError>
         return Ok(prepared.into_iter().map(|p| p.path).collect());
     }
 
-    // Step 5: 阶段二 — atomic rename + 可选 .bak（串行，保证错误回滚顺序可控）
+    // Step 5: 阶段二 — atomic rename + 可选 .bak（串行，记录已提交路径）
     let mut committed: Vec<PathBuf> = Vec::with_capacity(prepared.len());
     for p in prepared {
         let Phase1Out { path, tmp, .. } = p;
@@ -144,15 +161,15 @@ pub fn execute(ops: Vec<Op>, opts: &ExecOpts) -> Result<Vec<PathBuf>, ExecError>
             // check 模式不会走到这里；保险跳过
             continue;
         };
-        if opts.backup && path.exists() {
-            let bak = crate::core::atomic::bak_path(&path);
-            if let Err(e) = std::fs::copy(&path, &bak) {
-                return Err(ExecError::Phase2 {
-                    path: path.clone(),
-                    msg: format!("backup copy failed: {e}"),
-                    committed: committed.clone(),
-                });
-            }
+        if opts.backup
+            && path.exists()
+            && let Err(e) = crate::core::atomic::backup(&path)
+        {
+            return Err(ExecError::Phase2 {
+                path: path.clone(),
+                msg: format!("backup copy failed: {e}"),
+                committed: committed.clone(),
+            });
         }
         if let Err(e) = tmp.persist(&path) {
             return Err(ExecError::Phase2 {
@@ -188,12 +205,37 @@ fn prepare_one(
         msg: format!("read failed: {e}"),
     })?;
 
-    let mut ops_with_key: Vec<(usize, &Op)> = ops_for_file
+    let mut ops_with_key: Vec<(usize, Op)> = ops_for_file
         .iter()
-        .map(|op| (op_start_line(op, &bytes).unwrap_or(usize::MAX), op))
-        .collect();
+        .map(|op| {
+            freeze_locator(op, &bytes).map_err(|e| ExecError::Phase1 {
+                path: path.to_path_buf(),
+                msg: format!("locator validation failed: {e}"),
+            })
+        })
+        .collect::<Result<_, _>>()?;
+    let has_pattern = ops_with_key.iter().any(|(key, _)| *key == usize::MAX);
+    if has_pattern && ops_with_key.iter().any(|(key, _)| *key != usize::MAX) {
+        return Err(ExecError::Phase1 {
+            path: path.to_path_buf(),
+            msg: "cannot mix pattern and line-based edits in one file; use separate manifests"
+                .into(),
+        });
+    }
+    if ops_with_key.len() > 1
+        && ops_with_key
+            .iter()
+            .any(|(_, op)| matches!(op, Op::Move { .. }))
+    {
+        return Err(ExecError::Phase1 {
+            path: path.to_path_buf(),
+            msg: "move must be the only operation on its file; other line positions may shift"
+                .into(),
+        });
+    }
     ops_with_key.sort_by_key(|t| std::cmp::Reverse(t.0));
 
+    let original = opts.dry_run.then(|| bytes.clone());
     let mut content_bytes = bytes;
     for (_, op) in &ops_with_key {
         content_bytes = apply_one_op(op, &content_bytes, opts).map_err(|e| ExecError::Phase1 {
@@ -202,18 +244,9 @@ fn prepare_one(
         })?;
     }
 
-    let diff = if opts.dry_run {
-        let original = std::fs::read(path).unwrap_or_default();
-        Some(crate::core::diff::unified_diff(
-            path,
-            &original,
-            &content_bytes,
-        ))
-    } else {
-        None
-    };
+    let diff = original.map(|bytes| crate::core::diff::unified_diff(path, &bytes, &content_bytes));
 
-    if opts.check {
+    if opts.check || opts.dry_run {
         return Ok(Phase1Out {
             path: path.to_path_buf(),
             tmp: None,
@@ -221,20 +254,11 @@ fn prepare_one(
         });
     }
 
-    let parent = path
-        .parent()
-        .filter(|p| !p.as_os_str().is_empty())
-        .map_or_else(
-            || std::path::PathBuf::from("."),
-            std::path::Path::to_path_buf,
-        );
-    let tmp = NamedTempFile::new_in(&parent).map_err(|e| ExecError::Phase1 {
-        path: path.to_path_buf(),
-        msg: format!("tempfile create failed: {e}"),
-    })?;
-    std::fs::write(tmp.path(), &content_bytes).map_err(|e| ExecError::Phase1 {
-        path: path.to_path_buf(),
-        msg: format!("tempfile write failed: {e}"),
+    let tmp = crate::core::atomic::prepare_write(path, &content_bytes).map_err(|e| {
+        ExecError::Phase1 {
+            path: path.to_path_buf(),
+            msg: format!("stage write failed: {e}"),
+        }
     })?;
     Ok(Phase1Out {
         path: path.to_path_buf(),
@@ -442,17 +466,37 @@ fn clone_locator(loc: &Locator) -> Locator {
 }
 
 /// 解析 op 的起始行号（用于组内排序）。
-fn op_start_line(op: &Op, bytes: &[u8]) -> Option<usize> {
-    let loc = match op {
+fn freeze_locator(op: &Op, bytes: &[u8]) -> Result<(usize, Op)> {
+    let mut frozen = clone_with_target(op, op.target().clone());
+    let loc = match &mut frozen {
         Op::Replace { locator, .. } | Op::Insert { locator, .. } | Op::Indent { locator, .. } => {
             locator
         }
         Op::Move { from, .. } => from,
     };
     if matches!(loc, Locator::Pattern { .. }) {
-        return None; // pattern op 不参与行号排序
+        return Ok((usize::MAX, frozen));
     }
-    resolve(loc, bytes).ok().map(|r| r.start_line)
+    // Revert must not gain anchor support merely by freezing its locator.
+    let revert = match op {
+        Op::Replace { revert, .. }
+        | Op::Insert { revert, .. }
+        | Op::Move { revert, .. }
+        | Op::Indent { revert, .. } => *revert,
+    };
+    if revert && !matches!(loc, Locator::Lines { .. }) {
+        bail!("revert requires a lines locator");
+    }
+    let range = if matches!(op, Op::Insert { .. }) {
+        crate::core::ops::insert::resolve_anchor(loc, bytes)?
+    } else {
+        resolve(loc, bytes)?
+    };
+    *loc = Locator::Lines {
+        start: range.start_line,
+        end: range.end_line,
+    };
+    Ok((range.start_line, frozen))
 }
 
 /// 把单个 op 应用到 `bytes`，返回新内容。
@@ -497,18 +541,24 @@ fn apply_replace(
     opts: &ExecOpts,
 ) -> Result<Vec<u8>> {
     if let Locator::Pattern { regex, count } = locator {
+        if was.is_some() {
+            bail!("was is only supported for line-based replacement");
+        }
         let repl = match content {
             OpContent::Repl(s) => s.clone(),
             _ => bail!("replace --pattern requires `repl` content"),
         };
         let (effective_pat, effective_repl) = if revert {
-            crate::core::revert::invert_pattern_replacement(regex.as_str(), &repl)
+            crate::core::revert::invert_pattern_replacement(regex.as_str(), &repl)?
         } else {
             (regex.as_str().to_string(), repl)
         };
         let re = regex::bytes::Regex::new(&effective_pat)
             .with_context(|| format!("invalid regex (after revert): {effective_pat}"))?;
-        let (new_bytes, _n) = replace_pattern(bytes, &re, &effective_repl, *count);
+        let (new_bytes, n) = replace_pattern(bytes, &re, &effective_repl, *count);
+        if n == 0 {
+            bail!("pattern did not match anything");
+        }
         return Ok(new_bytes);
     }
 
@@ -575,7 +625,8 @@ fn apply_insert(
     if matches!(locator, Locator::Pattern { .. }) {
         bail!("insert does not accept --pattern locator");
     }
-    let r = resolve(locator, bytes).context("locator resolution failed")?;
+    let r = crate::core::ops::insert::resolve_anchor(locator, bytes)
+        .context("locator resolution failed")?;
     if r.start_line != r.end_line {
         bail!(
             "insert requires single-line anchor; got range {}-{}",

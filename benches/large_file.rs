@@ -12,8 +12,10 @@
 
 use criterion::{Criterion, Throughput, criterion_group, criterion_main};
 use regex::bytes::Regex as ByteRegex;
+use std::hint::black_box;
 use xnip::core::diff::unified_diff;
 use xnip::core::location::Count;
+use xnip::core::ops::find::{FindMode, FindOpts, scan};
 use xnip::core::ops::indent::{IndentOp, apply_indent};
 use xnip::core::ops::replace::{replace_pattern, replace_range};
 
@@ -75,11 +77,29 @@ fn bench_diff(c: &mut Criterion) {
     g.finish();
 }
 
+fn bench_find(c: &mut Criterion) {
+    let body = make_lines(100_000);
+    let re = ByteRegex::new("lorem").unwrap();
+    let mut group = c.benchmark_group("find_100k");
+    for (name, cap) in [("first", Some(1)), ("all", None)] {
+        let opts = FindOpts {
+            mode: FindMode::Pattern(&re),
+            max_matches: cap,
+            first_only: false,
+        };
+        group.bench_function(name, |b| {
+            b.iter(|| black_box(scan(black_box(&body), &opts)));
+        });
+    }
+    group.finish();
+}
+
 criterion_group!(
     benches,
     bench_replace_range,
     bench_replace_pattern,
     bench_indent,
-    bench_diff
+    bench_diff,
+    bench_find
 );
 criterion_main!(benches);

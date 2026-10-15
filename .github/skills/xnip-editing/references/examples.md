@@ -1,309 +1,142 @@
-# xnip — Real-World Examples
+# xnip — Examples
 
-## Example 1: Renaming a Function
+End-to-end recipes covering common editing scenarios.
 
-**Task:** Rename `calculateTotal()` to `sumItems()` across a file.
+## 1. Replace a known line
 
-```bash
-xnip replace src/utils.ts \
-  --pattern '\bcalculateTotal\b' \
-  --repl sumItems
+```sh
+xnip replace src/config.rs --lines 30 --text 'const PORT: u16 = 3000;'
 ```
 
-**What happens:**
-- All occurrences of `calculateTotal` (as whole word) are replaced with `sumItems`
-- Atomic operation; safe across the entire file
+With safety check (the expected file must include the original newline):
 
----
-
-## Example 2: Editing a Config File by Line Number
-
-**Task:** Update port in config, but verify first.
-
-```bash
-# Step 1: Preview
-xnip peek config/app.json --lines 10-20
-
-# Step 2: Preview the change
-xnip replace config/app.json --lines 15 --text 'port: 3000,' --dry-run
-
-# Step 3: Apply
-xnip replace config/app.json --lines 15 --text 'port: 3000,'
+```sh
+xnip replace src/config.rs --lines 30 \
+  --text 'const PORT: u16 = 3000;' \
+  --was-file ./snippets/old-port.txt
 ```
 
----
+## 2. Delete a range
 
-## Example 3: Semantic Anchor-Based Insert
+```sh
+xnip replace src/foo.rs --lines 30-45 --text ''
+```
 
-**Task:** Add a new export after the default export (survives code formatting changes).
+## 3. Anchor-based edit (won't drift if line numbers change)
 
-```bash
-xnip insert src/component.tsx \
-  --match-line '^export default' \
+```sh
+xnip replace src/Foo.vue \
+  --match-line '^const PORT' \
+  --text 'const PORT = 3000;'
+```
+
+## 4. Replace a function body
+
+```sh
+xnip replace src/lib.rs \
+  --between-re '^pub fn old\('..'^}' --inclusive \
+  --text-file ./snippets/new_old.rs
+```
+
+## 5. Cross-file rename (regex)
+
+```sh
+xnip replace src/Foo.rs \
+  --pattern '\bMAX_RETRIES\b' \
+  --repl 'MAX_TRIES'
+```
+
+Limit to first 2 matches:
+
+```sh
+xnip replace src/Foo.rs --pattern OLD --repl NEW --count 2
+```
+
+Revert:
+
+```sh
+xnip replace src/Foo.rs --pattern OLD --repl NEW --revert
+```
+
+## 6. Insert an import after a known `import` line
+
+```sh
+# Inspect matches first; select an occurrence that exists.
+xnip insert src/main.ts \
+  --match-line '^import ' \
+  --occurrence 1 \
   --position after \
-  --text 'export const metadata = { title: "MyComponent" };'
+  --text "import { ref } from 'vue';"
 ```
 
-**Advantage:** Works even if surrounding code reformats; regex anchors are drift-resistant.
+## 7. Move a function block
 
----
-
-## Example 4: Replace a Code Block
-
-**Task:** Update the body of a function without counting lines.
-
-```bash
-# Step 1: Preview function location
-xnip peek src/math.rs --pattern '^fn calculate'
-
-# Step 2: Replace between markers
-xnip replace src/math.rs \
-  --between-re '^fn calculate'..'^}' \
-  --inclusive \
-  --text-file new-function.rs
+```sh
+xnip move src/lib.rs --from-lines 100-150 --to 30 --position before
 ```
 
-**Why `--inclusive`:** Include the opening `fn` and closing `}` in the replacement.
+## 8. Reindent
 
----
+```sh
+# convert tabs to 4 spaces in lines 1-99
+xnip indent src/foo.go --lines 1-99 --tabs-to-spaces 4
 
-## Example 5: Batch Multi-File Edits
+# add 2 spaces to a block
+xnip indent src/foo.go --lines 30-45 --add 2
+```
 
-**Task:** Apply version number changes across 3 files atomically.
+## 9. Validated batch with `apply` (native format)
 
-**Create edits.json:**
+`edits.txt`:
+
+```
+# rename API constant + adjust caller
+replace src/lib.rs s/MAX_RETRIES/MAX_TRIES/g
+replace src/main.rs =/^use crate/ "use crate::config::MAX_TRIES;"
+insert src/main.rs 1 before "// Updated on 2026-01-01"
+```
+
+```sh
+xnip apply edits.txt --dry-run     # preview as unified diff
+xnip apply edits.txt --check       # validate, no write
+xnip apply edits.txt               # commit
+```
+
+## 10. Validated batch with `apply` (JSON, agent-friendly)
+
 ```json
 [
-  {
-    "op": "replace",
-    "file": "src/config.ts",
-    "match_line": "^export const VERSION",
-    "text": "export const VERSION = '2.1.0';",
-    "was": "export const VERSION = '2.0.0';\n"
-  },
-  {
-    "op": "replace",
-    "file": "package.json",
-    "match_line": "\"version\"",
-    "text": "  \"version\": \"2.1.0\",",
-    "was": "  \"version\": \"2.0.0\",\n"
-  },
-  {
-    "op": "replace",
-    "file": "docs/changelog.md",
-    "lines": "1-3",
-    "text": "# Changelog\n\n## 2.1.0 (2024-05-16)\n",
-    "text_file": "changelog-snippet.md"
-  }
+  {"op": "replace", "file": "src/lib.rs", "pattern": "MAX_RETRIES", "repl": "MAX_TRIES"},
+  {"op": "replace", "file": "src/main.rs",
+   "match-line": "^use crate", "text": "use crate::config::MAX_TRIES;"},
+  {"op": "insert", "file": "src/main.rs",
+   "lines": 1, "where": "before", "text": "// Updated on 2026-01-01"}
 ]
 ```
 
-**Apply:**
-```bash
-# Dry-run first
-xnip apply edits.json --dry-run
-
-# Then apply
-xnip apply edits.json
+```sh
+xnip apply edits.json --json    # NDJSON event stream on stdout
 ```
 
-**Benefit:** All three files updated atomically; if any fails, none complete.
+## 11. Read a window for context
 
----
-
-## Example 6: Indent a Block
-
-**Task:** Fix indentation of a misaligned block.
-
-```bash
-# Before: lines 10-15 are indented by 2 spaces instead of 4
-xnip indent src/app.js --lines 10-15 --add 2
+```sh
+xnip peek src/lib.rs --lines 80-120
+xnip peek src/lib.rs --match-line '^pub fn build_app' --context 5
+xnip peek src/lib.rs --all --max-lines 200
 ```
 
-**Alternatives:**
-```bash
-# Remove 1 level (4 spaces)
-xnip indent src/app.js --lines 10-15 --remove 1
+## 12. Find before edit
 
-# Convert tabs to 2 spaces
-xnip indent src/app.js --all --tabs-to-spaces 2
-
-# Convert 2 spaces to tabs
-xnip indent src/app.js --all --spaces-to-tabs 2
+```sh
+xnip find --pattern '\bTODO\b' src/**/*.rs
+xnip find --match-line '^use serde' src/main.rs
 ```
 
----
+## 13. Self-diagnose
 
-## Example 7: Move a Function
-
-**Task:** Move lines 50-80 (a function) to after line 120.
-
-```bash
-xnip move src/main.rs \
-  --from-lines 50-80 \
-  --to 120 \
-  --position after
+```sh
+xnip doctor
 ```
 
-**Result:** Lines 50-80 removed and inserted after the new location; all other line numbers adjust accordingly.
-
----
-
-## Example 8: Handling Drift with `--was`
-
-**Task:** Update a config value but fail if someone else changed it.
-
-```bash
-xnip replace config.yml \
-  --lines 42 \
-  --text 'timeout: 30s' \
-  --was 'timeout: 60s\n'
-```
-
-**What happens:**
-- If line 42 currently contains `timeout: 60s\n`, the edit proceeds
-- If line 42 is different, xnip fails with exit code 3 (validation error)
-- **Benefit:** Prevents silent conflicts
-
----
-
-## Example 9: Replace in stdin (Piped Content)
-
-**Task:** Process content from a pipe, then write to file.
-
-```bash
-# Generate edits from another tool, then apply
-cat edits.txt | xnip apply --from-stdin
-```
-
----
-
-## Example 10: Complex Refactor Across Multiple Files
-
-**Task:** Refactor an import across 5 files.
-
-**edits.yaml:**
-```yaml
-- op: replace
-  file: src/utils.ts
-  match_line: '^import.*lodash'
-  text: 'import { sum, map } from "modern-utils";'
-
-- op: replace
-  file: src/math.ts
-  pattern: '_.sum'
-  repl: sum
-
-- op: replace
-  file: src/collection.ts
-  pattern: '_.map'
-  repl: map
-
-- op: insert
-  file: src/index.ts
-  match_line: '^// Utilities'
-  text: 'export { sum, map } from "./math.ts";'
-  position: after
-
-- op: replace
-  file: tests/utils.test.ts
-  between_re: '^describe.*utils'..'^}'
-  inclusive: true
-  text_file: updated-tests.js
-```
-
-**Apply:**
-```bash
-xnip apply edits.yaml --dry-run
-xnip apply edits.yaml
-```
-
----
-
-## Example 11: Locate Before You Edit
-
-**Task:** Find all occurrences of a deprecated API.
-
-```bash
-# Find
-xnip find src --pattern '@deprecated\s+getUser'
-
-# Preview context
-xnip peek src/auth.ts --pattern '@deprecated'
-
-# Then replace
-xnip replace src/auth.ts \
-  --pattern 'getUser\(' \
-  --repl 'getCurrentUser('
-```
-
----
-
-## Example 12: Delete a Region
-
-**Task:** Remove a code block (lines 25-35).
-
-```bash
-xnip replace src/main.rs --lines 25-35 --text ''
-```
-
-**Alternative (semantic):**
-```bash
-xnip replace src/main.rs \
-  --between-re '^// TODO: old code'..'^// END old code' \
-  --inclusive \
-  --text ''
-```
-
----
-
-## Example 13: Safe Edits with Backup
-
-**Task:** Update a critical config file, but keep `.bak`.
-
-```bash
-xnip replace config/production.json \
-  --lines 50 \
-  --text 'db_host: "prod.example.com",' \
-  --backup
-```
-
-**Result:** Creates `config/production.json.bak` with the original, then writes the new version.
-
----
-
-## Example 14: Validation Without Write
-
-**Task:** Check if a manifest is valid before applying.
-
-```bash
-xnip apply edits.json --check
-
-# Exit code 0 = valid
-# Exit code 3 = validation error
-```
-
----
-
-## Decision Tree: Which Command?
-
-```
-Do I want to...
-├─ See lines?                          → xnip peek
-├─ Search for something?               → xnip find
-├─ Replace/delete?
-│  ├─ Know exact line(s)?              → xnip replace --lines
-│  ├─ Use semantic anchor?             → xnip replace --match-line
-│  ├─ Replace all matches?             → xnip replace --pattern
-│  └─ Replace a block?                 → xnip replace --between-re
-├─ Insert content?
-│  ├─ After a single anchor?           → xnip insert --position after
-│  └─ Before a marker?                 → xnip insert --position before
-├─ Move lines?                         → xnip move
-├─ Adjust indentation?                 → xnip indent
-└─ Apply 2+ edits atomically?          → xnip apply
-```
-
----
-
-See [SKILL.md](../SKILL.md) for command reference and safety options.
+Outputs version, OS/arch, target triple, cwd writability, TTY flags.

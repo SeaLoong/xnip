@@ -62,7 +62,7 @@ pub fn run(a: Args) -> Result<u8> {
         FindMode::Pattern(pat_re.as_ref().expect("locator presence checked"))
     };
 
-    let opts = FindOpts {
+    let mut opts = FindOpts {
         mode,
         max_matches: a.max_matches,
         first_only: a.first_only,
@@ -71,10 +71,13 @@ pub fn run(a: Args) -> Result<u8> {
     // 顺序扫描；M4 再加并发
     let mut files_with_hits = Vec::with_capacity(a.files.len());
     let mut total_hits = 0usize;
+    let mut load_failed = false;
     for path in a.files {
+        opts.max_matches = a.max_matches.map(|cap| cap.saturating_sub(total_hits));
         let bytes = match content::load_path(&path) {
             Ok(b) => b,
             Err(e) => {
+                load_failed = true;
                 eprintln!("xnip find: {e}");
                 continue;
             }
@@ -87,9 +90,11 @@ pub fn run(a: Args) -> Result<u8> {
     let stdout = std::io::stdout();
     let out = stdout.lock();
     let use_col = a.pattern.is_some();
-    let _written = write_hits(&files_with_hits, use_col, a.max_matches, out)
-        .map_err(|e| anyhow::anyhow!("{e}"))?;
+    let _written = write_hits(&files_with_hits, use_col, a.max_matches, out)?;
 
+    if load_failed {
+        return Ok(exit::IO);
+    }
     if total_hits == 0 {
         // 与 grep 语义一致：未命中不算用户错误，但退码 ≠ 0 方便脚本判定
         // PLAN 未明确，这里取 USAGE（与"找不到定位"语义一致）

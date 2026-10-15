@@ -26,7 +26,12 @@ fn help_flag_lists_commands() {
 
 #[test]
 fn no_args_prints_help_successfully() {
-    Command::cargo_bin("xnip").unwrap().assert().success();
+    Command::cargo_bin("xnip")
+        .unwrap()
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("Usage:"))
+        .stdout(predicate::str::contains("apply"));
 }
 
 #[test]

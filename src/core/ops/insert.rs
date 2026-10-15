@@ -10,7 +10,18 @@
 
 use thiserror::Error;
 
-use crate::core::location::split_lines;
+use crate::core::location::{LocateError, Locator, Resolved, resolve, split_lines};
+
+/// Resolve an insert anchor, including the first position in an empty file.
+pub fn resolve_anchor(locator: &Locator, content: &[u8]) -> Result<Resolved, LocateError> {
+    if content.is_empty() && matches!(locator, Locator::Lines { start: 1, end: 1 }) {
+        return Ok(Resolved {
+            start_line: 1,
+            end_line: 1,
+        });
+    }
+    resolve(locator, content)
+}
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum Position {
@@ -83,6 +94,9 @@ pub fn insert_at(
         }
     }
     if insert_idx == lines.len() {
+        if !payload.is_empty() && !out.ends_with(b"\n") {
+            out.push(b'\n');
+        }
         out.extend_from_slice(&normalize(payload));
     }
 
@@ -153,8 +167,8 @@ mod tests {
     #[test]
     fn insert_into_file_without_trailing_newline() {
         let r = insert_at(b"a\nb", 2, Position::After, b"X").unwrap();
-        // 原文件最后一行 'b' 后面没有 \n，输出也保持
-        assert_eq!(r, b"a\nbX\n");
+        // Inserting a line must not merge it into the unterminated last line.
+        assert_eq!(r, b"a\nb\nX\n");
     }
 
     #[test]

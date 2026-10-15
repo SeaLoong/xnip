@@ -1,6 +1,6 @@
 # xnip — Skill for LLM agents
 
-> Precise text editing CLI. Use **xnip** instead of "read-then-replace" to cut tokens by ≥ 70%.
+> Precise text editing CLI. Use **xnip** instead of "read-then-replace" to reduce repeated context and replacement text.
 
 ## When to use xnip
 
@@ -11,7 +11,7 @@ Reach for `xnip` whenever you need to:
 3. **Edit a known line range** → `xnip replace <file> --lines a-b --text '...'`
 4. **Edit by anchor (regex/line content)** → `xnip replace <file> --match-line '^const PORT' --text '...'`
 5. **Insert / move / re-indent** → `xnip insert | xnip move | xnip indent`
-6. **Apply many edits atomically** → `xnip apply edits.json`
+6. **Apply many edits after validation** → `xnip apply edits.json`
 
 Do **not** use xnip when you only need to read a small file you've already loaded; in that case, use your own tools.
 
@@ -28,11 +28,11 @@ Do **not** use xnip when you only need to read a small file you've already loade
 | `insert`  | Insert before/after a single anchor    | write         |
 | `move`    | Move a line block                      | write         |
 | `indent`  | Adjust indentation / tab↔space         | write         |
-| `apply`   | Apply many ops atomically              | write         |
+| `apply`   | Validate and apply many ops              | write         |
 
 ## Locator cheat-sheet
 
-All write commands accept exactly one of:
+`replace` and `insert` accept these locators (`move` uses `--from-lines`/`--from-match-line`; `indent` uses `--lines`/`--all`):
 
 - `--lines 30` or `--lines 30-45`
 - `--match-line '<regex>' [--occurrence N]`
@@ -42,7 +42,7 @@ All write commands accept exactly one of:
 
 ## Content cheat-sheet
 
-- `--text "..."` — literal string (shell-escaped); `\n` if you need newlines
+- `--text "..."` — literal shell argument; use `--text-file` or stdin for portable newlines
 - `--text-stdin` — read from stdin
 - `--text-file <path>` — read from file
 - `--text ""` — delete the located region
@@ -50,15 +50,15 @@ All write commands accept exactly one of:
 
 ## Safety knobs
 
-- `--was "expected\n"` / `--was-file <path>` — guard against concurrent edits
+- `--was "expected\n"` / `--was-file <path>` — check expected original bytes (not a file lock)
 - `--dry-run` — print new content (or unified diff for `apply`) without writing
-- `--check` — validate locator + `--was`, no output, exit 3 on failure
+- `--check` — validate without writing (`apply` prints `OK`; `--json` emits events)
 - `--backup` — write `<file>.bak` before atomic rename (default: off; rely on git)
-- `--revert` — invert a `replace --pattern --repl` op (other ops not strictly invertible)
+- `--revert` — limited inverse operation; not an undo log (see README safety limits)
 
 ## apply: prefer this for batch edits
 
-For 2+ edits to one or more files, write them once and apply atomically:
+For 2+ edits to one or more files, write them once and validate the batch before per-file commits:
 
 ```sh
 xnip apply edits.txt          # auto-detect format
@@ -71,6 +71,8 @@ xnip apply edits.txt --json     # emit NDJSON event stream on stdout
 ```
 
 See [`apply-format.md`](./apply-format.md) for the full manifest schema.
+
+Batch commits are atomic per file, not across files. On exit 4, inspect committed paths and recover from Git or backups; there is no automatic rollback. Do not mix pattern and line edits on one file; a move must be its file's only operation.
 
 ## Exit codes
 
@@ -101,10 +103,10 @@ xnip replace src/Foo.rs --pattern '\bMAX_RETRIES\b' --repl MAX_TRIES
 
 # Replace a function body without trusting line numbers
 xnip replace src/Foo.rs \
-  --between-re '^pub fn old\(' '^}' --inclusive \
+  --between-re '^pub fn old\('..'^}' --inclusive \
   --text-file ./snippets/new_old.rs
 
-# Atomic multi-file edit with rollback safety
+# Multi-file edit with validation before writing
 cat <<'EOF' | xnip apply --from-stdin
 replace src/Foo.rs 30 "const PORT = 3000;"
 replace src/Bar.rs =/^const PORT/ "const PORT = 3000;"

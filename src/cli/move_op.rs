@@ -71,7 +71,7 @@ pub struct Args {
 
 #[allow(clippy::needless_pass_by_value)]
 pub fn run(a: Args) -> Result<u8> {
-    let bytes = content::load_path(&a.file).map_err(|e| anyhow::anyhow!("{e}"))?;
+    let bytes = content::load_path(&a.file)?;
 
     // 解析源 Locator（仅支持 lines / match-line；其它写法走 apply）
     let src_loc = match (&a.from_lines, &a.from_match_line) {
@@ -104,28 +104,28 @@ pub fn run(a: Args) -> Result<u8> {
         );
     }
 
-    let r = resolve(&src_loc, &bytes).map_err(|e| anyhow::anyhow!("{e}"))?;
+    let r = resolve(&src_loc, &bytes)?;
 
     let (eff_s, eff_e, eff_to, eff_pos) = if a.revert {
-        crate::core::ops::move_op::reverse_params(r.start_line, r.end_line, a.to, a.position.into())
-            .map_err(|e| anyhow::anyhow!("{e}"))?
+        crate::core::ops::move_op::reverse_params(
+            r.start_line,
+            r.end_line,
+            a.to,
+            a.position.into(),
+        )?
     } else {
         (r.start_line, r.end_line, a.to, a.position.into())
     };
 
-    let new_bytes =
-        move_lines(&bytes, eff_s, eff_e, eff_to, eff_pos).map_err(|e| anyhow::anyhow!("{e}"))?;
+    let new_bytes = move_lines(&bytes, eff_s, eff_e, eff_to, eff_pos)?;
 
     if a.dry_run {
         use std::io::Write;
-        std::io::stdout()
-            .lock()
-            .write_all(&new_bytes)
-            .map_err(|e| anyhow::anyhow!("{e}"))?;
+        std::io::stdout().lock().write_all(&new_bytes)?;
         return Ok(exit::SUCCESS);
     }
 
-    atomic::atomic_write(&a.file, &new_bytes, a.backup).map_err(|e| anyhow::anyhow!("{e}"))?;
+    atomic::atomic_write(&a.file, &new_bytes, a.backup)?;
     let span = eff_e + 1 - eff_s;
     crate::note!(
         "xnip move: wrote {} ({} line(s) relocated)",

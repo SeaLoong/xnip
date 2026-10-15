@@ -2,20 +2,20 @@
 
 > A 30-second overview for contributors and curious agents.
 
-## Goals (verbatim from `PLAN.md`)
+## Design goals
 
 - **Project-agnostic**: no project config, no language detection, no implicit assumptions.
 - **Cross-platform**: same binary on macOS / Linux / Windows.
 - **Machine-friendly**: stderr for humans, stdout for machines; optional `--json` NDJSON.
 - **Atomic writes**: tmpfile in same dir → fsync → atomic rename. `.bak` is opt-in via `--backup`.
-- **Symmetric revert**: `--revert` inverts the same args; non-invertible ops error out.
+- **Symmetric revert**: `--revert` supports limited inverse operations; use Git or backups for exact recovery.
 
 ## Layout
 
 ```
 xnip/
 ├── Cargo.toml         # workspace = [".", "xtask"]
-├── rust-toolchain.toml  # 1.95, edition 2024
+├── rust-toolchain.toml  # stable, edition 2024; MSRV 1.89
 ├── src/
 │   ├── lib.rs         # crate root; re-exports public surface
 │   ├── main.rs        # binary entry → cli::run
@@ -90,7 +90,7 @@ for the first four; `Pattern` is consumed directly by `core::ops::replace::repla
 
 ## Three formats, one schema
 
-`parse_yaml` is implemented as `serde_yaml::Value → serde_json::Value → parse_json::parse`.
+`parse_yaml` is implemented as `serde_saphyr → serde_json::Value → parse_json::parse`.
 This guarantees JSON ≡ YAML by construction. The native parser produces the same
 `Vec<Op>` shape; the integration test `apply_three_formats_produce_equivalent_results`
 asserts equivalence end-to-end.
@@ -100,8 +100,8 @@ asserts equivalence end-to-end.
 `core::atomic::atomic_write`:
 
 1. Create a temp file in `target.parent()` (so rename stays on the same FS).
-2. `write_all` → `sync_all`.
-3. Optionally `fs::copy(target, target.with_extension("bak"))` if `make_bak`.
+2. `write_all` → preserve permissions → `sync_all`.
+3. Optionally stage an atomic backup at `<target>.bak` if `make_bak`.
 4. `tmp.persist(target)` — atomic rename on POSIX & NTFS.
 
 Failures at step 1/2/3 leave the original file untouched. Failure at step 4
@@ -111,4 +111,24 @@ aborts with the temp file dropped automatically.
 
 `Op` is intentionally close to CLI args. Each `core::ops::<cmd>` function is a
 pure `(bytes, params) → Vec<u8>` transformation. The result: every CLI command
-and every apply op share the same algorithm, with zero duplication.
+and apply share core algorithms, while interface validation and output handling remain separate.
+
+## Persistence and operational limits
+
+Both individual edits and `apply` use `core::atomic::prepare_write` to stage and sync data while preserving permissions. `apply` canonicalizes target paths before grouping, so relative/absolute paths and symlinks to one target share one staged file. Symbolic links remain intact. Backup names append `.bak`; backup paths that are also batch targets are rejected.
+
+This is a validation-then-commit pipeline, not a filesystem transaction. Phase-2 errors can leave earlier files committed; no automatic rollback or crash journal is provided. File data is synced before replacement, but parent directories are not synced; full power-loss durability is not guaranteed. Concurrent external writers are not locked out. Ownership, ACLs, extended attributes and hard-link identity are not preserved by replacement. These require a separate platform-specific design before stronger guarantees can be advertised.
+
+Read and edit paths currently load complete files into memory. `find` now bounds retained hits and scans line offsets incrementally; literal regex replacement scans matches once. `apply --check` and `--dry-run` avoid temporary-file writes, and parallelism is bounded. Repeated operations on the same large file still allocate complete buffers; streaming or a shared line index is a future optimization that needs benchmarks and explicit edit-order semantics.
+
+MCP shares the write core and has stdio protocol tests. Its synchronous file work runs on a single runtime thread; large requests can delay other requests and cancellation. Deploy with a trusted local client and an appropriate working directory. Workspace sandboxing and resource limits are not provided by xnip.
+
+## Repository review snapshot (2026-10-15)
+
+The review covered CLI/core editing, native/JSON/YAML parsing, batch persistence, MCP stdio tests, installation, release workflows, dependencies, benchmarks and integration documentation. Regression cases are in `tests/safety.rs`; installer contracts are in `tests/install_sh.py` and `tests/install_ps1.ps1`. Generated GitHub skill/reference files and the generic skill now share the canonical docs through `xtask sync-integrations`.
+
+On Windows x86_64, 327 tests passed (one illustrative doctest is ignored), strict Clippy passed, Rust 1.89 checked all workspace targets, and cargo-deny passed advisories/licenses/bans/sources. Its remaining warnings concern allowed-but-unused licenses and duplicate WASI binding versions. Offline tests exercised both installer variants, including checksum failures, and all six integration packages built. Linux/macOS execution and the full six-target release matrix remain CI validation, not local results.
+
+A Criterion quick run measured approximately 0.20 ms for a middle-line replacement over 10K lines, 0.26 ms for a literal pattern replacement over 10K lines, 0.67 ms for indentation over 10K lines, and 4.3 ms for all matches over 100K lines. A first-match-only scan over the same in-memory input took about 80 ns. These are local core-function measurements, exclude process startup and filesystem IO, and are not a before/after comparison or a cross-platform performance guarantee.
+
+Dependency fixes remove `unsafe-libyaml` (RUSTSEC-2024-0449) and upgrade past the advisories for anyhow (RUSTSEC-2026-0190) and crossbeam-epoch (RUSTSEC-2026-0204). YAML parsing now uses [serde-saphyr](https://docs.rs/serde-saphyr/latest/serde_saphyr/), with an explicit Rust 1.89 minimum. GitHub had no releases at review time; source installation is available, while release download URLs require the first published tag.

@@ -76,7 +76,7 @@ impl XnipServer {
     }
 
     #[rmcp::tool(
-        description = "Replace or delete a region in a file. Pick exactly one locator: `lines`/`match_line`/`between`/`between_re`/`pattern`. Provide `text` or `text_file` (or `repl` with `pattern`). Pass `was`/`was_file` for concurrency safety; `backup=true` keeps a `.bak` sidecar. Atomic write."
+        description = "Replace or delete a region in a file. Pick exactly one locator: `lines`/`match_line`/`between`/`between_re`/`pattern`. Provide `text` or `text_file` (or `repl` with `pattern`). Pass `was`/`was_file` to check the expected original bytes; `backup=true` keeps a `.bak` sidecar. Atomic write."
     )]
     async fn xnip_replace(
         &self,
@@ -117,7 +117,7 @@ impl XnipServer {
     }
 
     #[rmcp::tool(
-        description = "Apply a batch of edits atomically. Provide `path` (manifest file) or `manifest_text` (inline native/json/yaml content). Two-phase commit: stage 1 plans all writes, stage 2 commits or rolls back on any failure."
+        description = "Apply a batch of edits with validation before writing. Provide `path` (manifest file) or `manifest_text` (inline native/json/yaml content). Two-phase commit: stage 1 plans all writes, stage 2 renames files individually. Commit failures report already-committed files; there is no automatic rollback."
     )]
     async fn xnip_apply(
         &self,
@@ -152,8 +152,7 @@ const INSTRUCTIONS: &str = r"xnip — precise text editing for LLM agents.
 All tools operate on local file paths (relative to current working directory) \
 and use 1-based closed-interval line numbers. Use `xnip_peek` first to inspect a \
 file before editing; use `xnip_find` to locate edit anchors. Write tools (replace/ \
-insert/move/indent/apply) commit atomically; pass `was`/`was_file` for concurrency \
-safety, or `backup=true` to keep a `.bak` sidecar.";
+insert/move/indent/apply) commit atomically; pass `was`/`was_file` to check expected original bytes, or `backup=true` to keep a `.bak` sidecar.";
 
 /// 启动 stdio MCP server 并阻塞至连接关闭。
 ///

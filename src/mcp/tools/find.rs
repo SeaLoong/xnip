@@ -13,7 +13,7 @@ use serde::Deserialize;
 use crate::core::content;
 use crate::core::ops::find::{FindMode, FindOpts, scan, write_hits};
 
-use super::common::{err_to_internal, ok_bytes_as_text};
+use super::common::err_to_internal;
 
 #[derive(Debug, Deserialize, JsonSchema)]
 pub struct Args {
@@ -77,7 +77,7 @@ pub fn run(a: Args) -> Result<CallToolResult, McpError> {
         FindMode::Pattern(pat_re.as_ref().expect("locator presence checked"))
     };
 
-    let opts = FindOpts {
+    let mut opts = FindOpts {
         mode,
         max_matches: a.max_matches,
         first_only: a.first_only.unwrap_or(false),
@@ -87,6 +87,7 @@ pub fn run(a: Args) -> Result<CallToolResult, McpError> {
     let mut total_hits = 0usize;
     let mut load_errors: Vec<String> = Vec::new();
     for path in a.files {
+        opts.max_matches = a.max_matches.map(|cap| cap.saturating_sub(total_hits));
         match content::load_path(&path) {
             Ok(bytes) => {
                 let hits = scan(&bytes, &opts);
@@ -124,6 +125,5 @@ pub fn run(a: Args) -> Result<CallToolResult, McpError> {
             text.push('\n');
         }
     }
-    let _ = ok_bytes_as_text; // suppress unused warning if any
     Ok(super::common::ok_text(text))
 }

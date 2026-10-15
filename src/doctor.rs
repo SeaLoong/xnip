@@ -22,11 +22,7 @@ pub fn report<W: Write>(mut out: W) -> std::io::Result<()> {
     writeln!(out, "  os:       {}", std::env::consts::OS)?;
     writeln!(out, "  arch:     {}", std::env::consts::ARCH)?;
     writeln!(out, "  family:   {}", std::env::consts::FAMILY)?;
-    writeln!(
-        out,
-        "  target:   {}",
-        option_env!("TARGET").unwrap_or("unknown")
-    )?;
+    writeln!(out, "  target:   {}", env!("XNIP_TARGET"))?;
 
     // cwd 可写探针
     match probe_cwd_writable() {

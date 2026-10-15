@@ -8,8 +8,8 @@ agents should branch on them rather than parsing stderr text.
 | 0    | `SUCCESS` | Operation completed; files written (or read) as expected.       |
 | 1    | `USAGE`   | User error: bad CLI args, locator not found, parse error, unknown subcommand. |
 | 2    | `IO`      | IO error: cannot create tempfile, permission denied, disk full. |
-| 3    | `CHECK`   | Validation failure: `--was` mismatch; `--check` rejected the plan; binary file refused. |
-| 4    | `PARTIAL` | `apply` phase 2 partial commit: some files were renamed before a later rename failed. |
+| 3    | `CHECK`   | Validation failure: `--was` mismatch; `--check` rejected the plan; pattern matched nothing. |
+| 4    | `PARTIAL` | `apply` phase 2 partial commit: commit failed; zero or more earlier files may have been renamed. |
 
 ## Exit-code reference per command
 
@@ -22,6 +22,7 @@ agents should branch on them rather than parsing stderr text.
 
 - `0` at least one hit emitted
 - `1` no hits / locator missing / invalid regex
+- `2` any input failed to load, even if another input matched
 
 ### `replace`
 
@@ -50,7 +51,7 @@ agents should branch on them rather than parsing stderr text.
 
 ## Notes on `apply --json`
 
-When `--json` is set on `apply`, error events are emitted on stdout as NDJSON:
+When `--json` is set on `apply`, execution-phase errors are emitted on stdout as NDJSON (argument, manifest-read and parse errors occur before execution and are reported on stderr):
 
 ```json
 {"event":"error","kind":"phase1","message":"..."}

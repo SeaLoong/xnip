@@ -2,27 +2,31 @@
 
 # xnip
 
-> Precise text editing CLI for LLM agents — ≥ 70% token reduction.
+> Precise text editing CLI for LLM agents.
 
 xnip compresses the LLM agent "read section → generate new section → replace" loop into a single command: **file path + position + new content**.
 
-- Single static Rust binary, works on all platforms
+- Standalone Rust binary for supported macOS, Linux and Windows targets
 - 9 commands: `peek` / `find` / `replace` / `insert` / `move` / `indent` / `apply` / `mcp` / `doctor`
-- `apply` accepts three formats (native compact / JSON / YAML) for atomic batch edits
+- `apply` accepts three formats (native compact / JSON / YAML) for validated batch edits with per-file atomic writes
 - Atomic writes, `--dry-run` preview, symmetric `--revert`
 - **`xnip mcp`**: built-in [Model Context Protocol](https://modelcontextprotocol.io/) stdio server for Claude Desktop / Cursor / Cline / Continue / Zed
 
 ## Install
+
+Requires Rust **1.89+**. Source installation is available now.
 
 ### From source
 
 ```sh
 git clone https://github.com/SeaLoong/xnip
 cd xnip
-cargo install --path .
+cargo install --path . --locked
 ```
 
-### Prebuilt binaries
+### Prebuilt binaries (after the first release)
+
+The repository currently has no published GitHub release. These commands become available after a version tag is published with the release workflow. The crates.io command additionally requires publishing the crate.
 
 ```sh
 # macOS / Linux
@@ -32,7 +36,7 @@ curl -fsSL https://github.com/SeaLoong/xnip/releases/latest/download/install.sh 
 iwr -useb https://github.com/SeaLoong/xnip/releases/latest/download/install.ps1 | iex
 
 # Any platform with Rust
-cargo install xnip
+cargo install xnip --locked
 ```
 
 ## Quick start
@@ -48,9 +52,9 @@ xnip find --pattern '^const PORT' src/Foo.vue
 xnip replace src/Foo.vue --lines 30 --text "const X = 1;" --dry-run
 
 # Cross-file constant rename
-xnip replace --files-from list.txt --pattern OLD_NAME --repl NEW_NAME
+printf '%s\n' 'replace --files-from list.txt s/OLD_NAME/NEW_NAME/g' | xnip apply --from-stdin
 
-# Atomic batch edit
+# Validated batch edit
 xnip apply edits.txt
 ```
 
@@ -140,10 +144,37 @@ Best for agents driven by system prompts or instructions files. Copy the snippet
 - **Cross-platform** — same binary on macOS / Linux / Windows
 - **Machine-friendly** — stderr for humans, stdout for machines; optional `--json` NDJSON
 - **Atomic writes** — tmpfile in same dir → validate → atomic rename; `.bak` is opt-in (`--backup`)
-- **Symmetric revert** — `--revert` inverts the same args; non-invertible ops error out
+- **Symmetric revert** — `--revert` supports constrained inverse operations; see the limitations below
 
 Full design spec: [`PLAN.md`](./PLAN.md) · Version history: [`CHANGELOG.md`](./CHANGELOG.md)
 
 ## License
 
 MIT — see [`LICENSE`](./LICENSE).
+
+## Safety and usage limits
+
+- `apply` validates all operations before writing, but commits files one at a time. A phase-2 failure returns exit 4 with the committed paths. There is **no automatic rollback**; inspect those paths and restore from Git or `.bak` files as needed.
+- Backups append `.bak`: `main.rs` becomes `main.rs.bak`. An existing backup is replaced. This changes the older extension-replacement behavior (`main.bak`).
+- Existing symlinks are followed and file permissions preserved. Atomic replacement does not preserve hard-link identity, ownership, ACLs or extended attributes. Avoid concurrent writers: `--was` checks the bytes read, but does not lock the file.
+- `--revert` is not an undo log. Pattern revert accepts only a nonempty literal pattern and a nonempty replacement without capture expansion; pre-existing replacement text can make even literal reversal ambiguous. Range replacement revert requires the replacement to occupy the same range. Indentation conversion and edits at an unterminated EOF may not round-trip exactly. Use Git/backups for exact recovery.
+- Line operations split on LF; existing CR bytes are retained, but inserted text is not automatically converted to CRLF. Supply CRLF payloads when required.
+- CLI `--text` receives literal shell arguments. Use `--text-file` or stdin for portable multiline content. `apply --json --check` emits only NDJSON; `--json` and `--dry-run` are mutually exclusive.
+- MCP runs with the launching user's filesystem permissions and working directory; it is intended for trusted local clients.
+
+## Development and release
+
+```sh
+cargo fmt --all --check
+cargo clippy --workspace --all-targets --locked -- -D warnings
+cargo test --workspace --locked
+cargo +1.89.0 check --workspace --all-targets --locked
+cargo deny check
+cargo bench --locked
+cargo package --locked
+cargo run --locked -p xtask -- sync-integrations
+```
+
+Use `python3 tests/install_sh.py` on Linux/macOS, or build with `cargo build --locked` and run `./tests/install_ps1.ps1` in PowerShell. Installer tests use local archives and mock HTTP, including checksum-failure recovery.
+
+Before publishing, update the package version and changelog, run CI, and push a matching `vX.Y.Z` tag. Release CI checks the tag against Cargo metadata, builds six targets, and publishes all archives, SHA256 sidecars, installers and integration packages only after all builds succeed. Manual workflow runs build artifacts without publishing. Publishing to crates.io is a separate maintainer action (`cargo publish --locked`). See [architecture and remaining limits](docs/architecture.md).

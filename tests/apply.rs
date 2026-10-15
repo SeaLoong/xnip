@@ -92,7 +92,7 @@ fn apply_three_formats_produce_equivalent_results() {
             .unwrap(),
             "yaml" => {
                 // serde_yaml 会对路径中的反斜杠正确转义
-                let path_yaml = serde_yaml::to_string(target_str).unwrap();
+                let path_yaml = serde_json::to_string(target_str).unwrap();
                 let path_yaml = path_yaml.trim_end();
                 format!("- op: replace\n  file: {path_yaml}\n  lines: \"2\"\n  text: B\n")
             }
@@ -210,7 +210,7 @@ fn apply_backup_writes_bak() {
         .assert()
         .success();
     assert_eq!(common::read(&target), b"v2\n");
-    let bak = target.with_extension("bak");
+    let bak = xnip::core::atomic::bak_path(&target);
     assert!(bak.exists());
     assert_eq!(common::read(&bak), b"v1\n");
 }

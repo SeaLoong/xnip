@@ -153,7 +153,7 @@ You should see `serverInfo: {name: "xnip", version: "..."}` followed by a list o
 
 If `was` does not match lines 12-14 literally → returns `invalid_request` error; file is not modified.
 
-### `xnip_apply` — atomic batch commit
+### `xnip_apply` — validated batch editing
 
 ```json
 {
@@ -167,7 +167,7 @@ If `was` does not match lines 12-14 literally → returns `invalid_request` erro
 ```
 
 Phase 1: all ops are validated and staged; any failure → no file is written, error returned.
-Phase 2: atomic renames committed sequentially; partial failure rolls back already-committed files (via `.bak` when `backup=true`).
+Phase 2: atomic renames committed sequentially. Failure reports already-committed paths; no automatic rollback occurs. Restore from Git or `<file>.bak` after inspecting the error.
 
 ## Troubleshooting
 
@@ -186,4 +186,4 @@ Phase 2: atomic renames committed sequentially; partial failure rolls back alrea
 - Behavioral consistency is guaranteed by shared code (same byte passthrough, same atomic write, same `was` check)
 - Binary size is ~9 MB larger than CLI-only (cost of rmcp + tokio), but the tokio runtime is only created when `xnip mcp` actually starts — zero runtime overhead for all other CLI paths
 
-Dependencies: `rmcp 1.7` (official Rust SDK) + `tokio 1` (`rt, macros, io-std`) + `schemars 1.0` (auto-generates tool input JsonSchema). MSRV 1.95 (constrained by rmcp / schemars transitive dependencies and Cargo.lock resolution).
+Dependencies: `rmcp 1.7` (official Rust SDK) + `tokio 1` (`rt, macros, io-std`) + `schemars 1.2` (auto-generates tool input JsonSchema). MSRV 1.89 (required by the YAML parser).

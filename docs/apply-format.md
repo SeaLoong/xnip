@@ -91,7 +91,7 @@ replace src/Foo.vue revert s/OLD/NEW/g
 
 ## 2. JSON
 
-Top-level array of op objects. Field names match CLI flags (kebab-case).
+Top-level array of op objects. Field names match CLI flags (kebab-case). The objects below illustrate independent operations; do not combine these overlapping examples into one manifest for the same file.
 
 ```json
 [
@@ -154,7 +154,7 @@ Same schema as JSON. Multi-line text with `|` block scalars is more readable:
 4. **Phase 1** — for each file: read → apply ops → write a temp file in the same directory
 5. **Phase 2** — atomic-rename each temp file; if `--backup`, save `<file>.bak` first
 6. On phase-1 failure: nothing on disk changes; exit 3
-7. On phase-2 failure: with `--backup`, restore committed files; without, list affected files on stderr; exit 4
+7. On phase-2 failure: list committed paths and exit 4; no automatic rollback, even with `--backup`
 
 Modes:
 
@@ -162,9 +162,8 @@ Modes:
 - `--dry-run` — phase 1 + unified diff to stdout
 - `--from-stdin [--format ...]` — manifest from stdin
 - `--backup` — write `.bak` (default: off)
-- `--json` — emit NDJSON events on stdout
-- `--parallel <N>` — run phase 1 across N worker threads (rayon). Phase 2 stays serial
-  to keep commit-order-dependent rollback well-defined. `0` or `1` = single-threaded.
+- `--json` — emit NDJSON events on stdout (also with `--check`); conflicts with `--dry-run`
+- `--parallel <N>` — run phase 1 with up to N worker threads (rayon), capped by file count and available CPUs. Phase 2 stays serial. `0` or `1` = single-threaded.
 - `--stdin-file <PATH>` — supply the bytes that op-level `@-` consumes from a file
   instead of reading process stdin. Required when `--from-stdin` is used together with
   `@-`, since stdin is already consumed by the manifest.
@@ -179,7 +178,7 @@ Modes:
 
 ### `--revert` semantics
 
-- `replace --pattern --repl --revert` → swaps `pattern` and `repl` (regex-escaped).
+- `replace --pattern --repl --revert` → supports nonempty literal patterns and nonempty replacements without capture expansion; regex patterns are rejected. This is not an undo log; existing replacement text can make reversal ambiguous.
 - `replace --lines a-b --text X --was Y --revert` → swaps `text` and `was` with a
   pre-condition check that the current content equals `X`. Anchor-based locators
   (`--match-line`, `--between`, `--between-re`) are explicitly **rejected** for
@@ -192,3 +191,9 @@ Modes:
 - `indent --add/--remove/--tabs-to-spaces/--spaces-to-tabs --revert` → swaps the
   operator. `Remove`/`SpacesToTabs` are *not strictly* invertible (information may
   be lost), so revert may differ from the original bytes.
+
+### Paths and edit ordering
+
+Direct `file` targets resolve relative to the process working directory. `files-from` list paths, entries within those lists, and payload `text-file`/`@path` paths resolve relative to the manifest directory (or the working directory for stdin manifests). `was-file` is read during parsing and resolves relative to the process working directory. Use absolute paths when sharing manifests across working directories.
+
+Targets are canonicalized before grouping; diagnostics may therefore show absolute paths. Anchors are resolved against the original file before descending-line ordering. Keep line ranges disjoint. Pattern edits cannot be mixed with line-based edits on the same file, and a move must be the only operation on its file: use separate manifests for those dependent edits. A pattern with zero matches fails validation. JSON/YAML reject unknown fields and invalid `where` values.

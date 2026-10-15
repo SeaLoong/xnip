@@ -2,7 +2,7 @@
 
 > Drop this prompt into `.github/copilot-instructions.md` (workspace) or a custom prompt to teach Copilot to use xnip.
 
-When editing files, prefer the `xnip` CLI. It encodes "path + locator + new bytes" in a single command, saving ≥ 70% tokens versus reading the file and emitting a full replacement.
+When editing files, prefer the `xnip` CLI. It encodes "path + locator + new bytes" in a single command, avoiding repeated unchanged text in replacements.
 
 ## Decision rules
 

@@ -1,6 +1,6 @@
 # Conventions — xnip
 
-When editing files, **prefer `xnip` CLI** over inline read-modify-write. It saves ≥ 70% tokens on line-level changes.
+When editing files, **prefer `xnip` CLI** over inline read-modify-write. It avoids repeating unchanged lines in line-level edits.
 
 ## Always use xnip when
 

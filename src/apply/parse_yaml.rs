@@ -1,7 +1,7 @@
 //! YAML 格式 parser。
 //!
 //! YAML schema 与 JSON 完全相同（PLAN §6.9.4），仅序列化形式不同。
-//! 实现：先用 `serde_yaml` 解析为 `serde_json::Value`，再委托给 `parse_json::parse`。
+//! 实现：先用 `serde_saphyr` 解析为 `serde_json::Value`，再委托给 `parse_json::parse`。
 //! 这样保证 YAML 与 JSON 走同一套 schema 校验，是 PLAN G6 等价性的天然保证。
 #![allow(
     clippy::single_match,
@@ -17,8 +17,8 @@ use anyhow::{Context, Result};
 /// # Errors
 /// YAML 语法错误或转 JSON 失败时返回 `Err`。
 pub fn parse(src: &str) -> Result<Vec<crate::apply::Op>> {
-    let yaml_value: serde_yaml::Value =
-        serde_yaml::from_str(src).context("invalid YAML apply manifest")?;
+    let yaml_value: serde_json::Value =
+        serde_saphyr::from_str(src).context("invalid YAML apply manifest")?;
     let json_text = serde_json::to_string(&yaml_value).context("YAML to JSON conversion failed")?;
     crate::apply::parse_json::parse(&json_text)
 }
