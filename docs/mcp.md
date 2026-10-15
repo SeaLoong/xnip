@@ -1,6 +1,6 @@
 # MCP Server (`xnip mcp`)
 
-`xnip mcp` starts a [Model Context Protocol](https://modelcontextprotocol.io/) **stdio server** that exposes xnip's 9 development-branch capabilities (edit / peek / find / replace / insert / move / indent / apply / doctor) as structured tools to LLM agents — eliminating the quote-escaping, exit-code parsing, and stdout/stderr confusion that comes with shell invocations.
+`xnip mcp` starts a [Model Context Protocol](https://modelcontextprotocol.io/) **stdio server** that exposes xnip's 10 capabilities (edit / peek / find / replace / insert / move / indent / apply / recover / doctor) as structured tools to LLM agents — eliminating the quote-escaping, exit-code parsing, and stdout/stderr confusion that comes with shell invocations.
 
 ## When to use MCP vs CLI
 
@@ -8,7 +8,7 @@
 |---|---|
 | Default editing with structured old/new content and an existing MCP connection | MCP |
 | Manual terminal use, shell scripts, CI pipelines | CLI |
-| Create/delete or exact block replacement with preview/check | `xnip_edit` or CLI `edit` on the development build |
+| Create/delete or exact block replacement with preview/check | `xnip_edit` or CLI `edit` on v0.2.0+ |
 | Line/range/batch previews, revert or NDJSON | CLI |
 | Need `--text-stdin` / `apply --from-stdin` / op-level `@-` | CLI (MCP process stdin is occupied by the protocol) |
 
@@ -28,7 +28,7 @@ No sub-arguments. All "calls" arrive as `initialize` / `tools/list` / `tools/cal
 
 ## Tool list
 
-The development branch has 9 tools; released v0.1.1 has 8 and does not include `xnip_edit`. Names correspond to CLI subcommands:
+v0.2.0 has 10 tools; released v0.1.1 has 8 and does not include `xnip_edit` or `xnip_recover`. Names correspond to CLI subcommands:
 
 | MCP Tool | CLI equivalent | Type |
 |---|---|---|
@@ -40,13 +40,14 @@ The development branch has 9 tools; released v0.1.1 has 8 and does not include `
 | `xnip_move` | `xnip move` | write (atomic) |
 | `xnip_indent` | `xnip indent` | write (atomic) |
 | `xnip_apply` | `xnip apply` | write (two-phase batch) |
+| `xnip_recover` | `xnip recover` | conflict-checked rollback; optional dry-run |
 | `xnip_doctor` | `xnip doctor` | diagnostic |
 
-Input schema field names match CLI flags 1:1 (strip `--`, convert hyphens to underscores). For example, `--match-line` becomes `match_line`.
+Most input fields use CLI names with underscores, for example `--match-line` becomes `match_line`. `xnip_edit` selects file lifecycle actions with `operation` and uses `to` for rename destinations, rather than CLI `--create`/`--delete`/`--rename-to` flags. Manifest JSON/YAML fields remain kebab-case.
 
 ### Differences from CLI
 
-The older tools do **not** expose the following top-level flags; `xnip_edit` is the exception for `dry_run` and `check`:
+The older tools do **not** expose the following top-level flags; `xnip_edit` and `xnip_apply` are the exceptions for `dry_run` and `check`, and `xnip_recover` exposes `dry_run`:
 
 - `--dry-run` — not available on older tools; the older MCP write tools commit immediately after validation. Use the CLI for previews.
 - `--check` — not available; use CLI check mode when validation must not write.
@@ -171,7 +172,7 @@ If `was` does not match lines 12-14 literally → returns `invalid_request` erro
 ```
 
 Phase 1: all ops are validated and staged; any failure → no file is written, error returned.
-Phase 2: atomic renames committed sequentially. Failure reports already-committed paths; no automatic rollback occurs. Restore from Git or `<file>.bak` after inspecting the error.
+Phase 2: persist snapshots, commit targets individually, and attempt rollback on failure. Errors include a recovery journal; [recovery](recovery.md) checks snapshot integrity and external conflicts before restoration.
 
 ## Troubleshooting
 
@@ -196,4 +197,4 @@ Dependencies: `rmcp 1.7` (official Rust SDK) + `tokio 1` (`rt, macros, io-std`) 
 
 Relative paths are resolved from the server process working directory, which is chosen by the client. Configure that directory in the client when supported, or send absolute paths. `xnip_doctor` can check whether the current directory is writable. The server does not confine access to a repository and uses the launching user's permissions.
 
-For batch edits, direct targets resolve against the working directory; manifest-relative payloads and file lists follow the [apply path rules](apply-format.md#paths-and-edit-ordering). A phase-2 error can leave files committed. Preserve the returned path list and inspect files before retrying; blindly replaying a partially committed manifest can apply an operation twice.
+For batch edits, direct targets resolve against the working directory; manifest-relative payloads and file lists follow the [apply path rules](apply-format.md#paths-and-edit-ordering). A phase-2 error can leave files changed if rollback is incomplete. Inspect its rollback status and recovery journal before retrying; blindly replaying a partially committed manifest can apply an operation twice.

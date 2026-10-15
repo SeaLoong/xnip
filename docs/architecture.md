@@ -119,7 +119,7 @@ and apply share core algorithms, while interface validation and output handling 
 
 Both individual edits and `apply` use `core::atomic::prepare_write` to stage and sync data while preserving permissions. `apply` canonicalizes target paths before grouping, so relative/absolute paths and symlinks to one target share one staged file. Symbolic links remain intact. Backup names append `.bak`; backup paths that are also batch targets are rejected.
 
-This is a validation-then-commit pipeline, not a filesystem transaction. Phase-2 errors can leave earlier files committed; no automatic rollback or crash journal is provided. File data is synced before replacement, but parent directories are not synced; full power-loss durability is not guaranteed. Concurrent external writers are not locked out. Ownership, ACLs, extended attributes and hard-link identity are not preserved by replacement. These require a separate platform-specific design before stronger guarantees can be advertised.
+`core::transaction::Plan` coalesces final file states after validation. Before commit it writes and syncs recovery snapshots with SHA256 integrity values. It detects changes before writing and attempts rollback after failure; `recover` validates retained snapshots and refuses detected content/path conflicts. Pure same-filesystem moves preserve identity with no-clobber hard-link/unlink; rewritten files retain ordinary permissions but not full ownership/ACL/xattr/hard-link identity. This is not cross-file atomic visibility or a lock against arbitrary external writers, and full power-loss durability is not guaranteed. See [recovery](recovery.md).
 
 Read and edit paths currently load complete files into memory. `find` now bounds retained hits and scans line offsets incrementally; literal regex replacement scans matches once. `apply --check` and `--dry-run` avoid temporary-file writes, and parallelism is bounded. Repeated operations on the same large file still allocate complete buffers; streaming or a shared line index is a future optimization that needs benchmarks and explicit edit-order semantics.
 
@@ -127,18 +127,17 @@ MCP shares the write core and has stdio protocol tests. Its synchronous file wor
 
 ## Default editor capability coverage
 
-| Capability | Current behavior | Remaining work |
+| Capability | Implemented behavior | Boundary |
 |---|---|---|
-| New files and directories | `edit --create`, no overwrite; preview creates nothing | Optional file-mode selection |
-| Known-context replacement | Unique literal blocks, explicit all, byte-preserving payloads | General patch-format ingestion |
-| File deletion | Regular files, optional whole-file precondition and backup | Integrate file lifecycle operations into batch planning |
-| Line/anchor transformations | Existing replace/insert/move/indent operations | Consistent newline policy across legacy line-based operations |
-| Editor previews | CLI diff and `xnip_edit` MCP preview/check | Preview support on legacy MCP batch/range tools |
-| Rename | No whole-file rename command | No-clobber rename with failure reporting, not a create/delete workaround |
-| Batch editing | Validation before per-file commits for existing files | Explicit dependency/order semantics for mixed operations |
-| Recovery and concurrency | Backups, preconditions, detected-change checks | Transaction journal/rollback and stronger concurrency guarantees |
+| New files and directories | `edit --create` and batch `create`; no overwrite | Ordinary permission defaults |
+| Context replacement | Unique literal blocks, line anchors, unified/apply_patch text hunks | No fuzzy whitespace guessing or binary patches |
+| File deletion | Standalone and ordered batch delete, optional precondition/backup | Regular files only |
+| Rename | `edit --rename-to`, batch rename, patch moves | Absent destination; pure moves require hard-link support/same filesystem; no case-only rename |
+| Editor previews | CLI, `xnip_edit`, `xnip_apply`, recovery dry-run | Legacy individual line tools still use their original interfaces |
+| Dependent batches | Input-order virtual plan for lifecycle/patches; `--sequential` for legacy ops | Intermediate states are coalesced, not externally visible steps |
+| Recovery | Persisted snapshots, automatic rollback attempt, conflict-checked explicit recovery | Not a distributed transaction, writer lock or persistent undo history |
 
-The next capability priorities are rename and patch-format import, followed by a shared batch plan that can include create/delete. These need explicit failure and ordering contracts; merely instructing an agent to chain existing commands would not supply those guarantees. Semantic symbol discovery and binary/document formats remain responsibilities of their dedicated analysis or format tools.
+The previously identified rename, text patch import, batch file lifecycle and failure-recovery gaps are implemented. Semantic symbol analysis and binary/document formats remain outside this text editor's scope. File-mode patches, cross-filesystem moves and stronger concurrent-writer isolation are explicitly rejected/limited rather than silently approximated.
 
 ## Validation and performance
 

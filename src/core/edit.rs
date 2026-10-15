@@ -15,12 +15,14 @@ pub enum Operation {
     Replace,
     Create,
     Delete,
+    Rename,
 }
 
 #[derive(Debug, Default)]
 #[allow(clippy::struct_excessive_bools)]
 pub struct Request {
     pub operation: Operation,
+    pub to: Option<PathBuf>,
     pub old: Option<Vec<u8>>,
     pub text: Option<Vec<u8>>,
     pub all: bool,
@@ -42,6 +44,8 @@ pub enum EditError {
     Usage(&'static str),
     #[error("edit precondition failed: {0}")]
     Check(String),
+    #[error("{0}")]
+    Partial(String),
     #[error(transparent)]
     Io(#[from] std::io::Error),
     #[error(transparent)]
@@ -65,7 +69,38 @@ pub fn execute(path: &Path, request: &Request) -> Result<Outcome, EditError> {
     if request.check && request.dry_run {
         return Err(EditError::Usage("check and dry_run are mutually exclusive"));
     }
+    if request.operation == Operation::Rename {
+        if request.text.is_some() || request.all {
+            return Err(EditError::Usage(
+                "rename does not accept replacement text or all",
+            ));
+        }
+        let to = request
+            .to
+            .as_deref()
+            .ok_or(EditError::Usage("rename requires a destination"))?;
+        let mut plan = super::transaction::Plan::default();
+        plan.rename(path, to, request.old.as_deref())
+            .map_err(transaction_error)?;
+        let preview = plan.preview();
+        if !request.check && !request.dry_run {
+            plan.commit(request.backup).map_err(transaction_error)?;
+        }
+        return Ok(Outcome {
+            changed: !preview.files.is_empty(),
+            replacements: 0,
+            diff: if request.dry_run {
+                preview.diff
+            } else {
+                String::new()
+            },
+        });
+    }
+    if request.to.is_some() {
+        return Err(EditError::Usage("destination is only valid for rename"));
+    }
     let (before, after, replacements, target) = match request.operation {
+        Operation::Rename => unreachable!("rename handled above"),
         Operation::Create => {
             if request.old.is_some() || request.all {
                 return Err(EditError::Usage("create does not accept old text or all"));
@@ -199,4 +234,20 @@ pub fn replace_exact(
     }
     output.extend_from_slice(&content[cursor..]);
     Ok((output, count))
+}
+
+fn transaction_error(error: anyhow::Error) -> EditError {
+    if error
+        .downcast_ref::<super::transaction::CommitError>()
+        .is_some()
+    {
+        EditError::Partial(format!("{error:#}"))
+    } else if error
+        .chain()
+        .any(<dyn std::error::Error>::is::<std::io::Error>)
+    {
+        EditError::Io(std::io::Error::other(error))
+    } else {
+        EditError::Check(format!("{error:#}"))
+    }
 }

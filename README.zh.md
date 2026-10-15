@@ -7,8 +7,8 @@
 xnip 把 LLM agent 的「读一段 → 生成新一段 → 整段替换」压缩为「文件路径 + 位置 + 新内容」一条命令。
 
 - 单一 Rust 二进制，支持 macOS、Linux 和 Windows 的发布目标
-- 开发分支 10 个子命令：`edit` / `peek` / `find` / `replace` / `insert` / `move` / `indent` / `apply` / `mcp` / `doctor`
-- `apply` 接受三种格式（原生紧凑 / JSON / YAML）的批量编辑，逐文件原子写入
+- 11 个子命令：`edit` / `peek` / `find` / `replace` / `insert` / `move` / `indent` / `apply` / `recover` / `mcp` / `doctor`
+- `apply` 接受原生紧凑、JSON、YAML 和文本补丁格式的批量编辑，逐文件原子写入
 - 原子提交、可预览（`--dry-run`）、受限反向操作（`--revert`）
 - **`xnip mcp`**：内置 [Model Context Protocol](https://modelcontextprotocol.io/) stdio server，与 Claude Desktop / Cursor / Cline / Continue / Zed 等插拔即用
 
@@ -36,14 +36,14 @@ curl -fsSL https://github.com/SeaLoong/xnip/releases/latest/download/install.sh 
 iwr -useb https://github.com/SeaLoong/xnip/releases/latest/download/install.ps1 | iex
 
 # 任何装 Rust 的平台：从正式版本标签安装
-cargo install --git https://github.com/SeaLoong/xnip --tag v0.1.1 --locked xnip
+cargo install --git https://github.com/SeaLoong/xnip --tag v0.2.0 --locked xnip
 ```
 
 支持平台、指定版本、PATH 设置、校验及卸载详见 [安装说明](docs/installation.md)。当前通过 GitHub Release 分发，不提供未经发布验证的 crates.io 安装命令。
 
 ## 默认编辑入口
 
-开发分支新增 `xnip edit` / `xnip_edit`：创建文件、按唯一字面文本块替换、删除普通文件，并支持预览和检查。已发布的 v0.1.1 不含此命令，新能力需从当前源码构建。详见 [edit 手册](docs/edit.md)。
+v0.2.0 新增 `xnip edit` / `xnip_edit`：创建文件、按唯一字面文本块替换、删除普通文件、整文件重命名，并支持预览和检查。批量计划也支持补丁导入和失败恢复记录。v0.1.1 用户需升级后使用这些能力。详见 [edit 手册](docs/edit.md)。
 
 ```sh
 xnip edit config.txt --old 'PORT=8080' --text 'PORT=3000'
@@ -92,7 +92,7 @@ xnip 的目标是成为默认文本编辑入口。skill 负责选择合适的编
 
 ### 选择 CLI 或 MCP
 
-CLI 复用现有 shell；MCP 通过结构化 old/text 参数减少引号和多行转义问题。两者都可承担默认编辑流程，注册 MCP 是独立的安装配置动作。开发版提供 9 个工具，其中 `xnip_edit` 支持预览和检查，其他 MCP 写工具会直接提交；已发布 v0.1.1 为原来的 8 个工具。
+CLI 复用现有 shell；MCP 通过结构化 old/text 参数减少引号和多行转义问题。两者都可承担默认编辑流程，注册 MCP 是独立的安装配置动作。v0.2 提供 10 个工具：`xnip_edit` 与 `xnip_apply` 支持预览和检查，`xnip_recover` 支持恢复预览；旧的行级 MCP 写工具直接提交；已发布 v0.1.1 为原来的 8 个工具。
 
 客户端配置统一维护在 [MCP 手册](docs/mcp.md)。读取 skill 不等于需要自动注册新的 MCP 服务。
 
@@ -112,7 +112,7 @@ MIT — 见 [`LICENSE`](./LICENSE)。
 
 ## 安全边界与使用限制
 
-- `apply` 先校验全部操作，再逐文件提交。提交阶段失败会返回退出码 4 并列出已提交路径，**不会自动回滚**；请按实际路径从 Git 或备份恢复。
+- `apply` 先校验全部操作，再逐文件提交。提交失败会尝试回滚，返回退出码 4 并保留恢复记录；重试前检查回滚结果，必要时使用 [recover](docs/recovery.md)。检测到外部内容冲突时不会强制恢复，这不等于跨文件瞬间原子可见。
 - 备份名追加 `.bak`：`main.rs` 对应 `main.rs.bak`，会覆盖已有备份。旧版使用 `main.bak`，升级后请注意名称变化。
 - 写入会跟随已有符号链接并保留文件权限，但原子替换不保留硬链接身份、所有者、ACL 或扩展属性。请避免并发写入；`--was` 仅校验读取时的内容，并非文件锁。
 - `--revert` 不是撤销日志。正则替换仅支持非空字面模式和不含捕获展开的非空替换串；已有同名文本仍可能导致反向替换歧义。范围替换需保持相同行数，缩进转换及无末尾换行的编辑不保证字节级恢复。精确恢复请使用 Git 或备份。
@@ -137,3 +137,5 @@ Linux/macOS 安装器测试：`python3 tests/install_sh.py`。Windows 先运行 
 发布前更新版本与变更记录，通过 CI 后推送与 Cargo 版本一致的 `vX.Y.Z` 标签。发布流程会先检查并构建六个平台，全部成功后统一发布压缩包、SHA256、安装器和集成包。手动触发仅构建产物。crates.io 由维护者单独执行 `cargo publish --locked`。更多说明见 [架构文档](docs/architecture.md)。
 
 参与开发见 [CONTRIBUTING.md](CONTRIBUTING.md)，维护者发布步骤见 [docs/releasing.md](docs/releasing.md)。
+
+[补丁导入](docs/patch.md) · [事务恢复](docs/recovery.md)

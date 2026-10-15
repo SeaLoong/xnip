@@ -24,12 +24,12 @@ pub struct Args {
     #[arg(long, default_value_t = false)]
     pub from_stdin: bool,
 
-    /// 显式指定格式：`native` / `json` / `yaml`。不指定走自动识别。
+    /// 显式指定格式：`native` / `json` / `yaml` / `patch`。不指定走自动识别。
     #[arg(long, value_name = "FORMAT")]
     pub format: Option<String>,
 
     /// 仅阶段一校验，不写文件。stdout 打 `OK`。
-    #[arg(long, default_value_t = false)]
+    #[arg(long, default_value_t = false, conflicts_with = "dry_run")]
     pub check: bool,
 
     /// 阶段一 + 输出 unified diff，不写文件。
@@ -47,6 +47,9 @@ pub struct Args {
     /// 阶段一并行处理的文件数上限（0/1 = 单线程）。
     #[arg(long, value_name = "N", default_value_t = 0)]
     pub parallel: usize,
+    /// Execute operations in manifest order; implicit for file lifecycle and patch operations.
+    #[arg(long)]
+    pub sequential: bool,
 
     /// 以文件提供 op 内 `@-` 的字节流（默认从本进程 stdin 读）。
     /// `--from-stdin` 模式下必须明确使用该选项，因为本进程 stdin 已被清单占用。
@@ -129,6 +132,7 @@ pub fn run(a: Args) -> Result<u8> {
         backup: a.backup,
         manifest_dir,
         stdin_bytes: op_stdin,
+        sequential: a.sequential,
         parallel: if a.parallel <= 1 {
             None
         } else {
@@ -201,6 +205,13 @@ fn has_stdin_content(ops: &[Op]) -> bool {
         Op::Replace { content, .. } | Op::Insert { content, .. } => {
             matches!(content, OpContent::Stdin)
         }
+        Op::File { operation, .. } => match operation {
+            crate::apply::FileOp::Create(content)
+            | crate::apply::FileOp::Exact { text: content, .. } => {
+                matches!(content, OpContent::Stdin)
+            }
+            _ => false,
+        },
         Op::Move { .. } | Op::Indent { .. } => false,
     })
 }

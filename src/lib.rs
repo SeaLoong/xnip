@@ -10,7 +10,7 @@
 //! - [`doctor`]：环境自检
 //!
 
-#![doc(html_root_url = "https://docs.rs/xnip/0.1.1")]
+#![doc(html_root_url = "https://docs.rs/xnip/0.2.0")]
 
 pub mod apply;
 pub mod cli;

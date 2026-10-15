@@ -20,6 +20,7 @@ pub enum Format {
     Native,
     Json,
     Yaml,
+    Patch,
 }
 
 /// 解析 `--format` 字符串。
@@ -28,6 +29,7 @@ pub fn parse_format_arg(s: &str) -> Result<Format> {
         "native" => Ok(Format::Native),
         "json" => Ok(Format::Json),
         "yaml" | "yml" => Ok(Format::Yaml),
+        "patch" | "diff" => Ok(Format::Patch),
         other => anyhow::bail!("unknown --format: {other}"),
     }
 }
@@ -38,12 +40,20 @@ pub fn parse_with(src: &str, fmt: Format) -> Result<Vec<Op>> {
         Format::Native => crate::apply::parse_native::parse(src),
         Format::Json => crate::apply::parse_json::parse(src),
         Format::Yaml => crate::apply::parse_yaml::parse(src),
+        Format::Patch => crate::apply::patch::parse(src),
     }
 }
 
 /// 自动识别格式并解析。`path` 用于后缀提示，可为 `None`（如 stdin 模式）。
 pub fn parse_auto(src: &str, path: Option<&Path>) -> Result<Vec<Op>> {
-    let preferred = preferred_from_ext(path);
+    let preferred = if src.starts_with("*** Begin Patch")
+        || src.starts_with("diff --git ")
+        || src.starts_with("--- ")
+    {
+        Format::Patch
+    } else {
+        preferred_from_ext(path)
+    };
     let order = order_for(preferred);
 
     let mut first_err: Option<anyhow::Error> = None;
@@ -59,7 +69,7 @@ pub fn parse_auto(src: &str, path: Option<&Path>) -> Result<Vec<Op>> {
     }
     Err(first_err
         .unwrap_or_else(|| anyhow::anyhow!("no parser succeeded"))
-        .context("auto-detect failed across native/json/yaml"))
+        .context("auto-detect failed across native/json/yaml/patch"))
 }
 
 fn preferred_from_ext(path: Option<&Path>) -> Format {
@@ -73,15 +83,17 @@ fn preferred_from_ext(path: Option<&Path>) -> Format {
     {
         Some(ref e) if e == "json" || e == "json5" => Format::Json,
         Some(ref e) if e == "yaml" || e == "yml" => Format::Yaml,
+        Some(ref e) if e == "patch" || e == "diff" => Format::Patch,
         _ => Format::Native,
     }
 }
 
-fn order_for(preferred: Format) -> [Format; 3] {
+fn order_for(preferred: Format) -> [Format; 4] {
     match preferred {
-        Format::Json => [Format::Json, Format::Yaml, Format::Native],
-        Format::Yaml => [Format::Yaml, Format::Json, Format::Native],
-        Format::Native => [Format::Native, Format::Json, Format::Yaml],
+        Format::Patch => [Format::Patch, Format::Json, Format::Yaml, Format::Native],
+        Format::Json => [Format::Json, Format::Yaml, Format::Native, Format::Patch],
+        Format::Yaml => [Format::Yaml, Format::Json, Format::Native, Format::Patch],
+        Format::Native => [Format::Native, Format::Json, Format::Yaml, Format::Patch],
     }
 }
 

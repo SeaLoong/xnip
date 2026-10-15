@@ -4,6 +4,14 @@ User-visible changes are recorded here. Versions follow Semantic Versioning; com
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-16
+
+- Add no-clobber whole-file rename to CLI/MCP edit, with same-filesystem identity preservation and explicit conflict checks.
+- Import unified text diffs and apply_patch-style documents through `apply --format patch`; validate context, line counts, path boundaries and EOF markers.
+- Add native/JSON/YAML create/delete/rename/edit batch operations and ordered virtual planning, with `--sequential` for dependent legacy operations.
+- Route batch commits and renames through recovery snapshots, change detection and rollback attempts. Add `recover`/`xnip_recover` for explicit conflict-checked restoration; retain journals on failure.
+- Add MCP apply previews/checks without stdout protocol pollution, and synchronize patch/recovery reference documents into installed skills.
+
 - Add `edit` and `xnip_edit` as the primary editing entry point: create missing files without overwrite, replace exact blocks with unique-match guards, delete regular files, and preview/check across CLI and MCP. Preserve literal bytes and skip unchanged replacements.
 - Rework the editing skill around replacing the default text editor while reusing known context; generate generic/GitHub/Claude variants and package their on-demand references. Document capability gaps and development/release differences.
 - Preserve the preferred manifest parser's diagnostic on failed auto-detection instead of masking a JSON/YAML schema error with an unrelated fallback error.
@@ -54,5 +62,6 @@ First public release of xnip, a CLI and MCP stdio server for precise local text 
 - MCP write tools commit immediately; preview/check modes are available through the CLI. The server uses the launching user's filesystem permissions and is intended for trusted local clients.
 - Native CLI arguments are literal shell arguments; no automatic `\n` decoding or newline-style conversion is performed.
 
-[Unreleased]: https://github.com/SeaLoong/xnip/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/SeaLoong/xnip/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/SeaLoong/xnip/releases/tag/v0.2.0
 [0.1.1]: https://github.com/SeaLoong/xnip/releases/tag/v0.1.1

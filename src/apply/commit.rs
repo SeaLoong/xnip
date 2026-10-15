@@ -3,19 +3,19 @@
 //! 1. **格式识别 + 解析**（在 cli 层完成）→ 内部统一 op 列表
 //! 2. **按文件分组**：把 `FilesFrom` 展开后，按规范化目标路径分组
 //! 3. **组内排序**：起始行号降序；锚点定位先 resolve 再排
-//! 4. **阶段一**：每文件 read → 顺序应用所有 op → 写同目录 tmpfile
-//! 5. **阶段二**：所有 tmpfile OK 后逐个 atomic rename；可选 `--backup`
+//! 4. **阶段一**：内存中校验；文件操作/补丁按输入顺序执行虚拟计划
+//! 5. **阶段二**：持久化恢复快照，再提交每个目标；失败时尝试回滚
 //!
-//! 阶段一失败不会提交；阶段二失败报告已提交路径，不自动回滚。
+//! 阶段一失败不会提交；提交失败尝试回滚并保留恢复记录。
 
 use std::collections::BTreeMap;
 use std::path::PathBuf;
 
+use crate::core::transaction::{Plan, Report};
 use anyhow::{Context, Result, bail};
-use tempfile::NamedTempFile;
 use thiserror::Error;
 
-use crate::apply::{IndentKind, MovePosition, Op, OpContent, Target};
+use crate::apply::{FileOp, IndentKind, MovePosition, Op, OpContent, Target};
 use crate::core::content;
 use crate::core::location::{Locator, resolve};
 use crate::core::ops::indent::{IndentOp, apply_indent};
@@ -25,6 +25,7 @@ use crate::core::ops::replace::{replace_pattern, replace_range};
 
 /// 执行选项。
 #[derive(Debug, Clone, Default)]
+#[allow(clippy::struct_excessive_bools)]
 pub struct ExecOpts {
     /// `true` 时只校验内存中的结果，不创建 tmpfile 或修改文件。
     pub check: bool,
@@ -41,6 +42,8 @@ pub struct ExecOpts {
     pub stdin_bytes: Option<Vec<u8>>,
     /// `apply --parallel <N>`：阶段一并行处理的文件数上限。`None` 或 0/1 → 单线程。
     pub parallel: Option<usize>,
+    /// Apply all operations in input order against evolving in-memory files.
+    pub sequential: bool,
 }
 
 #[derive(Debug, Error)]
@@ -48,12 +51,12 @@ pub enum ExecError {
     #[error("phase 1 (validation) failed for {path}: {msg}")]
     Phase1 { path: PathBuf, msg: String },
     #[error(
-        "phase 2 (commit) failed for {path}: {msg}; affected files (already committed): {committed:?}"
+        "phase 2 (commit) failed for {path}: {msg}; planned paths (see rollback result and journal): {planned:?}"
     )]
     Phase2 {
         path: PathBuf,
         msg: String,
-        committed: Vec<PathBuf>,
+        planned: Vec<PathBuf>,
     },
     #[error("io error reading manifest file list: {0}")]
     Io(#[from] std::io::Error),
@@ -66,6 +69,30 @@ pub enum ExecError {
 /// - Phase1 → exit 3（CHECK）
 /// - Phase2 → exit 4（PARTIAL）
 pub fn execute(ops: Vec<Op>, opts: &ExecOpts) -> Result<Vec<PathBuf>, ExecError> {
+    let report = execute_report(ops, opts)?;
+    if opts.dry_run {
+        use std::io::Write;
+        let diff = if crate::core::diff::should_colorize_stdout() {
+            crate::core::diff::colorize_unified_diff(&report.diff)
+        } else {
+            report.diff
+        };
+        std::io::stdout().lock().write_all(diff.as_bytes())?;
+    }
+    if let Some(journal) = report.journal {
+        crate::note!("xnip: retained recovery journal {}", journal.display());
+    }
+    Ok(report.files)
+}
+
+/// Structured execution for MCP: never print diffs to protocol stdout.
+pub fn execute_report(ops: Vec<Op>, opts: &ExecOpts) -> Result<Report, ExecError> {
+    if opts.check && opts.dry_run {
+        return Err(ExecError::Phase1 {
+            path: PathBuf::new(),
+            msg: "check and dry-run are mutually exclusive".into(),
+        });
+    }
     crate::trace!(
         "apply.execute: n_ops={} check={} dry_run={} backup={} parallel={:?}",
         ops.len(),
@@ -80,6 +107,9 @@ pub fn execute(ops: Vec<Op>, opts: &ExecOpts) -> Result<Vec<PathBuf>, ExecError>
 
     // Step 1: 把 FilesFrom 展开
     let expanded = expand_files_from(ops, opts)?;
+    if opts.sequential || expanded.iter().any(|op| matches!(op, Op::File { .. })) {
+        return execute_ordered(expanded, opts);
+    }
 
     // Step 2: 按文件分组（保留组内 op 原顺序）
     let mut groups: BTreeMap<PathBuf, Vec<Op>> = BTreeMap::new();
@@ -135,135 +165,131 @@ pub fn execute(ops: Vec<Op>, opts: &ExecOpts) -> Result<Vec<PathBuf>, ExecError>
             .collect::<Result<Vec<_>, ExecError>>()?,
     };
 
-    // dry-run 的 diff 串行打到 stdout，保证顺序与 entries 一致
-    if opts.dry_run {
-        let colorize = crate::core::diff::should_colorize_stdout();
-        for p in &prepared {
-            if let Some(diff) = &p.diff {
-                if colorize {
-                    print!("{}", crate::core::diff::colorize_unified_diff(diff));
-                } else {
-                    print!("{diff}");
-                }
-            }
-        }
+    let mut plan = Plan::default();
+    for prepared in prepared {
+        plan.stage(&prepared.path, &prepared.before, prepared.after)
+            .map_err(|e| phase1(&prepared.path, e))?;
     }
-
-    if opts.check || opts.dry_run {
-        return Ok(prepared.into_iter().map(|p| p.path).collect());
-    }
-
-    // Step 5: 阶段二 — atomic rename + 可选 .bak（串行，记录已提交路径）
-    let mut committed: Vec<PathBuf> = Vec::with_capacity(prepared.len());
-    for p in prepared {
-        let Phase1Out { path, tmp, .. } = p;
-        let Some(tmp) = tmp else {
-            // check 模式不会走到这里；保险跳过
-            continue;
-        };
-        if opts.backup
-            && path.exists()
-            && let Err(e) = crate::core::atomic::backup(&path)
-        {
-            return Err(ExecError::Phase2 {
-                path: path.clone(),
-                msg: format!("backup copy failed: {e}"),
-                committed: committed.clone(),
-            });
-        }
-        if let Err(e) = tmp.persist(&path) {
-            return Err(ExecError::Phase2 {
-                path,
-                msg: format!("rename failed: {}", e.error),
-                committed,
-            });
-        }
-        committed.push(path);
-    }
-
-    Ok(committed)
+    finish_plan(&plan, opts)
 }
 
-/// 阶段一每文件输出。`tmp` 在 `check` 模式下为 `None`。
+fn phase1(path: &std::path::Path, error: impl std::fmt::Display) -> ExecError {
+    ExecError::Phase1 {
+        path: path.to_path_buf(),
+        msg: error.to_string(),
+    }
+}
+
+fn finish_plan(plan: &Plan, opts: &ExecOpts) -> Result<Report, ExecError> {
+    if opts.check || opts.dry_run {
+        return Ok(plan.preview());
+    }
+    plan.commit(opts.backup).map_err(|error| {
+        if error
+            .downcast_ref::<crate::core::transaction::CommitError>()
+            .is_some()
+        {
+            ExecError::Phase2 {
+                path: PathBuf::new(),
+                msg: format!("{error:#}"),
+                planned: plan.preview().files,
+            }
+        } else {
+            phase1(std::path::Path::new(""), format!("{error:#}"))
+        }
+    })
+}
+
+fn execute_ordered(ops: Vec<Op>, opts: &ExecOpts) -> Result<Report, ExecError> {
+    let mut plan = Plan::default();
+    for op in ops {
+        let Target::File(path) = op.target() else {
+            unreachable!("expanded file list");
+        };
+        let result = (|| -> Result<()> {
+            if let Op::File { operation, .. } = &op {
+                match operation {
+                    FileOp::Create(content) => plan.create(path, load_op_content(content, opts)?),
+                    FileOp::Delete { was } => plan.delete(path, was.as_deref()),
+                    FileOp::Rename { to, was } => plan.rename(path, to, was.as_deref()),
+                    FileOp::Exact { old, text, all } => {
+                        let before = plan.read(path)?;
+                        let (after, _) = crate::core::edit::replace_exact(
+                            &before,
+                            &load_op_content(old, opts)?,
+                            &load_op_content(text, opts)?,
+                            *all,
+                        )?;
+                        plan.update(path, after)
+                    }
+                    FileOp::Patch(patch) => {
+                        let before = if patch.create {
+                            Vec::new()
+                        } else {
+                            plan.read(path)?
+                        };
+                        let after = crate::apply::patch::apply(&before, patch)?;
+                        if patch.create {
+                            plan.create(path, after)?;
+                        } else if patch.delete {
+                            plan.delete(path, Some(&before))?;
+                        } else {
+                            plan.update(path, after)?;
+                        }
+                        if let Some(to) = &patch.rename_to {
+                            plan.rename(path, to, None)?;
+                        }
+                        Ok(())
+                    }
+                }
+            } else {
+                let before = plan.read(path)?;
+                let after = apply_one_op(&op, &before, opts)?;
+                plan.update(path, after)
+            }
+        })();
+        result.map_err(|e| phase1(path, format!("{e:#}")))?;
+    }
+    finish_plan(&plan, opts)
+}
+
 struct Phase1Out {
     path: PathBuf,
-    tmp: Option<NamedTempFile>,
-    diff: Option<String>,
+    before: Vec<u8>,
+    after: Vec<u8>,
 }
-
-/// 阶段一 per-file：read → 排序 → 顺序 apply → 写 tmpfile（除 `check`）→ 生成 diff（仅 `dry_run`）。
-///
-/// 设计为纯函数（仅访问 `path` 与不可变 `opts`），可在 rayon 中并行执行。
-#[allow(clippy::many_single_char_names)]
 fn prepare_one(
     path: &std::path::Path,
-    ops_for_file: &[Op],
+    ops: &[Op],
     opts: &ExecOpts,
 ) -> Result<Phase1Out, ExecError> {
-    let bytes = std::fs::read(path).map_err(|e| ExecError::Phase1 {
-        path: path.to_path_buf(),
-        msg: format!("read failed: {e}"),
-    })?;
-
-    let mut ops_with_key: Vec<(usize, Op)> = ops_for_file
+    let before = std::fs::read(path).map_err(|e| phase1(path, e))?;
+    let mut sorted: Vec<_> = ops
         .iter()
-        .map(|op| {
-            freeze_locator(op, &bytes).map_err(|e| ExecError::Phase1 {
-                path: path.to_path_buf(),
-                msg: format!("locator validation failed: {e}"),
-            })
-        })
+        .map(|op| freeze_locator(op, &before).map_err(|e| phase1(path, e)))
         .collect::<Result<_, _>>()?;
-    let has_pattern = ops_with_key.iter().any(|(key, _)| *key == usize::MAX);
-    if has_pattern && ops_with_key.iter().any(|(key, _)| *key != usize::MAX) {
-        return Err(ExecError::Phase1 {
-            path: path.to_path_buf(),
-            msg: "cannot mix pattern and line-based edits in one file; use separate manifests"
-                .into(),
-        });
+    let has_pattern = sorted.iter().any(|(key, _)| *key == usize::MAX);
+    if has_pattern && sorted.iter().any(|(key, _)| *key != usize::MAX) {
+        return Err(phase1(
+            path,
+            "cannot mix pattern and line edits without --sequential",
+        ));
     }
-    if ops_with_key.len() > 1
-        && ops_with_key
-            .iter()
-            .any(|(_, op)| matches!(op, Op::Move { .. }))
-    {
-        return Err(ExecError::Phase1 {
-            path: path.to_path_buf(),
-            msg: "move must be the only operation on its file; other line positions may shift"
-                .into(),
-        });
+    if sorted.len() > 1 && sorted.iter().any(|(_, op)| matches!(op, Op::Move { .. })) {
+        return Err(phase1(
+            path,
+            "move must be alone on its file unless --sequential is used",
+        ));
     }
-    ops_with_key.sort_by_key(|t| std::cmp::Reverse(t.0));
-
-    let original = opts.dry_run.then(|| bytes.clone());
-    let mut content_bytes = bytes;
-    for (_, op) in &ops_with_key {
-        content_bytes = apply_one_op(op, &content_bytes, opts).map_err(|e| ExecError::Phase1 {
-            path: path.to_path_buf(),
-            msg: format!("op failed: {e}"),
-        })?;
+    sorted.sort_by_key(|(line, _)| std::cmp::Reverse(*line));
+    let mut after = before.clone();
+    for (_, op) in sorted {
+        after = apply_one_op(&op, &after, opts).map_err(|e| phase1(path, format!("{e:#}")))?;
     }
-
-    let diff = original.map(|bytes| crate::core::diff::unified_diff(path, &bytes, &content_bytes));
-
-    if opts.check || opts.dry_run {
-        return Ok(Phase1Out {
-            path: path.to_path_buf(),
-            tmp: None,
-            diff,
-        });
-    }
-
-    let tmp = crate::core::atomic::prepare_write(path, &content_bytes).map_err(|e| {
-        ExecError::Phase1 {
-            path: path.to_path_buf(),
-            msg: format!("stage write failed: {e}"),
-        }
-    })?;
     Ok(Phase1Out {
         path: path.to_path_buf(),
-        tmp: Some(tmp),
-        diff,
+        before,
+        after,
     })
 }
 
@@ -297,6 +323,10 @@ fn materialize_stdin(ops: Vec<Op>, opts: &ExecOpts) -> Result<Vec<Op>, ExecError
 fn content_of(op: &Op) -> Option<&OpContent> {
     match op {
         Op::Replace { content, .. } | Op::Insert { content, .. } => Some(content),
+        Op::File { operation, .. } => match operation {
+            FileOp::Create(content) | FileOp::Exact { text: content, .. } => Some(content),
+            _ => None,
+        },
         Op::Move { .. } | Op::Indent { .. } => None,
     }
 }
@@ -329,6 +359,24 @@ fn replace_content(op: Op, new_content: OpContent) -> Op {
             content: new_content,
             position,
             revert,
+        },
+        Op::File {
+            target,
+            operation: FileOp::Create(_),
+        } => Op::File {
+            target,
+            operation: FileOp::Create(new_content),
+        },
+        Op::File {
+            target,
+            operation: FileOp::Exact { old, all, .. },
+        } => Op::File {
+            target,
+            operation: FileOp::Exact {
+                old,
+                text: new_content,
+                all,
+            },
         },
         other => other,
     }
@@ -369,6 +417,10 @@ fn resolve_relative(p: &std::path::Path, opts: &ExecOpts) -> PathBuf {
 
 fn clone_with_target(op: &Op, target: Target) -> Op {
     match op {
+        Op::File { operation, .. } => Op::File {
+            target,
+            operation: operation.clone(),
+        },
         Op::Replace {
             locator,
             content,
@@ -469,6 +521,7 @@ fn clone_locator(loc: &Locator) -> Locator {
 fn freeze_locator(op: &Op, bytes: &[u8]) -> Result<(usize, Op)> {
     let mut frozen = clone_with_target(op, op.target().clone());
     let loc = match &mut frozen {
+        Op::File { .. } => bail!("file operations require ordered planning"),
         Op::Replace { locator, .. } | Op::Insert { locator, .. } | Op::Indent { locator, .. } => {
             locator
         }
@@ -479,6 +532,7 @@ fn freeze_locator(op: &Op, bytes: &[u8]) -> Result<(usize, Op)> {
     }
     // Revert must not gain anchor support merely by freezing its locator.
     let revert = match op {
+        Op::File { .. } => false,
         Op::Replace { revert, .. }
         | Op::Insert { revert, .. }
         | Op::Move { revert, .. }
@@ -502,6 +556,7 @@ fn freeze_locator(op: &Op, bytes: &[u8]) -> Result<(usize, Op)> {
 /// 把单个 op 应用到 `bytes`，返回新内容。
 fn apply_one_op(op: &Op, bytes: &[u8], opts: &ExecOpts) -> Result<Vec<u8>> {
     match op {
+        Op::File { .. } => bail!("file operations require ordered planning"),
         Op::Replace {
             locator,
             content,

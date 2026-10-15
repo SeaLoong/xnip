@@ -343,6 +343,9 @@ fn parse_op_line(tokens: &[Token]) -> Result<Op> {
         bail!("first token must be op name, not a quoted string");
     }
     let op_name = std::str::from_utf8(&op_tok.bytes).context("op name not UTF-8")?;
+    if matches!(op_name, "create" | "delete" | "rename" | "edit") {
+        return parse_file_op(tokens, op_name);
+    }
 
     // 第二个 token：file 或 --files-from <path>
     if tokens.len() < 2 {
@@ -539,6 +542,51 @@ fn parse_op_line(tokens: &[Token]) -> Result<Op> {
         }
         other => bail!("unknown op: {other}"),
     }
+}
+
+fn parse_file_op(tokens: &[Token], name: &str) -> Result<Op> {
+    use crate::apply::FileOp;
+    if tokens.len() < 2 {
+        bail!("file operation requires a target");
+    }
+    let (target, next) = parse_target(tokens, 1)?;
+    if next != 2 {
+        bail!("file operations require a single file");
+    }
+    let content = |token: &Token| -> Result<OpContent> {
+        if !token.quoted
+            && let Some(path) = std::str::from_utf8(&token.bytes)?.strip_prefix('@')
+        {
+            return parse_at_token(path);
+        }
+        Ok(OpContent::Text(token.bytes.clone()))
+    };
+    let operation = match name {
+        "create" if tokens.len() == 3 => FileOp::Create(content(&tokens[2])?),
+        "delete" if tokens.len() == 2 => FileOp::Delete { was: None },
+        "rename" if tokens.len() == 3 => FileOp::Rename {
+            to: PathBuf::from(std::str::from_utf8(&tokens[2].bytes)?),
+            was: None,
+        },
+        "edit"
+            if tokens.len() == 4
+                || (tokens.len() == 5 && tokens[4].bytes == b"all" && !tokens[4].quoted) =>
+        {
+            let old = content(&tokens[2])?;
+            if matches!(old, OpContent::Stdin) {
+                bail!("old content cannot consume stdin");
+            }
+            FileOp::Exact {
+                old,
+                text: content(&tokens[3])?,
+                all: tokens.len() == 5,
+            }
+        }
+        _ => bail!(
+            "expected create FILE CONTENT, delete FILE, rename FILE TO, or edit FILE OLD NEW [all]"
+        ),
+    };
+    Ok(Op::File { target, operation })
 }
 
 fn parse_target(tokens: &[Token], i: usize) -> Result<(Target, usize)> {

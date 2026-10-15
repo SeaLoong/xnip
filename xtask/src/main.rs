@@ -39,7 +39,16 @@ fn sync_skill_files() -> std::io::Result<()> {
     let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
         .parent()
         .unwrap();
-    let references = ["apply-format.md", "error-codes.md", "examples.md"];
+    let references = [
+        "apply-format.md",
+        "error-codes.md",
+        "examples.md",
+        "patch.md",
+        "recovery.md",
+        "edit.md",
+        "architecture.md",
+        "releasing.md",
+    ];
     let mut body = std::fs::read_to_string(root.join("docs/SKILL.md"))?;
     for name in references {
         body = body.replace(&format!("({name})"), &format!("(references/{name})"));
@@ -56,10 +65,12 @@ fn sync_skill_files() -> std::io::Result<()> {
             body.replacen("name: xnip-editing", &format!("name: {name}"), 1),
         )?;
         for reference in references {
-            std::fs::copy(
-                root.join("docs").join(reference),
-                directory.join("references").join(reference),
-            )?;
+            let reference_text = std::fs::read_to_string(root.join("docs").join(reference))?
+                .replace(
+                    "(../CONTRIBUTING.md)",
+                    "(https://github.com/SeaLoong/xnip/blob/master/CONTRIBUTING.md)",
+                );
+            std::fs::write(directory.join("references").join(reference), reference_text)?;
         }
         eprintln!("xtask: synced {}", directory.display());
     }

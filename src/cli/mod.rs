@@ -20,6 +20,7 @@ mod insert;
 mod mcp;
 mod move_op;
 mod peek;
+mod recover;
 mod replace;
 
 /// xnip — precise text editing CLI for LLM agents.
@@ -72,6 +73,8 @@ pub enum Command {
     Mcp(mcp::Args),
     /// Self-diagnose environment and version.
     Doctor,
+    /// Restore a failed or interrupted transaction from its recovery journal.
+    Recover(recover::Args),
 }
 
 /// 程序入口：解析 argv 并分发到子命令。
@@ -128,6 +131,7 @@ where
         Command::Indent(a) => indent::run(a)?,
         Command::Apply(a) => apply::run(a)?,
         Command::Mcp(a) => mcp::run(a)?,
+        Command::Recover(a) => recover::run(&a)?,
         Command::Doctor => {
             let stdout = std::io::stdout();
             let mut out = stdout.lock();

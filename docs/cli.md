@@ -1,6 +1,6 @@
 # CLI usage
 
-The development branch uses [xnip edit](edit.md) for creation, exact block replacement and file deletion; published v0.1.1 provides line/anchor editing of existing files. Line numbers are 1-based and ranges include both endpoints. Use `xnip COMMAND --help` for every option and its default.
+v0.2.0 uses [xnip edit](edit.md) for creation, exact block replacement, file deletion and rename; published v0.1.1 provides line/anchor editing of existing files. Line numbers are 1-based and ranges include both endpoints. Use `xnip COMMAND --help` for every option and its default.
 
 ## A runnable first edit
 
@@ -43,6 +43,7 @@ The preview prints the complete proposed file; only the second replace writes. T
 | `move FILE --from-lines 3-5 --to 10 --position before` | Reorder a block | Status on stderr |
 | `indent FILE --all --add 2` | Add/remove indentation or convert tabs/spaces | Status on stderr |
 | `apply MANIFEST` | Validate a batch, then commit each file | Status or optional NDJSON |
+| `recover JOURNAL --check` | Validate recovery before restoring an interrupted transaction | Recovery report |
 | `doctor` | Inspect version, platform, target and environment | Diagnostic report |
 | `mcp` | Start the stdio tool server | JSON-RPC protocol only |
 
@@ -83,6 +84,6 @@ xnip apply edits.json --dry-run
 xnip apply edits.json --backup --json
 ```
 
-Apply resolves anchors against the original file and orders line edits from the bottom upward. Use disjoint ranges. Do not mix pattern replacements with line edits on one file, or combine a move with another edit to its file. Direct targets use the process working directory; other paths follow the [manifest path rules](apply-format.md#paths-and-edit-ordering).
+Apply resolves anchors against the original file and orders line edits from the bottom upward. In legacy grouped mode use disjoint ranges; do not mix pattern replacements with line edits on one file or combine a move with another edit to its file. Use `--sequential` for dependent edits. File lifecycle operations and text patches automatically use input-order virtual planning. Direct targets use the process working directory; other paths follow the [manifest path rules](apply-format.md#paths-and-edit-ordering).
 
-Validation errors leave targets unchanged. Commit errors can leave earlier files updated and return exit 4 with committed paths; there is no automatic rollback. Inspect those paths before retrying. `--json --check` emits JSON events only; `--json --dry-run` is rejected. Parse/read errors before execution still use stderr. See [exit codes](error-codes.md) for scripting behavior.
+Validation errors leave targets unchanged. Commit errors return exit 4 after attempting rollback and retain a recovery journal. Inspect the rollback result; use [recover](recovery.md) for an interrupted or incomplete restoration. `--json --check` emits JSON events only; `--json --dry-run` is rejected. Parse/read errors before execution still use stderr. See [exit codes](error-codes.md) for scripting behavior.

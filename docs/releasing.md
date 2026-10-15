@@ -23,8 +23,8 @@ gh run list --workflow release.yml --limit 3
 Inspect the run and its artifacts. Once checks and all target builds pass on the intended commit, create an annotated tag matching Cargo's version:
 
 ```sh
-git tag -a v0.1.1 -m "xnip v0.1.1"
-git push origin v0.1.1
+git tag -a v0.2.0 -m "xnip v0.2.0"
+git push origin v0.2.0
 ```
 
 The tag workflow checks the tag/version match and repeats validation. It packages executable, README and license; generates archive SHA256 sidecars; and uploads six binary archives, six sidecars, two installers and six integration archives. Build commit metadata comes from `XNIP_BUILD_COMMIT`; `Cross.toml` passes it into Linux build containers.

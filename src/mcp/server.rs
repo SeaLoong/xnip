@@ -53,9 +53,18 @@ impl Default for XnipServer {
 
 #[tool_router]
 impl XnipServer {
-    // === 9 个 tool 的实际实现委托给 super::tools::* ===
     #[rmcp::tool(
-        description = "Create a file, replace an exact literal text block, or delete a regular file. Replacement requires unique old text unless all=true. Supports dry_run/check without writes, including create/delete, and optional backups. Existing context may suffice; no mandatory read-before-edit call."
+        description = "Restore files from a recovery journal after a failed/interrupted transaction. dry_run validates and previews without writes. Refuses external-content conflicts. Only recover a known transaction after its writer has stopped."
+    )]
+    async fn xnip_recover(
+        &self,
+        params: rmcp::handler::server::wrapper::Parameters<tools::recover::Args>,
+    ) -> Result<rmcp::model::CallToolResult, McpError> {
+        tools::recover::run(params.0)
+    }
+    // === 10 个 tool 的实际实现委托给 super::tools::* ===
+    #[rmcp::tool(
+        description = "Create a file, replace an exact literal text block, delete a regular file, or rename to an absent destination. Replacement requires unique old text unless all=true. Supports dry_run/check without writes, including create/delete, and optional backups. Existing context may suffice; no mandatory read-before-edit call."
     )]
     async fn xnip_edit(
         &self,
@@ -129,7 +138,7 @@ impl XnipServer {
     }
 
     #[rmcp::tool(
-        description = "Apply a batch of edits with validation before writing. Provide `path` (manifest file) or `manifest_text` (inline native/json/yaml content). Two-phase commit: stage 1 plans all writes, stage 2 renames files individually. Commit failures report already-committed files; there is no automatic rollback."
+        description = "Apply a batch of edits with validation before writing. Provide path or manifest_text in native/json/yaml/patch format. Supports create/delete/rename/edit and sequential planning. dry_run/check do not write. Commit failures attempt rollback and retain a recovery journal; conflicts require inspection."
     )]
     async fn xnip_apply(
         &self,
@@ -161,7 +170,7 @@ impl ServerHandler for XnipServer {
 
 /// 顶层指令文本：告诉 LLM 这个 server 是什么、有哪些约定。
 /// 越精炼越好——LLM 上下文宝贵，不写废话。
-const INSTRUCTIONS: &str = "xnip edits local files using 1-based inclusive line numbers or exact text. Use xnip_edit for file creation, unique literal block replacement, deletion and non-writing previews/checks. Reuse known context; inspect only what is needed for a reliable edit. Other write tools commit immediately. Batch writes commit per file and do not automatically roll back. Expected-content checks are not locks; backup=true preserves a .bak sidecar.";
+const INSTRUCTIONS: &str = "xnip edits local files using 1-based inclusive line numbers or exact text. Use xnip_edit for file creation, unique literal block replacement, deletion, no-clobber rename and non-writing previews/checks. Reuse known context; inspect only what is needed for a reliable edit. xnip_apply also supports dry_run/check, file lifecycle operations and text patches. Legacy line tools commit immediately. Batch commits attempt rollback on failure and retain recovery snapshots; detected external conflicts block restoration. Expected-content checks are not locks; backup=true preserves a .bak sidecar.";
 
 /// 启动 stdio MCP server 并阻塞至连接关闭。
 ///

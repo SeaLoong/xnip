@@ -29,7 +29,7 @@ use regex::bytes::Regex as ByteRegex;
 use serde::Deserialize;
 use serde_json::Value;
 
-use crate::apply::{IndentKind, MovePosition, Op, OpContent, Target};
+use crate::apply::{FileOp, IndentKind, MovePosition, Op, OpContent, Target};
 use crate::core::location::{Count, Locator};
 
 /// JSON 数组顶层解析。
@@ -49,6 +49,14 @@ pub fn parse(src: &str) -> Result<Vec<Op>> {
 #[serde(rename_all = "kebab-case", deny_unknown_fields)]
 struct RawOp {
     op: String,
+    #[serde(default)]
+    old: Option<String>,
+    #[serde(default)]
+    old_file: Option<String>,
+    #[serde(default)]
+    to_file: Option<PathBuf>,
+    #[serde(default)]
+    all: bool,
 
     // target
     #[serde(default)]
@@ -104,13 +112,80 @@ struct RawOp {
 impl RawOp {
     fn into_op(self) -> Result<Op> {
         let op_name = self.op.clone();
+        if !matches!(op_name.as_str(), "create" | "delete" | "rename" | "edit")
+            && (self.old.is_some() || self.old_file.is_some() || self.to_file.is_some() || self.all)
+        {
+            bail!("old/old-file/to-file/all require a file operation");
+        }
         match op_name.as_str() {
+            "create" | "delete" | "rename" | "edit" => self.to_file_op(),
             "replace" => self.to_replace(),
             "insert" => self.to_insert(),
             "move" => self.to_move(),
             "indent" => self.to_indent(),
             other => bail!("unknown op: {other}"),
         }
+    }
+
+    fn to_file_op(self) -> Result<Op> {
+        let target = self.target()?;
+        if !matches!(target, Target::File(_)) {
+            bail!("file operations require a single file target");
+        }
+        if self.lines.is_some()
+            || self.pattern.is_some()
+            || self.match_line.is_some()
+            || self.between.is_some()
+            || self.between_re.is_some()
+            || self.revert.unwrap_or(false)
+            || self.to.is_some()
+            || self.by.is_some()
+            || self.tabs_to_spaces.is_some()
+            || self.spaces_to_tabs.is_some()
+            || self.where_.is_some()
+            || self.count.is_some()
+            || self.occurrence.is_some()
+            || self.inclusive.is_some()
+        {
+            bail!("file operations do not accept line/regex/indent modifiers");
+        }
+        let content = self.content(false)?;
+        let old = match (&self.old, &self.old_file) {
+            (Some(_), Some(_)) => bail!("old and old-file are mutually exclusive"),
+            (Some(text), None) => Some(OpContent::Text(text.as_bytes().to_vec())),
+            (None, Some(path)) => Some(OpContent::File(PathBuf::from(path))),
+            _ => None,
+        };
+        let was = self.was_bytes()?;
+        let operation = match self.op.as_str() {
+            "create"
+                if old.is_none()
+                    && was.is_none()
+                    && self.to_file.is_none()
+                    && !self.all
+                    && !content.is_none() =>
+            {
+                FileOp::Create(content)
+            }
+            "delete"
+                if old.is_none() && content.is_none() && self.to_file.is_none() && !self.all =>
+            {
+                FileOp::Delete { was }
+            }
+            "rename" if old.is_none() && content.is_none() && !self.all => FileOp::Rename {
+                to: self.to_file.context("rename requires to-file")?,
+                was,
+            },
+            "edit" if was.is_none() && self.to_file.is_none() && !content.is_none() => {
+                FileOp::Exact {
+                    old: old.context("edit requires old or old-file")?,
+                    text: content,
+                    all: self.all,
+                }
+            }
+            _ => bail!("invalid content/modifiers for {}", self.op),
+        };
+        Ok(Op::File { target, operation })
     }
 
     fn target(&self) -> Result<Target> {

@@ -2,7 +2,7 @@
 //!
 //! 这里**不依赖 rmcp client**——直接对子进程喂裸 JSON-RPC 帧，验证：
 //! 1. `initialize` 握手返回正确 `serverInfo`（name/version 来自 xnip 自身而非 rmcp）
-//! 2. `tools/list` 返回 9 个我们注册的工具
+//! 2. `tools/list` 返回 10 个我们注册的工具
 //! 3. `tools/call xnip_peek` 实际工作：行号格式 + 字节透传
 //! 4. `tools/call xnip_replace` + `was` 校验失败时返回 JSON-RPC error 且文件未改动
 
@@ -84,7 +84,7 @@ fn doctor_responds_while_stdin_remains_open() {
     )
     .unwrap();
     input.flush().unwrap();
-    assert_eq!(response(3)["result"]["tools"].as_array().unwrap().len(), 9);
+    assert_eq!(response(3)["result"]["tools"].as_array().unwrap().len(), 10);
     drop(input);
     drop(server);
     reader.join().unwrap();
@@ -142,12 +142,13 @@ fn initialize_returns_xnip_server_info() {
 }
 
 #[test]
-fn tools_list_returns_nine_tools() {
+fn tools_list_returns_ten_tools() {
     let out = run_mcp(&frames(&[
         r#"{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}"#,
     ]));
     for name in [
         "xnip_edit",
+        "xnip_recover",
         "xnip_peek",
         "xnip_find",
         "xnip_replace",
@@ -256,4 +257,18 @@ fn edit_tool_can_preview_create_and_exact_replace() {
     .to_string();
     assert!(run_mcp(&frames(&[&call])).contains(r#""error":{"code":-32600"#));
     assert!(file.exists());
+}
+
+#[test]
+fn apply_tool_preview_supports_lifecycle_without_stdout_pollution() {
+    let dir = tempfile::tempdir().unwrap();
+    let file = dir.path().join("new/file");
+    let manifest = serde_json::json!([{"op":"create","file":file,"text":"hello"}]).to_string();
+    let call=serde_json::json!({"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"xnip_apply","arguments":{"manifest_text":manifest,"format":"json","dry_run":true}}}).to_string();
+    let output = run_mcp(&frames(&[&call]));
+    for line in output.lines() {
+        serde_json::from_str::<serde_json::Value>(line).unwrap();
+    }
+    assert!(output.contains("validated"));
+    assert!(!file.parent().unwrap().exists());
 }

@@ -1,4 +1,4 @@
-//! 9 个 MCP 工具的实现。
+//! 10 个 MCP 工具的实现。
 //!
 //! 每个工具一个子模块，包含：
 //! - [`Args`]：JsonSchema 输入结构（与 cli args 字段同名同义，便于复用）
@@ -18,4 +18,5 @@ pub mod indent;
 pub mod insert;
 pub mod move_op;
 pub mod peek;
+pub mod recover;
 pub mod replace;

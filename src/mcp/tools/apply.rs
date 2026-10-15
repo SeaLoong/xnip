@@ -1,20 +1,21 @@
 //! `xnip_apply` 工具：批量应用清单。
 //!
-//! 与 cli `xnip apply` 行为一致（PLAN §6.9），不暴露 dry-run/check/json/from-stdin。
+//! 与 cli `xnip apply` 行为一致（PLAN §6.9），支持 dry_run/check；不读协议 stdin。
 //! 输入支持两种来源：
-//! - `path`：清单文件路径（支持 native/json/yaml，按扩展名自动识别）
+//! - `path`：清单文件路径（支持 native/json/yaml/patch，按扩展名自动识别）
 //! - `manifest_text`：行内清单文本（适合 LLM 直接生成短清单）
 //!
 //! 注意：MCP 上下文不读进程 stdin，因此清单中的 `@-` 内容来源**不被支持**——
 //! 若清单 op 含 `@-`，会在解析后报错。LLM 应改用 `text` 字面或 `text_file`。
 
+use std::fmt::Write as _;
 use std::path::PathBuf;
 
 use rmcp::{ErrorData as McpError, model::CallToolResult};
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use crate::apply::commit::{ExecError, ExecOpts, execute};
+use crate::apply::commit::{ExecError, ExecOpts, execute_report};
 use crate::apply::detect::{Format, parse_auto, parse_format_arg, parse_with};
 use crate::apply::{Op, OpContent};
 
@@ -41,6 +42,12 @@ pub struct Args {
     /// 阶段一并行处理的文件数上限（0/1 = 单线程）。
     #[serde(default)]
     pub parallel: Option<usize>,
+    #[serde(default)]
+    pub sequential: bool,
+    #[serde(default)]
+    pub dry_run: bool,
+    #[serde(default)]
+    pub check: bool,
 }
 
 pub fn run(a: Args) -> Result<CallToolResult, McpError> {
@@ -80,7 +87,7 @@ pub fn run(a: Args) -> Result<CallToolResult, McpError> {
     let ops = if let Some(fmt_str) = a.format.as_deref() {
         let fmt = parse_format_arg(fmt_str).map_err(any_to_invalid_params)?;
         parse_with(&src, fmt).map_err(|e| {
-            McpError::invalid_params(format!("parse with format {fmt:?} failed: {e}"), None)
+            McpError::invalid_params(format!("parse with format {fmt:?} failed: {e:#}"), None)
         })?
     } else if a.path.is_some() {
         parse_auto(&src, a.path.as_deref()).map_err(any_to_invalid_params)?
@@ -89,7 +96,7 @@ pub fn run(a: Args) -> Result<CallToolResult, McpError> {
         parse_with(&src, Format::Native)
             .or_else(|_| parse_auto(&src, None))
             .map_err(|e| {
-                McpError::invalid_params(format!("manifest_text parse failed: {e}"), None)
+                McpError::invalid_params(format!("manifest_text parse failed: {e:#}"), None)
             })?
     };
 
@@ -105,8 +112,9 @@ pub fn run(a: Args) -> Result<CallToolResult, McpError> {
 
     // 执行
     let opts = ExecOpts {
-        check: false,
-        dry_run: false,
+        check: a.check,
+        dry_run: a.dry_run,
+        sequential: a.sequential,
         backup,
         manifest_dir,
         stdin_bytes: None,
@@ -116,9 +124,24 @@ pub fn run(a: Args) -> Result<CallToolResult, McpError> {
         },
     };
 
-    match execute(ops, &opts) {
-        Ok(files) => {
-            let mut text = format!("xnip_apply: committed {} file(s)\n", files.len());
+    match execute_report(ops, &opts) {
+        Ok(report) => {
+            let files = report.files;
+            let mut text = format!(
+                "xnip_apply: {} {} file(s)\n",
+                if a.check || a.dry_run {
+                    "validated"
+                } else {
+                    "committed"
+                },
+                files.len()
+            );
+            if a.dry_run {
+                text.push_str(&report.diff);
+            }
+            if let Some(journal) = report.journal {
+                let _ = writeln!(text, "recovery journal retained: {}", journal.display());
+            }
             for f in &files {
                 text.push_str("  - ");
                 text.push_str(&f.display().to_string());
@@ -142,6 +165,13 @@ fn has_stdin_content(ops: &[Op]) -> bool {
         Op::Replace { content, .. } | Op::Insert { content, .. } => {
             matches!(content, OpContent::Stdin)
         }
+        Op::File { operation, .. } => match operation {
+            crate::apply::FileOp::Create(content)
+            | crate::apply::FileOp::Exact { text: content, .. } => {
+                matches!(content, OpContent::Stdin)
+            }
+            _ => false,
+        },
         Op::Move { .. } | Op::Indent { .. } => false,
     })
 }

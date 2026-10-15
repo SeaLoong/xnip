@@ -9,11 +9,11 @@ agents should branch on them rather than parsing stderr text.
 | 1    | `USAGE`   | User error: bad CLI args, locator not found, parse error, unknown subcommand. |
 | 2    | `IO`      | IO error: cannot create tempfile, permission denied, disk full. |
 | 3    | `CHECK`   | Validation failure: `--was` mismatch; `--check` rejected the plan; pattern matched nothing. |
-| 4    | `PARTIAL` | `apply` phase 2 partial commit: commit failed; zero or more earlier files may have been renamed. |
+| 4    | `PARTIAL` | `apply` phase 2 partial commit: commit failed; rollback was attempted, inspect status and recovery journal. |
 
 ## Exit-code reference per command
 
-### `edit` (development branch)
+### `edit`
 
 - `0` committed, previewed, checked or unchanged
 - `1` invalid arguments/operation or unsupported target type
@@ -51,7 +51,12 @@ agents should branch on them rather than parsing stderr text.
 - `1` manifest parse error
 - `2` IO error reading manifest or expanding `--files-from`
 - `3` phase-1 failure (no file modified)
-- `4` phase-2 commit failure (zero or more earlier files committed; inspect the reported list)
+- `4` phase-2 commit failure, even if automatic rollback completes; inspect the journal/status
+
+### `recover`
+
+- `0` restored or validated; snapshots are retained
+- `3` invalid/corrupt journal, conflict, or recovery failure; inspect the message before retrying
 
 ### `doctor`
 

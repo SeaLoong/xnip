@@ -30,7 +30,7 @@ cast_possible_wrap = "allow"
 
 [package]
 name = "xnip"
-version = "0.1.1"
+version = "0.2.0"
 description = "Precise text editing CLI for LLM agents"
 edition.workspace = true
 rust-version.workspace = true
@@ -54,6 +54,7 @@ path = "src/main.rs"
 clap = { version = "4.6", features = ["derive", "wrap_help"] }
 regex = "1.12"
 memchr = "2.8"
+sha2 = "0.10.9"
 tempfile = "3.27"
 anyhow = "1.0.103"
 thiserror = "2.0"

@@ -1,14 +1,14 @@
 # `xnip apply` manifest format reference
 
-`xnip apply` accepts three equivalent formats. You can pick whichever your toolchain emits more cheaply.
+`xnip apply` accepts native, JSON and YAML manifests, plus text patches. You can pick whichever your toolchain emits more cheaply.
 
 The format is auto-detected by:
 
-1. `--format <native|json|yaml>` (explicit)
+1. `--format <native|json|yaml|patch>` (explicit)
 2. File extension (`.json`/`.json5` → JSON, `.yaml`/`.yml` → YAML, otherwise native)
 3. Try the preferred format first, then each remaining format (native → JSON → YAML, JSON → YAML → native, or YAML → JSON → native)
 
-stdin first tries **native**, then JSON and YAML. Use `--format` to get format-specific validation errors. A `.json5` suffix is only a JSON hint; JSON5 syntax is not supported.
+Recognized unified/apply_patch headers and `.patch`/`.diff` files prefer the patch parser. Other stdin first tries **native**, then JSON, YAML and patch. Use `--format` to get format-specific validation errors. A `.json5` suffix is only a JSON hint; JSON5 syntax is not supported.
 
 ---
 
@@ -154,7 +154,7 @@ Same schema as JSON. Multi-line text with `|` block scalars is more readable:
 4. **Phase 1** — for each file: read → apply ops → write a temp file in the same directory
 5. **Phase 2** — atomic-rename each temp file; if `--backup`, save `<file>.bak` first
 6. On phase-1 failure: nothing on disk changes; exit 3
-7. On phase-2 failure: list committed paths and exit 4; no automatic rollback, even with `--backup`
+7. Before commit, persist recovery snapshots. On commit failure, attempt rollback and return exit 4 with the journal path and rollback status. See [recovery](recovery.md).
 
 Modes:
 
@@ -197,3 +197,36 @@ Modes:
 Direct `file` targets resolve relative to the process working directory. `files-from` list paths, entries within those lists, and payload `text-file`/`@path` paths resolve relative to the manifest directory (or the working directory for stdin manifests). `was-file` is read during parsing and resolves relative to the process working directory. Use absolute paths when sharing manifests across working directories.
 
 Targets are canonicalized before grouping; diagnostics may therefore show absolute paths. Anchors are resolved against the original file before descending-line ordering. Keep line ranges disjoint. Pattern edits cannot be mixed with line-based edits on the same file, and a move must be the only operation on its file: use separate manifests for those dependent edits. A pattern with zero matches fails validation. JSON/YAML reject unknown fields and invalid `where` values.
+
+## File lifecycle operations and ordered plans
+
+JSON/YAML support these additional operations. Native equivalents are shown below. Direct targets and `to-file` destinations resolve relative to the working directory; `old-file` and `text-file` payloads for `edit`/`create` resolve relative to the manifest directory. As with legacy operations, `was-file` is loaded during parsing relative to the working directory.
+
+```json
+[
+  {"op":"create","file":"new.txt","text":"alpha\nbeta"},
+  {"op":"edit","file":"new.txt","old":"beta","text":"gamma"},
+  {"op":"rename","file":"new.txt","to-file":"renamed.txt"},
+  {"op":"delete","file":"obsolete.txt","was":"expected original bytes"}
+]
+```
+
+```text
+create new.txt "alpha\nbeta"
+edit new.txt "beta" "gamma"
+rename new.txt renamed.txt
+delete obsolete.txt
+```
+
+- `create`: requires `text` or `text-file`; an existing virtual target is rejected.
+- `edit`: requires `old` or `old-file` plus `text` or `text-file`; literal unique matching, with optional `all: true`. Native form accepts a final `all` modifier. Old content cannot consume stdin.
+- `delete`: optional whole-file `was`/`was-file` in JSON/YAML. Native delete has only the target; use structured format for a precondition.
+- `rename`: requires `to-file`; optional whole-file `was`/`was-file` in JSON/YAML. The destination must be absent at the beginning of the plan. Pure moves require the same filesystem.
+
+Any file lifecycle operation or patch switches the entire manifest to **input-order execution** against virtual file contents. `--sequential` requests this mode for legacy operations too. This permits create→edit→rename, or a pattern edit followed by a locator targeting its result. `--parallel` only applies to legacy grouped preparation; dependent ordered plans execute serially. Intermediate states are not written: the final state is coalesced per path before commit. External payload files are still read from disk, not from virtual targets created earlier in the same manifest.
+
+Legacy-only manifests without `--sequential` retain original-file anchor resolution and descending-line ordering. Do not assume input order in that mode. A batch validates every operation before touching targets, but individual commits remain observable to external programs; recovery is not cross-file atomic visibility.
+
+## Text patch import
+
+`xnip apply changes.patch` or `--format patch --from-stdin` imports unified diff and `*** Begin Patch` syntax, including new/deleted files and renames. See [patch import](patch.md) for context, newline and path rules. MCP apply also supports `dry_run`, `check` and `sequential`, with diff output returned in the tool result rather than protocol stdout.

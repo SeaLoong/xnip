@@ -1,6 +1,6 @@
 //! MCP (Model Context Protocol) server 模式。
 //!
-//! 通过 `xnip mcp` 子命令启动 stdio MCP server，向 LLM agent 暴露 9 个工具：
+//! 通过 `xnip mcp` 子命令启动 stdio MCP server，向 LLM agent 暴露 10 个工具：
 //! - `xnip_peek` / `xnip_find`：只读查询
 //! - `xnip_replace` / `xnip_insert` / `xnip_move` / `xnip_indent`：单文件写
 //! - `xnip_apply`：批量原子写

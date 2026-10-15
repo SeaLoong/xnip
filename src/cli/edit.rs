@@ -13,11 +13,14 @@ pub struct Args {
     /// Target path; must exist unless --create is used.
     pub file: PathBuf,
     /// Create a missing file, including parent directories; never overwrite.
-    #[arg(long, conflicts_with_all = ["delete", "old", "old_file", "all"])]
+    #[arg(long, conflicts_with_all = ["delete", "rename_to", "old", "old_file", "all"])]
     pub create: bool,
     /// Delete a regular file; old/old-file optionally checks its entire contents.
-    #[arg(long, conflicts_with_all = ["text", "text_file", "text_stdin", "all"])]
+    #[arg(long, conflicts_with_all = ["rename_to", "text", "text_file", "text_stdin", "all"])]
     pub delete: bool,
+    /// Rename to an absent destination on the same filesystem; never overwrite.
+    #[arg(long, conflicts_with_all=["text", "text_file", "text_stdin", "all"])]
+    pub rename_to: Option<PathBuf>,
     /// Exact old block to replace (not a regex).
     #[arg(long, conflicts_with = "old_file")]
     pub old: Option<String>,
@@ -52,6 +55,8 @@ pub fn run(args: Args) -> Result<u8> {
         Operation::Create
     } else if args.delete {
         Operation::Delete
+    } else if args.rename_to.is_some() {
+        Operation::Rename
     } else {
         Operation::Replace
     };
@@ -63,6 +68,7 @@ pub fn run(args: Args) -> Result<u8> {
     }
     let request = Request {
         operation,
+        to: args.rename_to,
         text,
         old: payload(args.old, args.old_file)?,
         all: args.all,
@@ -93,6 +99,10 @@ pub fn run(args: Args) -> Result<u8> {
         Err(EditError::Check(message)) => {
             eprintln!("xnip edit: {message}");
             Ok(exit::CHECK)
+        }
+        Err(EditError::Partial(message)) => {
+            eprintln!("xnip edit: {message}");
+            Ok(exit::PARTIAL)
         }
         Err(error) => Err(error.into()),
     }

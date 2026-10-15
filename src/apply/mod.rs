@@ -12,6 +12,7 @@ pub mod detect;
 pub mod parse_json;
 pub mod parse_native;
 pub mod parse_yaml;
+pub mod patch;
 
 use std::path::PathBuf;
 
@@ -71,6 +72,10 @@ pub enum MovePosition {
 /// `Locator` 含不例年 Clone 的字段设计，避免隐藏 clone 代价）。
 #[derive(Debug)]
 pub enum Op {
+    File {
+        target: Target,
+        operation: FileOp,
+    },
     Replace {
         target: Target,
         locator: Locator,
@@ -104,10 +109,30 @@ impl Op {
     /// 取 op 的目标，便于按文件分组。
     pub fn target(&self) -> &Target {
         match self {
-            Op::Replace { target, .. }
+            Op::File { target, .. }
+            | Op::Replace { target, .. }
             | Op::Insert { target, .. }
             | Op::Move { target, .. }
             | Op::Indent { target, .. } => target,
         }
     }
+}
+
+/// File lifecycle and literal operations execute in manifest order.
+#[derive(Debug, Clone)]
+pub enum FileOp {
+    Create(OpContent),
+    Delete {
+        was: Option<Vec<u8>>,
+    },
+    Rename {
+        to: PathBuf,
+        was: Option<Vec<u8>>,
+    },
+    Exact {
+        old: OpContent,
+        text: OpContent,
+        all: bool,
+    },
+    Patch(patch::FilePatch),
 }

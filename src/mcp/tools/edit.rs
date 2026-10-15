@@ -10,9 +10,11 @@ use std::path::PathBuf;
 pub struct Args {
     /// Target path; create requires an absent path, other operations an existing file.
     pub file: PathBuf,
-    /// replace (default), create (must not exist), or delete (regular files only).
+    /// replace (default), create (must not exist), delete (regular files only), or rename (to required).
     #[serde(default)]
     pub operation: Operation,
+    /// Absent destination for rename. Same filesystem required.
+    pub to: Option<PathBuf>,
     /// Exact old block; for delete, optional expected whole-file content.
     pub old: Option<String>,
     /// File containing exact old bytes (mutually exclusive with old).
@@ -46,6 +48,7 @@ fn error(error: EditError) -> McpError {
 pub fn run(args: Args) -> Result<CallToolResult, McpError> {
     let request = Request {
         operation: args.operation,
+        to: args.to,
         old: payload(args.old, args.old_file).map_err(error)?,
         text: payload(args.text, args.text_file).map_err(error)?,
         all: args.all,
