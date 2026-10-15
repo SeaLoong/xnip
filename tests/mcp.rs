@@ -272,3 +272,15 @@ fn apply_tool_preview_supports_lifecycle_without_stdout_pollution() {
     assert!(output.contains("validated"));
     assert!(!file.parent().unwrap().exists());
 }
+
+#[test]
+fn apply_tool_patch_root_and_preview_do_not_depend_on_server_cwd() {
+    let project = tempfile::tempdir().unwrap();
+    let patch = "*** Begin Patch\n*** Add File: hello.txt\n+hello\n*** End Patch\n";
+    for dry_run in [true, false] {
+        let call=serde_json::json!({"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"xnip_apply","arguments":{"manifest_text":patch,"patch_root":project.path(),"dry_run":dry_run}}}).to_string();
+        let output = run_mcp(&frames(&[&call]));
+        assert!(output.contains(r#""isError":false"#), "{output}");
+        assert_eq!(project.path().join("hello.txt").exists(), !dry_run);
+    }
+}

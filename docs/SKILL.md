@@ -35,7 +35,7 @@ Use `--dry-run` when a diff will resolve uncertainty and `--check` for validatio
 - Independent edits to existing files: `apply`. Read [manifest syntax and ordering](apply-format.md) when building a batch. Create/delete/rename/edit manifests execute in input order against virtual contents. Use `--sequential` for dependent legacy operations.
 - Locate missing context with `peek`/`find`, or repository search for unknown files. Text matching does not establish symbol scope; use language analysis for semantic refactors, then apply the intended text changes.
 
-Import unified or apply_patch-style text patches with `apply --format patch`; read [patch rules](patch.md) when needed. Use `edit --rename-to` for whole-file moves. Binary/document editing, mode-only patches, cross-device pure rename and complete filesystem metadata preservation require their appropriate tools.
+Import unified or apply_patch-style text patches with `apply --format patch`; read [patch rules](patch.md) when needed. Specify CLI `--patch-root` or MCP `patch_root` when the server working directory is not the project root. Use `edit --rename-to` for whole-file moves. Binary/document editing, mode-only patches, cross-device pure rename and complete filesystem metadata preservation require their appropriate tools.
 
 ## Failure and recovery
 

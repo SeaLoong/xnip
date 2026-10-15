@@ -44,7 +44,7 @@ Hunk counts are checked. Header positions identify the original lines; if a posi
 
 ## Paths and supported scope
 
-Paths are relative to the process working directory. Git's `a/` and `b/` header prefixes are stripped. Absolute paths, parent traversal, backslashes, drive/stream separators and paths resolving outside the working directory are rejected. Symlink creation and binary patches are not supported. Existing symlink escapes are rejected; this path validation is not a sandbox against a concurrently malicious filesystem writer.
+Paths are relative to the process working directory by default. `--patch-root /project` (MCP `patch_root`) selects an explicit existing project directory and implies patch format; it does not change the server process working directory. Use this for globally configured MCP servers. Git's `a/` and `b/` header prefixes are stripped; C-quoted UTF-8 paths, including Git's octal byte escapes, are decoded. Absolute paths, parent traversal, backslashes, drive/stream separators and paths resolving outside the selected patch root are rejected. Symlink creation and binary patches are not supported. Existing symlink escapes are rejected; this path validation is not a sandbox against a concurrently malicious filesystem writer.
 
 Binary payloads, executable-bit/mode changes and combined merge diffs are rejected instead of silently ignored. A normal `new file mode 100644` header is accepted; it does not override platform defaults for newly created file permissions. Deleted-file mode metadata is informational. For ambiguous contexts, regenerate the patch with more context or use an exact `edit` operation. Never retry a partially committed plan until its rollback/recovery status is understood.
 

@@ -336,3 +336,70 @@ fn readonly_rename_is_rejected_before_creating_a_second_link() {
     assert!(!to.exists());
     assert_eq!(fs::read(from).unwrap(), b"original");
 }
+
+#[test]
+fn git_quoted_unicode_paths_are_decoded() {
+    let dir = tempfile::tempdir().unwrap();
+    let patch =
+        "--- /dev/null\n+++ \"b/\\344\\270\\255\\346\\226\\207.txt\"\n@@ -0,0 +1 @@\n+hello\n";
+    apply(dir.path(), "patch", patch).assert().success();
+    assert_eq!(fs::read(dir.path().join("中文.txt")).unwrap(), b"hello\n");
+}
+#[test]
+fn lifecycle_rejects_trailing_directory_separator() {
+    let dir = tempfile::tempdir().unwrap();
+    apply(
+        dir.path(),
+        "json",
+        r#"[{"op":"create","file":"directory/","text":"wrong"}]"#,
+    )
+    .assert()
+    .code(3);
+    assert!(!dir.path().join("directory").exists());
+}
+
+#[test]
+fn patch_root_is_independent_of_process_working_directory() {
+    let project = tempfile::tempdir().unwrap();
+    let elsewhere = tempfile::tempdir().unwrap();
+    let patch = "*** Begin Patch\n*** Add File: hello.txt\n+hello\n*** End Patch\n";
+    Command::cargo_bin("xnip")
+        .unwrap()
+        .current_dir(elsewhere.path())
+        .args(["apply", "--from-stdin", "--patch-root"])
+        .arg(project.path())
+        .write_stdin(patch)
+        .assert()
+        .success();
+    assert_eq!(
+        fs::read(project.path().join("hello.txt")).unwrap(),
+        b"hello\n"
+    );
+    assert!(!elsewhere.path().join("hello.txt").exists());
+}
+
+#[cfg(windows)]
+#[test]
+fn new_parent_case_aliases_do_not_cause_false_conflicts() {
+    let dir = tempfile::tempdir().unwrap();
+    apply(dir.path(),"json",r#"[{"op":"create","file":"Directory/a","text":"one"},{"op":"create","file":"directory/b","text":"two"}]"#).assert().success();
+    assert_eq!(fs::read(dir.path().join("Directory/a")).unwrap(), b"one");
+    assert_eq!(fs::read(dir.path().join("Directory/b")).unwrap(), b"two");
+}
+
+#[test]
+fn unified_same_paths_in_a_directory_are_not_mistaken_for_git_prefixes() {
+    let dir = tempfile::tempdir().unwrap();
+    fs::create_dir(dir.path().join("a")).unwrap();
+    fs::write(dir.path().join("a/file"), b"old\n").unwrap();
+    fs::write(dir.path().join("file"), b"unrelated\n").unwrap();
+    apply(
+        dir.path(),
+        "patch",
+        "--- a/file\n+++ a/file\n@@ -1 +1 @@\n-old\n+new\n",
+    )
+    .assert()
+    .success();
+    assert_eq!(fs::read(dir.path().join("a/file")).unwrap(), b"new\n");
+    assert_eq!(fs::read(dir.path().join("file")).unwrap(), b"unrelated\n");
+}

@@ -27,6 +27,9 @@ pub struct Args {
     /// 显式指定格式：`native` / `json` / `yaml` / `patch`。不指定走自动识别。
     #[arg(long, value_name = "FORMAT")]
     pub format: Option<String>,
+    /// Resolve patch targets inside this directory; implies patch format.
+    #[arg(long)]
+    pub patch_root: Option<PathBuf>,
 
     /// 仅阶段一校验，不写文件。stdout 打 `OK`。
     #[arg(long, default_value_t = false, conflicts_with = "dry_run")]
@@ -92,7 +95,14 @@ pub fn run(a: Args) -> Result<u8> {
     };
 
     // 解析
-    let ops = if let Some(fmt_str) = &a.format {
+    let ops = if let Some(root) = &a.patch_root {
+        if let Some(format) = &a.format
+            && parse_format_arg(format)? != Format::Patch
+        {
+            bail!("patch-root requires patch format");
+        }
+        crate::apply::patch::parse_in(&src, root)?
+    } else if let Some(fmt_str) = &a.format {
         let fmt = parse_format_arg(fmt_str)?;
         parse_with(&src, fmt).with_context(|| format!("parse with --format {fmt:?} failed"))?
     } else if a.from_stdin {

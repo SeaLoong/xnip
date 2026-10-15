@@ -34,6 +34,9 @@ pub struct Args {
     /// 显式格式：`"native"` / `"json"` / `"yaml"`（默认按扩展名 / 内容自动识别）。
     #[serde(default)]
     pub format: Option<String>,
+    /// Explicit project directory for patch paths. Implies patch format; avoids relying on server cwd.
+    #[serde(default)]
+    pub patch_root: Option<PathBuf>,
 
     /// 写文件前先备份为 `<file>.bak`。
     #[serde(default)]
@@ -84,7 +87,17 @@ pub fn run(a: Args) -> Result<CallToolResult, McpError> {
     };
 
     // 解析
-    let ops = if let Some(fmt_str) = a.format.as_deref() {
+    let ops = if let Some(root) = &a.patch_root {
+        if let Some(format) = &a.format
+            && parse_format_arg(format).map_err(any_to_invalid_params)? != Format::Patch
+        {
+            return Err(McpError::invalid_params(
+                "patch_root requires patch format",
+                None,
+            ));
+        }
+        crate::apply::patch::parse_in(&src, root).map_err(any_to_invalid_params)?
+    } else if let Some(fmt_str) = a.format.as_deref() {
         let fmt = parse_format_arg(fmt_str).map_err(any_to_invalid_params)?;
         parse_with(&src, fmt).map_err(|e| {
             McpError::invalid_params(format!("parse with format {fmt:?} failed: {e:#}"), None)

@@ -1,7 +1,7 @@
 //! Text-only unified diff and apply_patch-style import. No fuzzy whitespace matching.
 use super::{FileOp, Op, OpContent, Target};
 use anyhow::{Context, Result, bail};
-use std::path::{Component, PathBuf};
+use std::path::{Component, Path, PathBuf};
 
 #[derive(Debug, Clone)]
 pub struct FilePatch {
@@ -24,11 +24,67 @@ struct Line {
     no_newline: bool,
 }
 
-fn path(value: &str, prefix: Option<&str>) -> Result<PathBuf> {
+/// Git quotes UTF-8 path bytes with C escapes (including octal), not JSON.
+fn quoted_path(value: &str) -> Result<String> {
+    let bytes = value
+        .strip_prefix('"')
+        .and_then(|value| value.strip_suffix('"'))
+        .context("unterminated quoted patch path")?
+        .as_bytes();
+    let mut output = Vec::new();
+    let mut index = 0;
+    while index < bytes.len() {
+        let byte = bytes[index];
+        index += 1;
+        if byte != b'\\' {
+            output.push(byte);
+            continue;
+        }
+        let escaped = *bytes.get(index).context("truncated path escape")?;
+        index += 1;
+        let decoded = match escaped {
+            b'"' => b'"',
+            b'\\' => b'\\',
+            b't' => b'\t',
+            b'n' => b'\n',
+            b'r' => b'\r',
+            b'a' => 7,
+            b'b' => 8,
+            b'f' => 12,
+            b'v' => 11,
+            b'0'..=b'7' => {
+                let mut value = u16::from(escaped - b'0');
+                for _ in 0..2 {
+                    if let Some(byte @ b'0'..=b'7') = bytes.get(index) {
+                        value = value * 8 + u16::from(*byte - b'0');
+                        index += 1;
+                    } else {
+                        break;
+                    }
+                }
+                u8::try_from(value).context("octal path escape exceeds one byte")?
+            }
+            _ => bail!("unsupported path escape"),
+        };
+        output.push(decoded);
+    }
+    String::from_utf8(output).context("patch paths must decode as UTF-8")
+}
+
+fn header_prefix(value: &str, prefix: &str) -> Result<bool> {
+    let value = value.split('\t').next().unwrap_or(value);
+    Ok(if value.starts_with('"') {
+        quoted_path(value)?.starts_with(prefix)
+    } else {
+        value.starts_with(prefix)
+    })
+}
+
+fn path(value: &str, prefix: Option<&str>, root: &Path) -> Result<PathBuf> {
     let value = value.split('\t').next().unwrap_or(value);
     let decoded;
     let value = if value.starts_with('"') {
-        decoded = serde_json::from_str::<String>(value).context("unsupported quoted patch path")?;
+        decoded = quoted_path(value)?;
         decoded.as_str()
     } else {
         value
@@ -38,6 +94,7 @@ fn path(value: &str, prefix: Option<&str>) -> Result<PathBuf> {
         .unwrap_or(value);
     let result = PathBuf::from(value);
     if value.is_empty()
+        || value.ends_with('/')
         || value.contains(['\\', ':', '\0'])
         || result.is_absolute()
         || result
@@ -46,19 +103,32 @@ fn path(value: &str, prefix: Option<&str>) -> Result<PathBuf> {
     {
         bail!("patch paths must be relative forward-slash paths without parent traversal: {value}");
     }
-    let root = std::fs::canonicalize(".")?;
-    if !crate::core::transaction::normalize(&result)?.starts_with(&root) {
+    let result = root.join(result);
+    if !crate::core::transaction::normalize(&result)?.starts_with(root) {
         bail!("patch path escapes working directory: {value}");
     }
     Ok(result)
 }
 
 pub fn parse(source: &str) -> Result<Vec<Op>> {
+    parse_in(source, &std::env::current_dir()?)
+}
+
+/// Resolve patch paths inside an explicit directory without changing process cwd.
+pub fn parse_in(source: &str, root: &Path) -> Result<Vec<Op>> {
+    let root = std::fs::canonicalize(root)?;
+    if !root.is_dir() {
+        bail!("patch root must be a directory");
+    }
+    let source = source
+        .strip_prefix('\u{feff}')
+        .unwrap_or(source)
+        .trim_start_matches(['\r', '\n']);
     let lines: Vec<&str> = source.lines().collect();
     if lines.first() == Some(&"*** Begin Patch") {
-        parse_native(&lines)
+        parse_native(&lines, &root)
     } else {
-        parse_unified(&lines)
+        parse_unified(&lines, &root)
     }
 }
 
@@ -83,7 +153,7 @@ fn body_line(raw: &str) -> Result<Line> {
     })
 }
 
-fn parse_native(lines: &[&str]) -> Result<Vec<Op>> {
+fn parse_native(lines: &[&str], root: &Path) -> Result<Vec<Op>> {
     let mut ops = Vec::new();
     let mut index = 1;
     while index < lines.len() {
@@ -96,7 +166,7 @@ fn parse_native(lines: &[&str]) -> Result<Vec<Op>> {
             return Ok(ops);
         }
         if let Some(value) = header.strip_prefix("*** Add File: ") {
-            let target = path(value, None)?;
+            let target = path(value, None, root)?;
             let mut bytes = Vec::new();
             while index < lines.len() && !lines[index].starts_with("*** ") {
                 let content = lines[index]
@@ -108,9 +178,9 @@ fn parse_native(lines: &[&str]) -> Result<Vec<Op>> {
             }
             ops.push(file(target, FileOp::Create(OpContent::Text(bytes))));
         } else if let Some(value) = header.strip_prefix("*** Delete File: ") {
-            ops.push(file(path(value, None)?, FileOp::Delete { was: None }));
+            ops.push(file(path(value, None, root)?, FileOp::Delete { was: None }));
         } else if let Some(value) = header.strip_prefix("*** Update File: ") {
-            let target = path(value, None)?;
+            let target = path(value, None, root)?;
             let mut patch = FilePatch {
                 hunks: Vec::new(),
                 create: false,
@@ -121,7 +191,7 @@ fn parse_native(lines: &[&str]) -> Result<Vec<Op>> {
                 .get(index)
                 .and_then(|line| line.strip_prefix("*** Move to: "))
             {
-                patch.rename_to = Some(path(value, None)?);
+                patch.rename_to = Some(path(value, None, root)?);
                 index += 1;
             }
             while index < lines.len()
@@ -178,7 +248,7 @@ fn parse_native(lines: &[&str]) -> Result<Vec<Op>> {
     bail!("missing End Patch")
 }
 
-fn parse_unified(lines: &[&str]) -> Result<Vec<Op>> {
+fn parse_unified(lines: &[&str], root: &Path) -> Result<Vec<Op>> {
     let header = regex::Regex::new(r"^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@.*$")?;
     let mut index = 0;
     let mut ops = Vec::new();
@@ -194,12 +264,12 @@ fn parse_unified(lines: &[&str]) -> Result<Vec<Op>> {
             continue;
         }
         if let Some(value) = line.strip_prefix("rename from ") {
-            rename_from = Some(path(value, None)?);
+            rename_from = Some(path(value, None, root)?);
             index += 1;
             continue;
         }
         if let Some(value) = line.strip_prefix("rename to ") {
-            rename_to = Some(path(value, None)?);
+            rename_to = Some(path(value, None, root)?);
             index += 1;
             continue;
         }
@@ -225,15 +295,19 @@ fn parse_unified(lines: &[&str]) -> Result<Vec<Op>> {
         if create && delete {
             bail!("both patch paths are /dev/null");
         }
+        let git_prefixes =
+            (create || header_prefix(old, "a/")?) && (delete || header_prefix(new, "b/")?);
+        let old_prefix = git_prefixes.then_some("a/");
+        let new_prefix = git_prefixes.then_some("b/");
         let from = if create {
-            path(new, Some("b/"))?
+            path(new, new_prefix, root)?
         } else {
-            path(old, Some("a/"))?
+            path(old, old_prefix, root)?
         };
         let destination = if delete {
             None
         } else {
-            Some(path(new, Some("b/"))?)
+            Some(path(new, new_prefix, root)?)
         };
         if let Some(expected) = rename_from.take()
             && expected != from

@@ -75,6 +75,18 @@ pub fn normalize(path: &Path) -> Result<PathBuf> {
     }
 }
 
+fn same_path(left: &Path, right: &Path) -> bool {
+    #[cfg(windows)]
+    {
+        left.to_string_lossy()
+            .eq_ignore_ascii_case(&right.to_string_lossy())
+    }
+    #[cfg(not(windows))]
+    {
+        left == right
+    }
+}
+
 fn snapshot(path: &Path) -> Result<Option<Vec<u8>>> {
     match fs::symlink_metadata(path) {
         Ok(metadata) => {
@@ -102,6 +114,14 @@ fn reject_link(path: &Path) -> Result<()> {
 
 impl Plan {
     fn entry(&mut self, path: &Path) -> Result<(PathBuf, &mut Entry)> {
+        if path
+            .as_os_str()
+            .as_encoded_bytes()
+            .last()
+            .is_some_and(|byte| matches!(byte, b'/' | b'\\'))
+        {
+            bail!("file target must not end with a directory separator");
+        }
         let key = normalize(path)?;
         #[cfg(windows)]
         let key = self
@@ -231,7 +251,32 @@ impl Plan {
     pub fn preview(&self) -> Report {
         let changes = self.changed();
         let mut diff = String::new();
+        let mut moved = BTreeSet::new();
         for (path, entry) in &changes {
+            if entry.origin != *path
+                && entry.before.is_none()
+                && let Some(source) = changes.get(&entry.origin)
+                && source.after.is_none()
+            {
+                let _ = writeln!(
+                    diff,
+                    "# rename {} -> {}",
+                    entry.origin.display(),
+                    path.display()
+                );
+                diff.push_str(&super::diff::unified_diff(
+                    path,
+                    source.before.as_deref().unwrap_or_default(),
+                    entry.after.as_deref().unwrap_or_default(),
+                ));
+                moved.insert(&entry.origin);
+                moved.insert(path);
+            }
+        }
+        for (path, entry) in &changes {
+            if moved.contains(path) {
+                continue;
+            }
             let kind = if entry.before.is_none() {
                 "create"
             } else if entry.after.is_none() {
@@ -262,7 +307,7 @@ impl Plan {
     ) -> Result<Report> {
         // Validate every observed input, even no-op/read-only dependencies.
         for (path, entry) in &self.entries {
-            if snapshot(path)? != entry.before {
+            if !same_path(&normalize(path)?, path) || snapshot(path)? != entry.before {
                 bail!("file changed before commit: {}", path.display());
             }
         }
@@ -473,7 +518,10 @@ impl Journal {
         let mut paths = BTreeSet::new();
         for record in &manifest.records {
             if !record.path.is_absolute()
-                || normalize(&record.path)? != record.path
+                || !same_path(&normalize(&record.path)?, &record.path)
+                || paths
+                    .iter()
+                    .any(|existing: &PathBuf| same_path(existing, &record.path))
                 || !paths.insert(record.path.clone())
                 || record.path.starts_with(&directory)
             {
@@ -547,7 +595,9 @@ impl Journal {
             .iter()
             .find(|r| r.path == path)
             .context("unrecorded target")?;
-        if snapshot(path)?.as_deref().map(digest) != record.before {
+        if !same_path(&normalize(path)?, path)
+            || snapshot(path)?.as_deref().map(digest) != record.before
+        {
             bail!("concurrent change at {}", path.display());
         }
         Ok(())
@@ -555,7 +605,7 @@ impl Journal {
     fn restore(&self, check: bool) -> Result<Report> {
         // Reject conflicts across the whole plan before restoring any path.
         for record in &self.manifest.records {
-            if normalize(&record.path)? != record.path {
+            if !same_path(&normalize(&record.path)?, &record.path) {
                 bail!("recovery path changed: {}", record.path.display());
             }
             let current = snapshot(&record.path)?.as_deref().map(digest);
@@ -597,7 +647,7 @@ impl Journal {
                     .find(|r| r.path == *path)
                     .context("missing recovery endpoint")?;
                 let current = snapshot(path)?.as_deref().map(digest);
-                if normalize(path)? != *path
+                if !same_path(&normalize(path)?, path)
                     || (current != record.before && current != record.after)
                 {
                     bail!("recovery conflict at {}", path.display());
@@ -662,6 +712,19 @@ pub fn recover(directory: &Path, check: bool) -> Result<Report> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn pure_move_preview_does_not_dump_unchanged_contents() {
+        let dir = tempfile::tempdir().unwrap();
+        let from = dir.path().join("a");
+        let to = dir.path().join("b");
+        fs::write(&from, b"unchanged payload\n").unwrap();
+        let mut plan = Plan::default();
+        plan.rename(&from, &to, None).unwrap();
+        let preview = plan.preview();
+        assert_eq!(preview.files.len(), 2);
+        assert!(preview.diff.contains("# rename "));
+        assert!(!preview.diff.contains("unchanged payload"));
+    }
     #[test]
     fn batch_lifecycle_and_no_clobber_move() {
         let dir = tempfile::tempdir().unwrap();
