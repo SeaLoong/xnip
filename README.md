@@ -36,7 +36,7 @@ curl -fsSL https://github.com/SeaLoong/xnip/releases/latest/download/install.sh 
 iwr -useb https://github.com/SeaLoong/xnip/releases/latest/download/install.ps1 | iex
 
 # Any platform with Rust, directly from the release tag
-cargo install --git https://github.com/SeaLoong/xnip --tag v0.1.0 --locked
+cargo install --git https://github.com/SeaLoong/xnip --tag v0.1.1 --locked xnip
 ```
 
 See [installation and troubleshooting](docs/installation.md) for platform selection, version pinning, PATH setup, checksums and removal. The GitHub release is the distribution channel; crates.io installation is not currently advertised.

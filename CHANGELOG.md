@@ -4,9 +4,11 @@ User-visible changes are recorded here. Versions follow Semantic Versioning; com
 
 ## [Unreleased]
 
-## [0.1.0] - 2026-10-15
+## [0.1.1] - 2026-10-15
 
-First public release of xnip, a CLI and MCP stdio server for precise local text editing.
+First public release of xnip, a CLI and MCP stdio server for precise local text editing. The earlier v0.1.0 tag was an unpublished release candidate; no GitHub Release was published for it.
+
+- Correct Git source installation to explicitly select the `xnip` package in this workspace.
 
 ### Features
 
@@ -46,5 +48,5 @@ First public release of xnip, a CLI and MCP stdio server for precise local text 
 - MCP write tools commit immediately; preview/check modes are available through the CLI. The server uses the launching user's filesystem permissions and is intended for trusted local clients.
 - Native CLI arguments are literal shell arguments; no automatic `\n` decoding or newline-style conversion is performed.
 
-[Unreleased]: https://github.com/SeaLoong/xnip/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/SeaLoong/xnip/releases/tag/v0.1.0
+[Unreleased]: https://github.com/SeaLoong/xnip/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/SeaLoong/xnip/releases/tag/v0.1.1

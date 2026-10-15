@@ -36,7 +36,7 @@ curl -fsSL https://github.com/SeaLoong/xnip/releases/latest/download/install.sh 
 iwr -useb https://github.com/SeaLoong/xnip/releases/latest/download/install.ps1 | iex
 
 # 任何装 Rust 的平台：从正式版本标签安装
-cargo install --git https://github.com/SeaLoong/xnip --tag v0.1.0 --locked
+cargo install --git https://github.com/SeaLoong/xnip --tag v0.1.1 --locked xnip
 ```
 
 支持平台、指定版本、PATH 设置、校验及卸载详见 [安装说明](docs/installation.md)。当前通过 GitHub Release 分发，不提供未经发布验证的 crates.io 安装命令。
