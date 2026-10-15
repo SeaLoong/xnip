@@ -61,6 +61,39 @@ MCP **retains**:
 - `backup` (write commands) — opt-in `.bak` copy as a safety escape hatch
 - `manifest_text` (`xnip_apply` only) — inline manifest text, ideal for LLMs generating short manifests without writing a file first
 
+## Result display
+
+Available in current source, after the v0.2.0 release.
+
+All tools advertise a human-readable `title` and read/write annotations. Tool names and arguments remain compatible. Titles are display hints: Codex and other clients choose whether to use them, how to show arguments, and whether to render Markdown. xnip cannot force a native editor card, hide the client's argument JSON or customize its layout through these fields. Write tools remain marked as potentially destructive even when an individual call requests a preview.
+
+`xnip_edit`, `xnip_apply` and `xnip_recover` return a concise text summary plus `structuredContent`, described by their `outputSchema`:
+
+| Field | Meaning |
+|---|---|
+| `operation` | `create`, `replace`, `delete`, `rename`, `apply` or `recover` |
+| `mode` | `write`, `preview` or `check` |
+| `has_changes` | Planned file content/existence differs from the starting state |
+| `written` | This successful call committed changes; always false in preview/check |
+| `files` | Complete target paths; single edit includes its target even when unchanged, rename includes both endpoints, batches/recovery include changed paths |
+| `destination` | Rename destination, when applicable |
+| `replacements` | Matched literal blocks for exact replacement, including identical replacements |
+| `journal` | Retained recovery snapshot directory, when applicable |
+
+Text starts with `Created`, `Updated`, `Deleted`, `Renamed`, `Restored`, `Unchanged`, `Preview (no files written)` or `Check passed (no files written)`. The human batch path list shows at most 20 entries with an explicit omitted count; `files` remains complete. A rename counts as two affected paths, not two independent edits. Display paths omit Windows extended-length prefixes; structured paths retain them. Non-UTF-8 filesystem paths use lossy text for display/metadata, as in other xnip reports.
+
+Preview diffs remain complete and appear in a `diff` code block after the summary, with a fence long enough to contain source-code backticks. Diffs are not duplicated in structured metadata. Text is deliberately human-readable rather than a second serialized JSON copy; clients requiring machine-readable results should read `structuredContent`. Clients that ignore it still receive the summary and complete preview. Successful writes and checks do not include a diff. Read/search output and existing JSON-RPC error semantics remain unchanged.
+
+```text
+Renamed: src/old.rs -> src/new.rs
+
+Preview (no files written): config.toml
+  Operation: replace
+  Matched blocks: 1
+```
+
+See the [MCP tool specification](https://modelcontextprotocol.io/specification/2025-06-18/server/tools) for the standard metadata. Restart/reconnect an existing MCP server after upgrading its executable so that the client discovers the new titles and schemas.
+
 ## Error semantics
 
 Tool call failures return a JSON-RPC `error` object (not `result.isError=true`):

@@ -71,13 +71,7 @@ pub enum ExecError {
 pub fn execute(ops: Vec<Op>, opts: &ExecOpts) -> Result<Vec<PathBuf>, ExecError> {
     let report = execute_report(ops, opts)?;
     if opts.dry_run {
-        use std::io::Write;
-        let diff = if crate::core::diff::should_colorize_stdout() {
-            crate::core::diff::colorize_unified_diff(&report.diff)
-        } else {
-            report.diff
-        };
-        std::io::stdout().lock().write_all(diff.as_bytes())?;
+        crate::output::human::print_diff(&report.diff)?;
     }
     if let Some(journal) = report.journal {
         crate::note!("xnip: retained recovery journal {}", journal.display());

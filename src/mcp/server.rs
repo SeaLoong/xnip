@@ -54,6 +54,9 @@ impl Default for XnipServer {
 #[tool_router]
 impl XnipServer {
     #[rmcp::tool(
+        title = "Recover file changes",
+        annotations(read_only_hint = false, destructive_hint = true, open_world_hint = false),
+        output_schema = tools::common::change_schema(),
         description = "Restore files from a recovery journal after a failed/interrupted transaction. dry_run validates and previews without writes. Refuses external-content conflicts. Only recover a known transaction after its writer has stopped."
     )]
     async fn xnip_recover(
@@ -64,6 +67,9 @@ impl XnipServer {
     }
     // === 10 个 tool 的实际实现委托给 super::tools::* ===
     #[rmcp::tool(
+        title = "Edit files",
+        annotations(read_only_hint = false, destructive_hint = true, open_world_hint = false),
+        output_schema = tools::common::change_schema(),
         description = "Create a file, replace an exact literal text block, delete a regular file, or rename to an absent destination. Replacement requires unique old text unless all=true. Supports dry_run/check without writes, including create/delete, and optional backups. Existing context may suffice; no mandatory read-before-edit call."
     )]
     async fn xnip_edit(
@@ -77,6 +83,12 @@ impl XnipServer {
     // 不接受路径表达式(如 tools::peek::DESCRIPTION)。
 
     #[rmcp::tool(
+        title = "Read file lines",
+        annotations(
+            read_only_hint = true,
+            destructive_hint = false,
+            open_world_hint = false
+        ),
         description = "Print numbered lines from a file. Provide exactly one of `lines` (range like '30' or '30-45'), `match_line` (regex on whole line), or `all=true`. Use `context` (only with `match_line`) for surrounding lines, and `max_lines` to cap output. Read-only."
     )]
     async fn xnip_peek(
@@ -87,6 +99,12 @@ impl XnipServer {
     }
 
     #[rmcp::tool(
+        title = "Find text",
+        annotations(
+            read_only_hint = true,
+            destructive_hint = false,
+            open_world_hint = false
+        ),
         description = "Search and locate matches across one or more files. Provide one of `pattern` (cross-line byte regex, output `path:line:col`) or `match_line` (whole-line regex, output `path:line`). Read-only."
     )]
     async fn xnip_find(
@@ -97,6 +115,12 @@ impl XnipServer {
     }
 
     #[rmcp::tool(
+        title = "Replace text ranges",
+        annotations(
+            read_only_hint = false,
+            destructive_hint = true,
+            open_world_hint = false
+        ),
         description = "Replace or delete a region in a file. Pick exactly one locator: `lines`/`match_line`/`between`/`between_re`/`pattern`. Provide `text` or `text_file` (or `repl` with `pattern`). Pass `was`/`was_file` to check the expected original bytes; `backup=true` keeps a `.bak` sidecar. Atomic write."
     )]
     async fn xnip_replace(
@@ -107,6 +131,12 @@ impl XnipServer {
     }
 
     #[rmcp::tool(
+        title = "Insert text",
+        annotations(
+            read_only_hint = false,
+            destructive_hint = true,
+            open_world_hint = false
+        ),
         description = "Insert text before/after a single-line anchor. Locator must resolve to one line; use `position`='before'|'after' (default 'after'). Provide `text` or `text_file`. Atomic write."
     )]
     async fn xnip_insert(
@@ -117,6 +147,12 @@ impl XnipServer {
     }
 
     #[rmcp::tool(
+        title = "Move text lines",
+        annotations(
+            read_only_hint = false,
+            destructive_hint = true,
+            open_world_hint = false
+        ),
         name = "xnip_move",
         description = "Move a contiguous block of lines to another location. Source via `from_lines` (e.g. '30-45') or `from_match_line`; target via `to` (line number) and `position`. Atomic write."
     )]
@@ -128,6 +164,12 @@ impl XnipServer {
     }
 
     #[rmcp::tool(
+        title = "Adjust indentation",
+        annotations(
+            read_only_hint = false,
+            destructive_hint = true,
+            open_world_hint = false
+        ),
         description = "Adjust indentation or convert tabs/spaces over a line range. Pick exactly one op: `add`/`remove` N spaces, or `tabs_to_spaces`/`spaces_to_tabs` N. Range via `lines` or `all=true`. Atomic write."
     )]
     async fn xnip_indent(
@@ -138,6 +180,9 @@ impl XnipServer {
     }
 
     #[rmcp::tool(
+        title = "Apply file changes",
+        annotations(read_only_hint = false, destructive_hint = true, open_world_hint = false),
+        output_schema = tools::common::change_schema(),
         description = "Apply a batch of edits with validation before writing. Provide path or manifest_text in native/json/yaml/patch format. Supports create/delete/rename/edit and sequential planning. dry_run/check do not write. Commit failures attempt rollback and retain a recovery journal; conflicts require inspection."
     )]
     async fn xnip_apply(
@@ -148,6 +193,12 @@ impl XnipServer {
     }
 
     #[rmcp::tool(
+        title = "Check xnip environment",
+        annotations(
+            read_only_hint = true,
+            destructive_hint = false,
+            open_world_hint = false
+        ),
         description = "Self-diagnose xnip environment: version, build commit, runtime info. No arguments."
     )]
     async fn xnip_doctor(&self) -> Result<rmcp::model::CallToolResult, McpError> {

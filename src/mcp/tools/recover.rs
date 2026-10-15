@@ -16,18 +16,14 @@ pub fn run(args: Args) -> Result<CallToolResult, McpError> {
         crate::core::transaction::recover(&args.journal, args.dry_run).map_err(|error| {
             McpError::invalid_request(format!("recovery refused/failed: {error:#}"), None)
         })?;
-    Ok(super::common::ok_text(format!(
-        "xnip_recover: {} {} file(s); journal retained\n{}",
-        if args.dry_run {
-            "validated"
-        } else {
-            "restored"
-        },
-        report.files.len(),
-        if args.dry_run {
-            report.diff
-        } else {
-            String::new()
-        }
-    )))
+    let mut summary = crate::output::human::ChangeSummary::batch(
+        "recover",
+        crate::output::human::Mode::new(args.dry_run, false),
+        &report,
+    );
+    summary.journal = Some(args.journal.to_string_lossy().into_owned());
+    Ok(super::common::ok_change(
+        &summary,
+        if args.dry_run { &report.diff } else { "" },
+    ))
 }

@@ -49,6 +49,26 @@ The preview prints the complete proposed file; only the second replace writes. T
 
 `find` takes files, not directories; glob expansion is the shell's responsibility and differs across shells. `--match-line` searches one line at a time and prints no column. `--max-matches N` caps the total output and `--first-only` caps each file to one hit. Regexes use Rust regex syntax; lookaround and backreferences in the pattern are not supported. Replacement strings support capture expansion such as `$1` and `${name}`.
 
+## Reading command results (current source; after v0.2.0)
+
+`edit`, `apply` and `recover` use short status summaries on stderr. For example:
+
+```text
+Updated: config.toml
+  Matched blocks: 1
+
+Renamed: src/old.rs -> src/new.rs
+
+Preview (no files written): 2 path(s)
+  Operation: apply
+  src/main.rs
+  src/lib.rs
+```
+
+`Unchanged` means no content/existence change was needed; `Check passed` and `Preview` explicitly mean no files were written. Batch counts refer to affected paths (a rename has two endpoints). At most 20 paths are listed in a human batch summary, with an omitted count for larger batches. Use `apply --json` for the complete machine-readable path list.
+
+`edit`, `apply` and `recover` previews print full unified diffs on stdout. Interactive terminals receive colored additions, deletions and hunk headers; redirected output, `--no-color` or `NO_COLOR` keeps plain text. `--quiet` hides status summaries while retaining requested diff/data output and errors. `apply --check` still prints `OK` on stdout, and `apply --json` retains its NDJSON event format. Human status prose is intended for reading, not parsing.
+
 ## Locators and payloads
 
 For replace/insert, choose one locator: `--lines`, `--match-line`, `--between`, or `--between-re`. Pattern replacement instead uses `--pattern` with `--repl`. `--between 'BEGIN'..'END'` excludes marker lines unless `--inclusive` is supplied. Anchors must resolve to the required range; insert requires one line. An existing empty file accepts `insert --lines 1`.

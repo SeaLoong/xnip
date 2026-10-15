@@ -8,7 +8,7 @@ use std::path::PathBuf;
 use anyhow::{Context, Result, bail};
 use clap::Args as ClapArgs;
 
-use crate::apply::commit::{ExecError, ExecOpts, execute};
+use crate::apply::commit::{ExecError, ExecOpts, execute, execute_report};
 use crate::apply::detect::{Format, parse_auto, parse_format_arg, parse_with};
 use crate::apply::{Op, OpContent};
 use crate::output::exit;
@@ -185,13 +185,19 @@ pub fn run(a: Args) -> Result<u8> {
         }
     }
 
-    match execute(ops, &opts) {
-        Ok(files) => {
+    match execute_report(ops, &opts) {
+        Ok(report) => {
             if a.check {
                 println!("OK");
-            } else if !a.dry_run {
-                crate::note!("xnip apply: committed {} file(s)", files.len());
+            } else if a.dry_run {
+                crate::output::human::print_diff(&report.diff)?;
             }
+            let summary = crate::output::human::ChangeSummary::batch(
+                "apply",
+                crate::output::human::Mode::new(a.dry_run, a.check),
+                &report,
+            );
+            crate::note!("{}", summary.render());
             Ok(exit::SUCCESS)
         }
         Err(e @ ExecError::Phase1 { .. }) => {

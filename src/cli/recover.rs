@@ -23,18 +23,14 @@ pub fn run(args: &Args) -> Result<u8> {
         }
     };
     if args.dry_run {
-        use std::io::Write;
-        std::io::stdout().lock().write_all(report.diff.as_bytes())?;
+        crate::output::human::print_diff(&report.diff)?;
     }
-    crate::note!(
-        "xnip recover: {} {} file(s); snapshots retained at {}",
-        if args.check || args.dry_run {
-            "validated"
-        } else {
-            "restored"
-        },
-        report.files.len(),
-        args.journal.display()
+    let mut summary = crate::output::human::ChangeSummary::batch(
+        "recover",
+        crate::output::human::Mode::new(args.dry_run, args.check),
+        &report,
     );
+    summary.journal = Some(args.journal.to_string_lossy().into_owned());
+    crate::note!("{}", summary.render());
     Ok(crate::output::exit::SUCCESS)
 }

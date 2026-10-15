@@ -5,6 +5,7 @@
 //! - 输出助手：把 `String` / `Vec<u8>` 包装成 [`CallToolResult`]
 #![allow(clippy::doc_markdown)] // intra-doc link 不需要反引号
 
+use std::fmt::Write as _;
 use std::path::PathBuf;
 
 use rmcp::{
@@ -160,4 +161,28 @@ pub fn ok_bytes_as_text(bytes: &[u8]) -> CallToolResult {
     CallToolResult::success(vec![Content::text(
         String::from_utf8_lossy(bytes).into_owned(),
     )])
+}
+
+/// Concise summary followed by the full preview. Metadata is separate from text
+/// so clients can inspect results without parsing prose or duplicating the diff.
+pub fn ok_change(summary: &crate::output::human::ChangeSummary, diff: &str) -> CallToolResult {
+    let mut text = summary.render();
+    if !diff.is_empty() {
+        // A source file may itself contain Markdown fences. Choose a longer one.
+        let longest = diff.split(|c| c != '`').map(str::len).max().unwrap_or(0);
+        let fence = "`".repeat(3.max(longest + 1));
+        let _ = write!(text, "\n\n{fence}diff\n{diff}");
+        if !diff.ends_with('\n') {
+            text.push('\n');
+        }
+        text.push_str(&fence);
+    }
+    let mut result = ok_text(text);
+    result.structured_content = Some(serde_json::to_value(summary).expect("summary serializes"));
+    result
+}
+
+pub fn change_schema() -> std::sync::Arc<serde_json::Map<String, serde_json::Value>> {
+    let schema = schemars::schema_for!(crate::output::human::ChangeSummary);
+    std::sync::Arc::new(schema.as_object().expect("object schema").clone())
 }

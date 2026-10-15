@@ -47,4 +47,6 @@ Batches commit per file with recovery snapshots. Commit errors attempt rollback;
 
 Use the configured interface. CLI supports shell workflows and payload stdin; MCP avoids shell quoting. Both `xnip_edit` and `xnip_apply` expose MCP preview/check; `xnip_recover` has a non-writing dry run. Other MCP write tools commit immediately. Loading this skill does not authorize installing software or changing MCP configuration.
 
+On builds with structured change results, inspect `mode` and `written`: a successful preview/check has not edited the file. Human path lists may be abbreviated; use the complete `files` metadata when needed. Do not repeat edits solely because a client shows a generic tool card.
+
 Read [examples](references/examples.md) for a relevant command recipe, [CLI details](https://github.com/SeaLoong/xnip/blob/master/docs/cli.md) for options, and [MCP details](https://github.com/SeaLoong/xnip/blob/master/docs/mcp.md) for structured fields. Load references only when needed.

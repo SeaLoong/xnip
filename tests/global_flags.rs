@@ -216,7 +216,7 @@ fn apply_emits_committed_note_and_quiet_suppresses() {
         .args(["apply", m.to_str().unwrap()])
         .assert()
         .success()
-        .stderr(predicate::str::contains("committed 1 file"));
+        .stderr(predicate::str::contains("Updated: 1 path(s)"));
 
     // 重置 + --quiet 抑制
     std::fs::write(&target, b"x\n").unwrap();
@@ -225,7 +225,7 @@ fn apply_emits_committed_note_and_quiet_suppresses() {
         .args(["--quiet", "apply", m.to_str().unwrap()])
         .assert()
         .success()
-        .stderr(predicate::str::contains("committed").not());
+        .stderr(predicate::str::contains("Updated:").not());
 }
 
 // ------- 彩色 diff（apply --dry-run）-------
@@ -271,4 +271,78 @@ fn apply_dry_run_no_color_flag_disables_color() {
         .clone();
     let s = String::from_utf8(out).unwrap();
     assert!(!s.contains("\x1b["), "must not emit ANSI: {s:?}");
+}
+
+#[test]
+fn edit_preview_keeps_stdout_complete_and_quiet_only_suppresses_summary() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("sample.txt");
+    std::fs::write(&path, "old\n").unwrap();
+    for quiet in [false, true] {
+        let mut cmd = Command::cargo_bin("xnip").unwrap();
+        cmd.arg("edit").arg(&path).args([
+            "--old",
+            "old",
+            "--text",
+            "new",
+            "--dry-run",
+            "--no-color",
+        ]);
+        if quiet {
+            cmd.arg("--quiet");
+        }
+        let output = cmd.assert().success().get_output().clone();
+        let stdout = String::from_utf8(output.stdout).unwrap();
+        assert!(stdout.contains("-old\n+new\n"));
+        assert!(!stdout.contains('\x1b'));
+        assert!(!stdout.contains("Preview"));
+        if quiet {
+            assert_eq!(output.stderr, [] as [u8; 0]);
+        } else {
+            assert!(
+                String::from_utf8(output.stderr)
+                    .unwrap()
+                    .starts_with("Preview (no files written):")
+            );
+        }
+        assert_eq!(std::fs::read_to_string(&path).unwrap(), "old\n");
+    }
+}
+
+#[test]
+fn apply_check_and_json_keep_their_machine_readable_stdout() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("sample.txt");
+    let manifest = dir.path().join("batch.json");
+    std::fs::write(
+        &manifest,
+        serde_json::to_vec(&serde_json::json!([
+            {"op":"create","file":path,"text":"hello"}
+        ]))
+        .unwrap(),
+    )
+    .unwrap();
+    Command::cargo_bin("xnip")
+        .unwrap()
+        .arg("apply")
+        .arg(&manifest)
+        .arg("--check")
+        .assert()
+        .success()
+        .stdout("OK\n")
+        .stderr(predicate::str::contains("Check passed"));
+    let output = Command::cargo_bin("xnip")
+        .unwrap()
+        .arg("apply")
+        .arg(&manifest)
+        .args(["--json", "--check"])
+        .assert()
+        .success()
+        .get_output()
+        .clone();
+    assert_eq!(output.stderr, [] as [u8; 0]);
+    for line in String::from_utf8(output.stdout).unwrap().lines() {
+        serde_json::from_str::<serde_json::Value>(line).unwrap();
+    }
+    assert!(!path.exists());
 }

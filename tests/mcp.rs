@@ -269,7 +269,7 @@ fn apply_tool_preview_supports_lifecycle_without_stdout_pollution() {
     for line in output.lines() {
         serde_json::from_str::<serde_json::Value>(line).unwrap();
     }
-    assert!(output.contains("validated"));
+    assert!(output.contains("Preview (no files written)"));
     assert!(!file.parent().unwrap().exists());
 }
 
@@ -282,5 +282,145 @@ fn apply_tool_patch_root_and_preview_do_not_depend_on_server_cwd() {
         let output = run_mcp(&frames(&[&call]));
         assert!(output.contains(r#""isError":false"#), "{output}");
         assert_eq!(project.path().join("hello.txt").exists(), !dry_run);
+    }
+}
+
+fn call_result(name: &str, arguments: &serde_json::Value) -> serde_json::Value {
+    let call = serde_json::json!({"jsonrpc":"2.0", "id":2, "method":"tools/call",
+        "params":{"name":name,"arguments":arguments}})
+    .to_string();
+    let output = run_mcp(&frames(&[&call]));
+    let response = output
+        .lines()
+        .map(|line| serde_json::from_str::<serde_json::Value>(line).unwrap())
+        .find(|value| value["id"] == 2)
+        .unwrap();
+    assert!(response.get("error").is_none(), "{response}");
+    response["result"].clone()
+}
+
+#[test]
+fn tool_metadata_distinguishes_reads_and_writes_and_advertises_result_schema() {
+    let output = run_mcp(&frames(&[
+        r#"{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}"#,
+    ]));
+    let response = output
+        .lines()
+        .map(|line| serde_json::from_str::<serde_json::Value>(line).unwrap())
+        .find(|value| value["id"] == 2)
+        .unwrap();
+    for tool in response["result"]["tools"].as_array().unwrap() {
+        let name = tool["name"].as_str().unwrap();
+        assert_ne!(tool["title"].as_str().unwrap(), "");
+        let read_only = matches!(name, "xnip_peek" | "xnip_find" | "xnip_doctor");
+        assert_eq!(tool["annotations"]["readOnlyHint"], read_only);
+        assert_eq!(tool["annotations"]["destructiveHint"], !read_only);
+        assert_eq!(tool["annotations"]["openWorldHint"], false);
+        if matches!(name, "xnip_edit" | "xnip_apply" | "xnip_recover") {
+            assert_eq!(tool["outputSchema"]["type"], "object");
+            assert_eq!(
+                tool["outputSchema"]["properties"]["written"]["type"],
+                "boolean"
+            );
+        }
+    }
+}
+
+#[test]
+fn edit_results_distinguish_preview_check_write_and_unchanged() {
+    let dir = tempfile::tempdir().unwrap();
+    let file = dir.path().join("hello world.txt");
+    std::fs::write(&file, "old").unwrap();
+    for (mode, flags) in [
+        ("preview", serde_json::json!({"dry_run":true})),
+        ("check", serde_json::json!({"check":true})),
+        ("write", serde_json::json!({})),
+    ] {
+        let mut args = serde_json::json!({"file":file,"old":"old","text":"``````\nnew"});
+        args.as_object_mut()
+            .unwrap()
+            .extend(flags.as_object().unwrap().clone());
+        let result = call_result("xnip_edit", &args);
+        let data = &result["structuredContent"];
+        assert_eq!(data["mode"], mode);
+        assert_eq!(data["has_changes"], true);
+        assert_eq!(data["written"], mode == "write");
+        assert_eq!(data["replacements"], 1);
+        assert_eq!(data["files"], serde_json::json!([file]));
+        let text = result["content"][0]["text"].as_str().unwrap();
+        if mode == "preview" {
+            assert!(text.contains("```````diff\n"));
+            assert!(text.contains("+``````"));
+            assert!(text.ends_with("```````"));
+        } else {
+            assert!(!text.contains("diff\n"));
+        }
+        assert!(!text.contains('\x1b'));
+        assert_eq!(
+            std::fs::read_to_string(&file).unwrap(),
+            if mode == "write" {
+                "``````\nnew"
+            } else {
+                "old"
+            }
+        );
+    }
+    let result = call_result(
+        "xnip_edit",
+        &serde_json::json!({"file":file,"old":"new","text":"new"}),
+    );
+    assert_eq!(result["structuredContent"]["has_changes"], false);
+    assert_eq!(result["structuredContent"]["written"], false);
+    assert!(
+        result["content"][0]["text"]
+            .as_str()
+            .unwrap()
+            .starts_with("Unchanged:")
+    );
+
+    let to = dir.path().join("renamed.txt");
+    let result = call_result(
+        "xnip_edit",
+        &serde_json::json!({"file":file,"operation":"rename","to":to}),
+    );
+    assert_eq!(
+        result["structuredContent"]["destination"],
+        serde_json::json!(to)
+    );
+    assert_eq!(
+        result["structuredContent"]["files"],
+        serde_json::json!([file, to])
+    );
+    assert_eq!(result["structuredContent"]["written"], true);
+    assert!(!file.exists());
+    assert!(to.exists());
+}
+
+#[test]
+fn batch_summary_caps_only_display_paths_and_preserves_complete_preview() {
+    let dir = tempfile::tempdir().unwrap();
+    let ops: Vec<_> = (0..23)
+        .map(|i| {
+            serde_json::json!({"op":"create",
+        "file":dir.path().join(format!("file-{i:02}")), "text":format!("unique content {i}")})
+        })
+        .collect();
+    let result = call_result(
+        "xnip_apply",
+        &serde_json::json!({"manifest_text":serde_json::to_string(&ops).unwrap(),"format":"json","dry_run":true}),
+    );
+    assert_eq!(
+        result["structuredContent"]["files"]
+            .as_array()
+            .unwrap()
+            .len(),
+        23
+    );
+    assert_eq!(result["structuredContent"]["written"], false);
+    let text = result["content"][0]["text"].as_str().unwrap();
+    assert!(text.contains("... 3 more path(s)"));
+    for i in 0..23 {
+        assert!(text.contains(&format!("+unique content {i}")));
+        assert!(!dir.path().join(format!("file-{i:02}")).exists());
     }
 }

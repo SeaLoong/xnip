@@ -46,6 +46,8 @@ MCP uses `operation: "rename"` and `to` for the destination.
 
 Replacement follows existing symlinks and preserves ordinary file permissions through the shared atomic-write layer. The file is read again before commit to reject detected concurrent changes, but this is not a lock or a filesystem compare-and-swap operation. Ownership, ACLs, extended attributes and hard-link identity are not guaranteed. See [persistence limits](architecture.md#persistence-and-operational-limits).
 
+In current source (after v0.2.0), status summaries distinguish committed changes, unchanged content, preview and check. Rename reports both endpoints. Terminal preview diffs share the color rules of `apply`; pipes remain plain text. MCP returns the same summary, a fenced preview diff when requested, and [structured result metadata](https://github.com/SeaLoong/xnip/blob/master/docs/mcp.md#result-display).
+
 ## MCP
 
 ```json

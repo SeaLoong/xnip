@@ -1,4 +1,4 @@
-use std::io::{Read, Write};
+use std::io::Read;
 use std::path::PathBuf;
 
 use anyhow::Result;
@@ -79,21 +79,10 @@ pub fn run(args: Args) -> Result<u8> {
     match execute(&args.file, &request) {
         Ok(outcome) => {
             if args.dry_run {
-                std::io::stdout()
-                    .lock()
-                    .write_all(outcome.diff.as_bytes())?;
+                crate::output::human::print_diff(&outcome.diff)?;
             }
-            crate::note!(
-                "xnip edit: {} {operation:?} {} (changed={}, replacements={})",
-                if args.check || args.dry_run {
-                    "validated"
-                } else {
-                    "completed"
-                },
-                args.file.display(),
-                outcome.changed,
-                outcome.replacements
-            );
+            let summary = crate::output::human::ChangeSummary::edit(&args.file, &request, &outcome);
+            crate::note!("{}", summary.render());
             Ok(exit::SUCCESS)
         }
         Err(EditError::Check(message)) => {

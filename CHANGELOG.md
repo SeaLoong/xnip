@@ -4,6 +4,11 @@ User-visible changes are recorded here. Versions follow Semantic Versioning; com
 
 ## [Unreleased]
 
+- Add readable MCP tool titles and explicit read/write annotations without changing tool names or inputs.
+- Share concise CLI/MCP edit, batch and recovery summaries; show rename destinations, distinguish previews/checks/no-ops, and bound human batch path lists while retaining complete structured paths and diffs.
+- Return output schemas and structured change metadata for MCP edit/apply/recover, with fenced full preview diffs; preserve read/search output and existing error semantics.
+- Color terminal edit/recovery previews consistently with apply; preserve plain piped diffs, quiet behavior, `apply --check` stdout and NDJSON events.
+
 ## [0.2.0] - 2026-10-16
 
 - Add no-clobber whole-file rename to CLI/MCP edit, with same-filesystem identity preservation and explicit conflict checks.

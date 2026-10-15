@@ -57,17 +57,6 @@ pub fn run(args: Args) -> Result<CallToolResult, McpError> {
         backup: args.backup,
     };
     let outcome = execute(&args.file, &request).map_err(error)?;
-    Ok(super::common::ok_text(format!(
-        "xnip_edit: {} {:?} {} (changed={}, replacements={})\n{}",
-        if args.dry_run || args.check {
-            "validated"
-        } else {
-            "completed"
-        },
-        args.operation,
-        args.file.display(),
-        outcome.changed,
-        outcome.replacements,
-        outcome.diff,
-    )))
+    let summary = crate::output::human::ChangeSummary::edit(&args.file, &request, &outcome);
+    Ok(super::common::ok_change(&summary, &outcome.diff))
 }

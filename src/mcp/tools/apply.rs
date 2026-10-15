@@ -8,7 +8,6 @@
 //! 注意：MCP 上下文不读进程 stdin，因此清单中的 `@-` 内容来源**不被支持**——
 //! 若清单 op 含 `@-`，会在解析后报错。LLM 应改用 `text` 字面或 `text_file`。
 
-use std::fmt::Write as _;
 use std::path::PathBuf;
 
 use rmcp::{ErrorData as McpError, model::CallToolResult};
@@ -139,28 +138,15 @@ pub fn run(a: Args) -> Result<CallToolResult, McpError> {
 
     match execute_report(ops, &opts) {
         Ok(report) => {
-            let files = report.files;
-            let mut text = format!(
-                "xnip_apply: {} {} file(s)\n",
-                if a.check || a.dry_run {
-                    "validated"
-                } else {
-                    "committed"
-                },
-                files.len()
+            let summary = crate::output::human::ChangeSummary::batch(
+                "apply",
+                crate::output::human::Mode::new(a.dry_run, a.check),
+                &report,
             );
-            if a.dry_run {
-                text.push_str(&report.diff);
-            }
-            if let Some(journal) = report.journal {
-                let _ = writeln!(text, "recovery journal retained: {}", journal.display());
-            }
-            for f in &files {
-                text.push_str("  - ");
-                text.push_str(&f.display().to_string());
-                text.push('\n');
-            }
-            Ok(super::common::ok_text(text))
+            Ok(super::common::ok_change(
+                &summary,
+                if a.dry_run { &report.diff } else { "" },
+            ))
         }
         Err(e @ ExecError::Phase1 { .. }) => {
             Err(McpError::invalid_request(format!("phase1: {e}"), None))
