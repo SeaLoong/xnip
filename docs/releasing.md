@@ -27,7 +27,7 @@ git tag -a v0.2.0 -m "xnip v0.2.0"
 git push origin v0.2.0
 ```
 
-The tag workflow checks the tag/version match and repeats validation. It packages executable, README and license; generates archive SHA256 sidecars; and uploads six binary archives, six sidecars, two installers and six integration archives. Build commit metadata comes from `XNIP_BUILD_COMMIT`; `Cross.toml` passes it into Linux build containers.
+The tag workflow checks the tag/version match and repeats validation. It packages executable, README and license; generates archive SHA256 sidecars; and uploads six binary archives, six sidecars, two installers and seven integration archives (including the Codex instruction package added after v0.2.0). Build commit metadata comes from `XNIP_BUILD_COMMIT`; `Cross.toml` passes it into Linux build containers.
 
 Use the release notes to describe capabilities, installation, compatibility and limitations. Treat v0.x API/behavior changes explicitly; do not promise universal undo or multi-file transactions.
 

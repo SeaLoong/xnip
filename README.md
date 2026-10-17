@@ -73,15 +73,15 @@ Start with the [runnable tutorial](docs/cli.md), then consult the [agent guide](
 
 ## Integrating with LLM agents
 
-xnip is intended to serve as the normal text editing interface. Its skill chooses the appropriate operation and reuses known context, rather than requiring a doctor/peek/find sequence before every write. Repository discovery and semantic analysis remain separate from applying text edits.
+xnip is intended to serve as the normal text editing interface. Its agent guidance selects an operation and reuses known context, without requiring a doctor/peek/find sequence before every write. Repository discovery and semantic analysis remain separate from applying text edits.
 
-### Install the editing skill
+### Install agent guidance
 
-Use the generated [Codex/GitHub skill](.github/skills/xnip-editing/SKILL.md) or [Claude Code skill](integrations/claude-code/SKILL.md), including its `references` directory. The entrypoint covers the default workflow; detailed manifests, examples and errors are loaded only when needed.
+For Codex, use [automatic editing instructions](docs/codex.md): a short AGENTS section and an on-demand guide outside skill directories. This setup provides no `$xnip-editing` command. Other clients can use the [generic/GitHub skill](.github/skills/xnip-editing/SKILL.md) or [Claude Code skill](integrations/claude-code/SKILL.md), including its `references` directory.
 
 | Client | Integration | Placement |
 |---|---|---|
-| Codex | `.github/skills/xnip-editing/` | User skill directory (`~/.codex/skills/xnip-editing/`) |
+| Codex | [instructions and guide](integrations/codex/) | Merge AGENTS section; guide under `~/.codex/guides/xnip-editing/` |
 | Claude Code | `integrations/claude-code/` | `.claude/skills/xnip/` |
 | Cursor | [rule](integrations/cursor/xnip.mdc) | Project rule, with automatic always-on injection disabled |
 | Copilot | [short instruction](integrations/copilot/xnip.md) | Project instructions |

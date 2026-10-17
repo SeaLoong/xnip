@@ -1,7 +1,7 @@
 //! `cargo xtask` — 仓库级辅助任务。
 //!
 //! 子命令：
-//! - `sync-integrations` — 同步 generic、GitHub、Claude skills 及其按需参考文档。
+//! - `sync-integrations` — 同步 Codex 编辑指南及 generic、GitHub、Claude skills。
 //!   简短 integration（cursor/aider/copilot/agents-md）保留各自风格的人工维护版本。
 //!
 //! 用法：`cargo run -p xtask -- <subcommand>`
@@ -49,21 +49,40 @@ fn sync_skill_files() -> std::io::Result<()> {
         "architecture.md",
         "releasing.md",
     ];
-    let mut body = std::fs::read_to_string(root.join("docs/SKILL.md"))?;
+    let mut body = std::fs::read_to_string(root.join("docs/SKILL.md"))?.replace("\r\n", "\n");
     for name in references {
         body = body.replace(&format!("({name})"), &format!("(references/{name})"));
     }
     for (destination, name) in [
-        ("integrations/generic", "xnip-editing"),
-        (".github/skills/xnip-editing", "xnip-editing"),
-        ("integrations/claude-code", "xnip"),
+        ("integrations/codex", None),
+        ("integrations/generic", Some("xnip-editing")),
+        (".github/skills/xnip-editing", Some("xnip-editing")),
+        ("integrations/claude-code", Some("xnip")),
     ] {
         let directory = root.join(destination);
         std::fs::create_dir_all(directory.join("references"))?;
-        std::fs::write(
-            directory.join("SKILL.md"),
-            body.replacen("name: xnip-editing", &format!("name: {name}"), 1),
-        )?;
+        let (entrypoint, content) = if let Some(name) = name {
+            (
+                "SKILL.md",
+                body.replacen("name: xnip-editing", &format!("name: {name}"), 1),
+            )
+        } else {
+            let guide = body
+                .strip_prefix("---\n")
+                .and_then(|text| text.split_once("\n---\n"))
+                .map(|(_, text)| text.trim_start())
+                .ok_or_else(|| {
+                    std::io::Error::new(
+                        std::io::ErrorKind::InvalidData,
+                        "missing skill frontmatter",
+                    )
+                })?;
+            (
+                "guide.md",
+                guide.replace("Loading this skill", "Loading these instructions"),
+            )
+        };
+        std::fs::write(directory.join(entrypoint), content)?;
         for reference in references {
             let reference_text = std::fs::read_to_string(root.join("docs").join(reference))?
                 .replace(
