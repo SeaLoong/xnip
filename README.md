@@ -54,7 +54,7 @@ Or download a binary from [GitHub Releases](https://github.com/SeaLoong/xnip/rel
 Source installation needs **Rust 1.89+**:
 
 ~~~sh
-cargo install --git https://github.com/SeaLoong/xnip --tag v0.3.0 --locked xnip
+cargo install --git https://github.com/SeaLoong/xnip --tag v0.3.1 --locked xnip
 ~~~
 
 ## Edit

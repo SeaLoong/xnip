@@ -13,7 +13,7 @@ xnip is distributed through [GitHub Releases](https://github.com/SeaLoong/xnip/r
 | Windows | x64 | `x86_64-pc-windows-msvc` | `.zip` |
 | Windows | ARM64 | `aarch64-pc-windows-msvc` | `.zip` |
 
-Names include the complete tag, for example `xnip-v0.3.0-x86_64-pc-windows-msvc.zip`. Each binary archive includes the executable, README, MIT license and third-party data notices, with an adjacent `.sha256` file. Builds are unsigned. CI tests current Linux, macOS and Windows runners; older OS releases are not individually certified.
+Names include the complete tag, for example `xnip-v0.3.1-x86_64-pc-windows-msvc.zip`. Each binary archive includes the executable, README, MIT license and third-party data notices, with an adjacent `.sha256` file. Builds are unsigned. CI tests current Linux, macOS and Windows runners; older OS releases are not individually certified.
 
 ## Install with the script
 
@@ -43,20 +43,20 @@ Both installers download the archive and SHA256 sidecar and verify the bytes bef
 
 ```sh
 export XNIP_AUTO_UPDATE=0
-curl -fsSL https://github.com/SeaLoong/xnip/releases/download/v0.3.0/install.sh |
-  XNIP_VERSION=v0.3.0 XNIP_INSTALL_DIR="$HOME/bin" sh
+curl -fsSL https://github.com/SeaLoong/xnip/releases/download/v0.3.1/install.sh |
+  XNIP_VERSION=v0.3.1 XNIP_INSTALL_DIR="$HOME/bin" sh
 ```
 
 ```powershell
 $env:XNIP_AUTO_UPDATE = '0'
-$env:XNIP_VERSION = 'v0.3.0'
+$env:XNIP_VERSION = 'v0.3.1'
 $env:XNIP_INSTALL_DIR = "$env:USERPROFILE\bin"
-Invoke-RestMethod https://github.com/SeaLoong/xnip/releases/download/v0.3.0/install.ps1 | Invoke-Expression
+Invoke-RestMethod https://github.com/SeaLoong/xnip/releases/download/v0.3.1/install.ps1 | Invoke-Expression
 ```
 
 These examples pin both the initial release and future launches in the current shell. Set `XNIP_AUTO_UPDATE=0` in the agent/client environment as well when it launches xnip separately.
 
-`XNIP_VERSION` accepts `v0.3.0`, `0.3.0`, or `latest` (default). `XNIP_REPO` can select a trusted fork with the same asset naming convention. Current builds perform [silent background updates](updates.md) automatically. To keep a deployment pinned, set `XNIP_AUTO_UPDATE=0` in its terminal/client environment. You can also rerun the installer with `latest` or select an earlier tag manually; close running xnip/MCP processes before a manual Windows installer replacement.
+`XNIP_VERSION` accepts `v0.3.1`, `0.3.1`, or `latest` (default). `XNIP_REPO` can select a trusted fork with the same asset naming convention. Current builds perform [silent background updates](updates.md) automatically. To keep a deployment pinned, set `XNIP_AUTO_UPDATE=0` in its terminal/client environment. You can also rerun the installer with `latest` or select an earlier tag manually; close running xnip/MCP processes before a manual Windows installer replacement.
 
 ## Manual download and verification
 
@@ -64,13 +64,13 @@ Download an archive and its corresponding `.sha256` sidecar from the same releas
 
 ```sh
 # Linux
-sha256sum -c xnip-v0.3.0-x86_64-unknown-linux-musl.tar.gz.sha256
+sha256sum -c xnip-v0.3.1-x86_64-unknown-linux-musl.tar.gz.sha256
 # macOS (substitute the archive for your CPU)
-shasum -a 256 -c xnip-v0.3.0-aarch64-apple-darwin.tar.gz.sha256
+shasum -a 256 -c xnip-v0.3.1-aarch64-apple-darwin.tar.gz.sha256
 ```
 
 ```powershell
-$archive = 'xnip-v0.3.0-x86_64-pc-windows-msvc.zip'
+$archive = 'xnip-v0.3.1-x86_64-pc-windows-msvc.zip'
 $expected = ((Get-Content "$archive.sha256" -Raw).Trim() -split '\s+')[0]
 if ((Get-FileHash $archive -Algorithm SHA256).Hash -ne $expected) { throw 'SHA256 mismatch' }
 Expand-Archive $archive -DestinationPath .\xnip
@@ -84,7 +84,7 @@ For a `.tar.gz` archive, use `tar -xzf ARCHIVE`, then place `xnip` in a director
 Install Rust 1.89 or newer with Cargo and the native platform linker. Windows builds use the MSVC C++ build tools and Windows SDK.
 
 ```sh
-cargo install --git https://github.com/SeaLoong/xnip --tag v0.3.0 --locked xnip
+cargo install --git https://github.com/SeaLoong/xnip --tag v0.3.1 --locked xnip
 ```
 
 For a checkout, run `cargo install --path . --locked` at its root. Cargo installs to its configured binary directory, normally `~/.cargo/bin`. The explicit `xnip` argument selects the application rather than the `xtask` helper. The repository toolchain follows stable Rust; the minimum compiler is checked separately in CI. There is no separately verified crates.io distribution for this release.

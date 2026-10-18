@@ -19,7 +19,7 @@ The [release planner](../.github/scripts/release.py) compares every path in the 
 
 The exact allowlist lives in `release_relevant` and its constants, with [offline contracts](../tests/release_contract.py). CI still runs its checks for changes that do not publish.
 
-For a stable Cargo version `0.3.0`, CI generates `0.3.1-dev.<run_number>.g<commit12>`. An already-prerelease Cargo version retains its major/minor/patch core. Version, tag and binary `--version` agree: only the isolated build checkout's root manifest and matching lockfile entry are stamped. The source branch is never rewritten. Rerunning a workflow keeps the same tag; `run_attempt` is excluded.
+For a stable Cargo version `0.3.1`, CI generates `0.3.2-dev.<run_number>.g<commit12>`. An already-prerelease Cargo version retains its major/minor/patch core. Version, tag and binary `--version` agree: only the isolated build checkout's root manifest and matching lockfile entry are stamped. The source branch is never rewritten. Rerunning a workflow keeps the same tag; `run_attempt` is excluded.
 
 Publication starts only after formatting, linting, all platform tests, dependency policy, MSRV, package/integration checks and release contracts pass. Six build jobs produce Linux musl, macOS and Windows archives for x86_64 and ARM64. Native runner smoke tests check the embedded version and doctor output.
 
@@ -30,11 +30,11 @@ The publisher serializes calls for the same version. An existing tag must point 
 Install a preview by its explicit tag:
 
 ```sh
-XNIP_VERSION=v0.3.1-dev.123.gabcdef123456 sh install.sh
+XNIP_VERSION=v0.3.2-dev.123.gabcdef123456 sh install.sh
 ```
 
 ```powershell
-$env:XNIP_VERSION = 'v0.3.1-dev.123.gabcdef123456'
+$env:XNIP_VERSION = 'v0.3.2-dev.123.gabcdef123456'
 ./install.ps1
 ```
 
@@ -57,8 +57,8 @@ gh run list --workflow release.yml --limit 3
 Inspect all artifacts, then create an annotated tag matching Cargo:
 
 ```sh
-git tag -a v0.3.1 -m "xnip v0.3.1"
-git push --atomic origin master v0.3.1
+git tag -a v0.3.2 -m "xnip v0.3.2"
+git push --atomic origin master v0.3.2
 ```
 
 The example assumes Cargo has been set to that new unpublished version. Never move an existing published tag. Push the release commit and tag atomically: the planner sees a matching stable tag at the same commit and skips a duplicate development prerelease while retaining all branch checks. The tag workflow verifies Cargo/tag equality, repeats checks, builds, and publishes from a complete draft. Stable release notes use the matching, nonempty changelog section. Tags containing a SemVer prerelease identifier are marked prerelease and do not become latest.

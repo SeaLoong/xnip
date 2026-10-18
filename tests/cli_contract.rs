@@ -37,7 +37,7 @@ fn compact_write_is_a_single_line_receipt_and_quiet_suppresses_only_the_receipt(
             command.arg("--quiet");
         }
         let output = command.assert().success().get_output().clone();
-        assert!(output.stdout.is_empty());
+        assert_eq!(output.stdout, b"");
         assert_eq!(utf8(&output.stderr).lines().count(), usize::from(!quiet));
         if !quiet {
             assert!(utf8(&output.stderr).contains("written"));
@@ -94,7 +94,7 @@ fn json_change_results_are_one_complete_record_for_each_execution_mode() {
                 command.arg(flag);
             }
             let output = command.assert().success().get_output().clone();
-            assert!(output.stderr.is_empty(), "{}", utf8(&output.stderr));
+            assert_eq!(output.stderr, b"", "{}", utf8(&output.stderr));
             let record: Value = serde_json::from_slice(&output.stdout).unwrap();
             assert_eq!(record["mode"], mode);
             assert_eq!(record["written"], mode == "write");
@@ -163,7 +163,7 @@ fn json_result_and_legacy_event_stream_are_separate_and_cannot_be_mixed() {
         let events = json_lines(&output.stdout);
         assert_eq!(events.first().unwrap()["event"], "start");
         assert_eq!(events.last().unwrap()["event"], "done");
-        assert!(output.stderr.is_empty());
+        assert_eq!(output.stderr, b"");
     }
     w.batch(&manifest)
         .args(["--json", "--output", "json"])

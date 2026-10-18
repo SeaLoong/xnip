@@ -246,7 +246,7 @@ impl Installation {
             std::str::from_utf8(&output.stdout).unwrap().trim(),
             format!("xnip {}", xnip::VERSION)
         );
-        assert!(output.stderr.is_empty());
+        assert_eq!(output.stderr, b"");
     }
 
     fn wait_for_state(&self, predicate: impl Fn(&Value) -> bool) -> Value {
@@ -345,7 +345,7 @@ fn a_blocked_background_check_is_singleton_and_survives_all_foreground_exits() {
             .expect("foreground must exit while its background worker is still waiting for HTTP");
         assert!(output.status.success());
         assert_eq!(output.stdout, b"     1: unchanged\n");
-        assert!(output.stderr.is_empty());
+        assert_eq!(output.stderr, b"");
     }
     for caller in callers {
         caller.join().unwrap();
@@ -384,7 +384,7 @@ fn live_mcp_remains_usable_during_a_blocked_check_and_after_its_failure() {
         state["phase"] == "check_failed" && state["last_error"].as_str().is_some()
     });
     rpc.round_trip();
-    assert!(rpc.stop().is_empty());
+    assert_eq!(rpc.stop(), b"");
     installation.wait_for_state(|state| state["worker_pid"].is_null());
 }
 
@@ -424,8 +424,8 @@ fn a_second_worker_exits_silently_and_process_termination_releases_the_os_lock()
         .output()
         .unwrap();
     assert!(follower.status.success());
-    assert!(follower.stdout.is_empty());
-    assert!(follower.stderr.is_empty());
+    assert_eq!(follower.stdout, b"");
+    assert_eq!(follower.stderr, b"");
     assert!(
         listener
             .accept()
@@ -464,7 +464,7 @@ fn pending_update_waits_for_mcp_to_close_and_installs_only_on_the_next_usage() {
     assert_eq!(std::fs::read(&installation.binary).unwrap(), original);
     assert!(installation.state().unwrap()["installed_at"].is_null());
     rpc.round_trip();
-    assert!(rpc.stop().is_empty());
+    assert_eq!(rpc.stop(), b"");
     let waiting = installation.wait_for_state(|state| {
         state["phase"] == "waiting_for_next_use" && state["worker_pid"].is_null()
     });
@@ -481,7 +481,7 @@ fn pending_update_waits_for_mcp_to_close_and_installs_only_on_the_next_usage() {
     let output = installation.read(&endpoint).output().unwrap();
     assert!(output.status.success());
     assert_eq!(output.stdout, b"     1: unchanged\n");
-    assert!(output.stderr.is_empty());
+    assert_eq!(output.stderr, b"");
     let installed = installation
         .wait_for_state(|state| state["phase"] == "installed" && state["worker_pid"].is_null());
     assert_eq!(installed["install_reason"], "idle_start");
@@ -528,7 +528,7 @@ fn maximum_deferral_installs_during_a_live_mcp_session_and_hands_off_its_monitor
     for path in backups {
         assert_eq!(std::fs::read(path.as_str().unwrap()).unwrap(), original);
     }
-    assert!(rpc.stop().is_empty());
+    assert_eq!(rpc.stop(), b"");
     installation.wait_for_state(|state| {
         state["worker_pid"].is_null()
             && state["retained_backups"]
@@ -547,7 +547,7 @@ fn discovery_commands_do_not_launch_workers_or_create_state() {
     for args in [vec!["--version"], vec!["--help"], vec!["doctor"]] {
         let output = installation.command(&endpoint).args(args).output().unwrap();
         assert!(output.status.success());
-        assert!(output.stderr.is_empty());
+        assert_eq!(output.stderr, b"");
     }
     assert!(!installation.state_root.exists());
     assert!(
@@ -564,7 +564,7 @@ fn explicit_opt_out_does_not_create_update_state_or_change_cli_output() {
     let output = peek(&root, false);
     assert!(output.status.success());
     assert_eq!(output.stdout, b"     1: unchanged\n");
-    assert!(output.stderr.is_empty());
+    assert_eq!(output.stderr, b"");
     assert!(!root.exists());
 }
 
@@ -575,7 +575,7 @@ fn explicit_opt_out_keeps_a_live_mcp_session_free_of_update_state_and_messages()
     let mut rpc = LiveMcp::start(&root, false);
     rpc.round_trip();
     assert!(!root.exists());
-    assert!(rpc.stop().is_empty());
+    assert_eq!(rpc.stop(), b"");
 }
 
 #[test]
@@ -598,6 +598,6 @@ fn unavailable_update_storage_keeps_mcp_protocol_and_stderr_unchanged() {
     std::fs::write(&root, b"unrelated bytes\n").unwrap();
     let mut rpc = LiveMcp::start(&root, true);
     rpc.round_trip();
-    assert!(rpc.stop().is_empty());
+    assert_eq!(rpc.stop(), b"");
     assert_eq!(std::fs::read(&root).unwrap(), b"unrelated bytes\n");
 }

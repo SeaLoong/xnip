@@ -281,7 +281,8 @@ fn parsers_reject_unknown_fields_conflicting_selectors_and_incomplete_operations
     assert!(parse_json::parse("not JSON").is_err());
     assert!(parse_yaml::parse("x: y: [").is_err());
     for parse in [parse_json::parse, parse_yaml::parse] {
-        assert!(parse("[]").unwrap().is_empty());
+        let operations = parse("[]").unwrap();
+        assert_eq!(operations.len(), 0, "unexpected operations: {operations:?}");
     }
 }
 

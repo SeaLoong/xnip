@@ -54,7 +54,7 @@ Invoke-RestMethod https://github.com/SeaLoong/xnip/releases/latest/download/inst
 源码安装需要 **Rust 1.89+**：
 
 ~~~sh
-cargo install --git https://github.com/SeaLoong/xnip --tag v0.3.0 --locked xnip
+cargo install --git https://github.com/SeaLoong/xnip --tag v0.3.1 --locked xnip
 ~~~
 
 ## 编辑

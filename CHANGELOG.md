@@ -4,7 +4,7 @@ User-visible changes are recorded here. Versions follow Semantic Versioning; com
 
 ## [Unreleased]
 
-## [0.3.0] - 2026-10-18
+## [0.3.1] - 2026-10-18
 
 Smaller edit inputs and responses, byte-preserving operations, and silent background updates. The README now includes reproducible native-editor benchmark conclusions and an overview chart.
 
@@ -96,7 +96,7 @@ First public release of xnip, a CLI and MCP stdio server for precise local text 
 - MCP write tools commit immediately; preview/check modes are available through the CLI. The server uses the launching user's filesystem permissions and is intended for trusted local clients.
 - Native CLI arguments are literal shell arguments; no automatic `\n` decoding or newline-style conversion is performed.
 
-[Unreleased]: https://github.com/SeaLoong/xnip/compare/v0.3.0...HEAD
-[0.3.0]: https://github.com/SeaLoong/xnip/releases/tag/v0.3.0
+[Unreleased]: https://github.com/SeaLoong/xnip/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/SeaLoong/xnip/releases/tag/v0.3.1
 [0.2.0]: https://github.com/SeaLoong/xnip/releases/tag/v0.2.0
 [0.1.1]: https://github.com/SeaLoong/xnip/releases/tag/v0.1.1

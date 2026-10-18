@@ -46,7 +46,7 @@ fn online_context_merging_matches_a_selection_oracle_for_every_small_hit_layout(
                         let result = run(&content, &options, &mut actual);
                         if mask == 0 {
                             assert!(matches!(result, Err(PeekError::Locate(_))));
-                            assert!(actual.is_empty());
+                            assert_eq!(actual, b"");
                             continue;
                         }
                         let result = result.unwrap();
@@ -94,7 +94,7 @@ fn numbered_range_validation_never_writes_an_invalid_prefix() {
                 )
                 .is_err()
             );
-            assert!(actual.is_empty());
+            assert_eq!(actual, b"");
         }
     }
 }

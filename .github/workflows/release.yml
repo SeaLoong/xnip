@@ -54,4 +54,4 @@ jobs:
     with:
       version: ${{ needs.version.outputs.version }}
       prerelease: ${{ needs.version.outputs.prerelease == 'true' }}
-      publish: ${{ startsWith(github.ref, 'refs/tags/v') }}
+      publish: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}

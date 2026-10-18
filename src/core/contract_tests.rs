@@ -101,13 +101,13 @@ fn read_writers_propagate_io_failures_and_cli_payloads_preserve_invalid_utf8() {
         .render(b"\xff\0\r\n")
         .unwrap();
     assert_eq!(result.bytes, b"     1: \xff\0\r\n");
-    assert!(
+    assert_eq!(
         read::PeekQuery::new(None, None, true, 0, None, None)
             .unwrap()
             .render(b"")
             .unwrap()
-            .bytes
-            .is_empty()
+            .bytes,
+        b""
     );
 }
 
@@ -195,10 +195,13 @@ fn line_locations_preserve_lf_crlf_and_unterminated_bytes() {
             Err(LocateError::OutOfBounds { .. })
         ));
     }
-    assert!(location::split_lines(b"").is_empty());
+    assert_eq!(location::split_lines(b""), [] as [&[u8]; 0]);
     for (start, end) in [(0, 1), (1, 0), (2, 1), (1, 9)] {
         assert!(location::resolve(&Locator::Lines { start, end }, b"a\n").is_err());
-        assert!(location::extract_line_range_with_newline(b"a\n", start, end).is_empty());
+        assert_eq!(
+            location::extract_line_range_with_newline(b"a\n", start, end),
+            b""
+        );
     }
 }
 
@@ -734,7 +737,7 @@ fn transaction_plan_coalesces_lifecycle_and_refuses_external_changes() {
     let mut plan = transaction::Plan::default();
     plan.create(&b, b"temporary".to_vec()).unwrap();
     plan.delete(&b, Some(b"temporary")).unwrap();
-    assert!(plan.preview().files.is_empty());
+    assert_eq!(plan.preview().files, [] as [std::path::PathBuf; 0]);
     plan.rename(&a, &b, Some(b"old")).unwrap();
     plan.update(&b, b"new".to_vec()).unwrap();
     assert_eq!(plan.read(&b).unwrap(), b"new");

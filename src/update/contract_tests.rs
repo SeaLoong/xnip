@@ -89,7 +89,8 @@ fn a_busy_state_gate_never_blocks_a_session_or_loses_its_locked_lease() {
     assert!(session.path.is_file());
     assert!(session.path.with_extension("meta").is_file());
     drop(session);
-    assert!(coordinator.sweep(&mut state, now()).unwrap().is_empty());
+    let live = coordinator.sweep(&mut state, now()).unwrap();
+    assert_eq!(live.len(), 0, "unexpected live leases: {live:?}");
     assert!(
         fs::read_dir(coordinator.config.directory.join("leases"))
             .unwrap()
@@ -179,7 +180,7 @@ fn cleanup_only_removes_recorded_files_in_the_correct_namespace() {
     };
     coordinator.cleanup_backups(&mut state);
     assert!(!old.exists());
-    assert!(state.retained_backups.is_empty());
+    assert_eq!(state.retained_backups, [] as [PathBuf; 0]);
     assert_eq!(fs::read(unrelated).unwrap(), b"keep");
 }
 

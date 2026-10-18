@@ -752,7 +752,10 @@ mod tests {
             assert_eq!(fs::read(&paths[1]).unwrap(), b"delete me");
             assert!(!paths[2].exists());
             for check in [true, false, false] {
-                assert!(recover(&error.journal, check).unwrap().files.is_empty());
+                assert_eq!(
+                    recover(&error.journal, check).unwrap().files,
+                    [] as [PathBuf; 0]
+                );
             }
             fs::remove_dir_all(&error.journal).unwrap();
         }
