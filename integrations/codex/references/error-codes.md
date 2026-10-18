@@ -9,17 +9,17 @@ agents should branch on them rather than parsing stderr text.
 | 1    | `USAGE`   | User error: bad CLI args, locator not found, parse error, unknown subcommand. |
 | 2    | `IO`      | IO error: cannot create tempfile, permission denied, disk full. |
 | 3    | `CHECK`   | Validation failure: `--was` mismatch; `--check` rejected the plan; pattern matched nothing. |
-| 4    | `PARTIAL` | Batch or whole-file rename commit failed; rollback was attempted, inspect status and recovery journal. |
+| 4    | `PARTIAL` | Batch, whole-file write or rename commit failed; rollback was attempted, inspect status and recovery journal. |
 
 ## Exit-code reference per command
 
 ### `edit`
 
 - `0` committed, previewed, checked or unchanged
-- `1` invalid arguments/operation or unsupported target type
+- `1` invalid arguments/operation or unsupported replacement/deletion target type
 - `2` IO/persistence failure
-- `3` existing create target, missing/ambiguous old block, failed deletion precondition or detected concurrent change
-- `4` whole-file rename commit failed; rollback was attempted and a recovery journal was retained
+- `3` existing create target, missing/ambiguous old block, rejected whole-file write/rename plan, failed deletion precondition or detected concurrent change
+- `4` whole-file write or rename commit failed; rollback was attempted and a recovery journal was retained
 
 ### `peek`
 
@@ -29,7 +29,7 @@ agents should branch on them rather than parsing stderr text.
 
 ### `find`
 
-- `0` at least one hit emitted
+- `0` at least one matching hit found, even if the output budget truncates its display
 - `1` no hits / locator missing / invalid regex
 - `2` any input failed to load, even if another input matched
 

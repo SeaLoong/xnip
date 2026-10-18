@@ -1,0 +1,291 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1536" height="1048" viewBox="0 0 1536 1048" role="img" aria-labelledby="title desc">
+<title id="title">Best observed editing frontier</title><desc id="desc">Separate xnip MCP and CLI panels compare byte-exact native and xnip minima within the same allowed-contract pool. Guarded pools admit guarded profiles only; snapshot-enabled pools admit guarded and snapshot profiles on both sides. Native executor-input candidates may span native transports. Invocation overhead is separate. Input and known-text exchange winners are independent; this is not a global optimum or an executed strategy.</desc>
+<style>text{font-family:Segoe UI,Arial,sans-serif;fill:#192b3a;font-size:13px}.small{font-size:11px;fill:#526575}.title{font-size:21px;font-weight:600}.tick{fill:#dfe6eb;stroke:none}</style>
+<rect width="1536" height="1048" fill="#fff"/>
+<text x="28" y="36" class="title">Best observed editing frontier</text>
+<text x="28.00" y="61.00" class="small" text-anchor="start">Native best / xnip best | tokens | log axis | xnip = 1x | each minimum uses every recorded byte-exact repetition</text>
+<text x="28.00" y="82.00" class="small" text-anchor="start">Circle: input. Diamond: input + known text. Guarded: guarded only. Snapshot-enabled: guarded + whole writes. Aider return unknown.</text>
+<text x="28.00" y="103.00" class="small" text-anchor="start">Native candidates span native transports. CLI invocation and request envelopes are separate costs; no timing ranking is made.</text>
+<rect x="22" y="116" width="740" height="874" rx="7" fill="#f7f9fa"/>
+<text x="36.00" y="136.00" class="" text-anchor="start">xnip MCP</text>
+<text x="599.00" y="136.00" class="small" text-anchor="start">Input</text>
+<text x="679.00" y="136.00" class="small" text-anchor="start">+ text</text>
+<line x1="268.00" y1="148" x2="268.00" y2="982" stroke="#e2e9ed" stroke-dasharray="1 0"/>
+<text x="268.00" y="1000.00" class="small" text-anchor="middle">0.5x</text>
+<line x1="375.44" y1="148" x2="375.44" y2="982" stroke="#7e929e" stroke-dasharray="4 3"/>
+<text x="375.44" y="1000.00" class="small" text-anchor="middle">1x</text>
+<line x1="482.89" y1="148" x2="482.89" y2="982" stroke="#e2e9ed" stroke-dasharray="1 0"/>
+<text x="482.89" y="1000.00" class="small" text-anchor="middle">2x</text>
+<text x="36.00" y="169.00" class="small" text-anchor="start">tiny-config · guarded</text>
+<circle cx="428.90" cy="165" r="5" fill="#007f73"/>
+<path d="M 443.93 159 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#007f73" stroke-width="2"/>
+<text x="599.00" y="169.00" class="small" text-anchor="start">1.41x</text>
+<text x="679.00" y="169.00" class="small" text-anchor="start">1.56x</text>
+<text x="36.00" y="200.00" class="small" text-anchor="start">tiny-config · snapshot-enabled</text>
+<circle cx="425.89" cy="196" r="5" fill="#b67418"/>
+<path d="M 445.51 190 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#b67418" stroke-width="2"/>
+<text x="599.00" y="200.00" class="small" text-anchor="start">1.38x</text>
+<text x="679.00" y="200.00" class="small" text-anchor="start">1.57x</text>
+<text x="36.00" y="231.00" class="small" text-anchor="start">large-local-change · guarded</text>
+<circle cx="399.34" cy="227" r="5" fill="#007f73"/>
+<path d="M 411.03 221 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#007f73" stroke-width="2"/>
+<text x="599.00" y="231.00" class="small" text-anchor="start">1.17x</text>
+<text x="679.00" y="231.00" class="small" text-anchor="start">1.26x</text>
+<text x="36.00" y="262.00" class="small" text-anchor="start">large-local-change · snapshot-enabled</text>
+<circle cx="417.60" cy="258" r="5" fill="#b67418"/>
+<path d="M 435.23 252 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#b67418" stroke-width="2"/>
+<text x="599.00" y="262.00" class="small" text-anchor="start">1.31x</text>
+<text x="679.00" y="262.00" class="small" text-anchor="start">1.47x</text>
+<text x="36.00" y="293.00" class="small" text-anchor="start">multiline-function · guarded</text>
+<circle cx="392.50" cy="289" r="5" fill="#007f73"/>
+<path d="M 401.34 283 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#007f73" stroke-width="2"/>
+<text x="599.00" y="293.00" class="small" text-anchor="start">1.12x</text>
+<text x="679.00" y="293.00" class="small" text-anchor="start">1.18x</text>
+<text x="36.00" y="324.00" class="small" text-anchor="start">multiline-function · snapshot-enabled</text>
+<circle cx="381.52" cy="320" r="5" fill="#b67418"/>
+<path d="M 476.81 314 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#b67418" stroke-width="2"/>
+<text x="599.00" y="324.00" class="small" text-anchor="start">1.04x</text>
+<text x="679.00" y="324.00" class="small" text-anchor="start">1.92x</text>
+<text x="36.00" y="355.00" class="small" text-anchor="start">unicode · guarded</text>
+<circle cx="408.55" cy="351" r="5" fill="#007f73"/>
+<path d="M 423.52 345 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#007f73" stroke-width="2"/>
+<text x="599.00" y="355.00" class="small" text-anchor="start">1.24x</text>
+<text x="679.00" y="355.00" class="small" text-anchor="start">1.36x</text>
+<text x="36.00" y="386.00" class="small" text-anchor="start">unicode · snapshot-enabled</text>
+<circle cx="389.55" cy="382" r="5" fill="#b67418"/>
+<path d="M 423.52 376 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#b67418" stroke-width="2"/>
+<text x="599.00" y="386.00" class="small" text-anchor="start">1.10x</text>
+<text x="679.00" y="386.00" class="small" text-anchor="start">1.36x</text>
+<text x="36.00" y="417.00" class="small" text-anchor="start">crlf · guarded</text>
+<circle cx="428.90" cy="413" r="5" fill="#007f73"/>
+<path d="M 443.93 407 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#007f73" stroke-width="2"/>
+<text x="599.00" y="417.00" class="small" text-anchor="start">1.41x</text>
+<text x="679.00" y="417.00" class="small" text-anchor="start">1.56x</text>
+<text x="36.00" y="448.00" class="small" text-anchor="start">crlf · snapshot-enabled</text>
+<circle cx="425.89" cy="444" r="5" fill="#b67418"/>
+<path d="M 445.51 438 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#b67418" stroke-width="2"/>
+<text x="599.00" y="448.00" class="small" text-anchor="start">1.38x</text>
+<text x="679.00" y="448.00" class="small" text-anchor="start">1.57x</text>
+<text x="36.00" y="479.00" class="small" text-anchor="start">no-final-newline · guarded</text>
+<circle cx="428.90" cy="475" r="5" fill="#007f73"/>
+<path d="M 443.93 469 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#007f73" stroke-width="2"/>
+<text x="599.00" y="479.00" class="small" text-anchor="start">1.41x</text>
+<text x="679.00" y="479.00" class="small" text-anchor="start">1.56x</text>
+<text x="36.00" y="510.00" class="small" text-anchor="start">no-final-newline · snapshot-enabled</text>
+<circle cx="386.93" cy="506" r="5" fill="#b67418"/>
+<path d="M 445.51 500 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#b67418" stroke-width="2"/>
+<text x="599.00" y="510.00" class="small" text-anchor="start">1.08x</text>
+<text x="679.00" y="510.00" class="small" text-anchor="start">1.57x</text>
+<text x="36.00" y="541.00" class="small" text-anchor="start">disambiguated-block · guarded</text>
+<circle cx="390.70" cy="537" r="5" fill="#007f73"/>
+<path d="M 412.09 531 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#007f73" stroke-width="2"/>
+<text x="599.00" y="541.00" class="small" text-anchor="start">1.10x</text>
+<text x="679.00" y="541.00" class="small" text-anchor="start">1.27x</text>
+<text x="36.00" y="572.00" class="small" text-anchor="start">disambiguated-block · snapshot-enabled</text>
+<circle cx="428.90" cy="568" r="5" fill="#b67418"/>
+<path d="M 482.89 562 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#b67418" stroke-width="2"/>
+<text x="599.00" y="572.00" class="small" text-anchor="start">1.41x</text>
+<text x="679.00" y="572.00" class="small" text-anchor="start">2.00x</text>
+<text x="36.00" y="603.00" class="small" text-anchor="start">global-replace · guarded</text>
+<circle cx="465.32" cy="599" r="5" fill="#007f73"/>
+<path d="M 477.63 593 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#007f73" stroke-width="2"/>
+<text x="599.00" y="603.00" class="small" text-anchor="start">1.79x</text>
+<text x="679.00" y="603.00" class="small" text-anchor="start">1.93x</text>
+<text x="36.00" y="634.00" class="small" text-anchor="start">global-replace · snapshot-enabled</text>
+<circle cx="465.32" cy="630" r="5" fill="#b67418"/>
+<path d="M 477.63 624 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#b67418" stroke-width="2"/>
+<text x="599.00" y="634.00" class="small" text-anchor="start">1.79x</text>
+<text x="679.00" y="634.00" class="small" text-anchor="start">1.93x</text>
+<text x="36.00" y="665.00" class="small" text-anchor="start">same-file-batch · guarded</text>
+<circle cx="442.22" cy="661" r="5" fill="#007f73"/>
+<path d="M 477.04 655 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#007f73" stroke-width="2"/>
+<text x="599.00" y="665.00" class="small" text-anchor="start">1.54x</text>
+<text x="679.00" y="665.00" class="small" text-anchor="start">1.93x</text>
+<text x="36.00" y="696.00" class="small" text-anchor="start">same-file-batch · snapshot-enabled</text>
+<circle cx="391.78" cy="692" r="5" fill="#b67418"/>
+<path d="M 505.61 686 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#b67418" stroke-width="2"/>
+<text x="599.00" y="696.00" class="small" text-anchor="start">1.11x</text>
+<text x="679.00" y="696.00" class="small" text-anchor="start">2.32x</text>
+<text x="36.00" y="727.00" class="small" text-anchor="start">multi-file-batch · guarded</text>
+<circle cx="471.81" cy="723" r="5" fill="#007f73"/>
+<path d="M 497.66 717 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#007f73" stroke-width="2"/>
+<text x="599.00" y="727.00" class="small" text-anchor="start">1.86x</text>
+<text x="679.00" y="727.00" class="small" text-anchor="start">2.20x</text>
+<text x="36.00" y="758.00" class="small" text-anchor="start">multi-file-batch · snapshot-enabled</text>
+<circle cx="408.96" cy="754" r="5" fill="#b67418"/>
+<path d="M 497.66 748 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#b67418" stroke-width="2"/>
+<text x="599.00" y="758.00" class="small" text-anchor="start">1.24x</text>
+<text x="679.00" y="758.00" class="small" text-anchor="start">2.20x</text>
+<text x="36.00" y="789.00" class="small" text-anchor="start">long-line · guarded</text>
+<circle cx="438.29" cy="785" r="5" fill="#007f73"/>
+<path d="M 454.63 779 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#007f73" stroke-width="2"/>
+<text x="599.00" y="789.00" class="small" text-anchor="start">1.50x</text>
+<text x="679.00" y="789.00" class="small" text-anchor="start">1.67x</text>
+<text x="36.00" y="820.00" class="small" text-anchor="start">long-line · snapshot-enabled</text>
+<circle cx="451.78" cy="816" r="5" fill="#b67418"/>
+<path d="M 469.40 810 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#b67418" stroke-width="2"/>
+<text x="599.00" y="820.00" class="small" text-anchor="start">1.64x</text>
+<text x="679.00" y="820.00" class="small" text-anchor="start">1.83x</text>
+<text x="36.00" y="851.00" class="small" text-anchor="start">insert-after-anchor · guarded</text>
+<circle cx="410.03" cy="847" r="5" fill="#007f73"/>
+<path d="M 425.48 841 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#007f73" stroke-width="2"/>
+<text x="599.00" y="851.00" class="small" text-anchor="start">1.25x</text>
+<text x="679.00" y="851.00" class="small" text-anchor="start">1.38x</text>
+<text x="36.00" y="882.00" class="small" text-anchor="start">insert-after-anchor · snapshot-enabled</text>
+<circle cx="403.71" cy="878" r="5" fill="#b67418"/>
+<path d="M 444.62 872 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#b67418" stroke-width="2"/>
+<text x="599.00" y="882.00" class="small" text-anchor="start">1.20x</text>
+<text x="679.00" y="882.00" class="small" text-anchor="start">1.56x</text>
+<text x="36.00" y="913.00" class="small" text-anchor="start">delete-block · guarded</text>
+<circle cx="406.55" cy="909" r="5" fill="#007f73"/>
+<path d="M 424.06 903 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#007f73" stroke-width="2"/>
+<text x="599.00" y="913.00" class="small" text-anchor="start">1.22x</text>
+<text x="679.00" y="913.00" class="small" text-anchor="start">1.37x</text>
+<text x="36.00" y="944.00" class="small" text-anchor="start">delete-block · snapshot-enabled</text>
+<circle cx="375.44" cy="940" r="5" fill="#b67418"/>
+<path d="M 482.89 934 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#b67418" stroke-width="2"/>
+<text x="599.00" y="944.00" class="small" text-anchor="start">1.00x</text>
+<text x="679.00" y="944.00" class="small" text-anchor="start">2.00x</text>
+<rect x="776" y="116" width="740" height="874" rx="7" fill="#f7f9fa"/>
+<text x="790.00" y="136.00" class="" text-anchor="start">xnip CLI stdin</text>
+<text x="1353.00" y="136.00" class="small" text-anchor="start">Input</text>
+<text x="1433.00" y="136.00" class="small" text-anchor="start">+ text</text>
+<line x1="1022.00" y1="148" x2="1022.00" y2="982" stroke="#e2e9ed" stroke-dasharray="1 0"/>
+<text x="1022.00" y="1000.00" class="small" text-anchor="middle">0.5x</text>
+<line x1="1129.44" y1="148" x2="1129.44" y2="982" stroke="#7e929e" stroke-dasharray="4 3"/>
+<text x="1129.44" y="1000.00" class="small" text-anchor="middle">1x</text>
+<line x1="1236.89" y1="148" x2="1236.89" y2="982" stroke="#e2e9ed" stroke-dasharray="1 0"/>
+<text x="1236.89" y="1000.00" class="small" text-anchor="middle">2x</text>
+<text x="790.00" y="169.00" class="small" text-anchor="start">tiny-config · guarded</text>
+<circle cx="1224.48" cy="165" r="5" fill="#007f73"/>
+<path d="M 1181.60 159 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#007f73" stroke-width="2"/>
+<text x="1353.00" y="169.00" class="small" text-anchor="start">1.85x</text>
+<text x="1433.00" y="169.00" class="small" text-anchor="start">1.40x</text>
+<text x="790.00" y="200.00" class="small" text-anchor="start">tiny-config · snapshot-enabled</text>
+<circle cx="1255.15" cy="196" r="5" fill="#b67418"/>
+<path d="M 1188.81 190 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#b67418" stroke-width="2"/>
+<text x="1353.00" y="200.00" class="small" text-anchor="start">2.25x</text>
+<text x="1433.00" y="200.00" class="small" text-anchor="start">1.47x</text>
+<text x="790.00" y="231.00" class="small" text-anchor="start">large-local-change · guarded</text>
+<circle cx="1181.60" cy="227" r="5" fill="#007f73"/>
+<path d="M 1160.11 221 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#007f73" stroke-width="2"/>
+<text x="1353.00" y="231.00" class="small" text-anchor="start">1.40x</text>
+<text x="1433.00" y="231.00" class="small" text-anchor="start">1.22x</text>
+<text x="790.00" y="262.00" class="small" text-anchor="start">large-local-change · snapshot-enabled</text>
+<circle cx="1203.78" cy="258" r="5" fill="#b67418"/>
+<path d="M 1164.03 252 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#b67418" stroke-width="2"/>
+<text x="1353.00" y="262.00" class="small" text-anchor="start">1.62x</text>
+<text x="1433.00" y="262.00" class="small" text-anchor="start">1.25x</text>
+<text x="790.00" y="293.00" class="small" text-anchor="start">multiline-function · guarded</text>
+<circle cx="1165.66" cy="289" r="5" fill="#007f73"/>
+<path d="M 1151.86 283 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#007f73" stroke-width="2"/>
+<text x="1353.00" y="293.00" class="small" text-anchor="start">1.26x</text>
+<text x="1433.00" y="293.00" class="small" text-anchor="start">1.16x</text>
+<text x="790.00" y="324.00" class="small" text-anchor="start">multiline-function · snapshot-enabled</text>
+<circle cx="1178.06" cy="320" r="5" fill="#b67418"/>
+<path d="M 1230.81 314 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#b67418" stroke-width="2"/>
+<text x="1353.00" y="324.00" class="small" text-anchor="start">1.37x</text>
+<text x="1433.00" y="324.00" class="small" text-anchor="start">1.92x</text>
+<text x="790.00" y="355.00" class="small" text-anchor="start">unicode · guarded</text>
+<circle cx="1186.44" cy="351" r="5" fill="#007f73"/>
+<path d="M 1157.71 345 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#007f73" stroke-width="2"/>
+<text x="1353.00" y="355.00" class="small" text-anchor="start">1.44x</text>
+<text x="1433.00" y="355.00" class="small" text-anchor="start">1.20x</text>
+<text x="790.00" y="386.00" class="small" text-anchor="start">unicode · snapshot-enabled</text>
+<circle cx="1185.70" cy="382" r="5" fill="#b67418"/>
+<path d="M 1170.63 376 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#b67418" stroke-width="2"/>
+<text x="1353.00" y="386.00" class="small" text-anchor="start">1.44x</text>
+<text x="1433.00" y="386.00" class="small" text-anchor="start">1.30x</text>
+<text x="790.00" y="417.00" class="small" text-anchor="start">crlf · guarded</text>
+<circle cx="1224.48" cy="413" r="5" fill="#007f73"/>
+<path d="M 1181.60 407 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#007f73" stroke-width="2"/>
+<text x="1353.00" y="417.00" class="small" text-anchor="start">1.85x</text>
+<text x="1433.00" y="417.00" class="small" text-anchor="start">1.40x</text>
+<text x="790.00" y="448.00" class="small" text-anchor="start">crlf · snapshot-enabled</text>
+<circle cx="1255.15" cy="444" r="5" fill="#b67418"/>
+<path d="M 1188.81 438 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#b67418" stroke-width="2"/>
+<text x="1353.00" y="448.00" class="small" text-anchor="start">2.25x</text>
+<text x="1433.00" y="448.00" class="small" text-anchor="start">1.47x</text>
+<text x="790.00" y="479.00" class="small" text-anchor="start">no-final-newline · guarded</text>
+<circle cx="1224.48" cy="475" r="5" fill="#007f73"/>
+<path d="M 1181.60 469 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#007f73" stroke-width="2"/>
+<text x="1353.00" y="479.00" class="small" text-anchor="start">1.85x</text>
+<text x="1433.00" y="479.00" class="small" text-anchor="start">1.40x</text>
+<text x="790.00" y="510.00" class="small" text-anchor="start">no-final-newline · snapshot-enabled</text>
+<circle cx="1216.19" cy="506" r="5" fill="#b67418"/>
+<path d="M 1188.81 500 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#b67418" stroke-width="2"/>
+<text x="1353.00" y="510.00" class="small" text-anchor="start">1.75x</text>
+<text x="1433.00" y="510.00" class="small" text-anchor="start">1.47x</text>
+<text x="790.00" y="541.00" class="small" text-anchor="start">disambiguated-block · guarded</text>
+<circle cx="1187.52" cy="537" r="5" fill="#007f73"/>
+<path d="M 1171.34 531 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#007f73" stroke-width="2"/>
+<text x="1353.00" y="541.00" class="small" text-anchor="start">1.45x</text>
+<text x="1433.00" y="541.00" class="small" text-anchor="start">1.31x</text>
+<text x="790.00" y="572.00" class="small" text-anchor="start">disambiguated-block · snapshot-enabled</text>
+<circle cx="1236.89" cy="568" r="5" fill="#b67418"/>
+<path d="M 1228.51 562 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#b67418" stroke-width="2"/>
+<text x="1353.00" y="572.00" class="small" text-anchor="start">2.00x</text>
+<text x="1433.00" y="572.00" class="small" text-anchor="start">1.89x</text>
+<text x="790.00" y="603.00" class="small" text-anchor="start">global-replace · guarded</text>
+<circle cx="1271.48" cy="599" r="5" fill="#007f73"/>
+<path d="M 1212.23 593 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#007f73" stroke-width="2"/>
+<text x="1353.00" y="603.00" class="small" text-anchor="start">2.50x</text>
+<text x="1433.00" y="603.00" class="small" text-anchor="start">1.71x</text>
+<text x="790.00" y="634.00" class="small" text-anchor="start">global-replace · snapshot-enabled</text>
+<circle cx="1287.81" cy="630" r="5" fill="#b67418"/>
+<path d="M 1221.63 624 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#b67418" stroke-width="2"/>
+<text x="1353.00" y="634.00" class="small" text-anchor="start">2.78x</text>
+<text x="1433.00" y="634.00" class="small" text-anchor="start">1.81x</text>
+<text x="790.00" y="665.00" class="small" text-anchor="start">same-file-batch · guarded</text>
+<circle cx="1222.11" cy="661" r="5" fill="#007f73"/>
+<path d="M 1219.96 655 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#007f73" stroke-width="2"/>
+<text x="1353.00" y="665.00" class="small" text-anchor="start">1.82x</text>
+<text x="1433.00" y="665.00" class="small" text-anchor="start">1.79x</text>
+<text x="790.00" y="696.00" class="small" text-anchor="start">same-file-batch · snapshot-enabled</text>
+<circle cx="1164.03" cy="692" r="5" fill="#b67418"/>
+<path d="M 1230.00 686 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#b67418" stroke-width="2"/>
+<text x="1353.00" y="696.00" class="small" text-anchor="start">1.25x</text>
+<text x="1433.00" y="696.00" class="small" text-anchor="start">1.91x</text>
+<text x="790.00" y="727.00" class="small" text-anchor="start">multi-file-batch · guarded</text>
+<circle cx="1248.82" cy="723" r="5" fill="#007f73"/>
+<path d="M 1241.66 717 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#007f73" stroke-width="2"/>
+<text x="1353.00" y="727.00" class="small" text-anchor="start">2.16x</text>
+<text x="1433.00" y="727.00" class="small" text-anchor="start">2.06x</text>
+<text x="790.00" y="758.00" class="small" text-anchor="start">multi-file-batch · snapshot-enabled</text>
+<circle cx="1192.29" cy="754" r="5" fill="#b67418"/>
+<path d="M 1246.58 748 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#b67418" stroke-width="2"/>
+<text x="1353.00" y="758.00" class="small" text-anchor="start">1.50x</text>
+<text x="1433.00" y="758.00" class="small" text-anchor="start">2.13x</text>
+<text x="790.00" y="789.00" class="small" text-anchor="start">long-line · guarded</text>
+<circle cx="1244.45" cy="785" r="5" fill="#007f73"/>
+<path d="M 1189.23 779 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#007f73" stroke-width="2"/>
+<text x="1353.00" y="789.00" class="small" text-anchor="start">2.10x</text>
+<text x="1433.00" y="789.00" class="small" text-anchor="start">1.47x</text>
+<text x="790.00" y="820.00" class="small" text-anchor="start">long-line · snapshot-enabled</text>
+<circle cx="1299.74" cy="816" r="5" fill="#b67418"/>
+<path d="M 1210.99 810 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#b67418" stroke-width="2"/>
+<text x="1353.00" y="820.00" class="small" text-anchor="start">3.00x</text>
+<text x="1433.00" y="820.00" class="small" text-anchor="start">1.69x</text>
+<text x="790.00" y="851.00" class="small" text-anchor="start">insert-after-anchor · guarded</text>
+<circle cx="1189.23" cy="847" r="5" fill="#007f73"/>
+<path d="M 1158.78 841 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#007f73" stroke-width="2"/>
+<text x="1353.00" y="851.00" class="small" text-anchor="start">1.47x</text>
+<text x="1433.00" y="851.00" class="small" text-anchor="start">1.21x</text>
+<text x="790.00" y="882.00" class="small" text-anchor="start">insert-after-anchor · snapshot-enabled</text>
+<circle cx="1220.56" cy="878" r="5" fill="#b67418"/>
+<path d="M 1189.23 872 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#b67418" stroke-width="2"/>
+<text x="1353.00" y="882.00" class="small" text-anchor="start">1.80x</text>
+<text x="1433.00" y="882.00" class="small" text-anchor="start">1.47x</text>
+<text x="790.00" y="913.00" class="small" text-anchor="start">delete-block · guarded</text>
+<circle cx="1210.99" cy="909" r="5" fill="#007f73"/>
+<path d="M 1170.11 903 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#007f73" stroke-width="2"/>
+<text x="1353.00" y="913.00" class="small" text-anchor="start">1.69x</text>
+<text x="1433.00" y="913.00" class="small" text-anchor="start">1.30x</text>
+<text x="790.00" y="944.00" class="small" text-anchor="start">delete-block · snapshot-enabled</text>
+<circle cx="1174.04" cy="940" r="5" fill="#b67418"/>
+<path d="M 1204.70 934 l 6 6 l -6 6 l -6 -6 Z" fill="#fff" stroke="#b67418" stroke-width="2"/>
+<text x="1353.00" y="944.00" class="small" text-anchor="start">1.33x</text>
+<text x="1433.00" y="944.00" class="small" text-anchor="start">1.62x</text>
+<text x="28.00" y="1022.00" class="small" text-anchor="start">Best observed supplied profiles only. Missing comparisons remain n/a. Winners can differ between input and known-text exchange.</text>
+<text x="28.00" y="1038.00" class="small" text-anchor="start">Full serialized JSON-RPC replies are a separate captured layer when recorded; no frontier choice is replayed by the runner.</text>
+</svg>

@@ -15,7 +15,7 @@
 
 use thiserror::Error;
 
-use crate::core::location::{Count, split_lines};
+use crate::core::location::Count;
 
 #[derive(Debug, Error)]
 pub enum ReplaceError {
@@ -53,49 +53,33 @@ pub fn replace_range(
         });
     }
 
-    let lines = split_lines(content);
-    let total = lines.len();
-    if end_line > total {
-        return Err(ReplaceError::OutOfBounds {
-            start: start_line,
-            end: end_line,
-            total,
-        });
+    let mut line = 1;
+    let mut line_start = 0;
+    let mut start = 0;
+    for newline in memchr::memchr_iter(b'\n', content) {
+        if line == start_line {
+            start = line_start;
+        }
+        if line == end_line {
+            return Ok(splice(content, start, newline + 1, payload));
+        }
+        line += 1;
+        line_start = newline + 1;
     }
-
-    // 还原"该行后是否有 \n"的信息（split_lines 丢了分隔符）
-    let line_has_newline = compute_newline_flags(content, &lines);
-
-    let last_in_range_has_nl = line_has_newline[end_line - 1];
-
-    let mut out = Vec::with_capacity(content.len());
-
-    // 写入 [1, start_line)
-    for i in 0..(start_line - 1) {
-        out.extend_from_slice(lines[i]);
-        if line_has_newline[i] {
-            out.push(b'\n');
+    if line_start < content.len() {
+        if line == start_line {
+            start = line_start;
+        }
+        if line == end_line {
+            return Ok(splice(content, start, content.len(), payload));
         }
     }
-
-    // 写入 payload
-    if !payload.is_empty() {
-        out.extend_from_slice(payload);
-        // 如果原区段最后一行带 \n，并且 payload 末尾不是 \n，补一个
-        if last_in_range_has_nl && payload.last() != Some(&b'\n') {
-            out.push(b'\n');
-        }
-    }
-
-    // 写入 (end_line, total]
-    for i in end_line..total {
-        out.extend_from_slice(lines[i]);
-        if line_has_newline[i] {
-            out.push(b'\n');
-        }
-    }
-
-    Ok(out)
+    let total = line - usize::from(line_start == content.len());
+    Err(ReplaceError::OutOfBounds {
+        start: start_line,
+        end: end_line,
+        total,
+    })
 }
 
 /// 用 regex 在字节流上替换前 N 处（或全部），返回 `(new_bytes, n_replaced)`。
@@ -141,18 +125,17 @@ pub fn replace_pattern(
     (new_bytes, n_replaced)
 }
 
-/// 给定 `split_lines` 结果，反推每行后面在原 content 中是否跟着 `\n`。
-fn compute_newline_flags(content: &[u8], lines: &[&[u8]]) -> Vec<bool> {
-    if lines.is_empty() {
-        return Vec::new();
+fn splice(content: &[u8], start: usize, end: usize, payload: &[u8]) -> Vec<u8> {
+    let newline = !payload.is_empty()
+        && content.get(end.wrapping_sub(1)) == Some(&b'\n')
+        && payload.last() != Some(&b'\n');
+    let mut out =
+        Vec::with_capacity(content.len() - (end - start) + payload.len() + usize::from(newline));
+    out.extend_from_slice(&content[..start]);
+    out.extend_from_slice(payload);
+    if newline {
+        out.push(b'\n');
     }
-    let base = content.as_ptr() as usize;
-    lines
-        .iter()
-        .map(|line| {
-            let start = line.as_ptr() as usize;
-            let end_idx = start - base + line.len();
-            content.get(end_idx) == Some(&b'\n')
-        })
-        .collect()
+    out.extend_from_slice(&content[end..]);
+    out
 }

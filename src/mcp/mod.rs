@@ -4,4 +4,4 @@
 #![allow(clippy::needless_pass_by_value)]
 mod server;
 mod tools;
-pub use server::{Toolset, serve_stdio, serve_stdio_with_toolset};
+pub use server::{Receipts, Toolset, serve_stdio, serve_stdio_with_toolset, serve_with_options};

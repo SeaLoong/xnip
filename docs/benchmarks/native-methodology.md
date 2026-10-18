@@ -1,68 +1,96 @@
 # Native editor execution methodology
 
-## Question and two different experiments
+## Question and evidence
 
-The primary experiment asks: for the same intended edit, how do a harness's native editor and xnip differ in accepted input, actual file bytes, matching/rejection behavior, returned text and local execution time?
+This experiment compares real editing executors on identical known-input tasks: supplied input, captured results, matching/rejection policy and resulting file bytes. It does not invoke a model. The [supplementary suite](representation-methodology.md) instead compares serialized representations and current xnip interfaces.
 
-It directly executes native tools. The separate representation experiment is available as [supplementary data](representation-results.md). Serializing an aider block or applying a Codex-looking patch through xnip cannot establish the behavior of aider or Codex.
+Every repetition receives a fresh workspace. The oracle compares every file, including unexpected side effects, with the goal bytes. Native success status alone cannot pass it. The thirteen original tasks cover small/large edits, multiline code, Unicode, CRLF, missing EOF newline, disambiguation, global replacement, same/multiple-file edits, a long line, insertion and deletion.
 
-A full agent experiment asks a different question: with the same harness, model, prompt and initial repository, what changes when the native editor is replaced by xnip? That needs real model trajectories, tool selection, provider token usage, mandatory reads, retries and repeated runs. It has not been run here. No claim about total agent token savings follows from these executor measurements.
+All original twelve profiles remain. Added path, unique-context, whole-file and adaptive configurations are separately named. The full available matrix has 31 profiles; actual availability, versions and repetition count are in raw JSON.
 
-## Native implementations and surrounding context
+## Native implementations
 
-Codex is the actual installed executable, fingerprinted by SHA256 and queried for its version. Its native argv0 dispatcher consumes the unchanged patch on stdin. This avoids Windows argv size limits without reproducing the parser. Native stdout, stderr and status are retained.
+Codex is the installed executable, versioned and fingerprinted by SHA-256. Its native argv0=apply_patch dispatcher reads the unchanged patch from stdin. The fixture cwd is the case workspace. No Python patch reproduction or xnip patch parser stands in for Codex.
 
-Gemini CLI is the installed core package. The adapter invokes the unchanged EditTool and its real StandardFileSystemService. Workspace authorization is restricted to the temporary fixture, telemetry is disabled, and developer console output is captured separately. The default repair path stays enabled, but its generateJson request is intercepted and recorded without inference or network access. A blocked repair means the complete repair outcome is unmeasured. The exact native request size is available as an observation, not billed usage.
+Gemini CLI is the installed core package's unchanged EditTool and StandardFileSystemService. The adapter supplies workspace authorization and captures telemetry/console output. Its default correction path remains enabled, but generateJson calls are recorded and blocked before inference. Prescribed-context and executor-accepted minimal profiles remain separate.
 
-OpenCode is pinned to official commit `e3c4eb242585dcd77be1a867391b7c25fd47ce52` / 1.19.3. Matching, parameter validation, diff generation, output truncation and filesystem operations use SHA-verified upstream sources. LSP, formatting, permission UI, events and agent lookup are isolated context adapters. These choices are included in provenance; they do not create a full OpenCode session.
+OpenCode is pinned to official commit `e3c4eb242585dcd77be1a867391b7c25fd47ce52` / 1.19.3. Matching, validation, filesystem operations, diffs and output handling use SHA-verified upstream sources. LSP, formatting, permission UI, events and agent lookup are isolated surrounding adapters and are disclosed in provenance.
 
-aider is pinned to official commit `5dc9490bb35f9729ef2c95d00a19ccd30c26339c`. Its actual parser, edit application and InputOutput perform the reads/writes. Model orchestration, git commits, edit authorization, linting and reflection are outside the editing-kernel call. Consequently the final model-visible response is unknown; the human report marks that response cost as not captured. Native exceptions, IO output and internal returns are retained.
+Aider is pinned to `5dc9490bb35f9729ef2c95d00a19ccd30c26339c`. Its get_edits/apply_edits and InputOutput perform parsing and IO. Model orchestration, authorization, git commits, linting and reflection are outside this editing-kernel call. The final model-visible message is unavailable; an empty kernel output is not a measured zero-token agent response.
 
-## Same tasks, different accepted inputs
+Native source files, binary hashes, package versions, lockfiles and adapter fingerprints remain in the raw report. Claude Code and Cursor are unavailable in this experiment and receive no invented schema or simulated score.
 
-Thirteen deterministic tasks cover small and large edits, multiline code, Unicode, CRLF, missing EOF newline, disambiguated repeated text, global replacement, same/multiple-file changes, a long line, insertion and deletion. Each backend and repetition receives its own fresh workspace. Every file, including unexpected side effects, is included in the byte oracle.
+## Path and context configurations
 
-These fixtures modify existing UTF-8 text files. They are not a comprehensive comparison of file lifecycle, sandbox policy, concurrency safety or language correctness.
+The original `xnip-edit` profile retains one MCP process at the outer temporary directory and sends absolute case paths. New relative/adaptive MCP profiles launch a process with the actual case directory as cwd; they never change the parent process cwd. Initialization is timed separately from warm calls.
 
-Inputs are generated deterministically from each task's intended result. Patches use changed lines and three context lines; their execution uses the actual native patch executors. Aider diff/udiff/whole use their own native formats. The whole-file message uses LF line breaks and canonical closed fences; native InputOutput handles its configured file line endings.
+Codex's cwd, OpenCode's instance directory and aider's coder.root are the actual case root. Original Gemini/OpenCode literal profiles keep absolute arguments. Added relative variants invoke their real existing path handling: OpenCode joins its instance directory; Gemini validates/corrects relative paths against its configured target directory. Original and native-corrected arguments are retained. Workspace configuration savings are not attributed to a new matching algorithm.
 
-Gemini has two explicit profiles: prescribed three-line context, and an executor-accepted minimal literal. The minimal profile does not represent compliance with Gemini's full prompting rules. The tasks supply the same semantic instruction; no model generates the arguments.
+Original patches/aider blocks use three context lines. Added unique-context variants enumerate symmetric 0..3-line contexts and select the smallest serialized uniquely anchored candidate; if none is unique, they widen until one exists. This selection reads the known source and intended change, never execution results. It is a stated candidate set rather than proof of the shortest native encoding.
 
-Gemini and OpenCode prompts require a prior Read. This experiment assumes the edit context is already supplied and does not run the full Read/prompt workflow. Its token counts must not be described as whole-agent context totals.
+The prescribed three-line Gemini profile remains intact, alongside its minimal accepted profile and corresponding relative variants. Additional `gemini-relative-known-file-trim` and `opencode-relative-known-file-trim` profiles use the same known-file literal-trimming helper as snapshot-capable xnip. Their permission cohort is snapshot because deriving a shorter guard needs the supplied complete file; their selected edits still carry a unique old literal and retain the actual guarded contract. Required-old probes use the unchanged supplied old text. Mandatory native Read/prompt workflows are outside this known-context experiment, so these inputs are not complete agent-context totals.
 
-The current host is Windows. Aider `platform` therefore writes platform newlines; `lf` is a separate explicit native option. Byte-exact and LF-normalized checks are both reported. LF normalization does not erase missing-EOF differences.
+Aider platform mode follows the host newline policy; LF is explicit. Original whole-file bodies use closed fences. Separate EOF-aware whole profiles close newline-terminated goals and use an unclosed last fence only for goals with no final newline and no trailing whitespace that the native response accessor would strip. Earlier files are closed to delimit the next listing. Other unterminated trailing-whitespace goals are not claimed as supported by that encoding. Native InputOutput still applies its configured line endings. LF normalization is reported separately and does not erase missing final-newline differences.
 
-Aider WholeFileCoder also accepts an unclosed final fence, which can preserve missing EOF. That alternate accepted encoding is tested separately. A closed-fence generator limitation must not be attributed to every possible native whole-file invocation.
+## Xnip contracts and pre-execution selection
 
-## Independent observations
+| Profile | Contract and transport |
+|---|---|
+| xnip-edit | Original absolute-path literal edits, one call per supplied block; shared warm MCP |
+| xnip-relative | Same supplied guarded edits using relative slash paths and case-root MCP |
+| xnip-adaptive-guarded | Relative MCP; exact calls, direct batches, compact per-file pairs, native literal manifests, anchor insertion or guarded whole writes |
+| xnip-adaptive-snapshot | Relative MCP; guarded candidates, known-file unique trims, existing native line manifests, explicit whole-file and mixed per-file upserts |
+| xnip-adaptive-guarded-text / snapshot-text | Same candidate selection as the structured profiles, starting MCP once with `--receipts text` |
+| xnip-cli-native-guarded/snapshot | Actual complete native stdin programs; snapshot also reuses known-file trims and line programs; cold CLI process |
+| xnip-cli-compact-guarded/snapshot | Actual complete compact maps; snapshot also reuses known-file trimmed pairs; cold CLI process |
 
-A native success status is compared with expected final bytes; the status alone never passes the oracle. Per-repetition file hashes and status are compared for determinism. Failures and nonexact outcomes remain in the report.
+Guarded means an old block/anchor or whole expected old file is supplied. Snapshot permits complete whole-file upserts without old bytes because the full desired snapshot is already available; such a policy can still select a guarded edit. Contract groups describe permitted operations, while selection records the actual operation/precondition chosen.
 
-Separate probes supply ambiguous, stale, whitespace-drift and overlapping targets to observe each interface's matching and repair policy. Some representations cannot express an overlapping substring precondition; those combinations are omitted rather than given a fabricated result. These probes expose contract differences, not automatic product bug rankings.
+Candidates are built from the known before/after fixture and supplied edits, scored under the run's exact token or byte counter, then chosen before any request executes. Ties prefer fewer calls, then a guarded contract, then deterministic name order. The record includes all candidate costs and input hashes, the chosen candidate and a flag stating that observed output was not consulted.
 
-## Accounting and timing
+Compact per-file old/text pairs retain order. Global replacements keep an explicit all flag through a supported literal interface, or an eligible complete-file guard/write; an ambiguous pair is not silently treated as a global replacement. Native programs enumerate equivalent safe bare/quoted tokens and literal-multiline/escaped encodings, counting the whole resulting program. Reserved payload/locator prefixes remain quoted. MCP policies reuse these programs through the existing `manifest_text` argument, scoring the complete JSON wrapper; both policies also consider omitting the optional final record newline. Required-old probes keep their original edit form and supplied old bytes.
 
-Original captured calls and normalized copies are both stored. Counts use the normalized `/workspace` paths so random temporary directory names do not affect comparisons.
+Snapshot-only literal candidates remove equal prefixes/suffixes from each original edit while keeping old nonempty and unique, counting overlapping occurrences as Rust does. Each edit is checked against the virtual file produced by preceding edits; its final virtual files must match the supplied goal. Explicit all-match edits keep their original old/text and all flag. Small shared contexts enumerate trim offsets; large shared contexts use bounded offsets. The smallest compact pair serialization is retained for each edit before complete calls, direct batches and per-file pairs are scored. Original guarded representations remain eligible, so this bounded heuristic is not a claim of a global minimum.
 
-Input counts are the actual native patch/body/argument text. Returned-text counts are captured native output or errors. UI-rich objects and model-facing fields are distinguished. Adapter-return size includes instrumentation and duplicated fields; it is debug data, not agent context.
+Snapshot-only line candidates use the existing default `xnip_apply({manifest_text})` interface. LF-only diff groups with 0/1/3 context produce original-coordinate replace/insert programs; records are emitted descending. Payloads are always quoted so modifier-looking content cannot become a guard, locator or external payload. Source-derived simulation admits a program only when it preserves the complete expected bytes, including CRLF, blank lines and EOF. A terminal payload LF is omitted only when the existing operation's automatic LF restores the exact payload; an empty inserted line and repeated trailing LF cannot be shortened that way. A program need not end with a record newline. These are current five-tool capabilities, with no added tool catalog. CLI snapshot policies reuse the same helper and actual counter: native profiles receive the complete line program directly, while compact profiles add only trimmed compact pairs. Guarded and required-old CLI profiles preserve their original candidates and old bytes.
 
-The optional tiktoken encoding is named in every report. Bytes-only runs leave tokens null. Actual provider usage, hidden prompts, chat framing, caching and generated model reasoning are unmeasured.
+The snapshot policy does not receive a free hidden read. These fixtures already supply complete before/after files to all generators. A live policy must charge any additional read or full-file generation needed to make a snapshot available. Server-side persistence optimization cannot remove input already transmitted.
 
-Warm MCP/Node/kernel calls exclude worker initialization. Codex CLI timing includes native process startup. Aider IO setup and import timing are retained separately. These scopes differ and are not ranked as a universal speed comparison.
+## Probes and file oracle
 
-All xnip child processes set `XNIP_AUTO_UPDATE=0`. Native adapters never invoke a model. Gemini and aider block model/network activity during execution. OpenCode dependency/source preparation can use the network before timing; actual editing has no model context.
+Separate probes observe ambiguous targets, stale old bytes, whitespace drift, overlapping literals and aider's accepted unclosed whole encoding. Unsupported representation/probe combinations are omitted explicitly.
 
+Required-old probes force every xnip policy, including snapshot-capable policies, to use the exact supplied old bytes. They cannot substitute the current file as a regenerated guard, convert the attempt into an insertion or use unconditional write. These probes retain native rejection/mutation/repair behavior rather than assigning a universal quality score.
 
-## Paired relative statistics and charts
+Each output is checked against expected bytes in every repetition. CRLF, EOF, missing/extra files, native status and whether a file remained unchanged are retained. A byte-incompatible output remains visible and cannot qualify for the equivalent-outcome frontier.
 
-The [derived JSON](relative-results.json) and four SVG charts—[overview](charts/overview.svg), input ratios, scenario ratios and file correctness—are generated by [native_report.py](../../benches/native_report.py) from the raw native results. Report-only regeneration never rewrites raw transcripts or their measured source fingerprints. The derived file records the original JSON SHA-256.
+## Cost layers and timing
 
-For task i, input ratio r_i = native_input_i / xnip_input_i under the run's selected counter. xnip is 1x. The aggregate is exp(sum(log(r_i)) / N), with one equal vote per task. Neither token volume, call count nor the number of deterministic repetitions increases a task's weight. A ratio below 1x means the native representation is smaller on that task.
+Inputs are complete native edit messages, tool argument objects or full CLI stdin programs. Counter totals independently tokenize separate calls. The counter caches repeated exact strings within bounded per-instance storage; caching does not merge calls or alter their summed cost. Temporary case roots are normalized to /workspace; platform separators are retained where present. Exact token counts name the encoding; bytes-only runs leave tokens null.
 
-Two cohorts are reported. All-task ratios describe supplied input payloads, including native outputs with different final bytes. Exact-pair ratios require both tools to match the expected file bytes in every repetition. Exact subsets can have different members and sizes; they are identified in JSON and cannot support a common-corpus product ranking. The report publishes the intersection across all profiles explicitly.
+Captured native returned text is distinct from adapter debug objects and a complete host/provider response. Aider's final returned text is unknown. Blocked Gemini repair requests are captured separately, never executed or charged as paid inference.
 
-The extreme long-line task also has a leave-one-out sensitivity column. The geometric-mean chart uses a logarithmic x axis, the task heatmap uses a logarithmic color scale, and a star identifies byte-incompatible native output. Absolute counts remain available. The report separately computes returned-text and input-plus-captured-return paired ratios for the known captured text boundaries. The combined numerator and denominator each sum independently counted input and returned strings before taking the task ratio. Aider's final model-facing response remains unknown and is excluded; it is never converted to zero. A genuinely captured empty string is zero, while a zero returned-text denominator yields an undefined return-only ratio. Schemas, initialization, model-repair requests and host framing are excluded. These observable-string ratios are not a full-agent token or universal latency ranking.
+For xnip MCP, the runner additionally captures the protocol request and reply objects. Canonical serialization of the normalized JSON-RPC reply includes protocol IDs, content and structured fields; it can be much larger than the one-line returned text and may contain material a host never injects into model context. The serialized request includes its arguments and overlaps the input column, so it is not added to input again.
 
-## Unavailable products
+Two opt-in text-receipt profiles retain the same candidate input policy while the server omits structuredContent and outputSchema. Default structured profiles remain. Paired receipt statistics require byte equality in all repetitions, known complete reply costs, identical captured inputs and identical returned text. Equal token counts alone do not prove equivalent content. The resulting ratio isolates the captured canonical full JSON-RPC reply layer; unknown evidence stays unavailable and is excluded from sums/geometric means.
 
-Claude Code and Cursor are explicitly unmeasured in this run. No invented schema, approximate replacement function or reused xnip parser is allowed to fill those rows. A future authenticated full-agent run should retain its installed version and native tool traces before making claims about those products.
+For CLI profiles, invocation_cost counts the executed argv displayed with host-platform quoting, including the real binary path and apply/format/from-stdin arguments. The complete stdin program is the executor input. These are separate layers; a shell harness may have further quoting/framing costs. A raw-program advantage does not establish that using a shell costs less than an MCP call in a complete agent.
+
+CLI elapsed time includes cold process startup. MCP/kernel call time excludes initialization, with MCP setup timings recorded separately. No cross-transport speed ranking is calculated. Every xnip subprocess receives XNIP_AUTO_UPDATE=0, and native adapters block inference/network during execution.
+
+## Statistics and visualizations
+
+The report preserves all-task and byte-exact paired ratios against the original literal xnip-edit baseline. An all-task payload statistic includes incompatible native bytes; exact pairs require both profiles to meet the goal in every repetition. Cohorts can differ in members and size.
+
+The best-observed frontier instead groups profiles by guarded/snapshot contract and keeps xnip MCP/CLI transports separate. For each task, it independently selects:
+
+1. the lowest observed input among byte-exact profiles;
+2. the lowest input plus known captured returned text among byte-exact profiles.
+
+Native minima can span native transports; every winner retains its transport and actual contract. The guarded pool excludes snapshot profiles. The snapshot-enabled pool symmetrically admits guarded and snapshot candidates for both native and xnip: permission to overwrite a complete file does not force that representation on a local edit. Aider can win an input comparison but cannot supply an unknown combined-cost value. Full serialized MCP replies and invocation/request costs remain additional columns rather than fabricated native/provider measurements.
+
+The ratio is native best / xnip best. Aggregation is exp(mean(log(per-task ratio))), with one vote per task. Deterministic repetitions verify stability; they do not create extra independent tasks. The compact summary reports xnip input wins, near-equal ties using math.isclose, losses and missing comparisons. A frontier is a post-run descriptive lower envelope, not a strategy secretly fed back to execution or a claim of global optimality.
+
+Six deterministic SVGs and derived JSON are generated by [native_report.py](../../benches/native_report.py): literal overview, input geometric means, task matrix, byte correctness, per-task transport-separated frontier and compact README frontier. Report-only never changes raw data or sampling fingerprints. Derived JSON records the raw SHA-256, the renderer fingerprint sampled during execution, and the current renderer SHA-256, so a later layout-only regeneration has separate provenance. See [reproduction](README.md).
+
+A full agent study remains separate: hold model/harness/context constant, retain mandatory reads, all selected tools and retries, provider usage and repository-level assertions. Neither offline suite measures total agent savings or paid billing.

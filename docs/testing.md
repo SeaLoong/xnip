@@ -6,7 +6,6 @@ Tests cover observable bytes, commit state, rejected writes, output budgets and 
 
 ```sh
 cargo test --workspace --locked
-cargo test --workspace --doc --locked
 cargo fmt --all --check
 cargo clippy --workspace --all-targets --locked -- -D warnings
 cargo +1.89.0 check --workspace --all-targets --locked
@@ -17,7 +16,7 @@ cargo package --locked
 cargo run --locked -p xtask -- sync-integrations
 ```
 
-Use `RUSTDOCFLAGS=-D warnings` for documentation checks in CI. Integration generation must leave committed outputs unchanged. See [contributing](../CONTRIBUTING.md) for tool prerequisites and packaging from a dirty working tree.
+Use `RUSTDOCFLAGS=-D warnings` for documentation checks in CI. Integration generation must leave committed outputs unchanged. See [contributing](../CONTRIBUTING.md) for tool prerequisites and packaging from a dirty working tree, and [CI scopes](ci.md) for required checks. `cargo test` includes doctests; performance measurements run on demand.
 
 Platform installers have separate offline suites:
 
@@ -43,18 +42,20 @@ Native editor runs and fixture selection are documented in [benchmarks](benchmar
 |---|---|
 | [core contracts](../src/core/contract_tests.rs) | Inclusive byte ranges; LF/CRLF/unterminated EOF/Unicode/invalid UTF-8; locators and empty-anchor rejection; literal/regex replacement; insert/move/indent; diff; content/revert; atomic staging, backups and permissions; shared bounded reads and writer failures |
 | [apply contracts](../src/apply/contract_tests.rs) | Native/JSON/YAML equivalence; malformed/unknown fields; detection; serial/parallel planning; stdin and external payload resolution; lifecycle coalescing; overlapping-plan rejection; revert and patch planning |
+| [compact input contracts](../src/apply/compact.rs) | File-map shapes; ordered exact pairs; whole writes and guards; empty groups, duplicate keys, unknown fields and normalized alias rejection |
 | [transaction contracts](../src/core/transaction.rs) | Fault injection at commit steps; rollback; interrupted journals; integrity verification; repeat recovery; conflict refusal at existing and newly created paths |
-| [edit CLI](../tests/edit_contract.rs) | Literal old/text bytes and ambiguity; preview/check/no-op; create/delete/rename; no-clobber; backups; line/pattern edits; inverses; platform filesystem rules |
-| [batch CLI](../tests/batch_contract.rs) | Format and ordering equivalence; canonical aliases; sequential dependencies; no partial writes on validation failure; stdin/path rules; commit errors and recovery receipts |
+| [edit CLI](../tests/edit_contract.rs) | Literal replacement and before/after insertion; anchor ambiguity and byte preservation; complete-file write and whole-content guards; missing versus empty; symlink refusal; preview/check/no-op; create/delete/rename; backups; line/pattern edits and inverses |
+| [batch CLI](../tests/batch_contract.rs) | Native/JSON/YAML ordering; canonical aliases; sequential dependencies; validation-before-write; stdin/path rules; commit errors and recovery receipts |
+| [compact CLI](../tests/compact_contract.rs) | Ordered file maps; whole writes and guards; malformed/aliased groups; raw multiline and bare CR literals; CRLF/EOF; late validation leaves files unchanged |
 | [patch CLI](../tests/patch_contract.rs) | Unified/apply_patch lifecycle; exact context; CRLF/EOF; quoted UTF-8 paths; explicit patch root; malformed hunk rejection; path confinement |
 | [read CLI](../tests/read_contract.rs) | Selection/context; item/byte caps; zero unlimited; giant lines and UTF-8 boundaries; byte columns; input ordering; late IO errors |
 | [read selection matrix](../tests/read_matrix_contract.rs) | Exhaustive small selections/context/EOF/UTF-8 cases; dense bounded reads and late IO failures |
 | [CLI presentation](../tests/cli_contract.rs) | Discovery and exit categories; quiet/trace/color; compact/JSON/NDJSON; raw legacy previews; explicit truncation; executable documentation examples |
-| [live MCP](../tests/transport_contract.rs) | Stdio initialization and tool discovery; default/full toolsets; input schema rejection; preview/check/structured receipts; direct batches; reader budgets; recovery |
+| [live MCP](../tests/transport_contract.rs) | Stdio discovery; default/full toolsets; strict argument and mixed-input rejection; compact file groups and whole writes; exact insertion; default structured and opt-in text receipts; schema constraints and false-default omission; optional success flags; complete parse/regex errors; metadata omission and truthful modes; preview/check/no-op; reads and recovery |
 | [updater subprocesses](../tests/update_contract.rs) | Nonblocking CLI, singleton workers, MCP leases, deferred/forced installation, detached IO and platform replacement |
 | [POSIX installer](../tests/install_sh.py) | Local archive/checksum handling; pinned/latest selection; failed download/checksum preserves installation |
 | [PowerShell installer](../tests/install_ps1.ps1) | Local archive/checksum handling; target/version normalization; failed requests and destination cleanup |
-| [benchmark plumbing](../tests/native_benchmark_contract.py) | Adapter output/error separation, byte and EOF comparisons, cost-field interpretation |
+| [benchmark plumbing](../tests/native_benchmark_contract.py) | Adapter output/error separation; byte/EOF comparisons; snapshot-only unique-context trimming and line candidates; original-guard probe preservation; native/CLI/MCP selection symmetry; native literal manifests and record EOF; bounded counter caching with unchanged per-call totals; permission versus actual-precondition metadata; independent cost layers |
 
 Release contracts require Python 3.11+ and Git:
 
@@ -69,7 +70,7 @@ Updater policy, delivery and coordinator contracts are described in [update test
 
 ## Oracles and boundaries
 
-Core edits compare expected untouched byte slices rather than rebuilding content through the same line helpers being tested. Small move matrices use an independent sequence model and then check inverse restoration. Format tests run equivalent operations through real parsers. CLI tests execute the binary; MCP tests initialize a real stdio server and submit public requests.
+Core edits compare expected untouched byte slices rather than rebuilding content through the same line helpers being tested. Small move matrices use an independent sequence model and then check inverse restoration. Format tests run equivalent operations through real parsers, including compact whole writes, ordered pairs and native quoted multiline payloads. Whole-file guards distinguish absence from existing empty bytes. Literal insertion compares independently specified before/after output, including CRLF and unterminated EOF, and rejects empty/ambiguous anchors and incompatible flags. CLI tests execute the binary; MCP tests initialize a real stdio server and submit public requests.
 
 Transaction fault injection uses a private test seam because reliably failing a particular commit step is otherwise platform-dependent. Assertions include unchanged targets and parent paths after failed validation, retained recovery state after commit failure, and refusal to overwrite external changes.
 

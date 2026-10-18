@@ -4,6 +4,364 @@ use common::Workspace;
 use serde_json::json;
 
 #[test]
+fn whole_write_creates_exact_bytes_and_previews_without_creating_directories() {
+    for payload in [b"head\r\nlast".as_slice(), b"\xef\xbb\xbf\0\xffEOF", b""] {
+        let w = Workspace::new(&[("payload", payload)]);
+        for mode in ["--check", "--dry-run"] {
+            let output = w
+                .cli(&[
+                    "edit",
+                    "nested/target",
+                    "--write",
+                    "--text-file",
+                    "payload",
+                    mode,
+                    "--output",
+                    "json",
+                ])
+                .assert()
+                .success()
+                .get_output()
+                .stdout
+                .clone();
+            let value: serde_json::Value = serde_json::from_slice(&output).unwrap();
+            assert_eq!(value["operation"], "write");
+            assert_eq!(value["written"], false);
+            assert_eq!(value["has_changes"], true);
+            w.absent("nested");
+        }
+        let output = w
+            .cli(&[
+                "edit",
+                "nested/target",
+                "--write",
+                "--text-file",
+                "payload",
+                "--output",
+                "json",
+            ])
+            .assert()
+            .success()
+            .get_output()
+            .stdout
+            .clone();
+        let value: serde_json::Value = serde_json::from_slice(&output).unwrap();
+        assert_eq!(value["written"], true);
+        w.assert_bytes("nested/target", payload);
+        w.write("nested/target.bak", b"previous backup");
+        let output = w
+            .cli(&[
+                "edit",
+                "nested/target",
+                "--write",
+                "--text-file",
+                "payload",
+                "--backup",
+                "--output",
+                "json",
+            ])
+            .assert()
+            .success()
+            .get_output()
+            .stdout
+            .clone();
+        let value: serde_json::Value = serde_json::from_slice(&output).unwrap();
+        assert_eq!(value["has_changes"], false);
+        assert_eq!(value["written"], false);
+        w.assert_bytes("nested/target.bak", b"previous backup");
+    }
+}
+
+#[test]
+fn whole_write_old_is_a_whole_file_guard_and_missing_is_not_an_empty_file() {
+    for original in [b"prefix\r\nold\0\xffEOF".as_slice(), b""] {
+        let w = Workspace::new(&[
+            ("target", original),
+            ("old", original),
+            ("new", b"new\r\nEOF"),
+        ]);
+        w.cli(&[
+            "edit",
+            "target",
+            "--write",
+            "--old-file",
+            "old",
+            "--text-file",
+            "new",
+            "--backup",
+        ])
+        .assert()
+        .success();
+        w.assert_bytes("target", b"new\r\nEOF");
+        w.assert_bytes("target.bak", original);
+    }
+    let w = Workspace::new(&[("target", b"prefix old suffix"), ("empty", b"")]);
+    w.cli(&[
+        "edit", "target", "--write", "--old", "old", "--text", "new", "--backup",
+    ])
+    .assert()
+    .code(3);
+    w.assert_bytes("target", b"prefix old suffix");
+    w.absent("target.bak");
+    for old in ["", "expected"] {
+        w.cli(&[
+            "edit",
+            "nested/new",
+            "--write",
+            "--old",
+            old,
+            "--text",
+            "new",
+        ])
+        .assert()
+        .code(3);
+        w.absent("nested");
+    }
+    w.cli(&["edit", "target", "--write", "--text-stdin"])
+        .write_stdin("")
+        .assert()
+        .success();
+    w.assert_bytes("target", b"");
+}
+
+#[test]
+fn incompatible_whole_write_and_position_flags_never_write() {
+    for args in [
+        vec!["--write"],
+        vec!["--write", "--create", "--text", "new"],
+        vec!["--write", "--delete", "--text", "new"],
+        vec!["--write", "--rename-to", "nested/new", "--text", "new"],
+        vec!["--write", "--all", "--text", "new"],
+        vec!["--write", "--position", "after", "--text", "new"],
+        vec![
+            "--position",
+            "before",
+            "--all",
+            "--old",
+            "old",
+            "--text",
+            "new",
+        ],
+        vec!["--position", "before", "--create", "--text", "new"],
+        vec!["--position", "before", "--delete"],
+        vec!["--position", "before", "--rename-to", "nested/new"],
+        vec!["--position", "invalid", "--old", "old", "--text", "new"],
+    ] {
+        let w = Workspace::new(&[("target", b"old")]);
+        w.cli(&["edit", "target", "--backup"])
+            .args(args)
+            .assert()
+            .code(1);
+        w.assert_bytes("target", b"old");
+        w.absent("target.bak");
+        w.absent("nested");
+    }
+}
+
+#[test]
+fn literal_anchor_insertion_preserves_bytes_and_does_not_supply_newlines() {
+    for (original, anchor, insertion, position, expected) in [
+        (
+            b"head\r\nanchor\r\nlast".as_slice(),
+            b"anchor\r\n".as_slice(),
+            b"added".as_slice(),
+            "before",
+            b"head\r\naddedanchor\r\nlast".as_slice(),
+        ),
+        (
+            b"head\r\nanchor\r\nlast",
+            b"anchor\r\n",
+            b"added",
+            "after",
+            b"head\r\nanchor\r\naddedlast",
+        ),
+        (
+            b"head\0\xffEOF",
+            b"\0\xff",
+            b"$1",
+            "after",
+            b"head\0\xff$1EOF",
+        ),
+        (b"head\nEOF", b"EOF", b"tail", "after", b"head\nEOFtail"),
+        (b"anchor", b"anchor", b"", "before", b"anchor"),
+    ] {
+        let w = Workspace::new(&[("target", original), ("old", anchor), ("new", insertion)]);
+        for mode in ["--check", "--dry-run"] {
+            w.cli(&[
+                "edit",
+                "target",
+                "--old-file",
+                "old",
+                "--text-file",
+                "new",
+                "--position",
+                position,
+                "--backup",
+                mode,
+            ])
+            .assert()
+            .success();
+            w.assert_bytes("target", original);
+            w.absent("target.bak");
+        }
+        w.cli(&[
+            "edit",
+            "target",
+            "--old-file",
+            "old",
+            "--text-file",
+            "new",
+            "--position",
+            position,
+            "--backup",
+        ])
+        .assert()
+        .success();
+        w.assert_bytes("target", expected);
+        if insertion.is_empty() {
+            w.absent("target.bak");
+        } else {
+            w.assert_bytes("target.bak", original);
+        }
+    }
+}
+
+#[test]
+fn literal_anchor_rejects_empty_missing_ambiguous_and_overlapping_matches() {
+    for position in ["before", "after"] {
+        for (original, anchor) in [
+            ("head", ""),
+            ("head", "absent"),
+            ("foo foo", "foo"),
+            ("aaa", "aa"),
+        ] {
+            let w = Workspace::new(&[("target", original.as_bytes())]);
+            w.cli(&[
+                "edit",
+                "target",
+                "--old",
+                anchor,
+                "--text",
+                "new",
+                "--position",
+                position,
+                "--backup",
+            ])
+            .assert()
+            .code(if anchor.is_empty() { 1 } else { 3 });
+            w.assert_bytes("target", original.as_bytes());
+            w.absent("target.bak");
+        }
+    }
+}
+
+#[test]
+fn core_literal_helpers_share_byte_exact_unique_matching_guards() {
+    use xnip::core::edit::{EditError, Placement, insert_exact, replace_exact};
+    for (content, anchor) in [
+        (b"aaa".as_slice(), b"aa".as_slice()),
+        (b"old old", b"old"),
+        (b"head\r\nold\r\n", b"old\n"),
+    ] {
+        assert!(matches!(
+            replace_exact(content, anchor, b"new", false),
+            Err(EditError::Check(_))
+        ));
+        for placement in [Placement::Before, Placement::After] {
+            assert!(matches!(
+                insert_exact(content, anchor, b"new", placement),
+                Err(EditError::Check(_))
+            ));
+        }
+    }
+    assert_eq!(
+        insert_exact(b"\0\xff", b"\0\xff", b"tail", Placement::After).unwrap(),
+        (b"\0\xfftail".to_vec(), 1),
+    );
+    assert_eq!(
+        replace_exact(b"aaa", b"aa", b"x", true).unwrap(),
+        (b"xa".to_vec(), 1),
+    );
+}
+
+#[test]
+fn core_edit_rejects_position_misuse_before_accessing_a_target() {
+    use xnip::core::edit::{EditError, Operation, Placement, Request, execute};
+    let w = Workspace::new(&[]);
+    for operation in [
+        Operation::Write,
+        Operation::Create,
+        Operation::Delete,
+        Operation::Rename,
+    ] {
+        let request = Request {
+            operation,
+            position: Some(Placement::After),
+            text: Some(b"new".to_vec()),
+            ..Default::default()
+        };
+        assert!(matches!(
+            execute(&w.path("nested/new"), &request),
+            Err(EditError::Usage(_))
+        ));
+    }
+    let request = Request {
+        position: Some(Placement::After),
+        old: Some(b"old".to_vec()),
+        text: Some(b"new".to_vec()),
+        all: true,
+        ..Default::default()
+    };
+    assert!(matches!(
+        execute(&w.path("nested/new"), &request),
+        Err(EditError::Usage(_))
+    ));
+    for request in [
+        Request {
+            operation: Operation::Write,
+            text: Some(b"new".to_vec()),
+            all: true,
+            ..Default::default()
+        },
+        Request {
+            operation: Operation::Write,
+            text: Some(b"new".to_vec()),
+            to: Some(w.path("destination")),
+            ..Default::default()
+        },
+    ] {
+        assert!(matches!(
+            execute(&w.path("nested/new"), &request),
+            Err(EditError::Usage(_))
+        ));
+    }
+    w.absent("nested");
+    w.absent("destination");
+}
+
+#[test]
+fn whole_write_refuses_directories_without_creating_a_backup() {
+    let w = Workspace::new(&[("dir/child", b"keep")]);
+    w.cli(&["edit", "dir", "--write", "--text", "new", "--backup"])
+        .assert()
+        .code(3);
+    w.assert_bytes("dir/child", b"keep");
+    w.absent("dir.bak");
+}
+
+#[cfg(unix)]
+#[test]
+fn whole_write_never_follows_a_file_symlink() {
+    let w = Workspace::new(&[("target", b"keep")]);
+    std::os::unix::fs::symlink(w.path("target"), w.path("link")).unwrap();
+    w.cli(&["edit", "link", "--write", "--text", "new", "--backup"])
+        .assert()
+        .code(3);
+    w.assert_bytes("target", b"keep");
+    w.absent("link.bak");
+}
+
+#[test]
 fn exact_edit_preserves_bytes_and_treats_replacement_literally() {
     for (original, old, new, expected) in [
         (

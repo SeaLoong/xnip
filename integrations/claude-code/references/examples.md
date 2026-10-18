@@ -6,22 +6,28 @@ Reuse context already available. Read/search only the missing region; choose a p
 
 ```sh
 xnip edit config.txt --old 'PORT=8080' --text 'PORT=3000'
+xnip edit source.txt --old 'anchor' --position after --text ':suffix'
+xnip edit config.txt --write --old-file expected-whole-file.txt --text-file complete-file.txt
 xnip edit source.txt --old-file old-block.txt --text-file new-block.txt --dry-run
 xnip edit src/new.txt --create --text-file content.txt
 xnip edit old-name.txt --rename-to new-name.txt
 xnip edit obsolete.txt --delete --old-file expected-whole-file.txt --backup
 ```
 
-An exact old block must be nonempty and unique. Extend it with context to disambiguate, or use `--all` for a deliberate global replacement. Literal editing preserves CRLF, EOF and dollar signs. Create/rename require an absent destination; preview/check do not create parent directories.
+An exact old block must be nonempty and unique. Extend it with context to disambiguate, or use `--all` for a deliberate global replacement. Literal editing preserves CRLF, EOF and dollar signs. Exact insertion keeps its unique nonempty anchor and adds only the supplied bytes. `--write` creates or replaces the entire regular file; an old guard checks the complete existing content, including empty files, and rejects a missing file. Whole writes reject final symlinks. Create/rename require an absent destination; preview/check do not create parent directories.
 
-For several known blocks over MCP:
+For independent files over MCP:
 
 ```json
-{"name":"xnip_apply","arguments":{"edits":[
-  {"file":"src/a.rs","old":"old_name","text":"new_name"},
-  {"file":"src/b.rs","old":"old_name","text":"new_name"}
-]}}
+{"name":"xnip_apply","arguments":{"files":{
+  "src/a.rs":[["old_name","new_name"]],
+  "src/b.rs":[["old_name","new_name"]],
+  "generated.txt":"complete file content\n",
+  "config.txt":{"text":"PORT=3000","old":"PORT=8080"}
+}}}
 ```
+
+Pairs run in order within each file. String values are explicit complete-file writes; guarded objects use `old` for the whole existing content. Use an operation list for dependencies across files; map ordering has no dependency meaning.
 
 ## Lines and anchors
 
@@ -72,7 +78,17 @@ For a compact native manifest:
 ```text
 edit src/lib.rs "MAX_RETRIES" "MAX_TRIES" all
 edit src/main.rs "MAX_RETRIES" "MAX_TRIES" all
+write config.txt "PORT=3000" was="PORT=8080"
 ```
+
+Native quoted content can span physical lines without adding an EOF newline:
+
+```text
+write generated.txt "alpha
+beta"
+```
+
+The resulting file is exactly `alpha\nbeta`. Native write content also accepts `@payload.txt` and CLI `@-`; `was=...` is a literal whole-file guard. JSON/YAML operation lists call that guard `was`/`was-file`, while compact objects and `xnip_edit` use `old`.
 
 Import an existing text patch with `xnip apply changes.patch --patch-root /project`; see [patch rules](patch.md).
 

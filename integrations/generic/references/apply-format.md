@@ -1,20 +1,40 @@
 # `xnip apply` manifest format reference
 
-`xnip apply` accepts native, JSON and YAML manifests, plus text patches. You can pick whichever your toolchain emits more cheaply.
+`xnip apply` accepts compact JSON file groups, native/JSON/YAML operation lists and text patches. Use file groups for independent literal edits or complete-file writes; use operation lists for cross-file lifecycle dependencies and line operations.
 
 The format is auto-detected by:
 
-1. `--format <native|json|yaml|patch>` (explicit)
+1. `--format <compact|native|json|yaml|patch>` (explicit)
 2. File extension (`.json`/`.json5` → JSON, `.yaml`/`.yml` → YAML, otherwise native)
-3. Try the preferred format first, then each remaining format (native → JSON → YAML, JSON → YAML → native, or YAML → JSON → native)
+3. Try the preferred parser, then the remaining native/JSON/YAML/patch parsers. Compact objects use the JSON parser; `--format compact` restricts input to the file-map shape.
 
-Recognized unified/apply_patch headers and `.patch`/`.diff` files prefer the patch parser. Other stdin first tries **native**, then JSON, YAML and patch. Use `--format` to get format-specific validation errors. A `.json5` suffix is only a JSON hint; JSON5 syntax is not supported.
+Recognized unified/apply_patch headers and `.patch`/`.diff` files prefer the patch parser. Without a recognized extension, leading `[` or `{` (after whitespace) prefers JSON; other input prefers native. Each parser is attempted at most once. Use `--format` to restrict parsing and get format-specific validation errors. A `.json5` suffix is only a JSON hint; JSON5 syntax is not supported.
 
 ---
 
-## 1. Native (compact line-oriented manifests)
+## Compact file groups
 
-One operation per line. Lines beginning with `#` after optional whitespace are comments; avoid trailing inline comments. Blank lines are skipped.
+A JSON object maps each target path to one of these values:
+
+```json
+{
+  "src/a.rs": [["old_name", "new_name"], ["new_name()", "new_name(42)"]],
+  "generated.txt": "complete file content\n",
+  "config.txt": {"text": "PORT=3000", "old": "PORT=8080"}
+}
+```
+
+An array contains ordered `[old,text]` pairs for that file. Every old block must be nonempty and unique in the virtual content produced by preceding pairs; empty replacement text removes a block. A string explicitly writes the complete file, creating it if missing. `{text,old?}` provides the same whole-file write with an optional complete-content guard; `old: ""` requires an existing empty file, never a missing file. Whole writes reject final symlinks and directories.
+
+The map must contain at least one file, and pair arrays must be nonempty. Raw compact JSON parsing rejects duplicate keys. Normalized path aliases such as `a.txt` / `./a.txt` are rejected in every file map. Unknown fields in whole-write objects are rejected. Separate map entries are independent: do not use map-key order to express cross-file dependencies. All groups validate before a shared transaction commits the resulting per-file state.
+
+Save the object as `changes.json` and run `xnip apply changes.json --check`, then `xnip apply changes.json`. Both `--format compact` and JSON parsing of a top-level object accept this syntax; automatic format detection also reaches that JSON parser. YAML operation lists use the schema below, rather than compact file-map syntax.
+
+MCP carries the object directly as `xnip_apply({files:{...}})`; clients must use unique JSON keys because the protocol decoder collapses repeated raw keys before tool validation. Use `manifest_text` with `format:"compact"` to validate raw JSON key uniqueness. `files` is mutually exclusive with `edits`, `path`, `manifest_text`, `format` and `patch_root`. The existing direct `edits` array remains available for explicit global replacements with `all:true`.
+
+## Native manifests
+
+One operation per record; a quoted payload can span physical lines. Lines beginning with `#` after optional whitespace are comments; avoid trailing inline comments. Blank lines are skipped.
 
 ```
 <op> <file | --files-from path> <locator> [<modifier>...] [<content>] [<named-modifier>...]
@@ -22,12 +42,12 @@ One operation per line. Lines beginning with `#` after optional whitespace are c
 
 ### Tokens
 
-- Quoted strings `"..."` may contain spaces; C-style escapes inside: `\n` `\t` `\r` `\\` `\"`
-- Unquoted tokens are split by whitespace
+- Quoted strings `"..."` may contain spaces and physical LF/CRLF line breaks; C-style escapes inside: `\n` `\t` `\r` `\\` `\"`. Quoted payload bytes, including EOF, are preserved.
+- Unquoted tokens are split by spaces/tabs and record line endings; an internal bare CR remains a literal byte
 - `@<path>` reads content from a file
 - `@-` reads from apply's stdin (at most once per manifest)
 - `@@` is a literal `@`
-- `""` is the empty string (delete)
+- `""` is an empty payload; its effect depends on the operation (block deletion or an empty whole file).
 
 ### Locators
 
@@ -46,7 +66,7 @@ One operation per line. Lines beginning with `#` after optional whitespace are c
 - `revert`
 - `+N` / `-N` (indent: add/remove N spaces)
 - `t2s:N` (tabs → N spaces) / `s2t:N` (N spaces → tab)
-- Named: `was="expected\n"`, `was=@<path>`
+- Named: `was="expected\n"`; legacy line operations also accept `was=@<path>`. Native whole-file write treats the guard as literal bytes.
 
 ### Content
 
@@ -89,9 +109,9 @@ replace src/Foo.vue revert s/OLD/NEW/g
 
 ---
 
-## 2. JSON
+## JSON operation lists
 
-Top-level array of op objects. Field names match CLI flags (kebab-case). The objects below illustrate independent operations; do not combine these overlapping examples into one manifest for the same file.
+Top-level arrays contain op objects. A top-level object instead uses compact file groups above. Field names match CLI flags (kebab-case). The objects below illustrate independent operations; do not combine these overlapping examples into one manifest for the same file.
 
 ```json
 [
@@ -124,7 +144,7 @@ Field semantics (kebab-case):
 
 ---
 
-## 3. YAML
+## YAML operation lists
 
 Same schema as JSON. Multi-line text with `|` block scalars is more readable:
 
@@ -150,7 +170,7 @@ Same schema as JSON. Multi-line text with `|` block scalars is more readable:
 
 1. Parse → unified op list
 2. Group by file
-3. Within a file: order ops by **start line descending** (so later ops don't shift earlier ones)
+3. Legacy grouped operations resolve against the original file and run in **start line descending** order. Ordered file operations, compact pairs and `--sequential` instead use the current virtual content.
 4. **Phase 1** — read targets and validate the complete edit plan in memory; preview/check stop here without creating temporary files or directories
 5. **Phase 2** — persist recovery snapshots, optionally save `<file>.bak`, then stage and commit each changed target
 6. On phase-1 failure: targets remain unchanged; exit 3
@@ -201,11 +221,12 @@ Targets are canonicalized before grouping; diagnostics may therefore show absolu
 
 ## File lifecycle operations and ordered plans
 
-JSON/YAML support these additional operations. Native equivalents are shown below. Direct targets and `to-file` destinations resolve relative to the working directory; `old-file` and `text-file` payloads for `edit`/`create` resolve relative to the manifest directory. As with legacy operations, `was-file` is loaded during parsing relative to the working directory.
+JSON/YAML support these additional operations. Native equivalents are shown below. Direct targets and `to-file` destinations resolve relative to the working directory; `old-file` and `text-file` payloads for `edit`/`create`/`write` resolve relative to the manifest directory. As with legacy operations, `was-file` is loaded during parsing relative to the working directory.
 
 ```json
 [
   {"op":"create","file":"new.txt","text":"alpha\nbeta"},
+  {"op":"write","file":"config.txt","text":"PORT=3000","was":"PORT=8080"},
   {"op":"edit","file":"new.txt","old":"beta","text":"gamma"},
   {"op":"rename","file":"new.txt","to-file":"renamed.txt"},
   {"op":"delete","file":"obsolete.txt","was":"expected original bytes"}
@@ -214,12 +235,14 @@ JSON/YAML support these additional operations. Native equivalents are shown belo
 
 ```text
 create new.txt "alpha\nbeta"
+write config.txt "PORT=3000" was="PORT=8080"
 edit new.txt "beta" "gamma"
 rename new.txt renamed.txt
 delete obsolete.txt
 ```
 
 - `create`: requires `text` or `text-file`; an existing virtual target is rejected.
+- `write`: explicitly replaces the complete regular file or creates it if missing; requires `text` or `text-file`. JSON/YAML use `was`/`was-file` for a whole-file guard, not `old`. Native syntax is `write FILE CONTENT [was=OLD]`; its optional guard is literal bytes, including quoted multiline text. Native `was=@path` does not load a guard file; use structured `was-file` for that. Content accepts the same `@path`, `@-`, `@@` and quoted literal rules as create. A supplied guard requires the virtual file to exist, even when the guard is empty. Final symlinks and directories are rejected.
 - `edit`: requires `old` or `old-file` plus `text` or `text-file`; literal unique matching, with optional `all: true`. Native form accepts a final `all` modifier. Old content cannot consume stdin.
 - `delete`: optional whole-file `was`/`was-file` in JSON/YAML. Native delete has only the target; use structured format for a precondition.
 - `rename`: requires `to-file`; optional whole-file `was`/`was-file` in JSON/YAML. The destination must be absent at the beginning of the plan. Pure moves require the same filesystem.

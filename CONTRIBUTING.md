@@ -7,7 +7,6 @@ Use Rust stable, Cargo, a native linker and Git. The minimum supported Rust vers
 ```sh
 cargo build --locked
 cargo test --workspace --locked
-cargo test --workspace --doc --locked
 cargo fmt --all --check
 cargo clippy --workspace --all-targets --locked -- -D warnings
 cargo +1.89.0 check --workspace --all-targets --locked
@@ -45,4 +44,4 @@ The [native benchmark](docs/benchmarks/README.md) compares actual editor impleme
 
 ## Review and release
 
-Explain the original problem, resulting behavior, validation and material compatibility changes. CI checks formatting, Clippy, Linux/macOS/Windows contracts, minimum Rust, advisories and package/integration consistency. Maintainers follow the [release procedure](docs/releasing.md).
+Explain the original problem, resulting behavior, validation and material compatibility changes. The [CI workflow contract](docs/ci.md) defines check scopes and workflow ownership. The required `ci` gate covers formatting, Clippy, Linux/macOS/Windows contracts, minimum Rust, advisories and package/integration consistency when selected; every release commit requires full verification. Maintainers follow the [release procedure](docs/releasing.md).

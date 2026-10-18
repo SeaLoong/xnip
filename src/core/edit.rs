@@ -13,9 +13,17 @@ use super::atomic;
 pub enum Operation {
     #[default]
     Replace,
+    Write,
     Create,
     Delete,
     Rename,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, JsonSchema, PartialEq, Eq, clap::ValueEnum)]
+#[serde(rename_all = "snake_case")]
+pub enum Placement {
+    Before,
+    After,
 }
 
 #[derive(Debug, Default)]
@@ -25,6 +33,7 @@ pub struct Request {
     pub to: Option<PathBuf>,
     pub old: Option<Vec<u8>>,
     pub text: Option<Vec<u8>>,
+    pub position: Option<Placement>,
     pub all: bool,
     pub dry_run: bool,
     pub check: bool,
@@ -71,6 +80,26 @@ pub fn execute(path: &Path, request: &Request) -> Result<Outcome, EditError> {
     if request.check && request.dry_run {
         return Err(EditError::Usage("check and dry_run are mutually exclusive"));
     }
+    if request.position.is_some() && (request.operation != Operation::Replace || request.all) {
+        return Err(EditError::Usage(
+            "position requires a unique exact edit; it cannot be combined with all or another operation",
+        ));
+    }
+    if request.operation == Operation::Write {
+        if request.to.is_some() || request.all {
+            return Err(EditError::Usage(
+                "write does not accept a destination or all",
+            ));
+        }
+        let text = request
+            .text
+            .as_ref()
+            .ok_or(EditError::Usage("write requires text or a text file"))?;
+        let mut plan = super::transaction::Plan::default();
+        plan.write(path, text.clone(), request.old.as_deref())
+            .map_err(transaction_error)?;
+        return finish_plan(&plan, request);
+    }
     if request.operation == Operation::Rename {
         if request.text.is_some() || request.all {
             return Err(EditError::Usage(
@@ -84,37 +113,13 @@ pub fn execute(path: &Path, request: &Request) -> Result<Outcome, EditError> {
         let mut plan = super::transaction::Plan::default();
         plan.rename(path, to, request.old.as_deref())
             .map_err(transaction_error)?;
-        let preview = if request.dry_run {
-            plan.preview()
-        } else {
-            super::transaction::Report {
-                files: plan.changed_files(),
-                ..super::transaction::Report::default()
-            }
-        };
-        let journal = if !request.check && !request.dry_run {
-            plan.commit(request.backup)
-                .map_err(transaction_error)?
-                .journal
-        } else {
-            None
-        };
-        return Ok(Outcome {
-            journal,
-            changed: !preview.files.is_empty(),
-            replacements: 0,
-            diff: if request.dry_run {
-                preview.diff
-            } else {
-                String::new()
-            },
-        });
+        return finish_plan(&plan, request);
     }
     if request.to.is_some() {
         return Err(EditError::Usage("destination is only valid for rename"));
     }
     let (before, after, replacements, target) = match request.operation {
-        Operation::Rename => unreachable!("rename handled above"),
+        Operation::Write | Operation::Rename => unreachable!("plan operation handled above"),
         Operation::Create => {
             if request.old.is_some() || request.all {
                 return Err(EditError::Usage("create does not accept old text or all"));
@@ -164,7 +169,21 @@ pub fn execute(path: &Path, request: &Request) -> Result<Outcome, EditError> {
                 let new = request.text.as_deref().ok_or(EditError::Usage(
                     "replace requires text or a text file; empty text deletes the block",
                 ))?;
-                replace_exact(&before, old, new, request.all)?
+                if (request.position.is_none() && old == new)
+                    || (request.position.is_some() && new.is_empty())
+                {
+                    return Ok(Outcome {
+                        changed: false,
+                        replacements: count_exact(&before, old, request.all)?,
+                        diff: String::new(),
+                        journal: None,
+                    });
+                }
+                if let Some(position) = request.position {
+                    insert_exact(&before, old, new, position)?
+                } else {
+                    replace_exact(&before, old, new, request.all)?
+                }
             };
             (before, after, count, target)
         }
@@ -211,6 +230,30 @@ pub fn execute(path: &Path, request: &Request) -> Result<Outcome, EditError> {
     })
 }
 
+fn finish_plan(plan: &super::transaction::Plan, request: &Request) -> Result<Outcome, EditError> {
+    let preview = if request.dry_run {
+        plan.preview()
+    } else {
+        super::transaction::Report {
+            files: plan.changed_files(),
+            ..super::transaction::Report::default()
+        }
+    };
+    let journal = if !request.check && !request.dry_run {
+        plan.commit(request.backup)
+            .map_err(transaction_error)?
+            .journal
+    } else {
+        None
+    };
+    Ok(Outcome {
+        journal,
+        changed: !preview.files.is_empty(),
+        replacements: 0,
+        diff: preview.diff,
+    })
+}
+
 /// Literal matching preserves all bytes. Ambiguous (including overlapping)
 /// matches fail unless the caller explicitly chooses all non-overlapping hits.
 pub fn replace_exact(
@@ -219,19 +262,7 @@ pub fn replace_exact(
     new: &[u8],
     all: bool,
 ) -> Result<(Vec<u8>, usize), EditError> {
-    if old.is_empty() {
-        return Err(EditError::Usage(
-            "old text must not be empty; use insert or create",
-        ));
-    }
-    let first = memchr::memmem::find(content, old).ok_or_else(|| {
-        EditError::Check("old text was not found; include exact whitespace and line endings".into())
-    })?;
-    if !all && memchr::memmem::find(&content[first + 1..], old).is_some() {
-        return Err(EditError::Check(
-            "old text is ambiguous; include more context or explicitly request all matches".into(),
-        ));
-    }
+    let first = locate_exact(content, old, all)?;
     let mut output = Vec::with_capacity(content.len());
     let mut cursor = 0;
     let mut count = 0;
@@ -249,6 +280,56 @@ pub fn replace_exact(
     }
     output.extend_from_slice(&content[cursor..]);
     Ok((output, count))
+}
+
+/// Insert literal bytes immediately before/after a unique, nonempty byte anchor.
+pub fn insert_exact(
+    content: &[u8],
+    anchor: &[u8],
+    text: &[u8],
+    position: Placement,
+) -> Result<(Vec<u8>, usize), EditError> {
+    let start = locate_exact(content, anchor, false)?;
+    let offset = match position {
+        Placement::Before => start,
+        Placement::After => start + anchor.len(),
+    };
+    let mut output = Vec::with_capacity(content.len().saturating_add(text.len()));
+    output.extend_from_slice(&content[..offset]);
+    output.extend_from_slice(text);
+    output.extend_from_slice(&content[offset..]);
+    Ok((output, 1))
+}
+
+/// Validate exact matching and count non-overlapping hits without allocating output.
+pub(crate) fn count_exact(content: &[u8], old: &[u8], all: bool) -> Result<usize, EditError> {
+    let first = locate_exact(content, old, all)?;
+    let mut count = 1;
+    if all {
+        let mut cursor = first + old.len();
+        while let Some(offset) = memchr::memmem::find(&content[cursor..], old) {
+            count += 1;
+            cursor += offset + old.len();
+        }
+    }
+    Ok(count)
+}
+
+pub(crate) fn locate_exact(content: &[u8], old: &[u8], all: bool) -> Result<usize, EditError> {
+    if old.is_empty() {
+        return Err(EditError::Usage(
+            "old text must not be empty; use create or write for whole-file content",
+        ));
+    }
+    let first = memchr::memmem::find(content, old).ok_or_else(|| {
+        EditError::Check("old text was not found; include exact whitespace and line endings".into())
+    })?;
+    if !all && memchr::memmem::find(&content[first + 1..], old).is_some() {
+        return Err(EditError::Check(
+            "old text is ambiguous; include more exact context".into(),
+        ));
+    }
+    Ok(first)
 }
 
 fn transaction_error(error: anyhow::Error) -> EditError {

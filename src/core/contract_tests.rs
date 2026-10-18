@@ -586,6 +586,58 @@ fn literal_edits_validate_ambiguity_and_keep_preview_check_side_effect_free() {
 }
 
 #[test]
+fn exact_noops_still_validate_overlaps_and_report_nonoverlapping_all_counts() {
+    use edit::{Placement, Request};
+    let directory = tempfile::tempdir().unwrap();
+    let path = directory.path().join("a");
+    for (original, old, all, count) in [
+        (b"aaa".as_slice(), b"aa".as_slice(), true, 1),
+        (b"aaaa", b"aa", true, 2),
+        (b"single\0\xff", b"single\0\xff", false, 1),
+    ] {
+        fs::write(&path, original).unwrap();
+        let result = edit::execute(
+            &path,
+            &Request {
+                old: Some(old.to_vec()),
+                text: Some(old.to_vec()),
+                all,
+                backup: true,
+                ..Request::default()
+            },
+        )
+        .unwrap();
+        assert!(!result.changed);
+        assert_eq!(result.replacements, count);
+        assert_eq!(result.diff, "");
+        assert_eq!(fs::read(&path).unwrap(), original);
+        assert!(!atomic::bak_path(&path).exists());
+    }
+    fs::write(&path, b"aaa").unwrap();
+    for old in [b"".as_slice(), b"aa", b"missing"] {
+        assert!(
+            edit::execute(
+                &path,
+                &Request {
+                    old: Some(old.to_vec()),
+                    text: Some(old.to_vec()),
+                    ..Request::default()
+                }
+            )
+            .is_err()
+        );
+        assert_eq!(fs::read(&path).unwrap(), b"aaa");
+    }
+    let empty_insert = Request {
+        old: Some(b"aa".to_vec()),
+        text: Some(Vec::new()),
+        position: Some(Placement::After),
+        ..Request::default()
+    };
+    assert!(edit::execute(&path, &empty_insert).is_err());
+}
+
+#[test]
 fn bounded_peek_defaults_apply_to_every_selection_and_zero_means_unlimited() {
     let content = (1..=250).map(|_| "hit\n").collect::<String>();
     for (lines, pattern, all) in [

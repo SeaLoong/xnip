@@ -4,14 +4,17 @@ use std::path::PathBuf;
 use anyhow::Result;
 use clap::Args as ClapArgs;
 
-use crate::core::edit::{EditError, Operation, Request, execute, payload};
+use crate::core::edit::{EditError, Operation, Placement, Request, execute, payload};
 use crate::output::exit;
 
 #[derive(Debug, ClapArgs)]
 #[allow(clippy::struct_excessive_bools)]
 pub struct Args {
-    /// Target path; must exist unless --create is used.
+    /// Target path; must exist unless --create or --write is used.
     pub file: PathBuf,
+    /// Write the whole file, creating it if missing; old/old-file guards its entire contents.
+    #[arg(long, conflicts_with_all = ["create", "delete", "rename_to", "all", "position"])]
+    pub write: bool,
     /// Create a missing file, including parent directories; never overwrite.
     #[arg(long, conflicts_with_all = ["delete", "rename_to", "old", "old_file", "all"])]
     pub create: bool,
@@ -21,10 +24,10 @@ pub struct Args {
     /// Rename to an absent destination on the same filesystem; never overwrite.
     #[arg(long, conflicts_with_all=["text", "text_file", "text_stdin", "all"])]
     pub rename_to: Option<PathBuf>,
-    /// Exact old block to replace (not a regex).
+    /// Exact block or anchor; --write/--delete/--rename-to check entire contents.
     #[arg(long, conflicts_with = "old_file")]
     pub old: Option<String>,
-    /// Read the exact old block from a file (whole-file content for delete).
+    /// Read exact old bytes from a file, including whole-file guards.
     #[arg(long)]
     pub old_file: Option<PathBuf>,
     /// New bytes; empty text deletes the matched block.
@@ -36,6 +39,9 @@ pub struct Args {
     /// Read new bytes from stdin, including an empty stream.
     #[arg(long)]
     pub text_stdin: bool,
+    /// Insert new bytes before/after the unique literal old block, without adding newlines.
+    #[arg(long, value_enum, conflicts_with_all = ["create", "delete", "rename_to", "write", "all"])]
+    pub position: Option<Placement>,
     /// Replace all non-overlapping matches; default requires a unique match.
     #[arg(long)]
     pub all: bool,
@@ -51,7 +57,9 @@ pub struct Args {
 }
 
 pub fn run(args: Args) -> Result<u8> {
-    let operation = if args.create {
+    let operation = if args.write {
+        Operation::Write
+    } else if args.create {
         Operation::Create
     } else if args.delete {
         Operation::Delete
@@ -71,6 +79,7 @@ pub fn run(args: Args) -> Result<u8> {
         to: args.rename_to,
         text,
         old: payload(args.old, args.old_file)?,
+        position: args.position,
         all: args.all,
         check: args.check,
         dry_run: args.dry_run,

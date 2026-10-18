@@ -210,17 +210,15 @@ fn execute_ordered(ops: Vec<Op>, opts: &ExecOpts) -> Result<Report, ExecError> {
             if let Op::File { operation, .. } = &op {
                 match operation {
                     FileOp::Create(content) => plan.create(path, load_op_content(content, opts)?),
+                    FileOp::Write { content, was } => {
+                        plan.write(path, load_op_content(content, opts)?, was.as_deref())
+                    }
                     FileOp::Delete { was } => plan.delete(path, was.as_deref()),
                     FileOp::Rename { to, was } => plan.rename(path, to, was.as_deref()),
                     FileOp::Exact { old, text, all } => {
-                        let before = plan.read(path)?;
-                        let (after, _) = crate::core::edit::replace_exact(
-                            &before,
-                            &load_op_content(old, opts)?,
-                            &load_op_content(text, opts)?,
-                            *all,
-                        )?;
-                        plan.update(path, after)
+                        let old = borrow_op_content(old, opts)?;
+                        let text = borrow_op_content(text, opts)?;
+                        plan.replace_exact(path, &old, &text, *all).map(|_| ())
                     }
                     FileOp::Patch(patch) => {
                         let before = if patch.create {
@@ -243,9 +241,7 @@ fn execute_ordered(ops: Vec<Op>, opts: &ExecOpts) -> Result<Report, ExecError> {
                     }
                 }
             } else {
-                let before = plan.read(path)?;
-                let after = apply_one_op(&op, &before, opts)?;
-                plan.update(path, after)
+                plan.transform(path, |before| apply_one_op(&op, before, opts))
             }
         })();
         result.map_err(|e| phase1(path, format!("{e:#}")))?;
@@ -264,6 +260,13 @@ fn prepare_one(
     opts: &ExecOpts,
 ) -> Result<Phase1Out, ExecError> {
     let before = std::fs::read(path).map_err(|e| phase1(path, e))?;
+    if let Some(after) = prepare_replacements(path, &before, ops, opts)? {
+        return Ok(Phase1Out {
+            path: path.to_path_buf(),
+            before,
+            after,
+        });
+    }
     let mut sorted: Vec<_> = ops
         .iter()
         .map(|op| freeze_locator(op, &before).map_err(|e| phase1(path, e)))
@@ -309,6 +312,143 @@ fn prepare_one(
     })
 }
 
+/// Compile independent replacements against original coordinates and copy once.
+/// Only requested line boundaries are retained, so dense files need O(edits) metadata.
+fn prepare_replacements(
+    path: &std::path::Path,
+    before: &[u8],
+    ops: &[Op],
+    opts: &ExecOpts,
+) -> Result<Option<Vec<u8>>, ExecError> {
+    if ops.is_empty()
+        || !ops.iter().all(|op| {
+            matches!(op, Op::Replace {
+        locator, revert: false, ..
+    } if !matches!(locator, Locator::Pattern { .. }))
+        })
+    {
+        return Ok(None);
+    }
+    let mut ranges = Vec::with_capacity(ops.len());
+    let mut requested = Vec::with_capacity(ops.len() * 2);
+    for op in ops {
+        let Op::Replace {
+            locator,
+            content,
+            was,
+            ..
+        } = op
+        else {
+            unreachable!()
+        };
+        let range = match locator {
+            Locator::Lines { start, end } => {
+                if *start == 0 || *end == 0 {
+                    return Err(phase1(path, crate::core::location::LocateError::ZeroLine));
+                }
+                if end < start {
+                    return Err(phase1(
+                        path,
+                        crate::core::location::LocateError::InvalidRange {
+                            start: *start,
+                            end: *end,
+                        },
+                    ));
+                }
+                crate::core::location::Resolved {
+                    start_line: *start,
+                    end_line: *end,
+                }
+            }
+            _ => resolve(locator, before).map_err(|error| phase1(path, error))?,
+        };
+        requested.push(range.start_line - 1);
+        requested.push(range.end_line);
+        ranges.push((range, content, was.as_deref()));
+    }
+    requested.sort_unstable();
+    requested.dedup();
+    let mut offsets = BTreeMap::new();
+    let mut next = 0;
+    if requested.first() == Some(&0) {
+        offsets.insert(0, 0);
+        next += 1;
+    }
+    let mut line = 0;
+    for newline in memchr::memchr_iter(b'\n', before) {
+        line += 1;
+        if requested.get(next) == Some(&line) {
+            offsets.insert(line, newline + 1);
+            next += 1;
+            if next == requested.len() {
+                break;
+            }
+        }
+    }
+    if next < requested.len() && !before.is_empty() && !before.ends_with(b"\n") {
+        line += 1;
+        if requested.get(next) == Some(&line) {
+            offsets.insert(line, before.len());
+            next += 1;
+        }
+    }
+    if next < requested.len() {
+        let (range, _, _) = ranges
+            .iter()
+            .find(|(range, _, _)| range.end_line > line)
+            .expect("missing boundary belongs to an out-of-bounds range");
+        return Err(phase1(
+            path,
+            crate::core::location::LocateError::OutOfBounds {
+                requested: (range.start_line, range.end_line),
+                actual: line,
+            },
+        ));
+    }
+    ranges.sort_by_key(|(range, _, _)| range.start_line);
+    if ranges
+        .windows(2)
+        .any(|pair| pair[0].0.end_line >= pair[1].0.start_line)
+    {
+        return Err(phase1(path, "overlapping line edits require --sequential"));
+    }
+    let mut capacity = before.len();
+    let mut changes = Vec::with_capacity(ranges.len());
+    for (range, content, expected) in ranges {
+        let start = offsets[&(range.start_line - 1)];
+        let end = offsets[&range.end_line];
+        let original = &before[start..end];
+        if expected.is_some_and(|expected| expected != original) {
+            return Err(phase1(
+                path,
+                format!(
+                    "`was` mismatch at lines {}-{}: expected {} bytes, got {} bytes",
+                    range.start_line,
+                    range.end_line,
+                    expected.map_or(0, <[u8]>::len),
+                    original.len(),
+                ),
+            ));
+        }
+        let payload = load_op_content(content, opts).map_err(|error| phase1(path, error))?;
+        let newline = !payload.is_empty() && original.ends_with(b"\n") && !payload.ends_with(b"\n");
+        capacity = capacity - original.len() + payload.len() + usize::from(newline);
+        changes.push((start, end, payload, newline));
+    }
+    let mut after = Vec::with_capacity(capacity);
+    let mut cursor = 0;
+    for (start, end, payload, newline) in changes {
+        after.extend_from_slice(&before[cursor..start]);
+        after.extend_from_slice(&payload);
+        if newline {
+            after.push(b'\n');
+        }
+        cursor = end;
+    }
+    after.extend_from_slice(&before[cursor..]);
+    Ok(Some(after))
+}
+
 /// 把所有 `OpContent::Stdin` 替换为 `OpContent::Text(stdin_bytes)`，
 /// 同时校验：一份清单中 `@-` 至多出现一次。
 fn materialize_stdin(ops: Vec<Op>, opts: &ExecOpts) -> Result<Vec<Op>, ExecError> {
@@ -340,7 +480,9 @@ fn content_of(op: &Op) -> Option<&OpContent> {
     match op {
         Op::Replace { content, .. } | Op::Insert { content, .. } => Some(content),
         Op::File { operation, .. } => match operation {
-            FileOp::Create(content) | FileOp::Exact { text: content, .. } => Some(content),
+            FileOp::Create(content)
+            | FileOp::Write { content, .. }
+            | FileOp::Exact { text: content, .. } => Some(content),
             _ => None,
         },
         Op::Move { .. } | Op::Indent { .. } => None,
@@ -382,6 +524,16 @@ fn replace_content(op: Op, new_content: OpContent) -> Op {
         } => Op::File {
             target,
             operation: FileOp::Create(new_content),
+        },
+        Op::File {
+            target,
+            operation: FileOp::Write { was, .. },
+        } => Op::File {
+            target,
+            operation: FileOp::Write {
+                content: new_content,
+                was,
+            },
         },
         Op::File {
             target,
@@ -801,6 +953,14 @@ fn apply_indent_op(
 }
 
 /// 加载 `OpContent` 为字节序列。`Repl`/`None` 在调用方已分流，这里不接受。
+fn borrow_op_content<'a>(c: &'a OpContent, opts: &ExecOpts) -> Result<std::borrow::Cow<'a, [u8]>> {
+    match c {
+        OpContent::Text(bytes) => Ok(std::borrow::Cow::Borrowed(bytes)),
+        OpContent::Empty => Ok(std::borrow::Cow::Borrowed(&[])),
+        _ => load_op_content(c, opts).map(std::borrow::Cow::Owned),
+    }
+}
+
 fn load_op_content(c: &OpContent, opts: &ExecOpts) -> Result<Vec<u8>> {
     match c {
         OpContent::Text(b) => Ok(b.clone()),

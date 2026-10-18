@@ -37,6 +37,9 @@ use crate::core::location::{Count, Locator};
 /// # Errors
 /// 当 JSON 语法错误、缺字段、字段类型不对时返回 `Err`。
 pub fn parse(src: &str) -> Result<Vec<Op>> {
+    if src.trim_start().starts_with('{') {
+        return crate::apply::compact::parse(src);
+    }
     let arr: Vec<RawOp> = serde_json::from_str(src).context("invalid JSON apply manifest")?;
     arr.into_iter()
         .enumerate()
@@ -112,13 +115,18 @@ struct RawOp {
 impl RawOp {
     fn into_op(self) -> Result<Op> {
         let op_name = self.op.clone();
-        if !matches!(op_name.as_str(), "create" | "delete" | "rename" | "edit")
-            && (self.old.is_some() || self.old_file.is_some() || self.to_file.is_some() || self.all)
+        if !matches!(
+            op_name.as_str(),
+            "create" | "write" | "delete" | "rename" | "edit"
+        ) && (self.old.is_some()
+            || self.old_file.is_some()
+            || self.to_file.is_some()
+            || self.all)
         {
             bail!("old/old-file/to-file/all require a file operation");
         }
         match op_name.as_str() {
-            "create" | "delete" | "rename" | "edit" => self.to_file_op(),
+            "create" | "write" | "delete" | "rename" | "edit" => self.to_file_op(),
             "replace" => self.to_replace(),
             "insert" => self.to_insert(),
             "move" => self.to_move(),
@@ -166,6 +174,11 @@ impl RawOp {
                     && !content.is_none() =>
             {
                 FileOp::Create(content)
+            }
+            "write"
+                if old.is_none() && self.to_file.is_none() && !self.all && !content.is_none() =>
+            {
+                FileOp::Write { content, was }
             }
             "delete"
                 if old.is_none() && content.is_none() && self.to_file.is_none() && !self.all =>

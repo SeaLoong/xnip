@@ -30,7 +30,7 @@ cast_possible_wrap = "allow"
 
 [package]
 name = "xnip"
-version = "0.3.1"
+version = "0.4.0"
 description = "Precise text editing CLI for LLM agents"
 edition.workspace = true
 rust-version.workspace = true

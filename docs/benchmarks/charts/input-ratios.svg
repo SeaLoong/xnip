@@ -1,79 +1,174 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1160" height="648" viewBox="0 0 1160 648" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" width="1160" height="1370" viewBox="0 0 1160 1370" role="img" aria-labelledby="title desc">
 <title id="title">Relative native edit input</title><desc id="desc">Per-task native input divided by xnip input. Geometric means use equal task weights. Exact subsets differ across backends.</desc>
 <style>text{font-family:Segoe UI,Arial,sans-serif;fill:#192b3a;font-size:13px}.small{font-size:11px;fill:#526575}.title{font-size:21px;font-weight:600}.tick{fill:#dfe6eb;stroke:none}</style>
-<rect width="1160" height="648" fill="#fff"/>
+<rect width="1160" height="1370" fill="#fff"/>
 <text x="28" y="36" class="title">Relative native edit input</text>
 <text x="28.00" y="61.00" class="small" text-anchor="start">xnip = 1x | tokens | log axis | higher means more native input</text>
 <text x="28.00" y="82.00" class="small" text-anchor="start">Filled bar: all tasks, including incompatible outputs. Orange diamond: both tools byte-exact.</text>
 <text x="873.00" y="101.00" class="" text-anchor="start">All tasks</text>
 <text x="990.00" y="101.00" class="" text-anchor="start">Exact subset</text>
-<line x1="250.00" y1="98" x2="250.00" y2="568" stroke="#e1e7ed" stroke-dasharray="1 0"/>
-<text x="250.00" y="590.00" class="small" text-anchor="middle">0.5x</text>
-<line x1="419.53" y1="98" x2="419.53" y2="568" stroke="#768b9a" stroke-dasharray="4 3"/>
-<text x="419.53" y="590.00" class="small" text-anchor="middle">1x</text>
-<line x1="589.06" y1="98" x2="589.06" y2="568" stroke="#e1e7ed" stroke-dasharray="1 0"/>
-<text x="589.06" y="590.00" class="small" text-anchor="middle">2x</text>
-<line x1="813.17" y1="98" x2="813.17" y2="568" stroke="#e1e7ed" stroke-dasharray="1 0"/>
-<text x="813.17" y="590.00" class="small" text-anchor="middle">5x</text>
+<line x1="318.32" y1="98" x2="318.32" y2="1290" stroke="#e1e7ed" stroke-dasharray="1 0"/>
+<text x="318.32" y="1312.00" class="small" text-anchor="middle">0.5x</text>
+<line x1="467.53" y1="98" x2="467.53" y2="1290" stroke="#768b9a" stroke-dasharray="4 3"/>
+<text x="467.53" y="1312.00" class="small" text-anchor="middle">1x</text>
+<line x1="616.74" y1="98" x2="616.74" y2="1290" stroke="#e1e7ed" stroke-dasharray="1 0"/>
+<text x="616.74" y="1312.00" class="small" text-anchor="middle">2x</text>
+<line x1="813.99" y1="98" x2="813.99" y2="1290" stroke="#e1e7ed" stroke-dasharray="1 0"/>
+<text x="813.99" y="1312.00" class="small" text-anchor="middle">5x</text>
 <text x="28.00" y="126.00" class="" text-anchor="start">xnip-edit</text>
-<rect x="419.53" y="114" width="1.00" height="16" rx="3" fill="#007f73"/>
-<path d="M 419.53 115 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<rect x="467.53" y="114" width="1.00" height="16" rx="3" fill="#007f73"/>
+<path d="M 467.53 115 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
 <text x="873.00" y="126.00" class="" text-anchor="start">1.00x (13)</text>
 <text x="990.00" y="126.00" class="" text-anchor="start">1.00x (13)</text>
-<text x="28.00" y="164.00" class="" text-anchor="start">codex-apply-patch</text>
-<rect x="419.53" y="152" width="234.52" height="16" rx="3" fill="#3b6fac"/>
-<path d="M 665.06 153 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
-<text x="873.00" y="164.00" class="" text-anchor="start">2.61x (13)</text>
-<text x="990.00" y="164.00" class="" text-anchor="start">2.73x (12)</text>
-<text x="28.00" y="202.00" class="" text-anchor="start">gemini-edit-context</text>
-<rect x="419.53" y="190" width="327.07" height="16" rx="3" fill="#9165b6"/>
-<path d="M 746.60 191 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
-<text x="873.00" y="202.00" class="" text-anchor="start">3.81x (13)</text>
-<text x="990.00" y="202.00" class="" text-anchor="start">3.81x (13)</text>
-<text x="28.00" y="240.00" class="" text-anchor="start">gemini-edit-minimal</text>
-<rect x="419.53" y="228" width="132.37" height="16" rx="3" fill="#9165b6"/>
-<path d="M 551.91 229 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
-<text x="873.00" y="240.00" class="" text-anchor="start">1.72x (13)</text>
-<text x="990.00" y="240.00" class="" text-anchor="start">1.72x (13)</text>
-<text x="28.00" y="278.00" class="" text-anchor="start">opencode-edit</text>
-<rect x="419.53" y="266" width="25.60" height="16" rx="3" fill="#c46a24"/>
-<path d="M 445.14 267 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
-<text x="873.00" y="278.00" class="" text-anchor="start">1.11x (13)</text>
-<text x="990.00" y="278.00" class="" text-anchor="start">1.11x (13)</text>
-<text x="28.00" y="316.00" class="" text-anchor="start">opencode-apply-patch</text>
-<rect x="419.53" y="304" width="271.54" height="16" rx="3" fill="#c46a24"/>
-<path d="M 713.84 305 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
-<text x="873.00" y="316.00" class="" text-anchor="start">3.04x (13)</text>
-<text x="990.00" y="316.00" class="" text-anchor="start">3.33x (11)</text>
-<text x="28.00" y="354.00" class="" text-anchor="start">aider-diff-platform</text>
-<rect x="419.53" y="342" width="226.02" height="16" rx="3" fill="#6c7785"/>
-<path d="M 534.48 343 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
-<text x="873.00" y="354.00" class="" text-anchor="start">2.52x (13)</text>
-<text x="990.00" y="354.00" class="" text-anchor="start">1.60x (1)</text>
-<text x="28.00" y="392.00" class="" text-anchor="start">aider-diff-lf</text>
-<rect x="419.53" y="380" width="226.02" height="16" rx="3" fill="#6c7785"/>
-<path d="M 669.36 381 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
-<text x="873.00" y="392.00" class="" text-anchor="start">2.52x (13)</text>
-<text x="990.00" y="392.00" class="" text-anchor="start">2.78x (11)</text>
-<text x="28.00" y="430.00" class="" text-anchor="start">aider-whole-platform</text>
-<rect x="419.53" y="418" width="156.18" height="16" rx="3" fill="#6c7785"/>
-<path d="M 364.95 419 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
-<text x="873.00" y="430.00" class="" text-anchor="start">1.89x (13)</text>
-<text x="990.00" y="430.00" class="" text-anchor="start">0.80x (1)</text>
-<text x="28.00" y="468.00" class="" text-anchor="start">aider-whole-lf</text>
-<rect x="419.53" y="456" width="156.18" height="16" rx="3" fill="#6c7785"/>
-<path d="M 617.64 457 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
-<text x="873.00" y="468.00" class="" text-anchor="start">1.89x (13)</text>
-<text x="990.00" y="468.00" class="" text-anchor="start">2.25x (11)</text>
-<text x="28.00" y="506.00" class="" text-anchor="start">aider-udiff-platform</text>
-<rect x="419.53" y="494" width="250.79" height="16" rx="3" fill="#6c7785"/>
-<path d="M 557.80 495 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
-<text x="873.00" y="506.00" class="" text-anchor="start">2.79x (13)</text>
-<text x="990.00" y="506.00" class="" text-anchor="start">1.76x (1)</text>
-<text x="28.00" y="544.00" class="" text-anchor="start">aider-udiff-lf</text>
-<rect x="419.53" y="532" width="250.79" height="16" rx="3" fill="#6c7785"/>
-<path d="M 692.35 533 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
-<text x="873.00" y="544.00" class="" text-anchor="start">2.79x (13)</text>
-<text x="990.00" y="544.00" class="" text-anchor="start">3.05x (11)</text>
-<text x="28.00" y="630.00" class="small" text-anchor="start">Counts in parentheses are paired tasks. Exact subsets have different sizes; these bars are not a common-corpus quality ranking.</text>
+<text x="28.00" y="164.00" class="" text-anchor="start">xnip-relative</text>
+<rect x="431.90" y="152" width="35.63" height="16" rx="3" fill="#007f73"/>
+<path d="M 431.90 153 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="164.00" class="" text-anchor="start">0.85x (13)</text>
+<text x="990.00" y="164.00" class="" text-anchor="start">0.85x (13)</text>
+<text x="28.00" y="202.00" class="" text-anchor="start">xnip-adaptive-guarded</text>
+<rect x="388.40" y="190" width="79.12" height="16" rx="3" fill="#007f73"/>
+<path d="M 388.40 191 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="202.00" class="" text-anchor="start">0.69x (13)</text>
+<text x="990.00" y="202.00" class="" text-anchor="start">0.69x (13)</text>
+<text x="28.00" y="240.00" class="" text-anchor="start">xnip-adaptive-snapshot</text>
+<rect x="325.28" y="228" width="142.24" height="16" rx="3" fill="#007f73"/>
+<path d="M 325.28 229 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="240.00" class="" text-anchor="start">0.52x (13)</text>
+<text x="990.00" y="240.00" class="" text-anchor="start">0.52x (13)</text>
+<text x="28.00" y="278.00" class="" text-anchor="start">xnip-cli-native-guarded</text>
+<rect x="338.44" y="266" width="129.09" height="16" rx="3" fill="#007f73"/>
+<path d="M 338.44 267 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="278.00" class="" text-anchor="start">0.55x (13)</text>
+<text x="990.00" y="278.00" class="" text-anchor="start">0.55x (13)</text>
+<text x="28.00" y="316.00" class="" text-anchor="start">xnip-cli-native-snapshot</text>
+<rect x="250.00" y="304" width="217.53" height="16" rx="3" fill="#007f73"/>
+<path d="M 250.00 305 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="316.00" class="" text-anchor="start">0.36x (13)</text>
+<text x="990.00" y="316.00" class="" text-anchor="start">0.36x (13)</text>
+<text x="28.00" y="354.00" class="" text-anchor="start">xnip-cli-compact-guarded</text>
+<rect x="421.16" y="342" width="46.37" height="16" rx="3" fill="#007f73"/>
+<path d="M 421.16 343 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="354.00" class="" text-anchor="start">0.81x (13)</text>
+<text x="990.00" y="354.00" class="" text-anchor="start">0.81x (13)</text>
+<text x="28.00" y="392.00" class="" text-anchor="start">xnip-cli-compact-snapshot</text>
+<rect x="345.89" y="380" width="121.64" height="16" rx="3" fill="#007f73"/>
+<path d="M 345.89 381 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="392.00" class="" text-anchor="start">0.57x (13)</text>
+<text x="990.00" y="392.00" class="" text-anchor="start">0.57x (13)</text>
+<text x="28.00" y="430.00" class="" text-anchor="start">xnip-adaptive-guarded-text</text>
+<rect x="388.40" y="418" width="79.12" height="16" rx="3" fill="#007f73"/>
+<path d="M 388.40 419 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="430.00" class="" text-anchor="start">0.69x (13)</text>
+<text x="990.00" y="430.00" class="" text-anchor="start">0.69x (13)</text>
+<text x="28.00" y="468.00" class="" text-anchor="start">xnip-adaptive-snapshot-text</text>
+<rect x="325.28" y="456" width="142.24" height="16" rx="3" fill="#007f73"/>
+<path d="M 325.28 457 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="468.00" class="" text-anchor="start">0.52x (13)</text>
+<text x="990.00" y="468.00" class="" text-anchor="start">0.52x (13)</text>
+<text x="28.00" y="506.00" class="" text-anchor="start">codex-apply-patch</text>
+<rect x="467.53" y="494" width="206.41" height="16" rx="3" fill="#3b6fac"/>
+<path d="M 683.63 495 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="506.00" class="" text-anchor="start">2.61x (13)</text>
+<text x="990.00" y="506.00" class="" text-anchor="start">2.73x (12)</text>
+<text x="28.00" y="544.00" class="" text-anchor="start">codex-apply-patch-unique</text>
+<rect x="467.53" y="532" width="159.06" height="16" rx="3" fill="#3b6fac"/>
+<path d="M 634.33 533 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="544.00" class="" text-anchor="start">2.09x (13)</text>
+<text x="990.00" y="544.00" class="" text-anchor="start">2.17x (12)</text>
+<text x="28.00" y="582.00" class="" text-anchor="start">gemini-edit-context</text>
+<rect x="467.53" y="570" width="287.87" height="16" rx="3" fill="#9165b6"/>
+<path d="M 755.40 571 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="582.00" class="" text-anchor="start">3.81x (13)</text>
+<text x="990.00" y="582.00" class="" text-anchor="start">3.81x (13)</text>
+<text x="28.00" y="620.00" class="" text-anchor="start">gemini-edit-minimal</text>
+<rect x="467.53" y="608" width="116.51" height="16" rx="3" fill="#9165b6"/>
+<path d="M 584.04 609 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="620.00" class="" text-anchor="start">1.72x (13)</text>
+<text x="990.00" y="620.00" class="" text-anchor="start">1.72x (13)</text>
+<text x="28.00" y="658.00" class="" text-anchor="start">gemini-edit-relative-context</text>
+<rect x="467.53" y="646" width="275.83" height="16" rx="3" fill="#9165b6"/>
+<path d="M 743.36 647 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="658.00" class="" text-anchor="start">3.60x (13)</text>
+<text x="990.00" y="658.00" class="" text-anchor="start">3.60x (13)</text>
+<text x="28.00" y="696.00" class="" text-anchor="start">gemini-edit-relative-minimal</text>
+<rect x="467.53" y="684" width="96.86" height="16" rx="3" fill="#9165b6"/>
+<path d="M 564.38 685 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="696.00" class="" text-anchor="start">1.57x (13)</text>
+<text x="990.00" y="696.00" class="" text-anchor="start">1.57x (13)</text>
+<text x="28.00" y="734.00" class="" text-anchor="start">gemini-relative-known-file-trim</text>
+<rect x="467.53" y="722" width="77.37" height="16" rx="3" fill="#9165b6"/>
+<path d="M 544.90 723 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="734.00" class="" text-anchor="start">1.43x (13)</text>
+<text x="990.00" y="734.00" class="" text-anchor="start">1.43x (13)</text>
+<text x="28.00" y="772.00" class="" text-anchor="start">opencode-edit</text>
+<rect x="467.53" y="760" width="22.54" height="16" rx="3" fill="#c46a24"/>
+<path d="M 490.06 761 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="772.00" class="" text-anchor="start">1.11x (13)</text>
+<text x="990.00" y="772.00" class="" text-anchor="start">1.11x (13)</text>
+<text x="28.00" y="810.00" class="" text-anchor="start">opencode-edit-relative</text>
+<rect x="458.42" y="798" width="9.11" height="16" rx="3" fill="#c46a24"/>
+<path d="M 458.42 799 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="810.00" class="" text-anchor="start">0.96x (13)</text>
+<text x="990.00" y="810.00" class="" text-anchor="start">0.96x (13)</text>
+<text x="28.00" y="848.00" class="" text-anchor="start">opencode-relative-known-file-trim</text>
+<rect x="425.20" y="836" width="42.33" height="16" rx="3" fill="#c46a24"/>
+<path d="M 425.20 837 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="848.00" class="" text-anchor="start">0.82x (13)</text>
+<text x="990.00" y="848.00" class="" text-anchor="start">0.82x (13)</text>
+<text x="28.00" y="886.00" class="" text-anchor="start">opencode-apply-patch</text>
+<rect x="467.53" y="874" width="239.00" height="16" rx="3" fill="#c46a24"/>
+<path d="M 726.56 875 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="886.00" class="" text-anchor="start">3.04x (13)</text>
+<text x="990.00" y="886.00" class="" text-anchor="start">3.33x (11)</text>
+<text x="28.00" y="924.00" class="" text-anchor="start">opencode-apply-patch-unique</text>
+<rect x="467.53" y="912" width="195.59" height="16" rx="3" fill="#c46a24"/>
+<path d="M 682.90 913 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="924.00" class="" text-anchor="start">2.48x (13)</text>
+<text x="990.00" y="924.00" class="" text-anchor="start">2.72x (11)</text>
+<text x="28.00" y="962.00" class="" text-anchor="start">aider-diff-platform</text>
+<rect x="467.53" y="950" width="198.93" height="16" rx="3" fill="#6c7785"/>
+<path d="M 568.70 951 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="962.00" class="" text-anchor="start">2.52x (13)</text>
+<text x="990.00" y="962.00" class="" text-anchor="start">1.60x (1)</text>
+<text x="28.00" y="1000.00" class="" text-anchor="start">aider-diff-lf</text>
+<rect x="467.53" y="988" width="198.93" height="16" rx="3" fill="#6c7785"/>
+<path d="M 687.41 989 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="1000.00" class="" text-anchor="start">2.52x (13)</text>
+<text x="990.00" y="1000.00" class="" text-anchor="start">2.78x (11)</text>
+<text x="28.00" y="1038.00" class="" text-anchor="start">aider-whole-platform</text>
+<rect x="467.53" y="1026" width="137.46" height="16" rx="3" fill="#6c7785"/>
+<path d="M 419.49 1027 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="1038.00" class="" text-anchor="start">1.89x (13)</text>
+<text x="990.00" y="1038.00" class="" text-anchor="start">0.80x (1)</text>
+<text x="28.00" y="1076.00" class="" text-anchor="start">aider-whole-lf</text>
+<rect x="467.53" y="1064" width="137.46" height="16" rx="3" fill="#6c7785"/>
+<path d="M 641.89 1065 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="1076.00" class="" text-anchor="start">1.89x (13)</text>
+<text x="990.00" y="1076.00" class="" text-anchor="start">2.25x (11)</text>
+<text x="28.00" y="1114.00" class="" text-anchor="start">aider-udiff-platform</text>
+<rect x="467.53" y="1102" width="220.73" height="16" rx="3" fill="#6c7785"/>
+<path d="M 589.22 1103 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="1114.00" class="" text-anchor="start">2.79x (13)</text>
+<text x="990.00" y="1114.00" class="" text-anchor="start">1.76x (1)</text>
+<text x="28.00" y="1152.00" class="" text-anchor="start">aider-udiff-lf</text>
+<rect x="467.53" y="1140" width="220.73" height="16" rx="3" fill="#6c7785"/>
+<path d="M 707.65 1141 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="1152.00" class="" text-anchor="start">2.79x (13)</text>
+<text x="990.00" y="1152.00" class="" text-anchor="start">3.05x (11)</text>
+<text x="28.00" y="1190.00" class="" text-anchor="start">aider-diff-unique-lf</text>
+<rect x="467.53" y="1178" width="133.13" height="16" rx="3" fill="#6c7785"/>
+<path d="M 623.33 1179 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="1190.00" class="" text-anchor="start">1.86x (13)</text>
+<text x="990.00" y="1190.00" class="" text-anchor="start">2.06x (11)</text>
+<text x="28.00" y="1228.00" class="" text-anchor="start">aider-whole-eof-aware-platform</text>
+<rect x="467.53" y="1216" width="134.24" height="16" rx="3" fill="#6c7785"/>
+<path d="M 419.49 1217 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="1228.00" class="" text-anchor="start">1.87x (13)</text>
+<text x="990.00" y="1228.00" class="" text-anchor="start">0.80x (1)</text>
+<text x="28.00" y="1266.00" class="" text-anchor="start">aider-whole-eof-aware-lf</text>
+<rect x="467.53" y="1254" width="134.24" height="16" rx="3" fill="#6c7785"/>
+<path d="M 616.96 1255 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="1266.00" class="" text-anchor="start">1.87x (13)</text>
+<text x="990.00" y="1266.00" class="" text-anchor="start">2.00x (12)</text>
+<text x="28.00" y="1352.00" class="small" text-anchor="start">Counts in parentheses are paired tasks. Exact subsets have different sizes; these bars are not a common-corpus quality ranking.</text>
 </svg>

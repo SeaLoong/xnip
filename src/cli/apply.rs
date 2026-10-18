@@ -24,14 +24,14 @@ pub struct Args {
     #[arg(long, default_value_t = false)]
     pub from_stdin: bool,
 
-    /// 显式指定格式：`native` / `json` / `yaml` / `patch`。不指定走自动识别。
+    /// 显式指定格式：`native` / `json` / `compact` / `yaml` / `patch`。不指定走自动识别。
     #[arg(long, value_name = "FORMAT")]
     pub format: Option<String>,
     /// Resolve patch targets inside this directory; implies patch format.
     #[arg(long)]
     pub patch_root: Option<PathBuf>,
 
-    /// 仅阶段一校验，不写文件。stdout 打 `OK`。
+    /// 仅阶段一校验，不写文件。按选定输出格式报告结果。
     #[arg(long, default_value_t = false, conflicts_with = "dry_run")]
     pub check: bool,
 
@@ -109,10 +109,7 @@ pub fn run(a: Args) -> Result<u8> {
         let fmt = parse_format_arg(fmt_str)?;
         parse_with(&src, fmt).with_context(|| format!("parse with --format {fmt:?} failed"))?
     } else if a.from_stdin {
-        // stdin 默认 native
-        parse_with(&src, Format::Native)
-            .or_else(|_| parse_auto(&src, None))
-            .context("stdin manifest parse failed")?
+        parse_auto(&src, None).context("stdin manifest parse failed")?
     } else {
         parse_auto(&src, hint_path.as_deref())?
     };
@@ -221,6 +218,7 @@ fn has_stdin_content(ops: &[Op]) -> bool {
         }
         Op::File { operation, .. } => match operation {
             crate::apply::FileOp::Create(content)
+            | crate::apply::FileOp::Write { content, .. }
             | crate::apply::FileOp::Exact { text: content, .. } => {
                 matches!(content, OpContent::Stdin)
             }

@@ -2,7 +2,7 @@
   "mcpServers": {
     "xnip": {
       "command": "xnip",
-      "args": ["mcp"]
+      "args": ["mcp", "--receipts", "text"]
     }
   }
 }

@@ -4,6 +4,20 @@ User-visible changes are recorded here. Versions follow Semantic Versioning; com
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-19
+
+Smaller edit representations, reusable batch buffers and concise MCP receipts. Whole-file writes, literal insertion and compact file groups share the same validation and recovery path.
+
+- Add explicit byte-preserving whole-file writes with optional complete-content guards, plus insertion beside a unique literal anchor.
+- Accept compact file-group batches in MCP and CLI: share paths across ordered exact pairs or whole-file writes, reject aliases and validate all groups before committing. Use shared Windows Unicode path identities for alias checks and transaction lookup.
+- Support multiline quoted native payloads and guarded `write` instructions without nested JSON escaping.
+- Reduce line replacement to byte-span copies, assemble independent line batches once and share transaction snapshots. Ordered unique exact edits reuse copy-on-write buffers after validating each guard; identical edits avoid result allocation.
+- Keep normal MCP batch and global-edit receipts to `written`; retain paths, match counts and execution modes in structured results. Add opt-in `mcp --receipts text` to omit structured results and their output schemas for agent clients, without constructing discarded metadata. Omit optional success flags and redundant false-default schema annotations.
+- Preserve detailed MCP parameter error causes, move owned manifest strings without cloning, and detect inline JSON without duplicate native parsing.
+- Add scoped CI verification, six-platform release builds and automatic development prereleases; stable tags reuse full verification for the exact release commit.
+- Refresh CLI/MCP, integration, architecture, update and benchmark documentation and packaged agent references.
+- Expand horizontal native benchmarks with relative paths, guarded and snapshot strategies, tighter native encodings, separate transport costs and byte-exact per-task frontiers.
+
 ## [0.3.1] - 2026-10-18
 
 Smaller edit inputs and responses, byte-preserving operations, and silent background updates. The README now includes reproducible native-editor benchmark conclusions and an overview chart.
@@ -96,7 +110,8 @@ First public release of xnip, a CLI and MCP stdio server for precise local text 
 - MCP write tools commit immediately; preview/check modes are available through the CLI. The server uses the launching user's filesystem permissions and is intended for trusted local clients.
 - Native CLI arguments are literal shell arguments; no automatic `\n` decoding or newline-style conversion is performed.
 
-[Unreleased]: https://github.com/SeaLoong/xnip/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/SeaLoong/xnip/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/SeaLoong/xnip/releases/tag/v0.4.0
 [0.3.1]: https://github.com/SeaLoong/xnip/releases/tag/v0.3.1
 [0.2.0]: https://github.com/SeaLoong/xnip/releases/tag/v0.2.0
 [0.1.1]: https://github.com/SeaLoong/xnip/releases/tag/v0.1.1

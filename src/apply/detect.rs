@@ -1,12 +1,10 @@
 //! Manifest and patch format detection.
 //!
 //! 优先级：
-//! 1. `--format <native|json|yaml>` 显式指定 → 跳过自动识别
-//! 2. 文件后缀强暗示：
-//!    - `.json` / `.json5` → 先尝试 JSON
-//!    - `.yaml` / `.yml`   → 先尝试 YAML
-//!    - 其他 / 无后缀       → 先尝试原生
-//! 3. 后缀失败兜底：按 JSON → YAML → 原生 顺序逐个尝试
+//! 1. `--format <native|json|compact|yaml|patch>` 显式指定 → 跳过自动识别
+//! 2. Patch headers take priority, then recognized file extensions.
+//! 3. Without a format hint, leading `[` / `{` selects JSON; otherwise native.
+//! 4. Each remaining parser is tried once as a fallback.
 
 use std::path::Path;
 
@@ -19,6 +17,8 @@ use crate::apply::Op;
 pub enum Format {
     Native,
     Json,
+    /// Path-keyed exact pairs or explicit whole-file writes.
+    Compact,
     Yaml,
     Patch,
 }
@@ -28,6 +28,7 @@ pub fn parse_format_arg(s: &str) -> Result<Format> {
     match s.to_ascii_lowercase().as_str() {
         "native" => Ok(Format::Native),
         "json" => Ok(Format::Json),
+        "compact" => Ok(Format::Compact),
         "yaml" | "yml" => Ok(Format::Yaml),
         "patch" | "diff" => Ok(Format::Patch),
         other => anyhow::bail!("unknown --format: {other}"),
@@ -39,6 +40,7 @@ pub fn parse_with(src: &str, fmt: Format) -> Result<Vec<Op>> {
     match fmt {
         Format::Native => crate::apply::parse_native::parse(src),
         Format::Json => crate::apply::parse_json::parse(src),
+        Format::Compact => crate::apply::compact::parse(src),
         Format::Yaml => crate::apply::parse_yaml::parse(src),
         Format::Patch => crate::apply::patch::parse(src),
     }
@@ -52,7 +54,12 @@ pub fn parse_auto(src: &str, path: Option<&Path>) -> Result<Vec<Op>> {
     {
         Format::Patch
     } else {
-        preferred_from_ext(path)
+        let hint = preferred_from_ext(path);
+        if hint == Format::Native && src.trim_start().starts_with(['[', '{']) {
+            Format::Json
+        } else {
+            hint
+        }
     };
     let order = order_for(preferred);
 
@@ -91,8 +98,47 @@ fn preferred_from_ext(path: Option<&Path>) -> Format {
 fn order_for(preferred: Format) -> [Format; 4] {
     match preferred {
         Format::Patch => [Format::Patch, Format::Json, Format::Yaml, Format::Native],
-        Format::Json => [Format::Json, Format::Yaml, Format::Native, Format::Patch],
+        Format::Json | Format::Compact => {
+            [Format::Json, Format::Yaml, Format::Native, Format::Patch]
+        }
         Format::Yaml => [Format::Yaml, Format::Json, Format::Native, Format::Patch],
         Format::Native => [Format::Native, Format::Json, Format::Yaml, Format::Patch],
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{Format, parse_auto, parse_with};
+    use std::path::Path;
+
+    #[test]
+    fn unhinted_json_keeps_its_diagnostic_and_recognized_extensions_keep_priority() {
+        for path in [
+            None,
+            Some(Path::new("manifest")),
+            Some(Path::new("manifest.native")),
+        ] {
+            let error = format!("{:#}", parse_auto(" \n {invalid", path).unwrap_err());
+            assert!(error.contains("attempt with Json"), "{error}");
+            assert!(!error.contains("attempt with Native"), "{error}");
+        }
+        let error = format!(
+            "{:#}",
+            parse_auto(" \n {invalid", Some(Path::new("manifest.yaml"))).unwrap_err()
+        );
+        assert!(error.contains("attempt with Yaml"), "{error}");
+    }
+
+    #[test]
+    fn unhinted_json_and_native_inputs_have_the_explicit_parser_semantics() {
+        for (source, format) in [
+            (" \n {\"a\": [[\"old\", \"new\"]]}", Format::Json),
+            ("replace a 1 \"new\"", Format::Native),
+        ] {
+            assert_eq!(
+                format!("{:?}", parse_auto(source, None).unwrap()),
+                format!("{:?}", parse_with(source, format).unwrap())
+            );
+        }
     }
 }

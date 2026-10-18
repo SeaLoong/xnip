@@ -1,6 +1,6 @@
 //! 原生紧凑格式 parser。
 //!
-//! 一行一操作，注释 `#` 行首，空行忽略。
+//! 一条记录一个操作；双引号内可直接跨物理行，保留原始换行。记录间空行和行首 `#` 注释忽略。
 //!
 //! 操作行结构：`<op> <file | --files-from path> <定位> [<修饰>...] [<内容>] [<命名修饰>...]`
 //!
@@ -12,7 +12,7 @@
 //! - `@@` 表示字面 `@`
 //! - `""` 空字符串
 //!
-//! 实现策略：手写递归下降；先 tokenize 一行为字符串列表（带"是否原始引号包裹"标志），
+//! 实现策略：单次扫描 tokenize 一条记录（带"是否原始引号包裹"标志），
 //! 再按 op 类型解析字段顺序。
 //!
 //! `clippy::many_single_char_names` / `unnecessary_wraps` / `single_match_else` / `if_same_then_else`
@@ -47,19 +47,30 @@ use crate::core::location::{Count, Locator};
 /// 词法或语法错误时返回 `Err`，错误信息含行号。
 pub fn parse(src: &str) -> Result<Vec<Op>> {
     let mut ops = Vec::new();
-    for (idx, raw_line) in src.lines().enumerate() {
-        let line_no = idx + 1;
-        let trimmed = raw_line.trim_start();
-        if trimmed.is_empty() || trimmed.starts_with('#') {
-            continue;
-        }
-        let tokens =
-            tokenize(raw_line).with_context(|| format!("line {line_no}: tokenize failed"))?;
-        if tokens.is_empty() {
-            continue;
-        }
-        let op = parse_op_line(&tokens).with_context(|| format!("line {line_no}: {raw_line}"))?;
-        ops.push(op);
+    let mut rest = src;
+    let mut line_no = 1;
+    while !rest.is_empty() {
+        let first_line_end = rest.find('\n').map_or(rest.len(), |index| index + 1);
+        let first_line = &rest[..first_line_end];
+        let trimmed = first_line.trim_start();
+        let consumed = if trimmed.is_empty() || trimmed.starts_with('#') {
+            first_line_end
+        } else {
+            let (tokens, consumed) = tokenize_record(rest, true)
+                .with_context(|| format!("line {line_no}: tokenize failed"))?;
+            if !tokens.is_empty() {
+                ops.push(
+                    parse_op_line(&tokens)
+                        .with_context(|| format!("line {line_no}: invalid operation"))?,
+                );
+            }
+            consumed
+        };
+        line_no += rest[..consumed]
+            .bytes()
+            .filter(|byte| *byte == b'\n')
+            .count();
+        rest = &rest[consumed..];
     }
     Ok(ops)
 }
@@ -95,18 +106,36 @@ pub struct BetweenLiteral {
 /// # Errors
 /// 引号未闭合返回 `Err`。
 pub fn tokenize(line: &str) -> Result<Vec<Token>> {
+    tokenize_record(line, false).map(|(tokens, _)| tokens)
+}
+
+/// Scan a record once: raw line breaks inside quoted literals belong to the payload.
+fn tokenize_record(line: &str, record: bool) -> Result<(Vec<Token>, usize)> {
     let bytes = line.as_bytes();
     let mut out = Vec::new();
     let mut i = 0;
     let n = bytes.len();
     while i < n {
         // skip whitespace
-        while i < n && (bytes[i] == b' ' || bytes[i] == b'\t') {
+        while i < n
+            && (bytes[i] == b' '
+                || bytes[i] == b'\t'
+                || (record && bytes[i] == b'\r' && bytes.get(i + 1) == Some(&b'\n')))
+        {
             i += 1;
         }
         if i >= n {
             break;
         }
+        if record && bytes[i] == b'\n' {
+            return Ok((out, i + 1));
+        }
+        // Regex atoms stay on a physical line; quoted literals may span lines.
+        let atom_end = if record {
+            memchr::memchr(b'\n', &bytes[i..]).map_or(n, |offset| i + offset)
+        } else {
+            n
+        };
         if bytes[i] == b'"' {
             // 扫 quoted 子段；如果后接 `.."..."` 则识别为 between literal
             let (first_buf, after_first) = scan_quoted(bytes, i)?;
@@ -120,7 +149,7 @@ pub fn tokenize(line: &str) -> Result<Vec<Token>> {
                     // 可选 `i`：后面紧贴 `i` 且后面是空白或结束
                     if end_idx < n && bytes[end_idx] == b'i' {
                         let next = end_idx + 1;
-                        if next == n || bytes[next] == b' ' || bytes[next] == b'\t' {
+                        if next == n || matches!(bytes[next], b' ' | b'\t' | b'\r' | b'\n') {
                             inclusive = true;
                             end_idx = next;
                         }
@@ -149,7 +178,7 @@ pub fn tokenize(line: &str) -> Result<Vec<Token>> {
         }
         // 检测原子定位语法：=/.../N?  或  ~/A/..~/B/i?  或  s/.../.../FLAGS?
         if bytes[i] == b'=' && i + 1 < n && bytes[i + 1] == b'/' {
-            let (buf, next) = scan_match_line_atom(bytes, i)?;
+            let (buf, next) = scan_match_line_atom(&bytes[..atom_end], i)?;
             out.push(Token {
                 bytes: buf,
                 quoted: false,
@@ -159,7 +188,7 @@ pub fn tokenize(line: &str) -> Result<Vec<Token>> {
             continue;
         }
         if bytes[i] == b'~' && i + 1 < n && bytes[i + 1] == b'/' {
-            let (buf, next) = scan_between_re_atom(bytes, i)?;
+            let (buf, next) = scan_between_re_atom(&bytes[..atom_end], i)?;
             out.push(Token {
                 bytes: buf,
                 quoted: false,
@@ -169,7 +198,7 @@ pub fn tokenize(line: &str) -> Result<Vec<Token>> {
             continue;
         }
         if bytes[i] == b's' && i + 1 < n && bytes[i + 1] == b'/' {
-            let (buf, next) = scan_subst_atom(bytes, i)?;
+            let (buf, next) = scan_subst_atom(&bytes[..atom_end], i)?;
             out.push(Token {
                 bytes: buf,
                 quoted: false,
@@ -180,7 +209,12 @@ pub fn tokenize(line: &str) -> Result<Vec<Token>> {
         }
         // 不带引号 token：扫到下一个空白，遇到 " 进入引号子模式拼接
         let mut buf = Vec::new();
-        while i < n && bytes[i] != b' ' && bytes[i] != b'\t' {
+        while i < n
+            && bytes[i] != b' '
+            && bytes[i] != b'\t'
+            && !(record
+                && (bytes[i] == b'\n' || (bytes[i] == b'\r' && bytes.get(i + 1) == Some(&b'\n'))))
+        {
             if bytes[i] == b'"' {
                 let (q, next) = scan_quoted(bytes, i)?;
                 buf.extend_from_slice(&q);
@@ -196,7 +230,7 @@ pub fn tokenize(line: &str) -> Result<Vec<Token>> {
             between_literal: None,
         });
     }
-    Ok(out)
+    Ok((out, i))
 }
 
 /// 扫描引号 token。假设 `bytes[start] == '"'`。返回（解转义后的字节串, 下个位置）。
@@ -343,7 +377,7 @@ fn parse_op_line(tokens: &[Token]) -> Result<Op> {
         bail!("first token must be op name, not a quoted string");
     }
     let op_name = std::str::from_utf8(&op_tok.bytes).context("op name not UTF-8")?;
-    if matches!(op_name, "create" | "delete" | "rename" | "edit") {
+    if matches!(op_name, "create" | "write" | "delete" | "rename" | "edit") {
         return parse_file_op(tokens, op_name);
     }
 
@@ -563,6 +597,24 @@ fn parse_file_op(tokens: &[Token], name: &str) -> Result<Op> {
     };
     let operation = match name {
         "create" if tokens.len() == 3 => FileOp::Create(content(&tokens[2])?),
+        "write" if matches!(tokens.len(), 3 | 4) => {
+            let was = if tokens.len() == 4 {
+                if tokens[3].quoted {
+                    bail!("write guard must be was=CONTENT");
+                }
+                let guard = tokens[3]
+                    .bytes
+                    .strip_prefix(b"was=")
+                    .context("write guard must be was=CONTENT")?;
+                Some(guard.to_vec())
+            } else {
+                None
+            };
+            FileOp::Write {
+                content: content(&tokens[2])?,
+                was,
+            }
+        }
         "delete" if tokens.len() == 2 => FileOp::Delete { was: None },
         "rename" if tokens.len() == 3 => FileOp::Rename {
             to: PathBuf::from(std::str::from_utf8(&tokens[2].bytes)?),
@@ -583,7 +635,7 @@ fn parse_file_op(tokens: &[Token], name: &str) -> Result<Op> {
             }
         }
         _ => bail!(
-            "expected create FILE CONTENT, delete FILE, rename FILE TO, or edit FILE OLD NEW [all]"
+            "expected create FILE CONTENT, write FILE CONTENT [was=OLD], delete FILE, rename FILE TO, or edit FILE OLD NEW [all]"
         ),
     };
     Ok(Op::File { target, operation })

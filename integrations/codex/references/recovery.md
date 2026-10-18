@@ -1,6 +1,6 @@
 # Transaction failure and recovery
 
-`apply` and whole-file rename use a shared plan. All operations are validated in memory before commit. The plan compares every observed file with its original contents before writing, and checks each target again before its individual commit. This detects changes but is not a lock against external writers or a cross-file atomic filesystem transaction.
+`apply`, explicit whole-file write (`edit --write`) and whole-file rename use a shared plan. All operations are validated in memory before commit. The plan compares every observed file with its original contents before writing, and checks each target again before its individual commit. This detects changes but is not a lock against external writers or a cross-file atomic filesystem transaction.
 
 ## Recovery records
 
@@ -36,6 +36,6 @@ MCP exposes `xnip_recover` with `journal` and optional `dry_run`. It follows the
 
 ## Boundaries
 
-Single-file create/replace/delete through `edit` retain their existing atomic-write/backup behavior; whole-file rename and all apply modes use the recovery plan. A completed successful edit is not kept in an automatic undo history. Use Git or `--backup` for later user-requested undo.
+Single-file create/replace/delete through `edit` retain their existing atomic-write/backup behavior; explicit whole-file write, whole-file rename and all apply modes use the recovery plan. A completed successful edit is not kept in an automatic undo history. Use Git or `--backup` for later user-requested undo.
 
 The journal preserves ordinary permissions, not a complete copy of ownership, ACLs or extended attributes for rewritten files. External content and path conflicts are checked optimistically; filesystem races cannot be completely eliminated without cooperation from other writers. Temp-directory cleanup by the OS can remove old recovery records, so recover promptly after an interruption.

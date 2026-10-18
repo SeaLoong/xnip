@@ -14,7 +14,7 @@ pub struct Args {
     #[serde(default)]
     pub dry_run: bool,
 }
-pub fn run(args: Args) -> Result<CallToolResult, McpError> {
+pub fn run(args: Args, receipts: crate::mcp::Receipts) -> Result<CallToolResult, McpError> {
     let report =
         crate::core::transaction::recover(&args.journal, args.dry_run).map_err(|error| {
             McpError::invalid_request(format!("recovery refused/failed: {error:#}"), None)
@@ -29,5 +29,6 @@ pub fn run(args: Args) -> Result<CallToolResult, McpError> {
         &summary,
         if args.dry_run { &report.diff } else { "" },
         args.max_bytes,
+        receipts,
     ))
 }

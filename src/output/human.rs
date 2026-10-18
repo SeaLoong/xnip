@@ -61,6 +61,7 @@ impl ChangeSummary {
     pub fn edit(file: &Path, request: &Request, outcome: &Outcome) -> Self {
         let operation = match request.operation {
             Operation::Replace => "replace",
+            Operation::Write => "write",
             Operation::Create => "create",
             Operation::Delete => "delete",
             Operation::Rename => "rename",
@@ -120,12 +121,6 @@ impl ChangeSummary {
     /// MCP already carries operation and paths in its call and structured result.
     pub fn mcp_receipt(&self) -> String {
         let mut text = self.status().to_owned();
-        if matches!(self.operation.as_str(), "apply" | "recover") {
-            let _ = write!(text, "; {} paths", self.files.len());
-        }
-        if let Some(count) = self.replacements.filter(|count| *count > 1) {
-            let _ = write!(text, "; {count} matches");
-        }
         if self.mode != Mode::Write {
             text.push_str("; written=false");
         }
@@ -340,6 +335,32 @@ mod tests {
                 }
             );
         }
+    }
+
+    #[test]
+    fn mcp_ack_does_not_repeat_counts_available_in_structured_metadata() {
+        let request = Request {
+            all: true,
+            ..Default::default()
+        };
+        let outcome = Outcome {
+            changed: true,
+            replacements: 7,
+            diff: String::new(),
+            journal: None,
+        };
+        let summary = ChangeSummary::edit(Path::new("a"), &request, &outcome);
+        assert_eq!(summary.mcp_receipt(), "written");
+        assert_eq!(serde_json::to_value(&summary).unwrap()["replacements"], 7);
+        assert!(summary.compact().contains("7 matches"));
+        let report = crate::core::transaction::Report {
+            files: vec!["a".into(), "b".into()],
+            ..Default::default()
+        };
+        let summary = ChangeSummary::batch("apply", Mode::Write, &report);
+        assert_eq!(summary.mcp_receipt(), "written");
+        assert_eq!(summary.files.len(), 2);
+        assert!(summary.compact().contains("2 paths"));
     }
 
     #[test]

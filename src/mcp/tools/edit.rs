@@ -1,4 +1,4 @@
-use crate::core::edit::{EditError, Operation, Request, execute, payload};
+use crate::core::edit::{EditError, Operation, Placement, Request, execute, payload};
 use rmcp::{ErrorData as McpError, model::CallToolResult};
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -11,14 +11,14 @@ pub struct Args {
     /// Preview payload byte limit; default 12000, 0 for full output.
     #[serde(default)]
     pub max_bytes: Option<usize>,
-    /// Target path; create requires an absent path, other operations an existing file.
+    /// Target path; write may create or overwrite, create requires an absent path.
     pub file: PathBuf,
-    /// replace (default), create (must not exist), delete (regular files only), or rename (to required).
+    /// replace (default), write (whole-file upsert), create (absent), delete, or rename (to required).
     #[serde(default)]
     pub operation: Operation,
     /// Absent destination for rename. Same filesystem required.
     pub to: Option<PathBuf>,
-    /// Exact old block; for delete, optional expected whole-file content.
+    /// Exact block/anchor; write, delete and rename check the whole file when supplied.
     pub old: Option<String>,
     /// File containing exact old bytes (mutually exclusive with old).
     pub old_file: Option<PathBuf>,
@@ -26,6 +26,8 @@ pub struct Args {
     pub text: Option<String>,
     /// File containing new bytes (mutually exclusive with text).
     pub text_file: Option<PathBuf>,
+    /// Insert bytes before/after the unique old anchor; only for replace without all.
+    pub position: Option<Placement>,
     /// Explicitly replace every non-overlapping match instead of requiring uniqueness.
     #[serde(default)]
     pub all: bool,
@@ -48,12 +50,13 @@ fn error(error: EditError) -> McpError {
     }
 }
 
-pub fn run(args: Args) -> Result<CallToolResult, McpError> {
+pub fn run(args: Args, receipts: crate::mcp::Receipts) -> Result<CallToolResult, McpError> {
     let request = Request {
         operation: args.operation,
         to: args.to,
         old: payload(args.old, args.old_file).map_err(error)?,
         text: payload(args.text, args.text_file).map_err(error)?,
+        position: args.position,
         all: args.all,
         dry_run: args.dry_run,
         check: args.check,
@@ -65,5 +68,6 @@ pub fn run(args: Args) -> Result<CallToolResult, McpError> {
         &summary,
         &outcome.diff,
         args.max_bytes,
+        receipts,
     ))
 }

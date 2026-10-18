@@ -8,6 +8,14 @@ Precise text changes and the evidence an agent needs to apply them.
 A nonempty sequence of original bytes identifying a replacement target. It must occur once unless replacing all matches is explicitly requested.
 _Avoid_: fuzzy match, approximate context
 
+**Whole-file write**:
+A complete replacement file supplied as exact bytes, creating the target when absent. An optional whole-content precondition applies to the entire existing file.
+_Avoid_: implicit rewrite, partial replacement
+
+**File group**:
+One target with ordered exact replacements or a complete-file write. Different groups are independent; order within a group uses its preceding virtual content.
+_Avoid_: cross-file sequence
+
 **Edit plan**:
 The proposed final file contents and file existence changes, validated before committing a batch.
 _Avoid_: script, undo history
@@ -21,7 +29,7 @@ Validation of an edit plan without writing files or displaying its diff.
 _Avoid_: dry run with changes
 
 **Receipt**:
-The result identifying an operation, its mode, affected paths and whether changes were written.
+The edit result stating whether changes were written, unchanged, previewed or checked. Text receipts carry concise status; structured receipts add operation details and affected paths.
 _Avoid_: proof from exit status alone
 
 **Output budget**:

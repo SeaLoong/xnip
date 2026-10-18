@@ -12,11 +12,22 @@ use super::tools;
 
 /// MCP server 状态。
 ///
-/// 当前所有 tool 都是无状态纯计算(输入文件路径 + 选项 → 结果)，
-/// 因此 `XnipServer` 自身只持有 `ToolRouter`(rmcp 宏要求字段名为 `tool_router`)。
+/// 编辑实现由共享工具处理；server 只保存工具路由与回执展示配置。
+/// rmcp 宏要求路由字段名为 `tool_router`。
 #[derive(Debug, Clone)]
 pub struct XnipServer {
     tool_router: ToolRouter<Self>,
+    receipts: Receipts,
+}
+
+/// Presentation of edit/apply/recover results; editing behavior is identical.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
+pub enum Receipts {
+    /// Preserve machine-readable change metadata alongside the text receipt.
+    #[default]
+    Structured,
+    /// Return only the existing text receipt and bounded preview.
+    Text,
 }
 
 /// Which editing tools are advertised to the client.
@@ -35,6 +46,10 @@ impl XnipServer {
     }
 
     pub fn with_toolset(toolset: Toolset) -> Self {
+        Self::with_options(toolset, Receipts::Structured)
+    }
+
+    pub fn with_options(toolset: Toolset, receipts: Receipts) -> Self {
         // Probe handles before Tokio starts its blocking stdin reader. Doing
         // this inside xnip_doctor can wait forever on a live Windows pipe.
         crate::doctor::capture_stdio_status();
@@ -47,19 +62,39 @@ impl XnipServer {
                 )
             });
         }
-        for route in tool_router.map.values_mut() {
+        for (name, route) in &mut tool_router.map {
             // Schema titles describe Rust types, not facts a caller needs.
             let mut schema = serde_json::Value::Object((*route.attr.input_schema).clone());
             compact_schema(&mut schema);
             route.attr.input_schema =
                 std::sync::Arc::new(schema.as_object().expect("object schema").clone());
+            if receipts == Receipts::Text
+                && matches!(name.as_ref(), "xnip_edit" | "xnip_apply" | "xnip_recover")
+            {
+                route.attr.output_schema = None;
+            }
             if let Some(output) = &mut route.attr.output_schema {
                 let mut schema = serde_json::Value::Object((**output).clone());
                 compact_schema(&mut schema);
                 *output = std::sync::Arc::new(schema.as_object().expect("object schema").clone());
             }
         }
-        Self { tool_router }
+        Self {
+            tool_router,
+            receipts,
+        }
+    }
+
+    fn finish_receipt(
+        &self,
+        result: Result<rmcp::model::CallToolResult, McpError>,
+    ) -> Result<rmcp::model::CallToolResult, McpError> {
+        result.map(|mut receipt| {
+            if self.receipts == Receipts::Text && receipt.is_error != Some(true) {
+                receipt.structured_content = None;
+            }
+            receipt
+        })
     }
 }
 
@@ -81,20 +116,20 @@ impl XnipServer {
         &self,
         params: rmcp::handler::server::wrapper::Parameters<tools::recover::Args>,
     ) -> Result<rmcp::model::CallToolResult, McpError> {
-        tools::recover::run(params.0)
+        self.finish_receipt(tools::recover::run(params.0, self.receipts))
     }
     // === 10 个 tool 的实际实现委托给 super::tools::* ===
     #[rmcp::tool(
         title = "Edit files",
         annotations(read_only_hint = false, destructive_hint = true, open_world_hint = false),
         output_schema = tools::common::change_schema(),
-        description = "Create, replace exact text, delete, or rename. old must match uniquely unless all=true. dry_run/check never write."
+        description = "Replace unique old text, insert before/after it, create, write whole files, delete, or rename. write old guards the whole file. all replaces every match. dry_run/check never write."
     )]
     async fn xnip_edit(
         &self,
         params: rmcp::handler::server::wrapper::Parameters<tools::edit::Args>,
     ) -> Result<rmcp::model::CallToolResult, McpError> {
-        tools::edit::run(params.0)
+        self.finish_receipt(tools::edit::run(params.0, self.receipts))
     }
     // 为什么 description 直写而不用模块常量:
     // rmcp 的 #[tool] 属性宏要求 description = 字面字符串，
@@ -201,13 +236,13 @@ impl XnipServer {
         title = "Apply file changes",
         annotations(read_only_hint = false, destructive_hint = true, open_world_hint = false),
         output_schema = tools::common::change_schema(),
-        description = "Batch exact replacements with edits, or native/json/yaml/patch via path or manifest_text. Validates before writing. Failed commits attempt rollback; inspect the journal. dry_run/check never write."
+        description = "Batch with files: path maps to [[old,text],...] unique pairs, full text, or {text,old?} guarded whole writes. Or use edits/path/manifest_text. Validates before writing; failed commits retain a recovery journal. dry_run/check never write."
     )]
     async fn xnip_apply(
         &self,
         params: rmcp::handler::server::wrapper::Parameters<tools::apply::Args>,
     ) -> Result<rmcp::model::CallToolResult, McpError> {
-        tools::apply::run(params.0)
+        self.finish_receipt(tools::apply::run(params.0, self.receipts))
     }
 
     #[rmcp::tool(
@@ -232,7 +267,13 @@ impl XnipServer {
 impl ServerHandler for XnipServer {
     fn get_info(&self) -> ServerInfo {
         let mut info = ServerInfo::new(ServerCapabilities::builder().enable_tools().build())
-            .with_instructions(INSTRUCTIONS);
+            .with_instructions(format!(
+                "{INSTRUCTIONS_START}{}{INSTRUCTIONS_END}",
+                match self.receipts {
+                    Receipts::Structured => STRUCTURED_RECEIPTS,
+                    Receipts::Text => TEXT_RECEIPTS,
+                }
+            ));
         // 覆盖默认的 rmcp/0 为本 crate 的 name/version
         info.server_info.name = env!("CARGO_PKG_NAME").to_string();
         info.server_info.version = env!("CARGO_PKG_VERSION").to_string();
@@ -242,7 +283,11 @@ impl ServerHandler for XnipServer {
 
 /// 顶层指令文本：告诉 LLM 这个 server 是什么、有哪些约定。
 /// 越精炼越好——LLM 上下文宝贵，不写废话。
-const INSTRUCTIONS: &str = "Reuse known context; read only missing context. Prefer edit for exact blocks and file lifecycle; apply batches. Lines are 1-based inclusive. Results distinguish write/preview/check; written=false means no write. Truncation is explicit; max_bytes=0 requests full output. Expected text is a precondition, not a writer lock. Specialized tools: restart with --toolset full.";
+const INSTRUCTIONS_START: &str = "Reuse known context; read only missing context. Prefer edit for exact blocks and file lifecycle; apply batches. Lines are 1-based inclusive. Omitted input flags are false. ";
+const STRUCTURED_RECEIPTS: &str =
+    "Results distinguish write/preview/check; written=false means no write. ";
+const TEXT_RECEIPTS: &str = "Edit/apply/recover return text receipts: written confirms changes; unchanged means no change. preview/check include written=false; retained recovery journals stay in text. ";
+const INSTRUCTIONS_END: &str = "Truncation is explicit; max_bytes=0 requests full output. Expected text is a precondition, not a writer lock. Specialized tools: restart with --toolset full.";
 
 /// 启动 stdio MCP server 并阻塞至连接关闭。
 ///
@@ -259,6 +304,11 @@ pub fn serve_stdio() -> Result<()> {
 
 /// Serve the selected toolset over stdio.
 pub fn serve_stdio_with_toolset(toolset: Toolset) -> Result<()> {
+    serve_with_options(toolset, Receipts::Structured)
+}
+
+/// Serve the selected tool catalog and receipt presentation over stdio.
+pub fn serve_with_options(toolset: Toolset, receipts: Receipts) -> Result<()> {
     let rt = tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()
@@ -266,7 +316,7 @@ pub fn serve_stdio_with_toolset(toolset: Toolset) -> Result<()> {
 
     rt.block_on(async {
         let transport = (tokio::io::stdin(), tokio::io::stdout());
-        let service = XnipServer::with_toolset(toolset)
+        let service = XnipServer::with_options(toolset, receipts)
             .serve(transport)
             .await
             .context("MCP handshake failed")?;
@@ -285,7 +335,10 @@ fn compact_schema(value: &mut serde_json::Value) {
         serde_json::Value::Object(map) => {
             map.remove("title");
             map.remove("$schema");
-            if map.get("default") == Some(&serde_json::Value::Null) {
+            if matches!(
+                map.get("default"),
+                Some(serde_json::Value::Null | serde_json::Value::Bool(false))
+            ) {
                 map.remove("default");
             }
             for child in map.values_mut() {
@@ -316,5 +369,53 @@ fn compact_schema(value: &mut serde_json::Value) {
         }
         serde_json::Value::Array(values) => values.iter_mut().for_each(compact_schema),
         _ => {}
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{Receipts, Toolset, XnipServer};
+    use rmcp::{
+        ErrorData,
+        model::{CallToolResult, Content},
+    };
+
+    #[test]
+    fn schema_compaction_retains_validation_and_nonfalse_defaults() {
+        let mut schema = serde_json::json!({
+            "type":"object", "required":["operation"], "additionalProperties":false,
+            "properties": {
+                "operation":{"type":"string","enum":["replace","write"],"default":"replace"},
+                "flag":{"type":"boolean","default":false},
+                "enabled":{"type":"boolean","default":true},
+                "count":{"type":"integer","minimum":1,"default":7},
+                "nullable":{"type":["string","null"],"default":null}
+            }
+        });
+        let mut expected = schema.clone();
+        for field in ["flag", "nullable"] {
+            expected["properties"][field]
+                .as_object_mut()
+                .unwrap()
+                .remove("default");
+        }
+        expected["properties"]["nullable"]["type"] = serde_json::json!("string");
+        super::compact_schema(&mut schema);
+        assert_eq!(schema, expected);
+    }
+
+    #[test]
+    fn text_receipt_presentation_does_not_strip_error_details() {
+        let server = XnipServer::with_options(Toolset::Compact, Receipts::Text);
+        let mut failure = CallToolResult::success(vec![Content::text("failed")]);
+        failure.is_error = Some(true);
+        failure.structured_content = Some(serde_json::json!({"reason":"retained"}));
+        let expected = serde_json::to_value(&failure).unwrap();
+        let result = server.finish_receipt(Ok(failure)).unwrap();
+        assert_eq!(serde_json::to_value(result).unwrap(), expected);
+        let failure = ErrorData::invalid_request("unchanged error", None);
+        let expected = serde_json::to_value(&failure).unwrap();
+        let error = server.finish_receipt(Err(failure)).unwrap_err();
+        assert_eq!(serde_json::to_value(error).unwrap(), expected);
     }
 }

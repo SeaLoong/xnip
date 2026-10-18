@@ -5,39 +5,39 @@
 **用更少的重复上下文，完成精准文本编辑。** 编码 agent 传入已知的原文本块与替换内容，xnip 精确修改目标、保留未修改字节，并返回精简结果。
 
 - **复用已知上下文。** 需要时补读缺失内容；已知如何修改时直接编辑。
-- **只传需要的变化。** 精确文本块避免在每次编辑中重复输出整份文件或完整长行。
+- **按场景选择精简编辑。** 局部修改传精确文本块，多处修改共享文件路径，插入只传锚点与新增内容，小文件重写可直接传完整结果。
 - **保持输入输出精简。** 简短回执、有限读取与预览、默认五个 MCP 工具，减少日常上下文负担。
 - **保证定位明确。** 原文本缺失或存在歧义时不写入；显式 `all` 才做全局替换。精确编辑保留 CRLF 与末尾换行字节。
 - **跨 harness 复用。** CLI 与 stdio MCP 共享文件生命周期、批量、补丁、行与锚点编辑能力。
 
 ## 实测编辑成本
 
-Benchmark 实际运行 **Codex、Gemini CLI、OpenCode、aider 的编辑执行器**，与 xnip 在相同任务上比较：**13 个场景 × 12 种配置 × 3 次重复**，每次执行后检查目标文件字节。计数使用 `tiktoken 0.14.0 / o200k_base`。
+Benchmark 实际运行 **Codex、Gemini CLI、OpenCode、aider 的编辑器**：**13 个场景 × 31 种配置 × 3 次重复**。只有每次都得到预期文件字节的配置才进入有效对比。计数使用 `tiktoken 0.14.0 / o200k_base`。
 
-![原生编辑工具相对 xnip 的输入成本](docs/benchmarks/charts/overview.svg)
+![字节正确配置中的最佳实测编辑输入](docs/benchmarks/charts/readme-frontier.svg)
 
-下表为部分配置，比例均为 **原生工具 / xnip**，**xnip = 1.00x**。几何平均让每个场景权重相同。
+每个任务对比 **实测原生最小输入 / 实测 xnip 最小输入**，高于 **1x** 表示 xnip 输入更少；几何平均让各任务权重相同。“保留旧内容校验”只允许有原内容前置检查的编辑；“允许整文件写入”对双方都同时开放局部编辑和整文件写入。
 
-| 编辑器 / 配置 | 全部场景编辑输入 | 字节一致配对子集输入 | 一致配对数 | 全部输入 + 已捕获返回 |
-|---|---:|---:|---:|---:|
-| xnip edit | 1.00x | 1.00x | 13/13 | 1.00x |
-| OpenCode edit | 1.11x | 1.11x | 13/13 | 1.20x |
-| Codex apply_patch | 2.61x | 2.73x | 12/13 | 3.05x |
-| Gemini context | 3.81x | 3.81x | 13/13 | 4.35x |
-| aider diff / LF | 2.52x | 2.78x | 11/13 | 返回未知 |
-| aider whole / LF | 1.89x | 2.25x | 11/13 | 返回未知 |
+| xnip 接口 / 允许的操作 | 原生最小 / xnip 最小 | xnip 更少 / 持平 / 原生更少 |
+|---|---:|---:|
+| MCP · 保留旧内容校验 | 1.37x | 13 / 0 / 0 |
+| MCP · 允许整文件写入 | 1.26x | 12 / 1 / 0 |
+| CLI stdin · 保留旧内容校验 | 1.73x | 13 / 0 / 0 |
+| CLI stdin · 允许整文件写入 | 1.80x | 13 / 0 / 0 |
 
-**优势明显的场景：** 长行中的局部替换只需 **22 个 xnip 输入 token**，Codex 补丁需要 **10,037**。在 2,000 行文件中修改一处，xnip 需要 **36**，aider whole / LF 需要 **19,007**。这些场景的差距主要来自重复传输未变化的文本。
+**为什么使用：** 已知完整文件时，长行中的局部修改只需 **11 个 MCP 输入 token**，Codex 的唯一上下文补丁需要 **10,037**。文件分组还能省去重复路径和调用。在两组条件下，CLI stdin 策略的输入都在 13 个场景中更少；执行命令参数是另计的额外成本。
 
-**差距较小的场景：** OpenCode 的字面编辑器与 xnip 已很接近。原生补丁也擅长合并修改：同文件批量场景中，Codex 输入为 **45 token**，分别调用 xnip edit 为 **46**。xnip 也提供 `apply` 批量入口；这里的原生对照配置测量的是 `edit`。
+**发送前先选择表达方式：** 已知完整当前内容且旧内容校验可选时，原生行清单、缩短后仍唯一的精确文本对，可能比整份文件更省。多行函数的 xnip MCP 输入为 **25 token**，aider whole 为 **26**；同文件批量为 **18 对 20**。明确要求的旧内容检查保持不变。允许整写的 MCP 组中，xnip 在 12 个任务中更少、1 个持平。
 
-“全部”包含输出字节不一致的原生执行；配对子集只保留双方每次均得到预期字节的任务，各配置子集不同。已捕获返回指实际观察到的工具文本，aider 不可取得的返回保持未知。这些是编辑器实测，不能直接当作完整 agent 会话或计费总量。
+**返回也更精简：** `xnip mcp --receipts text` 在 26 组配对中，让捕获的完整 JSON-RPC 返回 token 约减少 **56%**；输入、正文回执和最终文件字节与默认结构化模式一致。同样五个工具的发现目录也减少 **23.8%**（2,303 → 1,754 token）。
 
-[完整结果与逐场景图表](docs/benchmarks/results.md) · [原始证据](docs/benchmarks/results.json) · [方法与复现](docs/benchmarks/README.md)
+对比已加入原生相对路径、更紧凑的上下文，以及同样适用的已知文件字面裁剪配置。前沿只使用字节正确的结果，原有配置和字节不符结果均保留。aider 最终返回文本未知；CLI 命令参数、MCP 请求/返回、工具正文与启动耗时分别计量，不能当作完整 agent 会话或计费总量。
+
+[完整结果与逐场景图表](docs/benchmarks/results.md) · [原始证据](docs/benchmarks/results.json) · [方法与复现](docs/benchmarks/README.md) · [核心性能](docs/benchmarks/core-performance.md)
 
 ## 安装
 
-稳定版预构建二进制无需 Rust。两种安装器均校验下载压缩包的 SHA256：
+本页功能已包含在 **v0.4.0** 中，发布详情见[变更记录](CHANGELOG.md)。稳定版预构建二进制无需 Rust。两种安装器均校验下载压缩包的 SHA256：
 
 ~~~sh
 # macOS / Linux
@@ -54,13 +54,15 @@ Invoke-RestMethod https://github.com/SeaLoong/xnip/releases/latest/download/inst
 源码安装需要 **Rust 1.89+**：
 
 ~~~sh
-cargo install --git https://github.com/SeaLoong/xnip --tag v0.3.1 --locked xnip
+cargo install --git https://github.com/SeaLoong/xnip --tag v0.4.0 --locked xnip
 ~~~
 
 ## 编辑
 
 ~~~sh
 xnip edit config.txt --old 'PORT=8080' --text 'PORT=3000'
+xnip edit generated.txt --write --text-file content.txt
+xnip edit imports.py --old 'import os' --text-file new-import.txt --position after
 xnip edit src/new.txt --create --text-file content.txt
 xnip edit old-name.txt --rename-to new-name.txt
 xnip edit obsolete.txt --delete
@@ -70,13 +72,19 @@ xnip apply edits.json
 
 字面替换要求 old 非空且唯一；有歧义时扩展原文本上下文，有意全局替换时使用 `--all`。`--dry-run` 预览，`--check` 校验，两者均不写入。需要跨 shell 可靠传入多行字节时使用文件或 stdin。
 
+`--write` 显式创建或覆盖完整文件，可用 `--old` 校验整个已有文件。`--position before|after` 在唯一锚点旁插入所给字节，不额外补换行。独立修改可在紧凑 JSON 清单中共享路径：
+
+~~~json
+{"a.txt":[["old","new"],["next","final"]],"b.txt":{"old":"was","text":"now"}}
+~~~
+
 已知行范围、锚点、移动与缩进可用专门命令。`peek` 与 `find` 用于补足上下文；仓库发现与语义分析继续使用 harness 的搜索/语言工具。参见 [CLI 教程](docs/cli.md)、[edit 手册](docs/edit.md)和[示例](docs/examples.md)。
 
 读取默认限制为 200 行、100 个搜索命中、12,000 个 payload 字节；预览默认限制 12,000 字节。截断会明确提示，对应限制设为零可取消。`edit/apply/recover` 默认返回精简回执，`--output json` 返回完整机器结果，`--output human` 展开状态与预览。
 
 ## Agent 集成
 
-复用 PATH 上的 CLI，或配置 `xnip mcp` 使用结构化参数。MCP 默认提供 `edit/apply/peek/find/recover`；`--toolset full` 增加行级工具与诊断。多个已知文本块可一次调用 `xnip_apply({edits:[{file,old,text},...]})`。配置与返回字段见 [MCP 手册](docs/mcp.md)。
+复用 PATH 上的 CLI，或配置 `xnip mcp` 使用结构化参数。MCP 默认提供 `edit/apply/peek/find/recover`；`--toolset full` 增加行级工具与诊断。`xnip mcp --receipts text` 省去结构化修改元数据及其输出 schema，精简 agent 返回；默认模式保留机器可读结果。多个已知文本块可一次调用 `xnip_apply({files:{"a.txt":[["old","new"],["next","final"]]}})`；需要显式全局替换时可用 `edits` 数组。配置与返回字段见 [MCP 手册](docs/mcp.md)。
 
 | 客户端 | 指南 | 放置位置 |
 |---|---|---|

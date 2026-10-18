@@ -1,13 +1,9 @@
-//! `apply`：批量编辑指令清单的解析（native / json / yaml）+ 两阶段提交。
-//!
-//! 数据模型设计：
-//! - 三个 parser（`parse_native` / `parse_json` / `parse_yaml`）的共同输出是
-//!   `Vec<Op>`，三种清单格式语义等价。
-//! - 执行器 [`commit::execute`] 接管 op 列表，按文件分组、组内降序排序、两阶段提交
-//!
-//! 清单语义见 `docs/apply-format.md`。
+//! Batch parsers compile native, JSON, compact, YAML and patch inputs to `Vec<Op>`.
+//! [`commit::execute`] validates original-coordinate line plans or ordered virtual
+//! file operations before using one shared transaction. See `docs/apply-format.md`.
 
 pub mod commit;
+pub mod compact;
 pub mod detect;
 pub mod parse_json;
 pub mod parse_native;
@@ -125,6 +121,11 @@ impl Op {
 #[derive(Debug, Clone)]
 pub enum FileOp {
     Create(OpContent),
+    /// Explicit whole-file upsert, optionally guarded by the complete current bytes.
+    Write {
+        content: OpContent,
+        was: Option<Vec<u8>>,
+    },
     Delete {
         was: Option<Vec<u8>>,
     },

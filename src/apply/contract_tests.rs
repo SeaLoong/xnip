@@ -1,6 +1,210 @@
 //! Manifest and execution contracts share the public parser/plan seam.
 
 #[test]
+fn independent_replacements_match_a_byte_oracle_for_subsets_and_input_orders() {
+    for original in [
+        b"a\nb\nc\nd\n".as_slice(),
+        b"a\r\nb\r\nc\r\nd",
+        b"\n\xff\n\0\nlast",
+    ] {
+        let lines: Vec<_> = original.split_inclusive(|byte| *byte == b'\n').collect();
+        for mask in 1..(1 << lines.len()) {
+            for reverse in [false, true] {
+                let directory = tempfile::tempdir().unwrap();
+                let path = directory.path().join("a");
+                fs::write(&path, original).unwrap();
+                let mut operations = Vec::new();
+                let mut expected = Vec::new();
+                for (index, line) in lines.iter().enumerate() {
+                    if mask & (1 << index) == 0 {
+                        expected.extend_from_slice(line);
+                        continue;
+                    }
+                    let payload: &[u8] = match index % 3 {
+                        0 => b"new",
+                        1 => b"long\r\nblock\r\n",
+                        _ => b"",
+                    };
+                    expected.extend_from_slice(payload);
+                    if !payload.is_empty() && line.ends_with(b"\n") && !payload.ends_with(b"\n") {
+                        expected.push(b'\n');
+                    }
+                    operations.push(Op::Replace {
+                        target: Target::File(path.clone()),
+                        locator: crate::core::location::Locator::Lines {
+                            start: index + 1,
+                            end: index + 1,
+                        },
+                        content: OpContent::Text(payload.to_vec()),
+                        was: Some(line.to_vec()),
+                        revert: false,
+                    });
+                }
+                if reverse {
+                    operations.reverse();
+                }
+                execute_report(operations, &ExecOpts::default()).unwrap();
+                assert_eq!(
+                    fs::read(path).unwrap(),
+                    expected,
+                    "mask={mask}, reverse={reverse}"
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn compiled_ranges_and_anchors_use_original_bytes_across_multiline_and_eof_edits() {
+    let anchor = regex::Regex::new("^TAG").unwrap();
+    for reverse in [false, true] {
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("a");
+        fs::write(&path, b"head\r\none\r\ntwo\r\nmiddle\nthree\nlast").unwrap();
+        let mut operations = vec![replace(&path, 2, 3, b"A\r\nB"), replace(&path, 6, 6, b"")];
+        if reverse {
+            operations.reverse();
+        }
+        execute_report(operations, &ExecOpts::default()).unwrap();
+        assert_eq!(fs::read(&path).unwrap(), b"head\r\nA\r\nB\nmiddle\nthree\n");
+        fs::write(&path, b"TAG\nx\nEND\nTAG\ntail").unwrap();
+        let mut operations = vec![
+            replace(&path, 3, 3, b"TAG"),
+            Op::Replace {
+                target: Target::File(path.clone()),
+                locator: crate::core::location::Locator::MatchLine {
+                    regex: anchor.clone(),
+                    occurrence: 2,
+                },
+                content: OpContent::Text(b"selected".to_vec()),
+                was: Some(b"TAG\n".to_vec()),
+                revert: false,
+            },
+        ];
+        if reverse {
+            operations.reverse();
+        }
+        execute_report(operations, &ExecOpts::default()).unwrap();
+        assert_eq!(fs::read(path).unwrap(), b"TAG\nx\nTAG\nselected\ntail");
+    }
+}
+
+#[test]
+fn compiled_replacements_reject_stale_late_ranges_without_touching_any_target() {
+    for invalid in [false, true] {
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("a");
+        fs::write(&path, b"one\ntwo\nthree").unwrap();
+        let operations = vec![
+            Op::Replace {
+                target: Target::File(path.clone()),
+                locator: crate::core::location::Locator::Lines { start: 1, end: 1 },
+                content: OpContent::Text(b"changed".to_vec()),
+                was: Some(b"one\n".to_vec()),
+                revert: false,
+            },
+            Op::Replace {
+                target: Target::File(path.clone()),
+                locator: crate::core::location::Locator::Lines {
+                    start: if invalid { 99 } else { 3 },
+                    end: if invalid { 100 } else { 3 },
+                },
+                content: OpContent::Text(b"bad".to_vec()),
+                was: Some(b"stale".to_vec()),
+                revert: false,
+            },
+        ];
+        assert!(execute_report(operations, &ExecOpts::default()).is_err());
+        assert_eq!(fs::read(path).unwrap(), b"one\ntwo\nthree");
+    }
+}
+
+#[test]
+fn ordered_exact_dependencies_and_late_failures_keep_all_disk_inputs_unchanged() {
+    for late_failure in [false, true] {
+        let directory = tempfile::tempdir().unwrap();
+        let first = directory.path().join("a");
+        let second = directory.path().join("b");
+        fs::write(&first, b"head\r\nold\0\xffEOF").unwrap();
+        fs::write(&second, b"keep").unwrap();
+        let edit = |path: &Path, old: &[u8], text: &[u8]| Op::File {
+            target: Target::File(path.to_path_buf()),
+            operation: FileOp::Exact {
+                old: OpContent::Text(old.to_vec()),
+                text: OpContent::Text(text.to_vec()),
+                all: false,
+            },
+        };
+        let mut operations = vec![
+            edit(&first, b"old", b"new"),
+            edit(&first, b"new", b"expanded"),
+            edit(&first, b"EOF", b""),
+            edit(&second, b"keep", b"next"),
+        ];
+        if late_failure {
+            operations.push(edit(&first, b"missing", b"BAD"));
+        }
+        let result = execute_report(operations, &ExecOpts::default());
+        assert_eq!(result.is_err(), late_failure);
+        assert_eq!(
+            fs::read(first).unwrap(),
+            if late_failure {
+                b"head\r\nold\0\xffEOF".as_slice()
+            } else {
+                b"head\r\nexpanded\0\xff".as_slice()
+            }
+        );
+        assert_eq!(
+            fs::read(second).unwrap(),
+            if late_failure { b"keep" } else { b"next" }
+        );
+    }
+}
+
+#[test]
+fn write_batches_use_ordered_virtual_state_and_validate_all_inputs_before_commit() {
+    let directory = tempfile::tempdir().unwrap();
+    let path = directory.path().join("nested/a");
+    let operation = |text: &[u8], was: Option<&[u8]>| Op::File {
+        target: Target::File(path.clone()),
+        operation: FileOp::Write {
+            content: OpContent::Text(text.to_vec()),
+            was: was.map(<[u8]>::to_vec),
+        },
+    };
+    assert!(execute_report(vec![operation(b"", Some(b""))], &ExecOpts::default()).is_err());
+    assert!(!path.parent().unwrap().exists());
+    assert!(
+        execute_report(
+            vec![
+                operation(b"first", None),
+                operation(b"last", Some(b"wrong"))
+            ],
+            &ExecOpts::default(),
+        )
+        .is_err()
+    );
+    assert!(!path.parent().unwrap().exists());
+    for check in [true, false] {
+        execute_report(
+            vec![
+                operation(b"first", None),
+                operation(b"last", Some(b"first")),
+            ],
+            &ExecOpts {
+                check,
+                ..ExecOpts::default()
+            },
+        )
+        .unwrap();
+        if check {
+            assert!(!path.parent().unwrap().exists());
+        }
+    }
+    assert_eq!(fs::read(path).unwrap(), b"last");
+}
+
+#[test]
 fn insert_same_anchor_is_ambiguous_in_original_line_mode_and_ordered_when_sequential() {
     for sequential in [false, true] {
         let directory = tempfile::tempdir().unwrap();

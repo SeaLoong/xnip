@@ -5,39 +5,39 @@
 **Precise text edits with less repeated context.** Give your coding agent a known old block and its replacement. xnip edits that block, preserves untouched bytes, and returns a compact result.
 
 - **Reuse what the agent already knows.** Read missing context when needed; a known edit goes straight to the editor.
-- **Send the change.** Exact blocks avoid copying an unchanged file or a long source line into every edit.
+- **Choose the smallest useful edit.** Exact blocks avoid unchanged content; file groups share paths, anchor insertions avoid repeating the anchor, and explicit whole-file writes suit small complete rewrites.
 - **Keep results small.** Short receipts, bounded reads/previews and five default MCP tools keep routine context compact.
 - **Keep the edit precise.** Missing or ambiguous blocks fail before writing; an explicit `all` enables global replacement. Exact edits preserve CRLF and final-newline bytes.
 - **Use one editor across harnesses.** CLI and stdio MCP share file lifecycle, batch, patch, line and anchor operations.
 
 ## Measured editing costs
 
-The benchmark runs real **Codex, Gemini CLI, OpenCode and aider editing executors** against xnip: **13 scenarios × 12 profiles × 3 repetitions**, with expected file bytes checked after each run. Counts use `tiktoken 0.14.0 / o200k_base`.
+The benchmark executes real **Codex, Gemini CLI, OpenCode and aider editors**: **13 scenarios × 31 profiles × 3 repetitions**. Every eligible profile produces the expected file bytes in every repetition. Counts use `tiktoken 0.14.0 / o200k_base`.
 
-![Measured native editing input relative to xnip](docs/benchmarks/charts/overview.svg)
+![Best observed byte-exact editing input](docs/benchmarks/charts/readme-frontier.svg)
 
-Selected profiles below report **native / xnip**, with **xnip = 1.00x**. Geometric means give each scenario equal weight.
+Each task compares the **best observed native input / best observed xnip input**; above **1x** means less xnip input. Geometric means give every task equal weight. Guarded pools retain old-content checks; snapshot-enabled pools allow both guarded edits and whole-file writes on **both** sides.
 
-| Editor / profile | All edit input | Byte-exact paired input | Exact pairs | Input + captured return, all |
-|---|---:|---:|---:|---:|
-| xnip edit | 1.00x | 1.00x | 13/13 | 1.00x |
-| OpenCode edit | 1.11x | 1.11x | 13/13 | 1.20x |
-| Codex apply_patch | 2.61x | 2.73x | 12/13 | 3.05x |
-| Gemini context | 3.81x | 3.81x | 13/13 | 4.35x |
-| aider diff / LF | 2.52x | 2.78x | 11/13 | unknown return |
-| aider whole / LF | 1.89x | 2.25x | 11/13 | unknown return |
+| xnip interface / allowed operations | Native best / xnip best | xnip shorter / tied / native shorter |
+|---|---:|---:|
+| MCP · guarded | 1.37x | 13 / 0 / 0 |
+| MCP · snapshot-enabled | 1.26x | 12 / 1 / 0 |
+| CLI stdin · guarded | 1.73x | 13 / 0 / 0 |
+| CLI stdin · snapshot-enabled | 1.80x | 13 / 0 / 0 |
 
-**Where it helps:** changing a substring in the long-line fixture needs **22 xnip input tokens**, versus **10,037** for Codex's patch. A local change in a 2,000-line file needs **36**, versus **19,007** for aider whole / LF. Unchanged text dominates those alternatives.
+**Why use it:** with complete file context, a substring change in the long-line fixture takes **11 MCP input tokens**, versus **10,037** for Codex's unique-context patch. File groups also avoid repeated paths and calls. The CLI stdin strategies have smaller input in all 13 measured tasks, in both pools; its invocation arguments are an additional cost recorded separately.
 
-**Where the gap is small:** OpenCode's literal editor is close to xnip. A native patch can also batch efficiently: Codex's same-file batch uses **45 input tokens** versus **46** for separate xnip edits. xnip also has `apply` for batching; this native profile measures `edit`.
+**Choose the representation before sending it:** when complete current content is already known and old-content guards are optional, native line manifests and shorter unique literal pairs can beat a whole-file listing. The multiline function takes **25** xnip MCP input tokens versus **26** for aider whole; the same-file batch takes **18** versus **20**. Required old-content checks remain intact. In the snapshot-enabled MCP pool, xnip is smaller in 12 tasks and tied in one.
 
-“All” includes supplied inputs with incompatible output bytes. The exact-pair column keeps only tasks where both editors produce the expected bytes in every repetition; its cohorts differ by profile. Captured return is the observed tool text, and aider's unavailable return stays unknown. These are editor measurements, rather than complete agent-session or billing totals.
+**Smaller replies:** `xnip mcp --receipts text` reduces full captured JSON-RPC reply tokens by about **56%** across 26 matched comparisons. Inputs, text receipts and final file bytes are identical to the default structured mode. The same five-tool discovery catalog is **23.8% smaller** (2,303 to 1,754 tokens).
 
-[Full results and per-task charts](docs/benchmarks/results.md) · [Raw evidence](docs/benchmarks/results.json) · [Method and reproduction](docs/benchmarks/README.md)
+Native relative-path, tighter-context and equivalent known-file literal-trimming profiles are included. Only byte-exact outcomes qualify for the frontier; all original profiles and incompatible results remain visible. Aider's final returned text is unknown. CLI invocation, serialized MCP request/reply, tool text and startup costs are separate measurements; this is an editor benchmark, not billed or complete agent usage.
+
+[Full results and per-task charts](docs/benchmarks/results.md) · [Raw evidence](docs/benchmarks/results.json) · [Method and reproduction](docs/benchmarks/README.md) · [Core performance](docs/benchmarks/core-performance.md)
 
 ## Install
 
-Prebuilt stable releases need no Rust. Both installers verify the downloaded archive's SHA256:
+The features below ship in **v0.4.0**; see the [changelog](CHANGELOG.md) for release details. Prebuilt stable releases need no Rust. Both installers verify the downloaded archive's SHA256:
 
 ~~~sh
 # macOS / Linux
@@ -54,13 +54,15 @@ Or download a binary from [GitHub Releases](https://github.com/SeaLoong/xnip/rel
 Source installation needs **Rust 1.89+**:
 
 ~~~sh
-cargo install --git https://github.com/SeaLoong/xnip --tag v0.3.1 --locked xnip
+cargo install --git https://github.com/SeaLoong/xnip --tag v0.4.0 --locked xnip
 ~~~
 
 ## Edit
 
 ~~~sh
 xnip edit config.txt --old 'PORT=8080' --text 'PORT=3000'
+xnip edit generated.txt --write --text-file content.txt
+xnip edit imports.py --old 'import os' --text-file new-import.txt --position after
 xnip edit src/new.txt --create --text-file content.txt
 xnip edit old-name.txt --rename-to new-name.txt
 xnip edit obsolete.txt --delete
@@ -70,13 +72,19 @@ xnip apply edits.json
 
 Literal replacement requires a unique nonempty old block. Extend it with surrounding context when ambiguous; use `--all` for an intentional global change. `--dry-run` previews and `--check` validates; both leave files unchanged. For portable multiline content, use payload files or stdin.
 
+`--write` explicitly creates or replaces a complete file; optional `--old` checks the entire existing content. Literal `--position before|after` inserts exactly the supplied bytes beside a unique anchor. Independent edits can share paths in one compact JSON manifest:
+
+~~~json
+{"a.txt":[["old","new"],["next","final"]],"b.txt":{"old":"was","text":"now"}}
+~~~
+
 Known line ranges, anchors, moves and indentation have dedicated commands. Use `peek` or `find` to fill gaps in known context; repository discovery and semantic analysis use the harness's search/language tools. Start with the [CLI tutorial](docs/cli.md), [edit reference](docs/edit.md) or [examples](docs/examples.md).
 
 Reads default to 200 lines / 100 search hits / 12,000 payload bytes; previews default to 12,000 bytes. Truncation is explicit; zero disables the corresponding limit. `edit/apply/recover` return compact receipts; `--output json` provides complete machine results and `--output human` expands status and previews.
 
 ## Agent integration
 
-Use the CLI already on PATH, or configure `xnip mcp` for structured arguments. MCP advertises `edit/apply/peek/find/recover` by default; `--toolset full` adds specialized line tools and diagnostics. Several known blocks fit one `xnip_apply({edits:[{file,old,text},...]})` call. Client setup and result fields are in [MCP](docs/mcp.md).
+Use the CLI already on PATH, or configure `xnip mcp` for structured arguments. MCP advertises `edit/apply/peek/find/recover` by default; `--toolset full` adds specialized line tools and diagnostics. `xnip mcp --receipts text` omits structured change metadata and output schemas for smaller agent responses; the default keeps machine-readable results. Several known blocks fit one `xnip_apply({files:{"a.txt":[["old","new"],["next","final"]]}})` call. Direct `edits` arrays remain available for explicit global replacements. Client setup and result fields are in [MCP](docs/mcp.md).
 
 | Client | Guidance | Placement |
 |---|---|---|

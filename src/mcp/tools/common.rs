@@ -130,7 +130,7 @@ impl ContentInput {
 
 /// `anyhow::Error` 多用于参数解析/校验失败 → `invalid_params`。
 pub fn any_to_invalid_params(e: anyhow::Error) -> McpError {
-    McpError::invalid_params(format!("{e}"), None)
+    McpError::invalid_params(format!("{e:#}"), None)
 }
 
 /// 定位失败 / 状态前提不满足 → `invalid_request`。
@@ -152,14 +152,15 @@ pub fn err_to_internal<E: std::fmt::Display>(e: E) -> McpError {
 
 /// 用单段文本构造成功结果。
 pub fn ok_text(s: impl Into<String>) -> CallToolResult {
-    CallToolResult::success(vec![Content::text(s.into())])
+    let mut result = CallToolResult::success(vec![Content::text(s.into())]);
+    // MCP assumes success when isError is absent.
+    result.is_error = None;
+    result
 }
 
 /// 用字节切片当 UTF-8 文本（非法 UTF-8 用 `from_utf8_lossy`）构造成功结果。
 pub fn ok_bytes_as_text(bytes: &[u8]) -> CallToolResult {
-    CallToolResult::success(vec![Content::text(
-        String::from_utf8_lossy(bytes).into_owned(),
-    )])
+    ok_text(String::from_utf8_lossy(bytes).into_owned())
 }
 
 /// A compact receipt and bounded preview. Structured metadata omits the diff.
@@ -167,6 +168,7 @@ pub fn ok_change(
     summary: &crate::output::human::ChangeSummary,
     diff: &str,
     max_bytes: Option<usize>,
+    receipts: crate::mcp::Receipts,
 ) -> CallToolResult {
     let mut text = summary.mcp_receipt();
     let diff = crate::output::budget::truncate(
@@ -178,7 +180,10 @@ pub fn ok_change(
         text.push_str(&diff);
     }
     let mut result = ok_text(text);
-    result.structured_content = Some(serde_json::to_value(summary).expect("summary serializes"));
+    if receipts == crate::mcp::Receipts::Structured {
+        result.structured_content =
+            Some(serde_json::to_value(summary).expect("summary serializes"));
+    }
     result
 }
 

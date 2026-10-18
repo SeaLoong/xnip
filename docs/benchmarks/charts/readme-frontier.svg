@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="414" viewBox="0 0 1000 414" role="img" aria-labelledby="title desc">
+<title id="title">Best observed editing input</title><desc id="desc">Four xnip transport and candidate-permission groups compare the geometric mean of native best executor input divided by xnip best executor input on byte-exact tasks. Guarded-only and snapshot-enabled (guarded plus snapshot) pools apply identical candidate permissions on both sides. Above one means less xnip input. Counts show xnip-shorter, tied, native-shorter and missing tasks. Native candidates may span transports; CLI invocation overhead is extra. This is not a full agent usage or global optimum result.</desc>
+<style>text{font-family:Segoe UI,Arial,sans-serif;fill:#192b3a;font-size:13px}.small{font-size:11px;fill:#526575}.title{font-size:21px;font-weight:600}.tick{fill:#dfe6eb;stroke:none}</style>
+<rect width="1000" height="414" fill="#fff"/>
+<text x="28" y="36" class="title">Best observed editing input</text>
+<text x="28.00" y="61.00" class="small" text-anchor="start">13 tasks · 3 repetitions / profile · tokens · equal task weights</text>
+<text x="28.00" y="82.00" class="small" text-anchor="start">Native best / xnip best: above 1x means less xnip input. Only all-repetition byte-exact profiles qualify.</text>
+<text x="28.00" y="103.00" class="small" text-anchor="start">Same candidate permissions on both sides; separate xnip transports. Native candidates span transports.</text>
+<text x="28.00" y="131.00" class="" text-anchor="start">xnip transport / contract</text>
+<text x="663.00" y="131.00" class="" text-anchor="start">Input ratio</text>
+<text x="786.00" y="131.00" class="" text-anchor="start">W / T / L / ?</text>
+<line x1="280.00" y1="136" x2="280.00" y2="306" stroke="#e2e9ed" stroke-dasharray="1 0"/>
+<text x="280.00" y="329.00" class="small" text-anchor="middle">0.5x</text>
+<line x1="434.40" y1="136" x2="434.40" y2="306" stroke="#7e929e" stroke-dasharray="4 3"/>
+<text x="434.40" y="329.00" class="small" text-anchor="middle">1x</text>
+<line x1="588.79" y1="136" x2="588.79" y2="306" stroke="#e2e9ed" stroke-dasharray="1 0"/>
+<text x="588.79" y="329.00" class="small" text-anchor="middle">2x</text>
+<rect x="434.40" y="145" width="69.78" height="16" rx="3" fill="#007f73"/>
+<circle cx="504.17" cy="153" r="4" fill="#007f73"/>
+<text x="28.00" y="157.00" class="" text-anchor="start">MCP · guarded</text>
+<text x="663.00" y="157.00" class="" text-anchor="start">1.37x (13/13)</text>
+<text x="786.00" y="157.00" class="" text-anchor="start">13 / 0 / 0 / 0</text>
+<rect x="434.40" y="188" width="52.23" height="16" rx="3" fill="#b67418"/>
+<circle cx="486.62" cy="196" r="4" fill="#b67418"/>
+<text x="28.00" y="200.00" class="" text-anchor="start">MCP · snapshot-enabled</text>
+<text x="663.00" y="200.00" class="" text-anchor="start">1.26x (13/13)</text>
+<text x="786.00" y="200.00" class="" text-anchor="start">12 / 1 / 0 / 0</text>
+<rect x="434.40" y="231" width="121.48" height="16" rx="3" fill="#007f73"/>
+<circle cx="555.87" cy="239" r="4" fill="#007f73"/>
+<text x="28.00" y="243.00" class="" text-anchor="start">CLI stdin · guarded</text>
+<text x="663.00" y="243.00" class="" text-anchor="start">1.73x (13/13)</text>
+<text x="786.00" y="243.00" class="" text-anchor="start">13 / 0 / 0 / 0</text>
+<rect x="434.40" y="274" width="131.16" height="16" rx="3" fill="#b67418"/>
+<circle cx="565.56" cy="282" r="4" fill="#b67418"/>
+<text x="28.00" y="286.00" class="" text-anchor="start">CLI stdin · snapshot-enabled</text>
+<text x="663.00" y="286.00" class="" text-anchor="start">1.80x (13/13)</text>
+<text x="786.00" y="286.00" class="" text-anchor="start">13 / 0 / 0 / 0</text>
+<text x="28.00" y="354.00" class="small" text-anchor="start">W / T / L / ? = xnip shorter / tie / native shorter / missing comparison. Counts use tasks, not repetitions.</text>
+<text x="28.00" y="372.00" class="small" text-anchor="start">Guarded: old content/context required. Snapshot-enabled: guarded edits + whole-file writes. Matching policies differ.</text>
+<text x="28.00" y="390.00" class="small" text-anchor="start">Input only: CLI invocation and request envelopes are extra. Schemas/setup and full agent usage are excluded.</text>
+<text x="28.00" y="408.00" class="small" text-anchor="start">Aider returned text is unknown; no returned-text or full-reply cost participates in this input chart.</text>
+</svg>

@@ -7,6 +7,7 @@ Without it, exact bytes/characters are reported and token counts are null.
 from __future__ import annotations
 
 import argparse
+from collections import OrderedDict
 import dataclasses
 import difflib
 import hashlib
@@ -49,7 +50,13 @@ def dump(value: Any) -> str:
 
 
 class Counter:
-    def __init__(self, encoding: str | None):
+    def __init__(self, encoding: str | None, *, cache_entries: int = 2048,
+                 cache_text_bytes: int = 8 * 1024 * 1024):
+        if cache_entries < 0 or cache_text_bytes < 0:
+            raise ValueError("counter cache limits must be nonnegative")
+        self._cache = OrderedDict()
+        self._cache_entries, self._cache_text_bytes = cache_entries, cache_text_bytes
+        self._cached_text_bytes = 0
         self.encoding = None
         self.metadata = {"unit": "utf8_bytes", "tokenizer": None, "encoding": None}
         if encoding:
@@ -64,10 +71,25 @@ class Counter:
             }
 
     def measure(self, text: str) -> dict:
-        return {
-            "utf8_bytes": len(text.encode("utf-8")), "characters": len(text),
-            "tokens": len(self.encoding.encode(text, disallowed_special=())) if self.encoding else None,
-        }
+        # Each Counter owns one encoding. Cache exact strings, never joined calls
+        # or normalized Unicode; return fresh dictionaries so callers cannot
+        # corrupt later results. Text storage and entry count are both bounded.
+        cached = self._cache.get(text)
+        if cached is not None:
+            counts, _ = cached
+            self._cache.move_to_end(text)
+        else:
+            counts = (len(text.encode("utf-8")), len(text),
+                      len(self.encoding.encode(text, disallowed_special=())) if self.encoding else None)
+            size = sys.getsizeof(text)
+            if self._cache_entries and size <= self._cache_text_bytes:
+                while self._cache and (len(self._cache) >= self._cache_entries
+                                       or self._cached_text_bytes + size > self._cache_text_bytes):
+                    _, (_, removed_size) = self._cache.popitem(last=False)
+                    self._cached_text_bytes -= removed_size
+                self._cache[text] = (counts, size)
+                self._cached_text_bytes += size
+        return {"utf8_bytes": counts[0], "characters": counts[1], "tokens": counts[2]}
 
     def total(self, texts) -> dict:
         parts = [self.measure(text) for text in texts]
@@ -78,11 +100,12 @@ class Counter:
 class Mcp:
     """Line-delimited JSON-RPC with response timeout and bounded teardown."""
 
-    def __init__(self, binary: Path, cwd: Path, full: bool = False):
+    def __init__(self, binary: Path, cwd: Path, full: bool = False, receipts: str = "structured"):
         self.binary = binary
         self.diagnostics = tempfile.TemporaryFile()
         self.process = subprocess.Popen(
-            [str(binary), "mcp", *(["--toolset", "full"] if full else [])],
+            [str(binary), "mcp", *(["--toolset", "full"] if full else []),
+             *(["--receipts", receipts] if receipts != "structured" else [])],
             cwd=cwd, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
             stderr=self.diagnostics, text=True, encoding="utf-8", bufsize=1,
             env=execution_environment(),
@@ -111,6 +134,7 @@ class Mcp:
             self.messages.put(EOFError("MCP server stopped before responding"))
 
     def _send(self, value):
+        self.last_request = value
         self.process.stdin.write(dump(value) + "\n")
         self.process.stdin.flush()
 
@@ -124,6 +148,7 @@ class Mcp:
             if isinstance(response, BaseException):
                 raise response
             if response.get("id") == current:
+                self.last_response = response
                 return {"jsonrpc_error": response["error"]} if "error" in response else response["result"]
 
     def call(self, name, arguments):
@@ -259,6 +284,12 @@ def representations(scenario):
         if edit.get("all"):
             item["replace_all"] = True
         exact.append(item)
+    guarded_files = {}
+    for name in scenario.files:
+        edits = [edit for edit in scenario.edits if edit["file"] == name]
+        guarded_files[name] = ({"old": scenario.files[name], "text": expected[name]}
+                               if any(edit.get("all") for edit in edits) else
+                               [[edit["old"], edit["text"]] for edit in edits])
     return {
         "whole-file-json": dump(full), "exact-replacement-json": dump(exact),
         "aider-search-replace": "".join(aider), "unified-diff": "".join(unified),
@@ -266,6 +297,11 @@ def representations(scenario):
         "xnip-single-edits": "\n".join(dump(edit) for edit in scenario.edits),
         "xnip-direct-edits": dump({"edits": scenario.edits}),
         "xnip-native-manifest": "".join(f'edit {dump(e["file"])} {dump(e["old"])} {dump(e["text"])}' + (" all" if e.get("all") else "") + "\n" for e in scenario.edits),
+        "xnip-files-guarded": dump({"files": guarded_files}),
+        "xnip-files-snapshot": dump({"files": expected}),
+        "xnip-write-snapshot": "\n".join(dump({"file": name, "operation": "write", "text": text}) for name, text in expected.items()),
+        "xnip-compact-guarded": dump(guarded_files),
+        "xnip-compact-snapshot": dump(expected),
     }
 
 
@@ -292,17 +328,24 @@ def normalize(value, directory):
 
 def measure_scenario(scenario, binary, counter, repeats):
     payloads, expected = representations(scenario), scenario.expected()
+    independent_calls = {
+        "xnip-single-edits": scenario.edits,
+        "xnip-write-snapshot": [{"file": name, "operation": "write", "text": text} for name, text in expected.items()],
+    }
     patch_supported = all("\r" not in text and text.endswith("\n")
                           for text in [*scenario.files.values(), *expected.values()])
     serializations = [{
         "format": name, "payload": payload,
-        "cost": counter.total(dump(edit) for edit in scenario.edits) if name == "xnip-single-edits" else counter.measure(payload),
+        "cost": counter.total(dump(edit) for edit in independent_calls[name]) if name in independent_calls else counter.measure(payload),
+        "contract_cohort": "snapshot" if "snapshot" in name or name == "whole-file-json" else "guarded",
         "supported": patch_supported if name in ("unified-diff", "apply-patch", "aider-search-replace") else True,
-        "execution": "xnip-parser" if name in ("unified-diff", "apply-patch", "line-edits-with-preconditions", "xnip-native-manifest") else (
+        "execution": "xnip-parser" if name in ("unified-diff", "apply-patch", "line-edits-with-preconditions", "xnip-native-manifest", "xnip-compact-guarded", "xnip-compact-snapshot") else (
             "xnip-mcp" if name.startswith("xnip-") else "serialization-only"),
     } for name, payload in payloads.items()]
     executions = []
-    formats = ["xnip-single-edits", "xnip-direct-edits", "line-edits-with-preconditions", "xnip-native-manifest"]
+    formats = ["xnip-single-edits", "xnip-direct-edits", "line-edits-with-preconditions", "xnip-native-manifest",
+               "xnip-files-guarded", "xnip-files-snapshot", "xnip-write-snapshot",
+               "xnip-compact-guarded", "xnip-compact-snapshot"]
     if patch_supported:
         formats += ["unified-diff", "apply-patch"]
     with tempfile.TemporaryDirectory(prefix="xnip-cost-") as temp:
@@ -313,13 +356,15 @@ def measure_scenario(scenario, binary, counter, repeats):
                 for _ in range(repeats):
                     put_files(directory, scenario.files)
                     start = time.perf_counter()
-                    if name == "xnip-single-edits":
-                        replies = [mcp.call("xnip_edit", edit) for edit in scenario.edits]
+                    if name in independent_calls:
+                        replies = [mcp.call("xnip_edit", edit) for edit in independent_calls[name]]
                         response = {"calls": replies, "isError": any(is_error(item) for item in replies)}
                     elif name == "xnip-direct-edits":
                         response = mcp.call("xnip_apply", {"edits": scenario.edits})
+                    elif name in ("xnip-files-guarded", "xnip-files-snapshot"):
+                        response = mcp.call("xnip_apply", json.loads(payloads[name]))
                     else:
-                        fmt = "native" if name == "xnip-native-manifest" else ("json" if name == "line-edits-with-preconditions" else "patch")
+                        fmt = "compact" if name.startswith("xnip-compact-") else ("native" if name == "xnip-native-manifest" else ("json" if name == "line-edits-with-preconditions" else "patch"))
                         command = [str(binary), "apply", "--from-stdin", "--format", fmt]
                         if fmt == "patch":
                             command += ["--patch-root", str(directory)]
@@ -336,9 +381,10 @@ def measure_scenario(scenario, binary, counter, repeats):
                     "format": name, "status": "expected-bytes-verified", "repeats": repeats,
                     "median_ms": round(statistics.median(elapsed), 3),
                     "response": json.loads(normalize(response, directory)),
-                    "response_cost": counter.total(normalize(item, directory) for item in response["calls"]) if name == "xnip-single-edits" else counter.measure(normalize(response, directory)),
-                    "payload_cost": counter.total(dump(edit) for edit in scenario.edits) if name == "xnip-single-edits" else counter.measure(payloads[name]),
-                    "timing_scope": "persistent MCP call(s)" if name in ("xnip-single-edits", "xnip-direct-edits") else "CLI process including startup",
+                    "response_cost": counter.total(normalize(item, directory) for item in response["calls"]) if name in independent_calls else counter.measure(normalize(response, directory)),
+                    "payload_cost": counter.total(dump(edit) for edit in independent_calls[name]) if name in independent_calls else counter.measure(payloads[name]),
+                    "contract_cohort": "snapshot" if "snapshot" in name else "guarded",
+                    "timing_scope": "persistent MCP call(s)" if name in ("xnip-single-edits", "xnip-direct-edits", "xnip-files-guarded", "xnip-files-snapshot", "xnip-write-snapshot") else "CLI process including startup",
                 })
     known_context = [e["old"] for e in scenario.edits]
     full_context = [scenario.files[name] for name in sorted(scenario.files)]
@@ -461,13 +507,13 @@ def output_probes(binary, counter):
 
 def schema_cost(binary, counter):
     result = []
-    for full in (False, True):
-        with Mcp(binary, ROOT, full=full) as mcp:
+    for full, receipts in ((False, "structured"), (True, "structured"), (False, "text")):
+        with Mcp(binary, ROOT, full=full, receipts=receipts) as mcp:
             listing = mcp.request("tools/list", {})
             if "tools" not in listing:
                 raise AssertionError(f"tools/list failed: {listing}")
             payload = {"instructions": mcp.initialize.get("instructions", ""), "tools": listing["tools"]}
-            result.append({"toolset": "full" if full else "compact",
+            result.append({"toolset": "full" if full else "compact", "receipts": receipts,
                            "tools": [tool["name"] for tool in listing["tools"]],
                            "cost": counter.measure(dump(payload)), "payload": payload})
     return result
@@ -498,7 +544,7 @@ def render(report):
         "| MCP catalog | Tools | Cost |", "|---|---:|---:|",
     ]
     for catalog in report["catalogs"]:
-        output.append(f"| {catalog['toolset']} | {len(catalog['tools'])} | {value(catalog['cost'])} |")
+        output.append(f"| {catalog['toolset']} / {catalog.get('receipts', 'structured')} | {len(catalog['tools'])} | {value(catalog['cost'])} |")
     output += ["", "| Current instruction entry point | Cost |", "|---|---:|"]
     for prompt in report["prompts"]:
         output.append(f"| {prompt['path']} | {value(prompt['cost'])} |")
@@ -507,9 +553,18 @@ def render(report):
                "", "| Scenario | Whole file | Exact JSON | Aider blocks | Unified | apply_patch | Lines | xnip single | xnip batch | Native |",
                "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|"]
     for scenario in report["scenarios"]:
+        legacy_formats = {"whole-file-json", "exact-replacement-json", "aider-search-replace", "unified-diff", "apply-patch",
+                          "line-edits-with-preconditions", "xnip-single-edits", "xnip-direct-edits", "xnip-native-manifest"}
         cells = [str(value(item["cost"])) if item["supported"] else "unsupported"
-                 for item in scenario["serializations"]]
+                 for item in scenario["serializations"] if item["format"] in legacy_formats]
         output.append("| " + scenario["name"] + " | " + " | ".join(cells) + " |")
+    output += ["", "| Compact interface | MCP files guarded | MCP files snapshot | MCP write snapshot | CLI compact guarded | CLI compact snapshot |",
+               "|---|---:|---:|---:|---:|---:|"]
+    compact_names = ("xnip-files-guarded", "xnip-files-snapshot", "xnip-write-snapshot", "xnip-compact-guarded", "xnip-compact-snapshot")
+    for scenario in report["scenarios"]:
+        costs = {item["format"]: item["cost"] for item in scenario["serializations"]}
+        output.append("| " + scenario["name"] + " | " + " | ".join(str(value(costs[name])) for name in compact_names) + " |")
+    output += ["", "Guarded maps retain old-content checks. Snapshot variants explicitly allow whole-file writes; these rows have different precondition contracts.", ""]
     output += ["", "| Current output mode / budget | Cost |", "|---|---:|"]
     for probe in report["output_probes"]:
         output.append(f"| {probe['name']} | {value(probe['cost'])} |")

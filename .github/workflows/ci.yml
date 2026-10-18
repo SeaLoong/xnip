@@ -1,16 +1,24 @@
+# Scope and required-check policy: docs/ci.md.
 name: ci
 
 on:
   push:
     branches: [master, main]
   pull_request:
+    branches: [master, main]
   workflow_call:
-    secrets:
-      RELEASE_TOKEN:
-        required: false
+    inputs:
+      force_all:
+        description: Run every check for an otherwise unverified release commit
+        default: false
+        type: boolean
 
 permissions:
   contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   CARGO_TERM_COLOR: always
@@ -18,108 +26,16 @@ env:
   XNIP_AUTO_UPDATE: "0"
 
 jobs:
-  fmt:
-    name: rustfmt
+  scope:
+    name: detect check and release scope
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt
-      - run: cargo fmt --all --check
-
-  clippy:
-    name: clippy
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy
-      - uses: Swatinem/rust-cache@v2
-      - run: cargo clippy --workspace --all-targets --locked -- -D warnings
-
-  test:
-    name: test (${{ matrix.os }})
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
-      - run: cargo test --workspace --locked
-      - run: cargo test --workspace --doc --locked
-      - run: cargo bench --no-run --locked
-      - name: Native benchmark result plumbing contracts
-        if: runner.os == 'Linux'
-        run: python3 tests/native_benchmark_contract.py
-      - name: Offline editing-cost contract smoke
-        if: runner.os == 'Linux'
-        run: python3 benches/edit_cost.py --repeats 1 --json target/edit-cost/results.json --markdown target/edit-cost/results.md
-
-  deny:
-    name: cargo-deny
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: EmbarkStudios/cargo-deny-action@v2
-
-  msrv:
-    name: minimum Rust (1.89)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@1.89.0
-      - uses: Swatinem/rust-cache@v2
-      - run: cargo check --workspace --all-targets --locked
-
-  package:
-    name: package and integration consistency
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
-      - run: cargo package --locked
-      - run: cargo doc --workspace --no-deps --locked
-        env:
-          RUSTDOCFLAGS: "-D warnings"
-      - run: cargo run --locked -p xtask -- sync-integrations
-      - run: git diff --exit-code -- integrations/codex integrations/generic integrations/claude-code .github/skills/xnip-editing
-      - run: sh -n install.sh
-      - run: python3 tests/install_sh.py
-
-  installer-windows:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
-      - run: cargo build --locked
-      - run: ./tests/install_ps1.ps1
-
-  release-contracts:
-    name: release policy and publication contracts
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-      - run: python tests/release_contract.py
-      - run: python tests/publish_release_contract.py
-
-  release-plan:
-    name: detect release inputs
-    if: github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
-    runs-on: ubuntu-latest
+    timeout-minutes: 5
     outputs:
-      publish: ${{ steps.plan.outputs.publish }}
-      version: ${{ steps.plan.outputs.version }}
-      tag: ${{ steps.plan.outputs.tag }}
+      rust: ${{ steps.scope.outputs.rust }}
+      integrations: ${{ steps.scope.outputs.integrations }}
+      full: ${{ steps.scope.outputs.full }}
+      publish: ${{ steps.release.outputs.publish }}
+      version: ${{ steps.release.outputs.version }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -127,8 +43,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-      - name: Compare every file in the push
-        id: plan
+      - name: Plan default-branch development release
+        id: release
+        if: github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
         env:
           XNIP_BEFORE: ${{ github.event.before }}
           XNIP_HEAD: ${{ github.sha }}
@@ -140,17 +57,148 @@ jobs:
             git fetch --no-tags origin "$XNIP_BEFORE"
           fi
           python .github/scripts/release.py plan --before "$XNIP_BEFORE" --head "$XNIP_HEAD" --run-number "$XNIP_RUN_NUMBER" --github-output
+      - name: Select checks from the complete Git diff
+        id: scope
+        env:
+          XNIP_FORCE_ALL: ${{ inputs.force_all || steps.release.outputs.publish == 'true' }}
+        shell: bash
+        run: |
+          set -eu
+          arguments=()
+          if [ "$XNIP_FORCE_ALL" = true ]; then
+            arguments+=(--force-all)
+          fi
+          python .github/scripts/ci_scope.py --event "$GITHUB_EVENT_PATH" --output "$GITHUB_OUTPUT" "${arguments[@]}"
+
+  quality:
+    name: Rust and integration quality
+    needs: scope
+    if: needs.scope.outputs.rust == 'true' || needs.scope.outputs.integrations == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - name: Format, lint, documentation and crate contents
+        if: needs.scope.outputs.rust == 'true'
+        env:
+          RUSTDOCFLAGS: "-D warnings"
+        run: |
+          cargo fmt --all --check
+          cargo clippy --workspace --all-targets --locked -- -D warnings
+          cargo doc --workspace --no-deps --locked
+          cargo package --locked
+      - name: Check generated integration assets
+        if: needs.scope.outputs.integrations == 'true'
+        run: |
+          cargo run --locked -p xtask -- sync-integrations
+          git diff --exit-code -- integrations/codex integrations/generic integrations/claude-code .github/skills/xnip-editing
+
+  test:
+    name: test (${{ matrix.os }})
+    needs: scope
+    if: needs.scope.outputs.rust == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      # cargo test includes doctests and builds the CLI used by installer tests.
+      - run: cargo test --workspace --locked
+      - name: Offline Windows installer contracts
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./tests/install_ps1.ps1
+
+  compatibility:
+    name: minimum Rust and dependency policy
+    needs: scope
+    if: needs.scope.outputs.rust == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.89.0
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo check --workspace --all-targets --locked
+      - uses: EmbarkStudios/cargo-deny-action@v2
+
+  contracts:
+    name: automation and installer contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Validate workflows
+        uses: docker://rhysd/actionlint:1.7.12
+      - name: Offline script contracts
+        run: |
+          node --test tests/verified_ci_contract.cjs
+          python tests/ci_scope_contract.py
+          python tests/release_contract.py
+          python tests/publish_release_contract.py
+          python tests/native_benchmark_contract.py
+          sh -n install.sh
+          python tests/install_sh.py
+
+  ci:
+    name: ci
+    needs: [scope, quality, test, compatibility, contracts]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Require every selected check to pass
+        env:
+          XNIP_NEEDS: ${{ toJSON(needs) }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          results = json.loads(os.environ["XNIP_NEEDS"])
+          failed = {name: job["result"] for name, job in results.items()
+                    if job["result"] not in ("success", "skipped")}
+          if failed:
+              raise SystemExit(f"Required checks did not pass: {failed}")
+          required = {"scope", "contracts"}
+          scope = results["scope"].get("outputs", {})
+          if scope.get("rust") == "true":
+              required.update(("quality", "test", "compatibility"))
+          if scope.get("integrations") == "true":
+              required.add("quality")
+          if any(results[name]["result"] != "success" for name in required):
+              raise SystemExit(f"Selected checks must run successfully: {sorted(required)}")
+          if scope.get("full") == "true" and any(
+              scope.get(name) != "true" for name in ("rust", "integrations")
+          ):
+              raise SystemExit("Full verification must enable every check")
+          PY
+      # release.yml only reuses successful gates carrying this marker.
+      - name: Full verification
+        if: needs.scope.outputs.full == 'true'
+        run: echo "All release checks passed for this commit"
 
   prerelease:
     name: build and publish development release
-    needs: [release-plan, fmt, clippy, test, deny, msrv, package, installer-windows, release-contracts]
-    if: needs.release-plan.outputs.publish == 'true'
+    needs: [scope, ci]
+    if: needs.scope.outputs.publish == 'true'
     permissions:
       contents: write
     uses: ./.github/workflows/build-release.yml
     secrets:
       RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
     with:
-      version: ${{ needs.release-plan.outputs.version }}
+      version: ${{ needs.scope.outputs.version }}
       prerelease: true
       publish: true

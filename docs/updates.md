@@ -1,6 +1,6 @@
 # Silent background updates
 
-Automatic updates are enabled for ordinary editing commands and MCP sessions. Version/help/doctor and invalid commands remain local. The foreground only records local usage and starts a detached worker; it never performs a release request or waits for another updater.
+Automatic updates are enabled for ordinary editing commands and MCP sessions. Version/help/doctor and commands rejected during argument parsing remain local. A parsed editing command records usage even if execution later fails. The foreground only records local usage and starts a detached worker; it never performs a release request or waits for another updater.
 
 The worker has no inherited agent output pipes. All outcomes stay in private state: no success messages, error messages, prompts, notifications, progress bars or update text in MCP responses.
 
@@ -58,7 +58,7 @@ Unix replacement is an atomic rename on the destination filesystem. Windows stag
 
 The default state root is:
 
-- Windows: `%LOCALAPPDATA%/xnip/update/<installation-id>/`.
+- Windows: `%LOCALAPPDATA%/xnip/update/<installation-id>/`; if `LOCALAPPDATA` is absent, `%USERPROFILE%/.local/state/xnip/update/<installation-id>/`.
 - Unix: `${XDG_STATE_HOME:-$HOME/.local/state}/xnip/update/<installation-id>/`.
 
 The installation ID derives from the canonical executable path. `state.json` records the last check, next check, phase, worker PID, error marker, pending candidate, first-seen time, installation time/reason and retained backups. `last_delivery.route` identifies the last attempted route (`proxy` or `direct`); `last_delivery.proxy_error` retains a bounded proxy failure even when direct fallback succeeds. It is private scheduling data, not an agent prompt or user-facing log. Lock files, temporary candidates and usage leases live beside it.

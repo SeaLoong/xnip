@@ -1,3 +1,5 @@
+# Reusable build/package/publish implementation; entry points are ci.yml and release.yml.
+# Verification belongs to the caller. See docs/ci.md for the workflow contract.
 name: release artifacts
 
 on:
@@ -50,6 +52,7 @@ jobs:
             os: windows-latest
             cross: false
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -143,6 +146,7 @@ jobs:
       group: publish-release-${{ inputs.version }}
       cancel-in-progress: false
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

@@ -1,55 +1,67 @@
 # Supplementary representation and xnip measurements
 
-This separate experiment measures serialized edit representations and current xnip interfaces. Its outputs are [representation-results.md](representation-results.md) and [representation-results.json](representation-results.json); the runner is [edit_cost.py](../../benches/edit_cost.py). The [primary native benchmark](README.md) runs third-party native editors.
+This experiment measures complete serialized edit representations and current xnip interfaces. Outputs are [representation-results.md](representation-results.md) and [representation-results.json](representation-results.json); the runner is [edit_cost.py](../../benches/edit_cost.py). The [primary native experiment](README.md) executes actual third-party editors and adaptive xnip policies.
 
-## What it measures
+## Fixtures and verified interfaces
 
-The same 13 deterministic fixtures cover small configuration changes, a local change in a 2,000-line file, multiline code, Unicode, CRLF, missing EOF newline, repeated text, explicit global replacement, same/multiple-file changes, a 40,000-character line, insertion and deletion. Separate cases exercise file lifecycle and rejected edits followed by a read and corrected retry.
+The thirteen unchanged fixtures cover small configuration changes, a local change in a 2,000-line file, multiline code, Unicode, CRLF, missing EOF newline, repeated text, global replacement, same/multiple-file edits, a long line, insertion and deletion. Separate cases exercise file lifecycle and rejected edits followed by a read/corrected retry.
 
-Every xnip execution checks expected file bytes. The suite exercises single MCP edits, direct MCP batches, line manifests, native literal manifests and imported patches where supported. It captures actual default/full MCP catalogs, current integration instructions, bounded/unlimited output and CLI output modes.
+Every xnip execution checks the expected file bytes. The suite runs:
 
-Other columns serialize whole-file JSON, old/new JSON, aider-style blocks, unified diff and apply_patch-style text. They measure representation size only. They do not establish third-party success rates, matching behavior, latency or model quality. Aider-like serialization in this script does not replace the actual aider parser measured by the primary native suite.
+- independent exact MCP edits and direct edits-array batches;
+- compact `files` maps with ordered guarded pairs or full old-file guards;
+- explicit snapshot maps and write operations without old-content preconditions;
+- line manifests, native literal manifests and compact CLI maps;
+- imported conventional/apply_patch-style patches where the example generator supports the newline semantics.
 
-| Cost | Measurement |
+There are **139 format/fixture executions per repetition** with the complete current matrix, plus recovery/output probes. Guarded and snapshot rows are labeled separately. A smaller explicit whole write has a different precondition contract from literal replacement.
+
+Other columns serialize whole-file JSON, old/new JSON and aider-style blocks. They measure representation size, not those products' matching behavior, success rates, latency or model quality. Use the primary experiment for real Codex/Gemini/OpenCode/aider execution.
+
+## Accounting
+
+| Cost | Captured boundary |
 |---|---|
-| Advertised tools | Actual initialize instructions plus tools/list catalogs |
-| Agent instructions | Current integration entry points; installed roles differ |
-| Initial context | Known old blocks or full fixture files, as separate assumptions |
-| Edit payload | Complete serialized arguments or textual format |
-| Result | Actual normalized xnip MCP result or serialized CLI stdout/stderr |
-| Retry | Rejected xnip call, actual read, corrected call and responses |
-| Local runtime | Median xnip execution time with its call/process scope |
+| Catalog | Actual initialize instructions plus tools/list: compact/structured, full/structured, compact/text receipts |
+| Agent guidance | Current installed-role entry points with text, hashes and counts; disclosed references excluded |
+| Initial context | Known old blocks or full files, as separate supplied-context assumptions |
+| Payload | Complete serialized arguments or complete textual manifest/patch |
+| Result | Normalized serialized xnip MCP result or CLI stdout/stderr record |
+| Retry | Rejected call, actual read, corrected call and their responses |
+| Local runtime | Median actual execution with warm MCP/cold CLI scope identified |
 
-Known-block and full-file context are alternatives. Content blocks and independent calls are counted separately, so unrelated strings cannot merge token boundaries. MCP result counting includes the serialized result object in this experiment; the native primary report counts captured returned text separately. Their numbers have different accounting boundaries.
+Independent strings/calls are counted separately so unrelated contents do not merge token boundaries. A bounded per-counter cache reuses exact-string measurements; independent calls are still added separately, and cached results cannot be changed by callers. Known-block and full-file context are alternatives, not cumulative charges. No model generates the predetermined payloads.
 
-Native manifest payloads use raw CLI stdin. Passing the same content as an MCP manifest_text string adds JSON quoting; direct edits arrays avoid that nesting. The simple patch/block example generator excludes CRLF and missing-EOF fixtures because it does not encode their special newline semantics. That restriction is a generator limit, not a claim about every native editor.
+Native manifest and compact-map CLI payloads are raw stdin. Encoding the same program inside MCP manifest_text adds a JSON envelope and escaping; direct typed maps avoid that string nesting. The primary suite additionally executes raw multiline native programs, safe bare-token encodings and pre-execution selection, with invocation cost shown separately. This supplementary suite retains its fixed canonical representation choices rather than claiming every row is a minimal encoding. The primary suite additionally explores snapshot-only original-coordinate line manifests/native CLI programs and known-file unique literal trims across MCP/native/compact transports, with equivalent literal-trim profiles for OpenCode and Gemini; these policy candidates do not alter this supplementary suite's 139 fixed rows.
+
+The simple patch/block example generator excludes CRLF and missing-EOF cases because it does not encode their special newline semantics. This is a generator restriction; the primary native experiment retains real accepted encodings and failures.
+
+MCP result counting here serializes the returned result object. The primary report separately records captured tool text, complete serialized protocol reply and invocation/request overhead. Their accounting boundaries differ, so the columns must not be interchanged.
 
 ## Reproduce
 
 ~~~sh
-cargo build --locked
-python benches/edit_cost.py --repeats 3 --json target/edit-cost/representation-results.json --markdown target/edit-cost/representation-results.md
+cargo build --release --locked
+python benches/edit_cost.py --xnip target/release/xnip --repeats 3 --json target/edit-cost/representation-results.json --markdown target/edit-cost/representation-results.md
 ~~~
 
-Python 3.10+ and a built xnip suffice for exact UTF-8 bytes and character counts. Tokens stay null without a tokenizer. No bytes-divided-by-four token estimates are used.
+On Windows, use `target/release/xnip.exe`. Python 3.10+ and a built xnip suffice for exact UTF-8 byte and character counts; tokens remain null.
 
 ~~~sh
 python -m pip install --target target/benchmark-python tiktoken==0.14.0
-python benches/edit_cost.py --encoding o200k_base --repeats 3 --json docs/benchmarks/representation-results.json --markdown docs/benchmarks/representation-results.md
+python benches/edit_cost.py --xnip target/release/xnip --encoding o200k_base --repeats 3 --json docs/benchmarks/representation-results.json --markdown docs/benchmarks/representation-results.md
 ~~~
 
-The recorded encoding is o200k_base. Counts are exact for that encoding and captured serialization; they exclude provider billing, hidden prompts, caching, reasoning and host framing. A first vocabulary load may use the network; cache it for offline runs.
+Counts are exact for the named o200k_base encoding and captured serialization. A first vocabulary load may use the network; cache it for offline use. Provider framing/billing, hidden prompts, caching and reasoning are outside scope. No bytes-divided-by-four estimates are labeled tokens.
 
-Every xnip subprocess receives XNIP_AUTO_UPDATE=0 without changing the host environment. Temporary fixture paths are normalized to /workspace before output counting. Warm MCP and CLI process timings differ in scope and are not a speed ranking.
+Each xnip subprocess has XNIP_AUTO_UPDATE=0 without changing the host environment. Output probes compare current bounded/unlimited reads and previews plus compact/human/JSON CLI modes; they do not require a historical binary baseline.
 
 ## Provenance and interpretation
 
-JSON retains fixtures, expected bytes, payloads, real xnip responses, schema snapshots, instruction text/hashes/counts and retry transcripts. A source fingerprint covers tracked and untracked Rust/build/instruction inputs, Cargo manifests/lockfile and the runner; binary SHA-256 is checked before and after execution. A source or binary change during measurement prevents publication of a mixed report.
+JSON retains fixture/goal bytes, every generated payload, real responses, catalog snapshots, instruction text/hashes/counts and retries. A source fingerprint includes tracked and untracked Rust/build/instruction inputs and the runner. Source and executable hashes are checked before/after execution; changes prevent publication of a mixed run. Finish builds and integration generation first.
 
-The suite compares current interfaces horizontally. It does not retain a historical binary baseline. The captured source revision and dirty-tree hashes identify the measured working tree rather than asserting that the data represents every future build.
+Whole-file output can be smaller on a short final file, while line context can dominate a substring edit in a long line. Shared-file batches avoid repeated paths. The primary suite measures these strategies under explicit guarded/snapshot contracts, preserves the original literal baseline and reports a best-observed frontier rather than a universal winner.
 
-Whole-file output can be shortest on small files. Line-based context can dominate a tiny substring edit in a very long line. A single patch can batch several changes. The relevant choice depends on known context, file semantics and tool contracts; payload size alone cannot predict model retries or correctness.
+Representation choices follow primary documentation: [Codex patch implementation](https://github.com/openai/codex/tree/main/codex-rs/apply-patch), [aider formats](https://aider.chat/docs/more/edit-formats.html), [OpenCode tools](https://opencode.ai/docs/tools/) and [Gemini source](https://github.com/google-gemini/gemini-cli/tree/main/packages/core/src/tools). Exact native revisions and source hashes are in the primary run. No invented Claude Code or Cursor executor is scored.
 
-The format choices are grounded in upstream documentation: [Codex apply-patch source](https://github.com/openai/codex/tree/main/codex-rs/apply-patch), [aider edit formats](https://aider.chat/docs/more/edit-formats.html), [OpenCode tools](https://opencode.ai/docs/tools/) and [Gemini CLI source](https://github.com/google-gemini/gemini-cli/tree/main/packages/core/src/tools). These references explain formats; exact tested versions, native sources and observed behavior belong to [the native method](native-methodology.md) and its raw provenance. No invented Claude Code or Cursor executor is scored.
-
-A complete agent experiment must additionally retain the model, harness version, prompts, tool catalog, mandatory reads, all attempts/results, provider usage, task assertions and independent repeated runs. Neither offline suite ran paid inference or measures total agent savings.
+A complete agent study must also retain model/harness versions, instructions, schemas, initial reads, selected tools, attempts, provider usage and task-level assertions. These offline suites make no paid model calls.

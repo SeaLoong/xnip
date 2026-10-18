@@ -6,6 +6,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -13,6 +14,29 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "benches"))
 import native_tools as bench
 import native_report as report
+
+
+class CounterContract(unittest.TestCase):
+    def test_repeated_text_is_cached_without_aliasing_returned_counts(self):
+        class CountedText(str):
+            encodes = 0
+            def encode(self, *args, **kwargs):
+                self.encodes += 1
+                return super().encode(*args, **kwargs)
+        text = CountedText("你好\r\n")
+        counter = bench.Counter(None)
+        first = counter.measure(text)
+        first["utf8_bytes"] = -1
+        self.assertEqual(counter.measure(text), {"utf8_bytes": 8, "characters": 4, "tokens": None})
+        self.assertEqual(text.encodes, 1)
+
+    def test_cache_can_be_disabled_and_eviction_never_changes_totals(self):
+        cached = bench.Counter(None, cache_entries=1, cache_text_bytes=128)
+        uncached = bench.Counter(None, cache_entries=0)
+        texts = ["é", "e\u0301", "é", "x" * 200, "x" * 200, ""]
+        self.assertEqual([cached.measure(text) for text in texts], [uncached.measure(text) for text in texts])
+        self.assertEqual(cached.total(iter(texts)), {"utf8_bytes": 407, "characters": 404, "tokens": None})
+        self.assertEqual(cached.total([]), {"utf8_bytes": 0, "characters": 0, "tokens": None})
 
 
 class Reply:
@@ -148,7 +172,9 @@ class RelativeReportContract(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             source, markdown = root / "results.json", root / "results.md"
-            source.write_text(json.dumps(fixture_report()) + "\n", encoding="utf8")
+            fixture = fixture_report()
+            fixture["adapter_fingerprints"] = {"benches/native_report.py": "sampled-renderer-before-regeneration"}
+            source.write_text(json.dumps(fixture) + "\n", encoding="utf8")
             original = source.read_bytes()
             process = subprocess.run([sys.executable, str(ROOT / "benches/native_tools.py"),
                 "--report-only", str(source), "--markdown", str(markdown),
@@ -157,13 +183,15 @@ class RelativeReportContract(unittest.TestCase):
             self.assertEqual(source.read_bytes(), original)
             relative = json.loads((root / "relative-results.json").read_text(encoding="utf8"))
             self.assertEqual(relative["source_json_sha256"], hashlib.sha256(original).hexdigest())
+            self.assertEqual(relative["report_generator_sha256"], hashlib.sha256(Path(report.__file__).read_bytes()).hexdigest())
+            self.assertEqual(relative["recorded_generator_sha256"], "sampled-renderer-before-regeneration")
             self.assertIn("not captured", markdown.read_text(encoding="utf8"))
-            for name in ("overview", "input-ratios", "scenario-ratios", "byte-exact"):
+            for name in ("overview", "input-ratios", "scenario-ratios", "byte-exact", "frontier", "readme-frontier"):
                 image = ET.parse(root / "charts" / (name + ".svg"))
                 self.assertTrue(image.getroot().tag.endswith("svg"))
             # Regenerating must produce the same derived artifacts, without a timestamp.
             before = {path.relative_to(root): path.read_bytes() for path in root.rglob("*") if path.is_file()}
-            report.write_report(fixture_report(), markdown, source)
+            report.write_report(fixture, markdown, source)
             self.assertEqual(before, {path.relative_to(root): path.read_bytes() for path in root.rglob("*") if path.is_file()})
 
     def test_overview_uses_measured_ratios_and_labels_different_exact_cohorts(self):
@@ -197,6 +225,441 @@ class RelativeReportContract(unittest.TestCase):
         fixture["cases"][0]["results"] = fixture["cases"][0]["results"][1:]
         with self.assertRaisesRegex(ValueError, "missing xnip"):
             report.paired_statistics(fixture)
+
+
+class StrategyContract(unittest.TestCase):
+    def test_guard_probes_cannot_become_snapshot_writes_or_regenerated_guards(self):
+        files = {"a.txt": "version=2\n"}
+        edits = [{"file": "a.txt", "old": "version=1\n", "text": "version=3\n"}]
+        plans = bench.mcp_plans(files, files, edits, allow_snapshot=True, probe=True)
+        self.assertEqual(len(plans), 1)
+        self.assertEqual(plans[0]["calls"], [("xnip_edit", edits[0])])
+        for format in ("native", "compact"):
+            plans = bench.cli_plans(files, files, edits, True, True, format)
+            self.assertTrue(all(plan["contract"] == "guarded" for plan in plans))
+            self.assertIn("version=1", plans[0]["calls"][0][1])
+            self.assertNotIn("version=2", plans[0]["calls"][0][1])
+            self.assertFalse(any(program.startswith("write ") for plan in plans for _, program in plan["calls"]))
+
+    def test_grouping_preserves_file_order_and_keeps_global_replacement_explicit(self):
+        edits = [{"file": "a", "old": "one", "text": "two"},
+                 {"file": "b", "old": "x", "text": "y"},
+                 {"file": "a", "old": "two", "text": "three"}]
+        self.assertEqual(bench.grouped_pairs(edits), {"a": [["one", "two"], ["two", "three"]],
+                                                     "b": [["x", "y"]]})
+        self.assertIsNone(bench.grouped_pairs([{**edits[0], "all": True}]))
+        plans = bench.mcp_plans({"a": "one one"}, {"a": "two two"},
+                               [{**edits[0], "all": True}])
+        self.assertTrue(plans[0]["calls"][0][1]["all"])
+        self.assertNotIn("file-pairs", [plan["name"] for plan in plans])
+
+    def test_mcp_native_programs_keep_guard_policy_and_count_the_complete_manifest(self):
+        files, expected = {"a": "old old\n"}, {"a": "new new\n"}
+        edits = [{"file": "a", "old": "old", "text": "new", "all": True}]
+        plans = bench.mcp_plans(files, expected, edits)
+        native = [plan for plan in plans if plan["name"].startswith("native-program")]
+        self.assertTrue(native)
+        self.assertIn({"manifest_text": "edit a old new all"},
+                      [args for plan in native for _, args in plan["calls"]])
+        self.assertTrue(all(plan["contract"] == "guarded" for plan in native))
+        counter = bench.Counter(None)
+        selected, evidence = bench.choose_plan(plans, counter)
+        self.assertFalse(evidence["uses_observed_output_to_select"])
+        self.assertEqual(bench.argument_cost(counter, selected["calls"])["utf8_bytes"],
+                         min(row["input_cost"]["utf8_bytes"] for row in evidence["candidates"]))
+        with mock.patch.object(bench, "cli_plans", side_effect=AssertionError("probe converted")):
+            probe = bench.mcp_plans(files, expected, edits, allow_snapshot=True, probe=True)
+        self.assertEqual(probe[0]["calls"], [("xnip_edit", edits[0])])
+
+    def test_snapshot_known_file_trims_unique_old_against_each_virtual_revision(self):
+        files = {"a": "port=8080\nvalue=1\n"}
+        edits = [{"file": "a", "old": "port=8080", "text": "port=3000"},
+                 {"file": "a", "old": "port=3000", "text": "port=7000"}]
+        trimmed = bench.trim_snapshot_edits(files, {"a": "port=7000\nvalue=1\n"}, edits)
+        self.assertEqual([(edit["old"], edit["text"]) for edit in trimmed],
+                         [("808", "300"), ("3", "7")])
+        self.assertEqual(edits[0]["old"], "port=8080")
+        self.assertIsNone(bench.trim_snapshot_edits({}, {"a": "new"}, edits))
+        self.assertIsNone(bench.trim_snapshot_edits(files, {"a": "wrong"}, edits))
+
+    def test_snapshot_trim_preserves_nonempty_overlap_uniqueness_and_explicit_all(self):
+        files = {"a": "ababa"}
+        edits = [{"file": "a", "old": "ababa", "text": "abXba"}]
+        trimmed = bench.trim_snapshot_edits(files, {"a": "abXba"}, edits)
+        old = trimmed[0]["old"]
+        self.assertTrue(old)
+        self.assertNotEqual(old, "aba")  # Two overlapping matches, one nonoverlapping match.
+        self.assertEqual(sum(files["a"].startswith(old, i) for i in range(len(files["a"]))), 1)
+        global_edits = [{"file": "a", "old": "one", "text": "only", "all": True}]
+        self.assertEqual(bench.trim_snapshot_edits({"a": "one one"}, {"a": "only only"}, global_edits),
+                         global_edits)
+
+    def test_only_snapshot_positive_plans_may_consult_the_complete_snapshot(self):
+        files, expected = {"a": "port=8080"}, {"a": "port=3000"}
+        edits = [{"file": "a", "old": "port=8080", "text": "port=3000"}]
+        with mock.patch.object(bench, "trim_snapshot_edits", side_effect=AssertionError("snapshot consulted")):
+            guarded = bench.mcp_plans(files, expected, edits)
+            probe = bench.mcp_plans(files, expected, edits, allow_snapshot=True, probe=True)
+        self.assertEqual(probe[0]["calls"], [("xnip_edit", edits[0])])
+        self.assertFalse(any(plan["name"].startswith("snapshot-") for plan in guarded))
+        with mock.patch.object(Path, "read_bytes", side_effect=AssertionError("extra read")), \
+             mock.patch.object(Path, "read_text", side_effect=AssertionError("extra read")):
+            positive = bench.mcp_plans(files, expected, edits, allow_snapshot=True)
+        self.assertIn({"files": {"a": [["808", "300"]]}},
+                      [args for plan in positive for _, args in plan["calls"]])
+
+    def test_snapshot_line_candidates_preserve_lf_crlf_and_missing_eof(self):
+        def programs(before, after):
+            edits = [{"file": "arbitrary.dat", "old": before, "text": after}]
+            return [args["manifest_text"] for plan in bench.mcp_plans(
+                {"arbitrary.dat": before}, {"arbitrary.dat": after}, edits, allow_snapshot=True)
+                if plan["name"].startswith("snapshot-lines") for _, args in plan["calls"]]
+        self.assertIn('replace arbitrary.dat 2 "c"', programs("a\nb\n", "a\nc\n"))
+        self.assertIn('replace arbitrary.dat 2 "c\r"', programs("a\r\nb\r\n", "a\r\nc\r\n"))
+        self.assertIn('replace arbitrary.dat 2 "c"', programs("a\nb", "a\nc"))
+        self.assertEqual(programs("a\n", "b"), [])
+        self.assertIn('replace arbitrary.dat 1 "\n"', programs("a\n", "\n"))
+        self.assertNotIn('replace arbitrary.dat 1 ""', programs("a\n", "\n"))
+        self.assertIn('replace arbitrary.dat 1 "x\n\n"', programs("a\n", "x\n\n"))
+        self.assertIn('replace arbitrary.dat 2 "y"',
+                      programs("a\rb\u2028c\nx\n", "a\rb\u2028c\ny\n"))
+        self.assertIn('insert arbitrary.dat 1 before "H"',
+                      programs("a\n", "H\na\n"))
+
+    def test_snapshot_line_payloads_are_literals_and_inserted_blank_lines_survive(self):
+        for text in ("before", "after", "revert", "+2", "-3", "t2s:4", "was=@secret", "@-"):
+            plans = bench.snapshot_line_plans({"a": "old\n"}, {"a": text + "\n"})
+            self.assertTrue(plans)
+            self.assertIn('replace a 1 "' + text + '"',
+                          [args["manifest_text"] for plan in plans for _, args in plan["calls"]])
+            self.assertFalse(any(args["manifest_text"] == "replace a 1 " + text
+                                 for plan in plans for _, args in plan["calls"]))
+        programs = [args["manifest_text"] for plan in bench.snapshot_line_plans(
+            {"a": "head\ntail\n"}, {"a": "head\n\ntail\n"}) for _, args in plan["calls"]]
+        self.assertIn('insert a 1 "\n"', programs)
+        self.assertNotIn('insert a 1 ""', programs)
+        programs = [args["manifest_text"] for plan in bench.snapshot_line_plans(
+            {"a": "a\nb\nc\n"}, {"a": "H\na\nb\nZ\n"}) for _, args in plan["calls"]]
+        self.assertIn('replace a 3 "Z"\ninsert a 1 before "H"', programs)
+
+    def test_selection_is_fixed_by_input_cost_before_any_execution(self):
+        counter = bench.Counter(None)
+        files, expected = {"a": "old " * 100}, {"a": "new"}
+        edits = [{"file": "a", "old": files["a"], "text": "new"}]
+        plans = bench.mcp_plans(files, expected, edits, allow_snapshot=True)
+        selected, evidence = bench.choose_plan(plans, counter)
+        scores = [item["input_cost"]["utf8_bytes"] for item in evidence["candidates"]]
+        self.assertEqual(bench.argument_cost(counter, selected["calls"])["utf8_bytes"], min(scores))
+        self.assertEqual(selected["contract"], "snapshot")
+        self.assertFalse(evidence["uses_observed_output_to_select"])
+        self.assertTrue(all("input_sha256" in item for item in evidence["candidates"]))
+        self.assertEqual(evidence, bench.choose_plan(plans, counter)[1])
+
+    def test_native_known_file_trim_is_snapshot_only_and_probes_keep_supplied_old(self):
+        class Capture:
+            def __init__(self):
+                self.arguments = []
+            def request(self, request):
+                self.arguments.append(request["arguments"])
+                return {"ok": False, "error": "stop before filesystem observation"}
+        for family, mode, old_key, new_key in (
+            ("opencode", "opencode-relative-trim", "oldString", "newString"),
+            ("gemini", "gemini-relative-trim", "old_string", "new_string"),
+        ):
+            worker = Capture()
+            backend = bench.Backend("known-file", family, mode, {}, worker)
+            self.assertEqual(backend.contract_cohort, "snapshot")
+            edits = [{"file": "a", "old": "port=8080", "text": "port=3000"}]
+            calls = backend.execute(Path("workspace"), {"a": "port=8080"}, {"a": "port=3000"},
+                                    edits, "change port")
+            self.assertEqual((worker.arguments[-1][old_key], worker.arguments[-1][new_key]), ("808", "300"))
+            self.assertEqual(calls[0]["selection"]["selected_contract"], "guarded")
+            with mock.patch.object(bench, "trim_snapshot_edits", side_effect=AssertionError("probe trimmed")):
+                backend.execute(Path("workspace"), {"a": "port=8080"}, {"a": "port=3000"},
+                                edits, "guard probe", probe=True)
+            self.assertEqual(worker.arguments[-1][old_key], "port=8080")
+
+    def test_cli_snapshot_reuses_known_file_trim_and_native_line_candidates(self):
+        files, expected = {"a": "port=8080"}, {"a": "port=3000"}
+        edits = [{"file": "a", "old": "port=8080", "text": "port=3000"}]
+        compact = bench.cli_plans(files, expected, edits, True, format="compact")
+        self.assertIn(bench.dump({"a": [["808", "300"]]}),
+                      [program for plan in compact for _, program in plan["calls"]])
+        native = bench.cli_plans(files, expected, edits, True, format="native")
+        self.assertIn("edit a 808 300", [program for plan in native for _, program in plan["calls"]])
+        line_files = {"a": "old\nbody\n"}
+        line_expected = {"a": "new\nbody\n"}
+        line_edits = [{"file": "a", "old": "old", "text": "new"}]
+        native = bench.cli_plans(line_files, line_expected, line_edits, True)
+        self.assertIn('replace a 1 "new"', [program for plan in native for _, program in plan["calls"]])
+        self.assertFalse(any(plan["name"].startswith("snapshot-lines") for plan in compact))
+        with mock.patch.object(bench, "trim_snapshot_edits", side_effect=AssertionError("guard trimmed")), \
+             mock.patch.object(bench, "snapshot_line_plans", side_effect=AssertionError("guard became lines")):
+            for format in ("native", "compact"):
+                guarded = bench.cli_plans(files, expected, edits, False, format=format)
+                probes = bench.cli_plans(files, expected, edits, True, True, format)
+                self.assertTrue(all("port=8080" in program for plan in guarded for _, program in plan["calls"]))
+                self.assertTrue(all("port=8080" in program for plan in probes for _, program in plan["calls"]))
+
+    def test_relative_mcp_binds_case_cwd_without_global_chdir(self):
+        seen = {}
+        class FakeMcp:
+            def __init__(self, binary, cwd, **options):
+                seen["cwd"] = cwd
+                seen["options"] = options
+            def __enter__(self):
+                return self
+            def __exit__(self, *_):
+                pass
+            def call(self, tool, arguments):
+                seen["arguments"] = arguments
+                self.last_request = {"method": "tools/call", "params": {"name": tool, "arguments": arguments}}
+                self.last_response = {"result": {"content": [{"type": "text", "text": "written"}]}}
+                return self.last_response["result"]
+        original_cwd = Path.cwd()
+        with tempfile.TemporaryDirectory() as temporary, mock.patch.object(bench, "Mcp", FakeMcp):
+            root = Path(temporary)
+            backend = bench.Backend("relative-test", "xnip", "xnip-mcp-relative",
+                                    {"executable": str(root / "not-run")})
+            calls = backend.execute(root, {"src/a": "old"}, {"src/a": "new"},
+                                    [{"file": "src/a", "old": "old", "text": "new"}], "fixture")
+            self.assertEqual(seen["cwd"], root)
+            self.assertEqual(seen["arguments"]["file"], "src/a")
+            self.assertFalse(Path(seen["arguments"]["file"]).is_absolute())
+            self.assertIn("serialized_mcp_result", calls[0])
+            self.assertIn("setup_elapsed_ms", calls[0])
+            text_backend = bench.Backend("relative-text", "xnip", "xnip-mcp-relative",
+                                         {"executable": str(root / "not-run"), "receipt_mode": "text"})
+            text_backend.execute(root, {"src/a": "old"}, {"src/a": "new"},
+                                 [{"file": "src/a", "old": "old", "text": "new"}], "fixture")
+            self.assertEqual(seen["options"]["receipts"], "text")
+        self.assertEqual(Path.cwd(), original_cwd)
+
+    def test_record_describes_selected_precondition_without_changing_permission_pool(self):
+        class FakeBackend:
+            name, family, contract_cohort, transport, receipt_mode, mode = (
+                "snapshot-fixture", "xnip", "snapshot", "mcp", "structured", "xnip-mcp-snapshot")
+            operation, actual = "snapshot-trimmed-file-pairs", "guarded"
+            def execute(self, root, files, expected, edits, purpose, probe):
+                bench.reset_files(root, expected)
+                return [{"input": {"files": {"a": [["old", "new"]]}}, "native_result": {},
+                         "returned_text": "written", "ok": True, "elapsed_ms": 1,
+                         "selection": {"selected": self.operation, "selected_contract": self.actual}}]
+        backend = FakeBackend()
+        case = {"files": {"a": "old"}, "expected": {"a": "new"},
+                "edits": [{"file": "a", "old": "old", "text": "new"}], "purpose": "test metadata"}
+        with tempfile.TemporaryDirectory() as temporary:
+            row = bench.record(backend, Path(temporary), case, bench.Counter(None))
+            self.assertEqual(row["contract_cohort"], "snapshot")
+            self.assertEqual(row["selected_contract"], "guarded")
+            self.assertEqual(row["preconditions"], "old block/anchor or whole-file guard")
+            backend.operation, backend.actual = "snapshot-lines-test", "snapshot"
+            row = bench.record(backend, Path(temporary), case, bench.Counter(None))
+            self.assertEqual(row["preconditions"], "known original coordinates; no supplied old guard")
+
+    def test_native_bare_tokens_leave_payload_and_locator_prefixes_quoted(self):
+        self.assertEqual(bench.native_quote("port=8080", compact=True), "port=8080")
+        self.assertEqual(bench.native_quote("src/example.txt", compact=True), "src/example.txt")
+        for value in ("@payload", "=/pattern/", "~/left/", "s/old/new/", "--files-from",
+                      "with space", "", "line\nnext", "literal\\n"):
+            self.assertTrue(bench.native_quote(value, compact=True).startswith('"'), value)
+
+    def test_native_escaped_literals_use_only_escapes_supported_by_the_executor(self):
+        self.assertEqual(bench.native_quote("\b\f\x00\n\r\t", escaped=True),
+                         '"\b\f\x00\\n\\r\\t"')
+
+    def test_native_multiline_preserves_literal_backslash_n_and_counts_whole_program(self):
+        quoted = bench.native_quote('line\nnext\r\nliteral\\n "quote"\t')
+        self.assertIn("line\nnext\r\n", quoted)
+        self.assertIn("literal\\\\n", quoted)
+        self.assertIn('\\"quote\\"', quoted)
+        self.assertIn("\\t", quoted)
+        files = {"src/a": "old\nbody"}
+        edits = [{"file": "src/a", "old": "old\nbody", "text": "new\nbody"}]
+        captured = {}
+        def fake_run(command, **kwargs):
+            captured.update(command=command, **kwargs)
+            return subprocess.CompletedProcess(command, 0, b"", b"written\n")
+        with tempfile.TemporaryDirectory() as temporary, mock.patch.object(bench.subprocess, "run", fake_run):
+            root = Path(temporary)
+            backend = bench.Backend("cli-test", "xnip", "xnip-cli-native-guarded",
+                                    {"executable": str(root / "not-run")})
+            call = backend.execute(root, files, files, edits, "fixture", probe=True)[0]
+            self.assertEqual(captured["input"], call["input"].encode("utf8"))
+            self.assertTrue(call["input"].startswith("edit "))
+            self.assertIn("src/a", call["input"])
+            self.assertIn("old\nbody", call["input"])
+            self.assertEqual(captured["cwd"], root)
+            self.assertIn("--from-stdin", call["invocation"])
+            self.assertIn("--format", call["invocation"])
+            self.assertIn("cold CLI", call["timing_scope"])
+
+    def test_unique_context_uses_known_source_uniqueness_instead_of_output_trials(self):
+        before = "def first():\n    return 0\n\ndef second():\n    return 0\n"
+        after = before.replace("def second():\n    return 0", "def second():\n    return 1")
+        self.assertIsNone(bench.unique_groups(before, after, 0))
+        self.assertIsNotNone(bench.unique_groups(before, after, 1))
+        payload = bench.unique_payload({"a": before}, {"a": after}, "patch", bench.Counter(None))
+        self.assertIn("def second()", payload)
+        self.assertNotIn("def first()", payload)
+        self.assertIn("-    return 0", payload)
+        self.assertIn("+    return 1", payload)
+
+    def test_unclosed_whole_keeps_last_eof_and_separates_preceding_files(self):
+        payload = bench.eof_aware_whole_payload({"a": "old\n", "b": "old"},
+                                              {"a": "new\n", "b": "last"})
+        self.assertEqual(payload, "a\n" + bench.FENCE + "\nnew\n" + bench.FENCE +
+                         "\nb\n" + bench.FENCE + "\nlast")
+        self.assertFalse(payload.endswith("\n"))
+        terminated = bench.eof_aware_whole_payload({"a": "old\n"}, {"a": "new\n"})
+        self.assertEqual(terminated, "a\n" + bench.FENCE + "\nnew\n" + bench.FENCE + "\n")
+
+
+class ReceiptModeContract(unittest.TestCase):
+    @staticmethod
+    def fixture():
+        calls = [{"input": {"files": {"a": [["old", "new"]]}}, "returned_text": "written"}]
+        base = {"backend": "xnip-adaptive-guarded", "family": "xnip", "transport": "mcp",
+                "receipt_mode": "structured", "contract_cohort": "guarded",
+                "input_cost": {"tokens": 10}, "returned_text_cost": {"tokens": 1},
+                "full_serialized_mcp_cost": {"tokens": 70},
+                "outcomes": [{"byte_exact": True}] * 3, "calls": calls}
+        text = {**base, "backend": base["backend"] + "-text", "receipt_mode": "text",
+                "full_serialized_mcp_cost": {"tokens": 30}}
+        return {"counter": {"unit": "tokens"}, "backends": [],
+                "cases": [{"name": "fixture", "results": [base, text]}]}
+
+    def test_same_input_and_text_prove_a_full_reply_layer_reduction(self):
+        measured = report.receipt_comparisons(self.fixture())
+        pair = measured["pairs"][0]
+        self.assertTrue(pair["inputs_identical"])
+        self.assertTrue(pair["returned_text_identical"])
+        self.assertEqual(pair["saved_full_reply"], 40)
+        self.assertAlmostEqual(pair["full_reply_ratio"], 30 / 70)
+        self.assertEqual(measured["overall"]["paired_count"], 1)
+
+    def test_equal_token_counts_do_not_prove_equal_inputs_or_receipt_effect(self):
+        fixture = self.fixture()
+        fixture["cases"][0]["results"][1]["calls"] = [
+            {"input": {"different": "same-cost"}, "returned_text": "written"}]
+        measured = report.receipt_comparisons(fixture)
+        self.assertTrue(measured["pairs"][0]["input_cost_equal"])
+        self.assertFalse(measured["pairs"][0]["inputs_identical"])
+        self.assertIsNone(measured["pairs"][0]["full_reply_ratio"])
+        self.assertEqual(measured["overall"]["paired_count"], 0)
+
+    def test_unknown_evidence_or_nonexact_repeat_never_becomes_zero_saving(self):
+        fixture = self.fixture()
+        fixture["cases"][0]["results"][1]["full_serialized_mcp_cost"] = None
+        measured = report.receipt_comparisons(fixture)
+        self.assertIsNone(measured["pairs"][0]["saved_full_reply"])
+        self.assertEqual(measured["overall"]["paired_count"], 0)
+        fixture = self.fixture()
+        fixture["cases"][0]["results"][1]["outcomes"] = [{"byte_exact": True}, {"byte_exact": False}]
+        self.assertIsNone(report.receipt_comparisons(fixture)["pairs"][0]["full_reply_ratio"])
+
+
+class FrontierContract(unittest.TestCase):
+    @staticmethod
+    def fixture():
+        def row(name, family, supplied, returned, cohort="guarded", transport="native-function", exact=True, full=None):
+            return {"backend": name, "family": family, "contract_cohort": cohort, "transport": transport,
+                    "input_cost": {"tokens": supplied}, "returned_text_cost": {"tokens": returned},
+                    "outcomes": [{"byte_exact": exact, "lf_normalized_equal": exact}] * 3,
+                    "full_serialized_mcp_cost": {"tokens": full} if full is not None else None}
+        rows = [
+            row("xnip-edit", "xnip", 10, 2, transport="mcp", full=40),
+            row("xnip-fast-input", "xnip", 5, 20, transport="mcp", full=45),
+            row("xnip-cli", "xnip", 1, 1, transport="cli-stdin"),
+            row("xnip-snapshot", "xnip", 1, 0, cohort="snapshot", transport="mcp", full=35),
+            row("native-input", "codex", 6, 20, transport="cli-stdin"),
+            row("native-exchange", "opencode", 8, 1),
+            row("aider-whole-lf", "aider", 1, 0, cohort="snapshot"),
+            row("invalid-cheap", "opencode", 1, 0, exact=False),
+        ]
+        return {"counter": {"unit": "tokens"},
+                "backends": [{"name": r["backend"], "family": r["family"]} for r in rows],
+                "cases": [{"name": "fixture", "results": rows}]}
+
+    def test_frontier_separates_contracts_transports_and_independent_winners(self):
+        frontier = report.frontier_statistics(self.fixture())
+        task = frontier["tasks"][0]
+        self.assertEqual(task["xnip"]["mcp"]["guarded"]["best_input"]["backend"], "xnip-fast-input")
+        self.assertEqual(task["xnip"]["mcp"]["guarded"]["best_input_plus_captured_returned_text"]["backend"], "xnip-edit")
+        self.assertEqual(task["xnip"]["cli-stdin"]["guarded"]["best_input"]["backend"], "xnip-cli")
+        self.assertEqual(task["native"]["guarded"]["best_input"]["backend"], "native-input")
+        self.assertEqual(task["native"]["guarded"]["best_input_plus_captured_returned_text"]["backend"], "native-exchange")
+        self.assertEqual(task["native"]["snapshot"]["best_input"]["backend"], "aider-whole-lf")
+        self.assertEqual(task["native"]["snapshot"]["best_input_plus_captured_returned_text"]["backend"], "native-exchange")
+        self.assertNotIn("invalid-cheap", task["native"]["guarded"]["eligible_profiles"])
+        self.assertEqual(task["xnip"]["mcp"]["snapshot"]["best_input"]["backend"], "xnip-snapshot")
+        ET.fromstring(report.frontier_chart(frontier))
+
+    def test_snapshot_enabled_symmetrically_accepts_guarded_candidates_on_both_sides(self):
+        fixture = self.fixture()
+        for row in fixture["cases"][0]["results"]:
+            if row["contract_cohort"] == "snapshot":
+                row["input_cost"]["tokens"] = 100
+        task = report.frontier_statistics(fixture)["tasks"][0]
+        self.assertEqual(task["native"]["snapshot"]["best_input"]["backend"], "native-input")
+        self.assertEqual(task["native"]["snapshot"]["best_input"]["contract_cohort"], "guarded")
+        self.assertEqual(task["xnip"]["mcp"]["snapshot"]["best_input"]["backend"], "xnip-fast-input")
+        self.assertEqual(task["xnip"]["mcp"]["snapshot"]["best_input"]["contract_cohort"], "guarded")
+        self.assertNotIn("aider-whole-lf", task["native"]["guarded"]["eligible_profiles"])
+        self.assertNotIn("xnip-snapshot", task["xnip"]["mcp"]["guarded"]["eligible_profiles"])
+
+    def test_full_mcp_result_invocation_and_unknown_return_are_independent_layers(self):
+        fixture = self.fixture()
+        fixture["cases"][0]["results"][2]["invocation_cost"] = {"tokens": 1000}
+        frontier = report.frontier_statistics(fixture)
+        records = {item["backend"]: item for item in frontier["profiles"]}
+        self.assertEqual(records["xnip-edit"]["serialized_mcp_result"], 40)
+        self.assertEqual(records["xnip-edit"]["input_plus_serialized_mcp_result"], 50)
+        self.assertEqual(records["xnip-cli"]["invocation"], 1000)
+        self.assertIsNone(records["xnip-cli"]["serialized_mcp_result"])
+        self.assertIsNone(records["aider-whole-lf"]["captured_returned_text"])
+        self.assertIsNone(records["aider-whole-lf"]["input_plus_captured_returned_text"])
+        self.assertEqual(frontier["tasks"][0]["xnip"]["cli-stdin"]["guarded"]["best_input"]["backend"], "xnip-cli")
+
+    def test_readme_frontier_counts_near_ties_and_missing_without_inventing_winners(self):
+        frontier = {"unit": "tokens", "cohorts": [
+            {"xnip_transport": "mcp", "contract_cohort": "guarded", "input_geomean": 1.0, "input_pairs": 3}],
+            "tasks": [{"scenario": str(i), "comparisons": [
+                {"xnip_transport": "mcp", "contract_cohort": "guarded", "input_ratio": ratio}]}
+                for i, ratio in enumerate([2.0, 1 + 1e-12, 0.5, None])]}
+        summaries = report.readme_frontier_summary(frontier)
+        guarded = summaries[0]
+        self.assertEqual((guarded["wins"], guarded["ties"], guarded["losses"], guarded["missing"]), (1, 1, 1, 1))
+        self.assertEqual(guarded["task_count"], 4)
+        self.assertEqual(summaries[1]["missing"], 4)
+        svg = report.readme_frontier_chart(frontier, {"cases": [None] * 4, "backends": [None] * 5, "repeats": 3})
+        ET.fromstring(svg)
+        self.assertIn("4", svg)
+        self.assertIn("invocation", svg.lower())
+        self.assertIn("unknown", svg.lower())
+
+    def test_snapshot_permission_and_selected_guarded_contract_remain_distinct(self):
+        fixture = self.fixture()
+        row = next(row for row in fixture["cases"][0]["results"] if row["backend"] == "xnip-snapshot")
+        row.update(selected_contract="guarded", preconditions="old block/anchor or whole-file guard")
+        frontier = report.frontier_statistics(fixture)
+        task = frontier["tasks"][0]
+        self.assertNotIn("xnip-snapshot", task["xnip"]["mcp"]["guarded"]["eligible_profiles"])
+        self.assertEqual(task["xnip"]["mcp"]["snapshot"]["best_input"]["selected_contract"], "guarded")
+        markdown = "\n".join(report.frontier_markdown(frontier))
+        self.assertIn("xnip-snapshot; mcp; guarded)", markdown)
+        self.assertIn("| fixture | xnip-snapshot | mcp | guarded |", markdown)
+
+    def test_one_nonexact_repeat_excludes_a_profile_and_ties_are_deterministic(self):
+        fixture = self.fixture()
+        row = fixture["cases"][0]["results"][5]
+        row["outcomes"] = [{"byte_exact": True}, {"byte_exact": False}, {"byte_exact": True}]
+        frontier = report.frontier_statistics(fixture)
+        self.assertNotIn("native-exchange", frontier["tasks"][0]["native"]["guarded"]["eligible_profiles"])
+        duplicate = dict(fixture["cases"][0]["results"][4], backend="aaa-native")
+        fixture["cases"][0]["results"].append(duplicate)
+        fixture["backends"].append({"name": "aaa-native", "family": "codex"})
+        self.assertEqual(report.frontier_statistics(fixture)["tasks"][0]["native"]["guarded"]["best_input"]["backend"], "aaa-native")
 
 
 if __name__ == "__main__":

@@ -56,7 +56,7 @@ pub struct Cli {
 
 #[derive(Debug, Subcommand)]
 pub enum Command {
-    /// Create, replace exact text, delete or rename a file.
+    /// Replace exact text, insert at a literal anchor, write whole files, create, delete or rename.
     Edit(edit::Args),
     /// Print numbered lines in a range (read-only).
     Peek(peek::Args),

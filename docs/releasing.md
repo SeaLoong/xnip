@@ -1,6 +1,6 @@
 # Builds and releases
 
-CI checks every configured branch push and pull request. A successful push to the repository's default branch also creates a development prerelease when release inputs changed. Tag releases and manual build rehearsals use the same six-platform [artifact workflow](../.github/workflows/build-release.yml).
+CI selects checks for configured branch pushes and pull requests. A successful push to the repository's default branch also creates a development prerelease when release inputs changed. Tag releases and manual build rehearsals use the same six-platform [artifact workflow](../.github/workflows/build-release.yml). The [CI workflow contract](ci.md) defines the three workflows, their event boundaries, required gate and change scopes.
 
 ## Automatic development prereleases
 
@@ -19,9 +19,9 @@ The [release planner](../.github/scripts/release.py) compares every path in the 
 
 The exact allowlist lives in `release_relevant` and its constants, with [offline contracts](../tests/release_contract.py). CI still runs its checks for changes that do not publish.
 
-For a stable Cargo version `0.3.1`, CI generates `0.3.2-dev.<run_number>.g<commit12>`. An already-prerelease Cargo version retains its major/minor/patch core. Version, tag and binary `--version` agree: only the isolated build checkout's root manifest and matching lockfile entry are stamped. The source branch is never rewritten. Rerunning a workflow keeps the same tag; `run_attempt` is excluded.
+For a stable Cargo version `0.4.0`, CI generates `0.4.1-dev.<run_number>.g<commit12>`. An already-prerelease Cargo version retains its major/minor/patch core. Version, tag and binary `--version` agree: only the isolated build checkout's root manifest and matching lockfile entry are stamped. The source branch is never rewritten. Rerunning a workflow keeps the same tag; `run_attempt` is excluded.
 
-Publication starts only after formatting, linting, all platform tests, dependency policy, MSRV, package/integration checks and release contracts pass. Six build jobs produce Linux musl, macOS and Windows archives for x86_64 and ARM64. Native runner smoke tests check the embedded version and doctor output.
+Every commit selected for publication receives full verification: formatting, linting, all platform tests, dependency policy, MSRV, package/integration checks and release contracts must pass. The successful `ci` gate records a `Full verification` marker; scoped verification alone cannot authorize publication. Six build jobs produce Linux musl, macOS and Windows archives for x86_64 and ARM64. Native runner smoke tests check the embedded version and doctor output.
 
 A [publisher](../.github/scripts/publish_release.py) verifies all 21 expected assets and six archive SHA256 sidecars before creating or completing a draft. It publishes only after all uploads are present. Development releases set `prerelease=true` and `make_latest=false`; they never replace stable `latest`.
 
@@ -30,11 +30,11 @@ The publisher serializes calls for the same version. An existing tag must point 
 Install a preview by its explicit tag:
 
 ```sh
-XNIP_VERSION=v0.3.2-dev.123.gabcdef123456 sh install.sh
+XNIP_VERSION=v0.4.1-dev.123.gabcdef123456 sh install.sh
 ```
 
 ```powershell
-$env:XNIP_VERSION = 'v0.3.2-dev.123.gabcdef123456'
+$env:XNIP_VERSION = 'v0.4.1-dev.123.gabcdef123456'
 ./install.ps1
 ```
 
@@ -45,7 +45,7 @@ The default installers and [silent updater](updates.md) remain on stable release
 1. Update the root package version in `Cargo.toml` and regenerate its `Cargo.lock` entry. Keep `xtask` unpublished.
 2. Move Unreleased entries into a dated `CHANGELOG.md` section and update pinned installation examples. Use the project's Asia/Shanghai timezone for the release date.
 3. Review user-facing contracts and compatibility limits. Run `cargo run --locked -p xtask -- sync-integrations` and commit generated integration files too.
-4. Run [contributor checks](../CONTRIBUTING.md), commit and push. Wait for all CI checks on that exact commit.
+4. Run [contributor checks](../CONTRIBUTING.md) and commit locally. For stable publication, push the release commit and annotated tag atomically as shown below. The tag workflow waits for the full `ci` gate on that exact commit before building the release.
 
 A manual rehearsal runs checks and all release builds without publishing:
 
@@ -54,14 +54,14 @@ gh workflow run release.yml --ref master
 gh run list --workflow release.yml --limit 3
 ```
 
-Inspect all artifacts, then create an annotated tag matching Cargo:
+When publishing, create an annotated tag matching Cargo:
 
 ```sh
-git tag -a v0.3.2 -m "xnip v0.3.2"
-git push --atomic origin master v0.3.2
+git tag -a v0.4.1 -m "xnip v0.4.1"
+git push --atomic origin master v0.4.1
 ```
 
-The example assumes Cargo has been set to that new unpublished version. Never move an existing published tag. Push the release commit and tag atomically: the planner sees a matching stable tag at the same commit and skips a duplicate development prerelease while retaining all branch checks. The tag workflow verifies Cargo/tag equality, repeats checks, builds, and publishes from a complete draft. Stable release notes use the matching, nonempty changelog section. Tags containing a SemVer prerelease identifier are marked prerelease and do not become latest.
+The example assumes Cargo has been set to that new unpublished version. Never move an existing published tag. Push the release commit and tag atomically: the planner sees a matching stable tag at the same commit and skips a duplicate development prerelease while retaining all branch checks. The tag workflow verifies Cargo/tag equality and reuses the successful full `ci` gate from a same-repository default-branch push for that exact commit, waiting for an in-progress gate if necessary. If no reusable full gate exists, it runs full checks once. It then builds and publishes from a complete draft. Stable release notes use the matching, nonempty changelog section. Tags containing a SemVer prerelease identifier are marked prerelease and do not become latest.
 
 Archives contain the executable, README, MIT license and third-party notices. Assets comprise six binary archives, six checksums, two installers and seven integration archives. Build commit metadata comes from `XNIP_BUILD_COMMIT`; `Cross.toml` forwards it into Linux containers.
 

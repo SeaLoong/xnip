@@ -34,9 +34,12 @@ pub struct ExactEdit {
 #[derive(Debug, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct Args {
-    /// Ordered exact replacements. Choose edits, path, or manifest_text.
+    /// Ordered exact replacements. Choose edits, files, path, or manifest_text.
     #[serde(default)]
     pub edits: Option<Vec<ExactEdit>>,
+    /// Independent file groups: arrays of [old,text] pairs, full text strings, or {text,old?} guarded full writes.
+    #[serde(default)]
+    pub files: Option<crate::apply::compact::Files>,
     /// Preview payload byte limit; default 12000, 0 for full output.
     #[serde(default)]
     pub max_bytes: Option<usize>,
@@ -48,7 +51,7 @@ pub struct Args {
     #[serde(default)]
     pub manifest_text: Option<String>,
 
-    /// 显式格式：`"native"` / `"json"` / `"yaml"`（默认按扩展名 / 内容自动识别）。
+    /// native/json/compact/yaml/patch; otherwise detect from extension and content.
     #[serde(default)]
     pub format: Option<String>,
     /// Explicit project directory for patch paths. Implies patch format; avoids relying on server cwd.
@@ -70,11 +73,24 @@ pub struct Args {
     pub check: bool,
 }
 
-pub fn run(a: Args) -> Result<CallToolResult, McpError> {
+pub fn run(a: Args, receipts: crate::mcp::Receipts) -> Result<CallToolResult, McpError> {
     let backup = a.backup.unwrap_or(false);
 
     // 互斥与必填
-    let (ops, manifest_dir) = if let Some(edits) = &a.edits {
+    let (ops, manifest_dir) = if let Some(files) = a.files {
+        if a.edits.is_some()
+            || a.path.is_some()
+            || a.manifest_text.is_some()
+            || a.format.is_some()
+            || a.patch_root.is_some()
+        {
+            return Err(McpError::invalid_params(
+                "files conflicts with other inputs",
+                None,
+            ));
+        }
+        (files.into_ops().map_err(any_to_invalid_params)?, None)
+    } else if let Some(edits) = a.edits {
         if a.path.is_some()
             || a.manifest_text.is_some()
             || a.format.is_some()
@@ -92,19 +108,19 @@ pub fn run(a: Args) -> Result<CallToolResult, McpError> {
             ));
         }
         let ops = edits
-            .iter()
+            .into_iter()
             .map(|edit| Op::File {
-                target: Target::File(edit.file.clone()),
+                target: Target::File(edit.file),
                 operation: FileOp::Exact {
-                    old: OpContent::Text(edit.old.as_bytes().to_vec()),
-                    text: OpContent::Text(edit.text.as_bytes().to_vec()),
+                    old: OpContent::Text(edit.old.into_bytes()),
+                    text: OpContent::Text(edit.text.into_bytes()),
                     all: edit.all,
                 },
             })
             .collect();
         (ops, None)
     } else {
-        let (src, manifest_dir) = match (a.path.as_deref(), a.manifest_text.as_deref()) {
+        let (src, manifest_dir) = match (a.path.as_deref(), a.manifest_text) {
             (Some(_), Some(_)) => {
                 return Err(McpError::invalid_params(
                     "`path` and `manifest_text` are mutually exclusive",
@@ -124,7 +140,7 @@ pub fn run(a: Args) -> Result<CallToolResult, McpError> {
                 let dir = p.parent().map(std::path::Path::to_path_buf);
                 (s, dir)
             }
-            (None, Some(t)) => (t.to_string(), None),
+            (None, Some(t)) => (t, None),
             (None, None) => {
                 return Err(McpError::invalid_params(
                     "either `path` or `manifest_text` is required",
@@ -152,12 +168,9 @@ pub fn run(a: Args) -> Result<CallToolResult, McpError> {
         } else if a.path.is_some() {
             parse_auto(&src, a.path.as_deref()).map_err(any_to_invalid_params)?
         } else {
-            // manifest_text 默认尝试 native，失败回落 auto-detect by content
-            parse_with(&src, Format::Native)
-                .or_else(|_| parse_auto(&src, None))
-                .map_err(|e| {
-                    McpError::invalid_params(format!("manifest_text parse failed: {e:#}"), None)
-                })?
+            parse_auto(&src, None).map_err(|e| {
+                McpError::invalid_params(format!("manifest_text parse failed: {e:#}"), None)
+            })?
         };
 
         (ops, manifest_dir)
@@ -198,6 +211,7 @@ pub fn run(a: Args) -> Result<CallToolResult, McpError> {
                 &summary,
                 if a.dry_run { &report.diff } else { "" },
                 a.max_bytes,
+                receipts,
             ))
         }
         Err(e @ ExecError::Phase1 { .. }) => {
@@ -218,6 +232,7 @@ fn has_stdin_content(ops: &[Op]) -> bool {
         }
         Op::File { operation, .. } => match operation {
             crate::apply::FileOp::Create(content)
+            | crate::apply::FileOp::Write { content, .. }
             | crate::apply::FileOp::Exact { text: content, .. } => {
                 matches!(content, OpContent::Stdin)
             }
