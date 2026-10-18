@@ -8,7 +8,7 @@
 //!
 //! 跑：`cargo bench`
 //!
-//! PLAN §7.8 性能目标：100MB 文件 single op < 2s（macOS M 系；其它平台放宽）。
+//! Measures in-memory core operations; process startup and filesystem IO are excluded.
 
 use criterion::{Criterion, Throughput, criterion_group, criterion_main};
 use regex::bytes::Regex as ByteRegex;

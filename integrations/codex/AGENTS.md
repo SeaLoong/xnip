@@ -1,5 +1,3 @@
 ## Text-file editing
 
-For local code, configuration and other text-file edits, use xnip as the primary editing interface when it supports the operation. Respect an explicit user choice of another editor. Use the configured xnip MCP tools or CLI directly and reuse known context.
-
-At the start of a text-editing task, read `~/.codex/guides/xnip-editing/guide.md` for operation selection and recovery rules. Read its references only when needed. Search and semantic analysis use their appropriate tools.
+Use the configured xnip MCP tools or CLI for supported text edits; respect the user's editor choice. Read `~/.codex/guides/xnip-editing/guide.md` when choosing an operation or handling failure. Reuse known context and load references only for the current operation. Use search and language tools for discovery and symbol analysis.

@@ -1,6 +1,6 @@
 //! NDJSON 输出（`--json`）。
 //!
-//! 事件类型（PLAN §6.7.5 简化）：
+//! 事件类型：
 //!
 //! - `start`：批次开始（含命令名、参数概要）
 //! - `op`：单个 op 完成（含文件路径、op 类型、变更概要）
@@ -37,51 +37,45 @@ pub fn emit<W: Write>(mut out: W, event: &Event<'_>) -> std::io::Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::{Event, emit};
 
-    fn emit_one(e: &Event<'_>) -> String {
-        let mut buf = Vec::new();
-        emit(&mut buf, e).unwrap();
-        String::from_utf8(buf).unwrap()
+    #[test]
+    fn events_round_trip_as_independent_ndjson_records() {
+        let path = "文件\nwith \"quotes\".txt";
+        let mut bytes = Vec::new();
+        for event in [
+            Event::Start { command: "apply" },
+            Event::Op {
+                file: path,
+                op: "replace",
+            },
+            Event::Done {
+                affected_files: vec![path.into()],
+            },
+            Event::Error {
+                kind: "phase1",
+                message: "bad\ninput".into(),
+            },
+        ] {
+            emit(&mut bytes, &event).unwrap();
+        }
+        let text = String::from_utf8(bytes).unwrap();
+        let records: Vec<serde_json::Value> = text
+            .lines()
+            .map(|line| serde_json::from_str(line).unwrap())
+            .collect();
+        assert_eq!(records.len(), 4);
+        assert_eq!(records[0]["event"], "start");
+        assert_eq!(records[1]["file"], path);
+        assert_eq!(records[2]["affected_files"][0], path);
+        assert_eq!(records[3]["message"], "bad\ninput");
+        assert!(text.ends_with('\n'));
     }
 
     #[test]
-    fn start_event_format() {
-        let s = emit_one(&Event::Start { command: "apply" });
-        assert!(s.contains("\"event\":\"start\""));
-        assert!(s.contains("\"command\":\"apply\""));
-        assert!(s.ends_with('\n'));
-    }
-
-    #[test]
-    fn op_event_format() {
-        let s = emit_one(&Event::Op {
-            file: "a.txt",
-            op: "replace",
-        });
-        assert!(s.contains("\"event\":\"op\""));
-        assert!(s.contains("\"file\":\"a.txt\""));
-        assert!(s.contains("\"op\":\"replace\""));
-    }
-
-    #[test]
-    fn done_event_lists_files() {
-        let s = emit_one(&Event::Done {
-            affected_files: vec!["a.txt".into(), "b.txt".into()],
-        });
-        assert!(s.contains("\"event\":\"done\""));
-        assert!(s.contains("a.txt"));
-        assert!(s.contains("b.txt"));
-    }
-
-    #[test]
-    fn error_event_format() {
-        let s = emit_one(&Event::Error {
-            kind: "phase1",
-            message: "bad locator".into(),
-        });
-        assert!(s.contains("\"event\":\"error\""));
-        assert!(s.contains("\"kind\":\"phase1\""));
-        assert!(s.contains("\"message\":\"bad locator\""));
+    fn a_closed_output_pipe_is_an_error() {
+        let mut output = [0_u8; 0];
+        let error = emit(output.as_mut_slice(), &Event::Start { command: "apply" });
+        assert!(error.is_err());
     }
 }

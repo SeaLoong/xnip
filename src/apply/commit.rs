@@ -1,4 +1,4 @@
-//! 两阶段提交执行器（PLAN §6.9.5）：
+//! 两阶段提交执行器：
 //!
 //! 1. **格式识别 + 解析**（在 cli 层完成）→ 内部统一 op 列表
 //! 2. **按文件分组**：把 `FilesFrom` 展开后，按规范化目标路径分组
@@ -175,8 +175,14 @@ fn phase1(path: &std::path::Path, error: impl std::fmt::Display) -> ExecError {
 }
 
 fn finish_plan(plan: &Plan, opts: &ExecOpts) -> Result<Report, ExecError> {
-    if opts.check || opts.dry_run {
+    if opts.dry_run {
         return Ok(plan.preview());
+    }
+    if opts.check {
+        return Ok(Report {
+            files: plan.changed_files(),
+            ..Report::default()
+        });
     }
     plan.commit(opts.backup).map_err(|error| {
         if error
@@ -186,7 +192,7 @@ fn finish_plan(plan: &Plan, opts: &ExecOpts) -> Result<Report, ExecError> {
             ExecError::Phase2 {
                 path: PathBuf::new(),
                 msg: format!("{error:#}"),
-                planned: plan.preview().files,
+                planned: plan.changed_files(),
             }
         } else {
             phase1(std::path::Path::new(""), format!("{error:#}"))
@@ -276,6 +282,22 @@ fn prepare_one(
         ));
     }
     sorted.sort_by_key(|(line, _)| std::cmp::Reverse(*line));
+    let mut previous_start = usize::MAX;
+    for (_, op) in &sorted {
+        let locator = match op {
+            Op::Replace { locator, .. }
+            | Op::Insert { locator, .. }
+            | Op::Indent { locator, .. } => locator,
+            Op::Move { from, .. } => from,
+            Op::File { .. } => unreachable!("file operations use ordered planning"),
+        };
+        if let Locator::Lines { start, end } = locator {
+            if *end >= previous_start {
+                return Err(phase1(path, "overlapping line edits require --sequential"));
+            }
+            previous_start = *start;
+        }
+    }
     let mut after = before.clone();
     for (_, op) in sorted {
         after = apply_one_op(&op, &after, opts).map_err(|e| phase1(path, format!("{e:#}")))?;
@@ -803,235 +825,4 @@ fn load_op_content(c: &OpContent, opts: &ExecOpts) -> Result<Vec<u8>> {
 
 fn extract_lines_with_newline(content: &[u8], start: usize, end: usize) -> Vec<u8> {
     crate::core::location::extract_line_range_with_newline(content, start, end)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::core::location::Locator;
-    use tempfile::tempdir;
-
-    fn write(p: &std::path::Path, b: &[u8]) {
-        std::fs::write(p, b).unwrap();
-    }
-    fn read(p: &std::path::Path) -> Vec<u8> {
-        std::fs::read(p).unwrap()
-    }
-
-    #[test]
-    fn execute_single_replace() {
-        let dir = tempdir().unwrap();
-        let p = dir.path().join("a.txt");
-        write(&p, b"a\nb\nc\n");
-        let ops = vec![Op::Replace {
-            target: Target::File(p.clone()),
-            locator: Locator::Lines { start: 2, end: 2 },
-            content: OpContent::Text(b"B".to_vec()),
-            was: None,
-            revert: false,
-        }];
-        execute(ops, &ExecOpts::default()).unwrap();
-        assert_eq!(read(&p), b"a\nB\nc\n");
-    }
-
-    #[test]
-    fn execute_multiple_ops_same_file_descending_order() {
-        let dir = tempdir().unwrap();
-        let p = dir.path().join("a.txt");
-        write(&p, b"1\n2\n3\n4\n5\n");
-        // 把 line 2 改 X，line 4 改 Y；不依赖输入顺序
-        let ops = vec![
-            Op::Replace {
-                target: Target::File(p.clone()),
-                locator: Locator::Lines { start: 2, end: 2 },
-                content: OpContent::Text(b"X".to_vec()),
-                was: None,
-                revert: false,
-            },
-            Op::Replace {
-                target: Target::File(p.clone()),
-                locator: Locator::Lines { start: 4, end: 4 },
-                content: OpContent::Text(b"Y".to_vec()),
-                was: None,
-                revert: false,
-            },
-        ];
-        execute(ops, &ExecOpts::default()).unwrap();
-        assert_eq!(read(&p), b"1\nX\n3\nY\n5\n");
-    }
-
-    #[test]
-    fn execute_check_does_not_modify_files() {
-        let dir = tempdir().unwrap();
-        let p = dir.path().join("a.txt");
-        write(&p, b"orig\n");
-        let ops = vec![Op::Replace {
-            target: Target::File(p.clone()),
-            locator: Locator::Lines { start: 1, end: 1 },
-            content: OpContent::Text(b"new".to_vec()),
-            was: None,
-            revert: false,
-        }];
-        let opts = ExecOpts {
-            check: true,
-            ..ExecOpts::default()
-        };
-        execute(ops, &opts).unwrap();
-        assert_eq!(read(&p), b"orig\n");
-    }
-
-    #[test]
-    fn execute_phase1_failure_leaves_file_intact() {
-        let dir = tempdir().unwrap();
-        let p = dir.path().join("a.txt");
-        write(&p, b"orig\n");
-        let ops = vec![Op::Replace {
-            target: Target::File(p.clone()),
-            locator: Locator::Lines {
-                start: 100,
-                end: 200,
-            }, // out of bounds
-            content: OpContent::Text(b"x".to_vec()),
-            was: None,
-            revert: false,
-        }];
-        let err = execute(ops, &ExecOpts::default()).unwrap_err();
-        assert!(matches!(err, ExecError::Phase1 { .. }));
-        assert_eq!(
-            read(&p),
-            b"orig\n",
-            "file must remain intact after phase1 failure"
-        );
-    }
-
-    #[test]
-    fn execute_backup_writes_bak() {
-        let dir = tempdir().unwrap();
-        let p = dir.path().join("a.txt");
-        write(&p, b"v1\n");
-        let ops = vec![Op::Replace {
-            target: Target::File(p.clone()),
-            locator: Locator::Lines { start: 1, end: 1 },
-            content: OpContent::Text(b"v2".to_vec()),
-            was: None,
-            revert: false,
-        }];
-        let opts = ExecOpts {
-            backup: true,
-            ..ExecOpts::default()
-        };
-        execute(ops, &opts).unwrap();
-        assert_eq!(read(&p), b"v2\n");
-        let bak = crate::core::atomic::bak_path(&p);
-        assert!(bak.exists());
-        assert_eq!(read(&bak), b"v1\n");
-    }
-
-    #[test]
-    fn execute_was_check_passes() {
-        let dir = tempdir().unwrap();
-        let p = dir.path().join("a.txt");
-        write(&p, b"a\nold\nc\n");
-        let ops = vec![Op::Replace {
-            target: Target::File(p.clone()),
-            locator: Locator::Lines { start: 2, end: 2 },
-            content: OpContent::Text(b"new".to_vec()),
-            was: Some(b"old\n".to_vec()),
-            revert: false,
-        }];
-        execute(ops, &ExecOpts::default()).unwrap();
-        assert_eq!(read(&p), b"a\nnew\nc\n");
-    }
-
-    #[test]
-    fn execute_was_check_fails() {
-        let dir = tempdir().unwrap();
-        let p = dir.path().join("a.txt");
-        write(&p, b"a\nactual\nc\n");
-        let ops = vec![Op::Replace {
-            target: Target::File(p.clone()),
-            locator: Locator::Lines { start: 2, end: 2 },
-            content: OpContent::Text(b"new".to_vec()),
-            was: Some(b"expected\n".to_vec()),
-            revert: false,
-        }];
-        let err = execute(ops, &ExecOpts::default()).unwrap_err();
-        assert!(matches!(err, ExecError::Phase1 { .. }));
-        assert_eq!(read(&p), b"a\nactual\nc\n");
-    }
-
-    #[test]
-    fn execute_indent_op() {
-        let dir = tempdir().unwrap();
-        let p = dir.path().join("a.txt");
-        write(&p, b"a\nb\n");
-        let ops = vec![Op::Indent {
-            target: Target::File(p.clone()),
-            locator: Locator::Lines { start: 1, end: 2 },
-            kind: IndentKind::Adjust(2),
-            revert: false,
-        }];
-        execute(ops, &ExecOpts::default()).unwrap();
-        assert_eq!(read(&p), b"  a\n  b\n");
-    }
-
-    #[test]
-    fn execute_move_op() {
-        let dir = tempdir().unwrap();
-        let p = dir.path().join("a.txt");
-        write(&p, b"1\n2\n3\n");
-        let ops = vec![Op::Move {
-            target: Target::File(p.clone()),
-            from: Locator::Lines { start: 1, end: 1 },
-            to_line: 3,
-            position: MovePosition::After,
-            revert: false,
-        }];
-        execute(ops, &ExecOpts::default()).unwrap();
-        assert_eq!(read(&p), b"2\n3\n1\n");
-    }
-
-    #[test]
-    fn execute_insert_op() {
-        let dir = tempdir().unwrap();
-        let p = dir.path().join("a.txt");
-        write(&p, b"a\nc\n");
-        let ops = vec![Op::Insert {
-            target: Target::File(p.clone()),
-            locator: Locator::Lines { start: 1, end: 1 },
-            content: OpContent::Text(b"b".to_vec()),
-            position: MovePosition::After,
-            revert: false,
-        }];
-        execute(ops, &ExecOpts::default()).unwrap();
-        assert_eq!(read(&p), b"a\nb\nc\n");
-    }
-
-    #[test]
-    fn execute_files_from_expands() {
-        let dir = tempdir().unwrap();
-        let p1 = dir.path().join("x.txt");
-        let p2 = dir.path().join("y.txt");
-        write(&p1, b"foo\n");
-        write(&p2, b"foo\n");
-        let list = dir.path().join("list.txt");
-        write(
-            &list,
-            format!("{}\n{}\n", p1.display(), p2.display()).as_bytes(),
-        );
-
-        let ops = vec![Op::Replace {
-            target: Target::FilesFrom(list),
-            locator: Locator::Pattern {
-                regex: regex::bytes::Regex::new("foo").unwrap(),
-                count: crate::core::location::Count::All,
-            },
-            content: OpContent::Repl("BAR".to_string()),
-            was: None,
-            revert: false,
-        }];
-        execute(ops, &ExecOpts::default()).unwrap();
-        assert_eq!(read(&p1), b"BAR\n");
-        assert_eq!(read(&p2), b"BAR\n");
-    }
 }

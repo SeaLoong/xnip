@@ -5,6 +5,9 @@ on:
     branches: [master, main]
   pull_request:
   workflow_call:
+    secrets:
+      RELEASE_TOKEN:
+        required: false
 
 permissions:
   contents: read
@@ -12,6 +15,7 @@ permissions:
 env:
   CARGO_TERM_COLOR: always
   RUSTFLAGS: "-D warnings"
+  XNIP_AUTO_UPDATE: "0"
 
 jobs:
   fmt:
@@ -49,6 +53,12 @@ jobs:
       - run: cargo test --workspace --locked
       - run: cargo test --workspace --doc --locked
       - run: cargo bench --no-run --locked
+      - name: Native benchmark result plumbing contracts
+        if: runner.os == 'Linux'
+        run: python3 tests/native_benchmark_contract.py
+      - name: Offline editing-cost contract smoke
+        if: runner.os == 'Linux'
+        run: python3 benches/edit_cost.py --repeats 1 --json target/edit-cost/results.json --markdown target/edit-cost/results.md
 
   deny:
     name: cargo-deny
@@ -90,3 +100,57 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - run: cargo build --locked
       - run: ./tests/install_ps1.ps1
+
+  release-contracts:
+    name: release policy and publication contracts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: python tests/release_contract.py
+      - run: python tests/publish_release_contract.py
+
+  release-plan:
+    name: detect release inputs
+    if: github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-latest
+    outputs:
+      publish: ${{ steps.plan.outputs.publish }}
+      version: ${{ steps.plan.outputs.version }}
+      tag: ${{ steps.plan.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Compare every file in the push
+        id: plan
+        env:
+          XNIP_BEFORE: ${{ github.event.before }}
+          XNIP_HEAD: ${{ github.sha }}
+          XNIP_RUN_NUMBER: ${{ github.run_number }}
+        shell: bash
+        run: |
+          set -eu
+          if [[ ! "$XNIP_BEFORE" =~ ^0+$ ]] && ! git cat-file -e "$XNIP_BEFORE^{commit}" 2>/dev/null; then
+            git fetch --no-tags origin "$XNIP_BEFORE"
+          fi
+          python .github/scripts/release.py plan --before "$XNIP_BEFORE" --head "$XNIP_HEAD" --run-number "$XNIP_RUN_NUMBER" --github-output
+
+  prerelease:
+    name: build and publish development release
+    needs: [release-plan, fmt, clippy, test, deny, msrv, package, installer-windows, release-contracts]
+    if: needs.release-plan.outputs.publish == 'true'
+    permissions:
+      contents: write
+    uses: ./.github/workflows/build-release.yml
+    secrets:
+      RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+    with:
+      version: ${{ needs.release-plan.outputs.version }}
+      prerelease: true
+      publish: true

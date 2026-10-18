@@ -1,6 +1,6 @@
 //! `xnip_insert` 工具：在单行锚点的前/后插入内容。
 //!
-//! 与 cli `xnip insert` 行为一致（PLAN §6.7.4），不暴露 dry-run/check/revert/backup_revert。
+//! 与 CLI `xnip insert` 共享插入操作，不暴露 dry-run/check/revert/backup_revert。
 
 use std::path::PathBuf;
 
@@ -17,6 +17,7 @@ use crate::core::ops::insert::{Position, insert_at};
 use super::common::{ContentInput, LocatorInput, err_to_internal, locate_to_mcp_err};
 
 #[derive(Debug, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
 pub struct Args {
     /// 目标文件路径。
     pub file: PathBuf,

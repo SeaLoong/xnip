@@ -8,6 +8,9 @@ use std::path::PathBuf;
 #[serde(deny_unknown_fields)]
 #[allow(clippy::struct_excessive_bools)]
 pub struct Args {
+    /// Preview payload byte limit; default 12000, 0 for full output.
+    #[serde(default)]
+    pub max_bytes: Option<usize>,
     /// Target path; create requires an absent path, other operations an existing file.
     pub file: PathBuf,
     /// replace (default), create (must not exist), delete (regular files only), or rename (to required).
@@ -58,5 +61,9 @@ pub fn run(args: Args) -> Result<CallToolResult, McpError> {
     };
     let outcome = execute(&args.file, &request).map_err(error)?;
     let summary = crate::output::human::ChangeSummary::edit(&args.file, &request, &outcome);
-    Ok(super::common::ok_change(&summary, &outcome.diff))
+    Ok(super::common::ok_change(
+        &summary,
+        &outcome.diff,
+        args.max_bytes,
+    ))
 }

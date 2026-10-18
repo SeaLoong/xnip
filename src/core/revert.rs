@@ -1,6 +1,7 @@
 //! 参数对称反向计算（`--revert` 实现）。
 //!
-//! 设计原则（PLAN.md §6.8）：「同参数加 `--revert` 与不加完全互逆。不可逆即报错。」
+//! Supported inverse operations; exact recovery uses Git or backups.
+//! See `docs/apply-format.md` for locator, replacement and newline restrictions.
 //!
 //! 本模块提供两类工具：
 //! 1. `RevertError` 枚举：各 op 在 revert 前置条件不满足时统一返回的错误
@@ -54,7 +55,7 @@ impl Direction {
 
 /// 工具函数：把 `replace --pattern A --repl B --revert` 反向为 `--pattern B --repl A`。
 ///
-/// 这是 PLAN.md §6.8 表里描述的最简单 case，不涉及 `--was` 校验。
+/// 此反向不涉及 `--was` 校验。
 /// 调用方需自行处理 regex 的特殊字符转义（pattern 字段不再 take 字面 B 而是 `regex::escape(B)`）。
 pub fn invert_pattern_replacement(
     pattern: &str,
@@ -75,47 +76,4 @@ pub fn invert_pattern_replacement(
         ));
     }
     Ok((regex::escape(repl), pattern.to_string()))
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn direction_from_flag_true_is_revert() {
-        assert_eq!(Direction::from_flag(true), Direction::Revert);
-        assert!(Direction::from_flag(true).is_revert());
-    }
-
-    #[test]
-    fn direction_from_flag_false_is_forward() {
-        assert_eq!(Direction::from_flag(false), Direction::Forward);
-        assert!(!Direction::from_flag(false).is_revert());
-    }
-
-    #[test]
-    fn invert_pattern_swaps_and_escapes() {
-        let (p, r) = invert_pattern_replacement("OLD_NAME", "NEW.NAME").unwrap();
-        // NEW.NAME 中的 . 被 escape；旧 pattern 作为新 replacement 字面化
-        assert_eq!(p, r"NEW\.NAME");
-        assert_eq!(r, "OLD_NAME");
-    }
-
-    #[test]
-    fn invert_pattern_double_invert_round_trips_for_safe_strings() {
-        // 对 [A-Za-z_] 这种 regex-safe 串，二次反转回到原输入
-        let (p1, r1) = invert_pattern_replacement("OLD", "NEW").unwrap();
-        let (p2, r2) = invert_pattern_replacement(&p1, &r1).unwrap();
-        assert_eq!(p2, "OLD");
-        assert_eq!(r2, "NEW");
-    }
-
-    #[test]
-    fn revert_error_messages_are_distinct() {
-        let e1 = RevertError::NotInvertible("a".into());
-        let e2 = RevertError::NotStrictlyInvertible("a".into());
-        let e3 = RevertError::PreconditionMismatch("a".into());
-        assert_ne!(format!("{e1}"), format!("{e2}"));
-        assert_ne!(format!("{e2}"), format!("{e3}"));
-    }
 }

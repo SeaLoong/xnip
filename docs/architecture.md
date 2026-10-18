@@ -1,148 +1,74 @@
-# xnip — Architecture
+# xnip architecture
 
-> A 30-second overview for contributors and curious agents.
+xnip minimizes the context an agent must read and generate to make a correct text edit. Correctness takes priority over shorter payloads: exact matching, byte preservation, validation before writes and explicit recovery remain editing contracts.
 
-## Design goals
+## Goals and acceptance criteria
 
-- **Project-agnostic**: no project config, no language detection, no implicit assumptions.
-- **Cross-platform**: shared command behavior, with native binaries per OS/architecture.
-- **Machine-friendly**: stderr for humans, stdout for machines; optional `--json` NDJSON.
-- **Atomic writes**: tmpfile in same dir → fsync → atomic rename. `.bak` is opt-in via `--backup`.
-- **Symmetric revert**: `--revert` supports limited inverse operations; use Git or backups for exact recovery.
+| Goal | Observable acceptance criterion |
+|---|---|
+| Smaller default interface | Five advertised MCP tools; full toolset explicitly available |
+| Less repeated knowledge | CLI and MCP read adapters share selection, validation and output budgets |
+| Bounded agent output | Reads default to 200 lines / 100 hits / 12,000 payload bytes; truncation is explicit |
+| Cheap ordinary edits | Exact replacement consumes known old/new blocks without a required read; MCP batches accept direct `edits` arrays |
+| Reliable receipts | Write, preview, check and no-op results report whether bytes were committed |
+| Smaller prompts | Canonical entry guide selects operations and discloses branch-specific references |
+| Behavioral verification | Fresh contract suites cover byte output, rejected writes, lifecycle, recovery, platform safety and transports |
+| Reproducible cost evidence | Paired native-editor/xnip execution records real bytes, inputs and results; representation costs are a supplementary experiment |
+
+The [glossary](../GLOSSARY.md) defines editing terms. Benchmark methodology and measured results live under [benchmarks](benchmarks/README.md). Representation cost is distinct from model quality or native harness reliability.
+
+## Modules and seams
+
+```text
+CLI adapter ─┬─ read module ───────────── selection + scan + bounded text
+MCP adapter ─┤
+             ├─ edit module ───────────── exact blocks + lifecycle
+             └─ apply module ──────────── manifests/patches + edit plan
+                         └─ transaction module ─ snapshots + commit + recovery
+Receipts ──── output module ───────────── compact / JSON / human presentation
+```
+
+The read module accepts a query and returns bounded output, absorbing regex validation, selection, limits and partial IO reporting. Peek uses borrowed line cursors and merges context online; find visits hits without retaining a match list. Once the byte prefix is full, unlimited find still counts selected hits for compatible receipts but stops formatting discarded hits. Both transport adapters share this seam; fixes and contract tests apply to both.
+
+The edit module preserves literal bytes, rejects missing or ambiguous exact blocks (including overlaps), and skips identical writes. The apply module parses native/JSON/YAML/text patches into operations and validates their edit plan. MCP direct `edits` are ordered exact replacements using that same plan; they do not bypass transaction validation.
+
+MCP advertises `edit/apply/peek/find/recover` by default. `xnip mcp --toolset full` restores all ten tools, including specialized line editing and diagnostics. CLI keeps all commands. Schemas omit presentation-only titles and nullable alternatives for optional fields; optional inputs can be omitted. Unknown MCP fields are rejected so a misspelled preview flag cannot quietly become a write.
 
 ## Layout
 
-```
-xnip/
-├── Cargo.toml         # workspace = [".", "xtask"]
-├── rust-toolchain.toml  # stable, edition 2024; MSRV 1.89
-├── src/
-│   ├── lib.rs         # crate root; re-exports public surface
-│   ├── main.rs        # binary entry → cli::run
-│   ├── cli/           # clap derive + per-subcommand glue
-│   │   ├── mod.rs     # Cli/Command + dispatch
-│   │   ├── common.rs  # shared LocatorArgs / ContentArgs
-│   │   └── {peek,find,replace,insert,move_op,indent,apply}.rs
-│   ├── core/          # byte operations plus content/persistence IO
-│   │   ├── location.rs   # 5 locators + resolve()
-│   │   ├── content.rs    # 4 content sources + load
-│   │   ├── atomic.rs     # tempfile + atomic rename + optional .bak
-│   │   ├── diff.rs       # similar-based unified diff
-│   │   ├── revert.rs     # symmetric inversion helpers
-│   │   └── ops/          # one file per write-op + peek/find
-│   ├── apply/         # batch edit pipeline
-│   │   ├── mod.rs        # Op enum + Target / OpContent / IndentKind
-│   │   ├── parse_native.rs
-│   │   ├── parse_json.rs
-│   │   ├── parse_yaml.rs   # delegates to JSON via serde_json::Value
-│   │   ├── detect.rs       # auto-format detection
-│   │   └── commit.rs       # two-phase commit executor
-│   ├── output/
-│   │   ├── exit.rs    # exit-code constants
-│   │   ├── human.rs   # placeholder; per-cmd glue currently inlines plain output
-│   │   └── json.rs    # NDJSON Event enum + emit()
-│   └── doctor.rs      # `xnip doctor` self-diagnostic
-├── tests/             # assert_cmd integration tests, one file per command
-├── benches/           # criterion benchmarks
-├── docs/              # SKILL / apply-format / examples / error-codes / architecture
-├── integrations/      # per-tool template directories
-└── xtask/             # `cargo run -p xtask -- sync-integrations`
-```
+- `src/cli`: argument parsing and terminal adapter.
+- `src/mcp`: stdio adapter, tool discovery and structured receipts.
+- `src/core/read.rs`: shared read queries and bounded rendering.
+- `src/core/edit.rs`: guarded literal edits and standalone file lifecycle.
+- `src/core/ops`, `location.rs`, `content.rs`: byte transformations, locators and content loading.
+- `src/core/transaction.rs`: edit plans, snapshots, commit and recovery.
+- `src/apply`: manifest/patch parsing and batch planning.
+- `src/output`: receipts, UTF-8-safe preview budgets, human/JSON output and exit codes.
+- `src/update`: background leases, singleton scheduling, release verification and platform replacement.
+- `tests`: observable CLI/MCP and distribution contracts; core/apply contracts are colocated with their modules.
+- `benches`: core latency benchmarks and offline editing-cost comparisons.
+- `docs/SKILL.md`: canonical agent guide, copied by `xtask sync-integrations`.
 
-## Data flow for write commands
+## Output contracts
 
-```
-clap derive  → cli::<cmd>::Args
-            → LocatorArgs::into_locator → core::location::Locator
-            → ContentArgs::into_content → core::content::Content
-            → core::content::load_path(target)
-            → core::ops::<cmd>::<fn>(bytes, locator, payload, ...)
-            → core::atomic::atomic_write(target, new_bytes, backup)
-```
+`edit/apply/recover` default to one compact receipt on stderr; previews print a bounded diff on stdout. `--output json` returns one complete JSON receipt, including a full diff when requested. `--output human` prints the full diff and expanded human receipt. `apply --json` is the existing NDJSON progress format and conflicts with a nondefault `--output`. Errors retain their exit codes.
 
-## Data flow for `apply`
+MCP ordinary writes return `written`, with no repeated input path or operation; complete details stay in structured metadata. Multiple-match counts, batch path counts and retained journals remain visible. Preview/check explicitly state `written=false`; previews append a bounded diff without duplicating it in metadata. Checks and non-preview rename receipts do not build an unused diff. Preview payloads default to 12,000 bytes; `max_bytes=0` requests a full preview. Read output has independent item and byte budgets; zero disables the respective cap. A truncation notice may exceed the payload budget by a small fixed amount.
 
-```
-manifest text
-  → apply::detect::parse_auto / parse_with → Vec<Op>
-  → apply::commit::execute(ops, opts)
-       ├─ expand_files_from
-       ├─ group by file
-       ├─ sort each group by start-line desc
-       ├─ phase 1: read → fold ops → tmpfile per file
-       └─ phase 2: atomic-rename each tmpfile (+ optional .bak)
-  → ExitCode (0 / 3 / 4)
-```
+## Persistence and limits
 
-## Locator semantics
+Writes use temporary files in the target directory. Batch commit is atomic per file, with recovery snapshots and rollback attempts on errors. It does not provide cross-file atomic visibility or a lock against arbitrary external writers. Expected bytes are preconditions, not locks. Interrupted or incomplete recovery must be inspected before retrying.
 
-`core::location::Locator` is the single canonical type used by both CLI args
-and apply ops:
+Pure renames use no-clobber hard-link/unlink and require one filesystem. Rewritten files retain ordinary permissions but not complete ownership/ACL/xattr/hard-link identity. Create never overwrites; deletion refuses directories and symbolic links. Text patches reject directory traversal, unsupported binary/mode changes and ambiguous context.
 
-- `Lines { start, end }` — 1-based inclusive line range
-- `MatchLine { regex, occurrence }` — Nth line matching regex
-- `Between { start, end, ..., inclusive }` — literal anchors (line-level `contains`)
-- `BetweenRe { start, end, ..., inclusive }` — regex anchors
-- `Pattern { regex, count }` — byte-level matches across lines (replace only)
+Reads still load files into memory; bounded rendering limits returned context, not input file memory. MCP performs synchronous filesystem work on a single runtime thread. Workspace sandboxing, semantic symbol analysis and binary/document editing belong to the invoking harness. Full power-loss durability is not guaranteed.
 
-`resolve(loc, content) → Resolved { start_line, end_line }` is the entry point
-for the first four; `Pattern` is consumed directly by `core::ops::replace::replace_pattern`.
+## Background update module
 
-## Three formats, one schema
+The update module absorbs scheduling, process leases, singleton coordination and private markers behind `begin_usage` and the hidden worker entry. Editing never makes a network request. The policy is a pure decision seam; CLI/MCP lifetimes and verified release delivery are concrete adapters exercised by real-process contracts.
 
-`parse_yaml` is implemented as `serde_saphyr → serde_json::Value → parse_json::parse`.
-This shares field validation between JSON and YAML. The native parser produces the same
-`Vec<Op>` shape; the integration test `apply_three_formats_produce_equivalent_results`
-asserts equivalence end-to-end.
+A new generation after idle opens a short startup opportunity. Older live leases cancel that opportunity; a 24-hour prepared-release deadline bypasses usage-based deferral. Existing images continue running across installation. Windows workers explicitly disable handle inheritance so background HTTP cannot delay the agent's output EOF. See [update policy](updates.md) and [update tests](update-testing.md).
 
-## Atomic write contract
+## Validation
 
-`core::atomic::atomic_write`:
-
-1. Create a temp file in `target.parent()` (so rename stays on the same FS).
-2. `write_all` → preserve permissions → `sync_all`.
-3. Optionally stage an atomic backup at `<target>.bak` if `make_bak`.
-4. `tmp.persist(target)` — atomic rename on POSIX & NTFS.
-
-Failures at step 1/2/3 leave the original file untouched. Failure at step 4
-aborts with the temp file dropped automatically.
-
-## Why not a shared "Edit AST" beyond `Op`?
-
-`Op` is intentionally close to CLI args. Each `core::ops::<cmd>` function is a
-pure `(bytes, params) → Vec<u8>` transformation. The result: every CLI command
-and apply share core algorithms, while interface validation and output handling remain separate.
-
-## Persistence and operational limits
-
-`core::edit` implements creation, literal block replacement and regular-file deletion, shared by CLI edit and MCP xnip_edit. Literal replacement uses memmem matching rather than regex escaping. Create uses no-clobber persistence; exact replacements detect ambiguity and avoid unnecessary writes. Preview/check are computed without creating directories.
-
-Both individual edits and `apply` use `core::atomic::prepare_write` to stage and sync data while preserving permissions. `apply` canonicalizes target paths before grouping, so relative/absolute paths and symlinks to one target share one staged file. Symbolic links remain intact. Backup names append `.bak`; backup paths that are also batch targets are rejected.
-
-`core::transaction::Plan` coalesces final file states after validation. Before commit it writes and syncs recovery snapshots with SHA256 integrity values. It detects changes before writing and attempts rollback after failure; `recover` validates retained snapshots and refuses detected content/path conflicts. Pure same-filesystem moves preserve identity with no-clobber hard-link/unlink; rewritten files retain ordinary permissions but not full ownership/ACL/xattr/hard-link identity. This is not cross-file atomic visibility or a lock against arbitrary external writers, and full power-loss durability is not guaranteed. See [recovery](recovery.md).
-
-Read and edit paths currently load complete files into memory. `find` now bounds retained hits and scans line offsets incrementally; literal regex replacement scans matches once. `apply --check` and `--dry-run` avoid temporary-file writes, and parallelism is bounded. Repeated operations on the same large file still allocate complete buffers; streaming or a shared line index is a future optimization that needs benchmarks and explicit edit-order semantics.
-
-MCP shares the write core and has stdio protocol tests. Its synchronous file work runs on a single runtime thread; large requests can delay other requests and cancellation. Deploy with a trusted local client and an appropriate working directory. Workspace sandboxing and resource limits are not provided by xnip.
-
-## Default editor capability coverage
-
-| Capability | Implemented behavior | Boundary |
-|---|---|---|
-| New files and directories | `edit --create` and batch `create`; no overwrite | Ordinary permission defaults |
-| Context replacement | Unique literal blocks, line anchors, unified/apply_patch text hunks | No fuzzy whitespace guessing or binary patches |
-| File deletion | Standalone and ordered batch delete, optional precondition/backup | Regular files only |
-| Rename | `edit --rename-to`, batch rename, patch moves | Absent destination; pure moves require hard-link support/same filesystem; no case-only rename |
-| Editor previews | CLI, `xnip_edit`, `xnip_apply`, recovery dry-run | Legacy individual line tools still use their original interfaces |
-| Dependent batches | Input-order virtual plan for lifecycle/patches; `--sequential` for legacy ops | Intermediate states are coalesced, not externally visible steps |
-| Recovery | Persisted snapshots, automatic rollback attempt, conflict-checked explicit recovery | Not a distributed transaction, writer lock or persistent undo history |
-
-The previously identified rename, text patch import, batch file lifecycle and failure-recovery gaps are implemented. Semantic symbol analysis and binary/document formats remain outside this text editor's scope. File-mode patches, cross-filesystem moves and stronger concurrent-writer isolation are explicitly rejected/limited rather than silently approximated.
-
-## Validation and performance
-
-Regression cases are in `tests/safety.rs`; installer contracts are in `tests/install_sh.py` and `tests/install_ps1.ps1`. CI exercises Linux, macOS and Windows, minimum Rust 1.89, strict Clippy, dependency checks and source packaging. Generated GitHub skill/reference files and the generic skill share canonical docs through `xtask sync-integrations`.
-
-A Criterion quick run measured approximately 0.20 ms for a middle-line replacement over 10K lines, 0.26 ms for a literal pattern replacement over 10K lines, 0.67 ms for indentation over 10K lines, and 4.3 ms for all matches over 100K lines. A first-match-only scan over the same in-memory input took about 80 ns. These are local core-function measurements, exclude process startup and filesystem IO, and are not a before/after comparison or a cross-platform performance guarantee.
-
-Dependency fixes remove `unsafe-libyaml` (RUSTSEC-2024-0449) and upgrade past the advisories for anyhow (RUSTSEC-2026-0190) and crossbeam-epoch (RUSTSEC-2026-0204). YAML parsing now uses [serde-saphyr](https://docs.rs/serde-saphyr/latest/serde_saphyr/), with an explicit Rust 1.89 minimum. Release packaging and verification follow [the maintainer procedure](releasing.md).
+Run `cargo test --workspace --locked`, `cargo clippy --workspace --all-targets --locked -- -D warnings` and `cargo fmt --all --check`. The [test map](testing.md) covers suites and platform-specific runners. Tests use independently computed byte/sequence oracles and public request interfaces; private forwarding layout is not a test contract.

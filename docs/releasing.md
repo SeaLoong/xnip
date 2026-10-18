@@ -1,45 +1,82 @@
-# Release procedure
+# Builds and releases
 
-The release workflow builds six OS/architecture archives and publishes a GitHub Release only after its validation and build jobs succeed. GitHub Releases are the supported distribution channel. crates.io publishing is a separate action and is not performed by this workflow.
+CI checks every configured branch push and pull request. A successful push to the repository's default branch also creates a development prerelease when release inputs changed. Tag releases and manual build rehearsals use the same six-platform [artifact workflow](../.github/workflows/build-release.yml).
 
-## Prepare the release commit
+## Automatic development prereleases
 
-1. Update the root package version in `Cargo.toml` and regenerate `Cargo.lock` if the version changes. Keep `xtask` unpublished.
-2. Move Unreleased entries into a dated `CHANGELOG.md` release section and update version-pinned installation examples. Keep the release date in the project's Asia/Shanghai timezone.
-3. Review README, CLI examples, manifest rules, MCP differences, compatibility limits and installer asset names. Run `cargo run --locked -p xtask -- sync-integrations` and commit generated files too.
-4. Run the checks in [CONTRIBUTING.md](../CONTRIBUTING.md), commit and push. Wait for every job in the `ci` workflow on that exact commit, including Linux, macOS and Windows tests.
+The [release planner](../.github/scripts/release.py) compares every path in the complete push range, including renamed and deleted paths. It does not rely on GitHub's limited webhook file list or workflow path filters. Initial pushes inspect the full initial tree. A missing comparison commit fails the plan rather than guessing that nothing changed.
 
-Do not move an existing published version tag to another commit. If a released version needs a fix, increment the version and publish another release.
+| Input changes | Automatic prerelease |
+|---|---|
+| Application files under `src/` | Yes, except dedicated `contract_tests.rs` files |
+| Cargo manifests/lockfile, build script, Rust toolchain, Cross and `.cargo/` configuration | Yes |
+| Installers, licenses and third-party notices | Yes |
+| Integration packages, editing guide and its six packaged references, `xtask` generator | Yes |
+| Release planning/publication scripts and release/artifact workflows | Yes |
+| General README/docs, tests, benchmarks, CI-check-only changes | No; README content is included with the next qualifying release |
+| Pull requests, including forks | Checks only; no publication |
+| Nondefault branch pushes | No publication |
 
-## Rehearse and tag
+The exact allowlist lives in `release_relevant` and its constants, with [offline contracts](../tests/release_contract.py). CI still runs its checks for changes that do not publish.
 
-Use the manual workflow to test all release builds without publishing:
+For a stable Cargo version `0.3.0`, CI generates `0.3.1-dev.<run_number>.g<commit12>`. An already-prerelease Cargo version retains its major/minor/patch core. Version, tag and binary `--version` agree: only the isolated build checkout's root manifest and matching lockfile entry are stamped. The source branch is never rewritten. Rerunning a workflow keeps the same tag; `run_attempt` is excluded.
+
+Publication starts only after formatting, linting, all platform tests, dependency policy, MSRV, package/integration checks and release contracts pass. Six build jobs produce Linux musl, macOS and Windows archives for x86_64 and ARM64. Native runner smoke tests check the embedded version and doctor output.
+
+A [publisher](../.github/scripts/publish_release.py) verifies all 21 expected assets and six archive SHA256 sidecars before creating or completing a draft. It publishes only after all uploads are present. Development releases set `prerelease=true` and `make_latest=false`; they never replace stable `latest`.
+
+The publisher serializes calls for the same version. An existing tag must point to the same source commit. A published complete release is left intact on rerun; a draft can resume. A conflicting tag or incomplete published release fails instead of replacing published assets. Different versions can build concurrently; completion order is not commit order.
+
+Install a preview by its explicit tag:
+
+```sh
+XNIP_VERSION=v0.3.1-dev.123.gabcdef123456 sh install.sh
+```
+
+```powershell
+$env:XNIP_VERSION = 'v0.3.1-dev.123.gabcdef123456'
+./install.ps1
+```
+
+The default installers and [silent updater](updates.md) remain on stable releases. A preview based on the next patch cannot be replaced by the previous stable version.
+
+## Stable release procedure
+
+1. Update the root package version in `Cargo.toml` and regenerate its `Cargo.lock` entry. Keep `xtask` unpublished.
+2. Move Unreleased entries into a dated `CHANGELOG.md` section and update pinned installation examples. Use the project's Asia/Shanghai timezone for the release date.
+3. Review user-facing contracts and compatibility limits. Run `cargo run --locked -p xtask -- sync-integrations` and commit generated integration files too.
+4. Run [contributor checks](../CONTRIBUTING.md), commit and push. Wait for all CI checks on that exact commit.
+
+A manual rehearsal runs checks and all release builds without publishing:
 
 ```sh
 gh workflow run release.yml --ref master
 gh run list --workflow release.yml --limit 3
 ```
 
-Inspect the run and its artifacts. Once checks and all target builds pass on the intended commit, create an annotated tag matching Cargo's version:
+Inspect all artifacts, then create an annotated tag matching Cargo:
 
 ```sh
-git tag -a v0.2.0 -m "xnip v0.2.0"
-git push origin v0.2.0
+git tag -a v0.3.1 -m "xnip v0.3.1"
+git push --atomic origin master v0.3.1
 ```
 
-The tag workflow checks the tag/version match and repeats validation. It packages executable, README and license; generates archive SHA256 sidecars; and uploads six binary archives, six sidecars, two installers and seven integration archives (including the Codex instruction package added after v0.2.0). Build commit metadata comes from `XNIP_BUILD_COMMIT`; `Cross.toml` passes it into Linux build containers.
+The example assumes Cargo has been set to that new unpublished version. Never move an existing published tag. Push the release commit and tag atomically: the planner sees a matching stable tag at the same commit and skips a duplicate development prerelease while retaining all branch checks. The tag workflow verifies Cargo/tag equality, repeats checks, builds, and publishes from a complete draft. Stable release notes use the matching, nonempty changelog section. Tags containing a SemVer prerelease identifier are marked prerelease and do not become latest.
 
-Use the release notes to describe capabilities, installation, compatibility and limitations. Treat v0.x API/behavior changes explicitly; do not promise universal undo or multi-file transactions.
+Archives contain the executable, README, MIT license and third-party notices. Assets comprise six binary archives, six checksums, two installers and seven integration archives. Build commit metadata comes from `XNIP_BUILD_COMMIT`; `Cross.toml` forwards it into Linux containers.
 
 ## Verify publication
 
-- Confirm the release is neither draft nor prerelease, its tag resolves to the tested commit, and all 20 expected assets exist.
-- Download the actual binary archive and checksum, verify the hash, and run `--version` and `doctor`.
-- Exercise the published installer with an isolated installation directory. Verify both the explicit version and default `latest` channel. Stop running Windows MCP processes before replacing a normal installation.
-- Check the latest-download links and version-pinned source install command. Record the CI/release URLs in the completion report.
+- Confirm the tag resolves to the tested commit and all 21 assets exist.
+- Check prerelease/latest flags for the intended channel.
+- Download the archive and checksum, verify SHA256, and run `--version` and `doctor`.
+- Exercise an installer in an isolated directory. Stable releases should work with both the explicit tag and default latest channel.
+- Record the CI/release URLs with the validation results.
 
-For a failure before publication, fix the branch, push, and rerun the rehearsal. If a tag build fails before publishing, prefer a corrected version rather than rewriting a tag that users may already have fetched. Never delete successful unrelated releases or bypass required checks.
+If uploading fails, retry the same run to resume its draft. A published immutable release is never repaired by overwriting its assets; use a new version. Ordinary default-branch publication uses the publish job's `contents: write` token. [GitHub requires additional workflow permission](https://docs.github.com/en/rest/releases/releases?apiVersion=latest) when an older target commit changes workflow files relative to the current default branch. This can happen after a concurrent workflow update. An optional repository secret `RELEASE_TOKEN`, scoped to Contents and Workflows write for this repository, is passed only to the publishing step; without it that exceptional request fails explicitly and can be retried later. No extra secret is needed for the ordinary current-default-HEAD case.
+
+Creating a tag with `GITHUB_TOKEN` does not start another release workflow, so CI calls the artifact workflow directly in the same run. The tag workflow also excludes the reserved `-dev.*` namespace, preventing duplicate release runs when an optional token does generate a tag event. See [GitHub's trigger rules](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow).
 
 ## Optional crates.io publication
 
-If the maintainer separately chooses to distribute through crates.io, verify ownership/name availability, run `cargo publish --dry-run --locked`, then publish with the appropriate account credential. Add `cargo install xnip --locked` to installation instructions only after that distribution has been verified. Do not place registry tokens in the repository or release notes.
+crates.io publishing is separate and is not performed by these workflows. Verify ownership/name availability, run `cargo publish --dry-run --locked`, then publish with the appropriate credential only when that distribution is intended. Document `cargo install xnip --locked` only after verifying it. Never place registry tokens in release notes or the repository.

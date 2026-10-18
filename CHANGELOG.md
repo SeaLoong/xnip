@@ -4,12 +4,39 @@ User-visible changes are recorded here. Versions follow Semantic Versioning; com
 
 ## [Unreleased]
 
-- Provide Codex AGENTS instructions and a plain on-demand guide as the default integration, keeping editing automatic without exposing a `$xnip-editing` command. Document migration from the optional skill integration and package the guide with its references.
+## [0.3.0] - 2026-10-18
 
-- Add readable MCP tool titles and explicit read/write annotations without changing tool names or inputs.
-- Share concise CLI/MCP edit, batch and recovery summaries; show rename destinations, distinguish previews/checks/no-ops, and bound human batch path lists while retaining complete structured paths and diffs.
-- Return output schemas and structured change metadata for MCP edit/apply/recover, with fenced full preview diffs; preserve read/search output and existing error semantics.
-- Color terminal edit/recovery previews consistently with apply; preserve plain piped diffs, quiet behavior, `apply --check` stdout and NDJSON events.
+Smaller edit inputs and responses, byte-preserving operations, and silent background updates. The README now includes reproducible native-editor benchmark conclusions and an overview chart.
+
+### Compatibility
+
+- MCP advertises five tools by default: edit, apply, peek, find and recover. Use `xnip mcp --toolset full` to expose all ten tools.
+- Reads default to 200 lines or 100 search hits and 12,000 payload bytes. Previews also default to 12,000 bytes; zero disables the corresponding cap. Truncation is explicit, including quiet mode.
+- MCP rejects unknown arguments, including misspelled preview/check flags.
+- `apply --check` no longer writes stdout `OK`. Use structured JSON receipts for scripts.
+- Independent overlapping line edits are rejected; use `--sequential` for dependent operations.
+
+### Editing and context
+
+- Accept direct ordered `edits` arrays for MCP exact batches, without a nested manifest string.
+- Reduce ordinary MCP write text to `written`; retain complete structured results and exceptional details. CLI defaults to one compact receipt, with JSON and expanded human output available.
+- Share CLI/MCP read selection and budget behavior. Stream line selections and search hits without retaining a full line index or match list. Skip unused diffs during checks and non-preview renames.
+- Fix empty-marker panics, context overflow, IO exit classification and missing retained rename journals.
+- Provide concise Codex AGENTS instructions and an on-demand guide; synchronize the six editing references across integrations.
+
+### Silent updates
+
+- Add detached, nonblocking update checks with an OS-lock singleton per installation. Live MCP leases and a 30-minute CLI idle tail defer installation until the next eligible use; a prepared update has a 24-hour maximum deferral.
+- Prefer GH-Proxy for public release metadata and assets; retry failed delivery directly against GitHub within one bounded HTTP budget. `XNIP_UPDATE_PROXY=direct` selects the official HTTPS route alone.
+- Verify stable newer releases, archive checksums, paths and executable hashes. Existing mapped processes keep running across replacement. Windows state replacement supports concurrent readers without sleeps or retries.
+- Keep checks, failures, fallback markers and retained backups in private state. No update notifications or text enter CLI/MCP responses.
+
+### Evidence and distribution
+
+- Execute native Codex, Gemini CLI, OpenCode and aider editing tools against xnip on 13 scenarios, with three repetitions, byte-level oracles, paired relative costs and reproducible charts. These measure editing executors, not full agent/model token usage.
+- Rewrite behavior contracts around independent byte and sequence oracles, including lifecycle, recovery, budgets, transports and updater subprocesses.
+- Automatically build six release targets after qualifying default-branch changes and successful CI. Verify all 21 assets in a draft before publishing; support safe reruns and protect existing tags/assets.
+- A matching stable tag on the same commit suppresses a duplicate automatic prerelease. Stable releases include the matching changelog section in their release notes.
 
 ## [0.2.0] - 2026-10-16
 
@@ -69,6 +96,7 @@ First public release of xnip, a CLI and MCP stdio server for precise local text 
 - MCP write tools commit immediately; preview/check modes are available through the CLI. The server uses the launching user's filesystem permissions and is intended for trusted local clients.
 - Native CLI arguments are literal shell arguments; no automatic `\n` decoding or newline-style conversion is performed.
 
-[Unreleased]: https://github.com/SeaLoong/xnip/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/SeaLoong/xnip/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/SeaLoong/xnip/releases/tag/v0.3.0
 [0.2.0]: https://github.com/SeaLoong/xnip/releases/tag/v0.2.0
 [0.1.1]: https://github.com/SeaLoong/xnip/releases/tag/v0.1.1

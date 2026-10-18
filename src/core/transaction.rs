@@ -248,6 +248,15 @@ impl Plan {
             .map(|(p, e)| (p.clone(), e))
             .collect()
     }
+    /// Changed paths without constructing a diff for checks or error receipts.
+    pub fn changed_files(&self) -> Vec<PathBuf> {
+        self.entries
+            .iter()
+            .filter(|(_, entry)| entry.before != entry.after)
+            .map(|(path, _)| path.clone())
+            .collect()
+    }
+
     pub fn preview(&self) -> Report {
         let changes = self.changed();
         let mut diff = String::new();
@@ -328,7 +337,7 @@ impl Plan {
             }
         }
         let journal = Journal::save(&changes)?;
-        crate::note!(
+        crate::trace!(
             "xnip transaction: recovery journal {}",
             journal.directory.display()
         );
@@ -717,103 +726,94 @@ pub fn recover(directory: &Path, check: bool) -> Result<Report> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
     #[test]
-    fn pure_move_preview_does_not_dump_unchanged_contents() {
-        let dir = tempfile::tempdir().unwrap();
-        let from = dir.path().join("a");
-        let to = dir.path().join("b");
-        fs::write(&from, b"unchanged payload\n").unwrap();
+    fn failure_at_each_commit_step_restores_every_original_and_retains_repeatable_recovery() {
+        for failure_step in 0..3 {
+            let directory = tempfile::tempdir().unwrap();
+            let paths = ["a", "b", "c"].map(|name| directory.path().join(name));
+            fs::write(&paths[0], b"original").unwrap();
+            fs::write(&paths[1], b"delete me").unwrap();
+            let mut plan = Plan::default();
+            plan.update(&paths[0], b"updated".to_vec()).unwrap();
+            plan.delete(&paths[1], None).unwrap();
+            plan.create(&paths[2], b"created".to_vec()).unwrap();
+            let error = plan
+                .commit_with_hook(false, &mut |step| {
+                    if step == failure_step {
+                        bail!("injected failure at {step}");
+                    }
+                    Ok(())
+                })
+                .unwrap_err();
+            let error = error.downcast_ref::<CommitError>().unwrap();
+            assert_eq!(error.rollback, "completed");
+            assert_eq!(fs::read(&paths[0]).unwrap(), b"original");
+            assert_eq!(fs::read(&paths[1]).unwrap(), b"delete me");
+            assert!(!paths[2].exists());
+            for check in [true, false, false] {
+                assert!(recover(&error.journal, check).unwrap().files.is_empty());
+            }
+            fs::remove_dir_all(&error.journal).unwrap();
+        }
+    }
+
+    #[test]
+    fn recovery_of_interrupted_move_checks_integrity_and_preserves_preview_bytes() {
+        let directory = tempfile::tempdir().unwrap();
+        let from = directory.path().join("from");
+        let to = directory.path().join("to");
+        fs::write(&from, b"unchanged payload").unwrap();
         let mut plan = Plan::default();
         plan.rename(&from, &to, None).unwrap();
         let preview = plan.preview();
         assert_eq!(preview.files.len(), 2);
         assert!(preview.diff.contains("# rename "));
         assert!(!preview.diff.contains("unchanged payload"));
-    }
-    #[test]
-    fn batch_lifecycle_and_no_clobber_move() {
-        let dir = tempfile::tempdir().unwrap();
-        let a = dir.path().join("a");
-        let b = dir.path().join("b");
-        let c = dir.path().join("new/c");
-        fs::write(&a, b"original").unwrap();
-        let mut plan = Plan::default();
-        plan.rename(&a, &b, None).unwrap();
-        plan.create(&c, b"created".to_vec()).unwrap();
-        plan.commit(false).unwrap();
-        assert!(!a.exists());
-        assert_eq!(fs::read(b).unwrap(), b"original");
-        assert_eq!(fs::read(c).unwrap(), b"created");
-    }
-    #[test]
-    fn failed_commit_rolls_back_and_journal_is_repeatable() {
-        let dir = tempfile::tempdir().unwrap();
-        let a = dir.path().join("a");
-        let b = dir.path().join("b");
-        fs::write(&a, b"old").unwrap();
-        let mut plan = Plan::default();
-        plan.update(&a, b"new".to_vec()).unwrap();
-        plan.create(&b, b"created".to_vec()).unwrap();
-        let error = plan
-            .commit_with_hook(false, &mut |step| {
-                if step == 1 {
-                    bail!("injected IO failure");
-                }
-                Ok(())
-            })
-            .unwrap_err();
-        let error = error.downcast_ref::<CommitError>().unwrap();
-        assert_eq!(error.rollback, "completed");
-        assert_eq!(fs::read(&a).unwrap(), b"old");
-        assert!(!b.exists());
-        assert_eq!(
-            recover(&error.journal, false).unwrap().files,
-            Vec::<PathBuf>::new()
-        );
-        fs::remove_dir_all(&error.journal).unwrap();
-    }
-    #[test]
-    fn recovery_restores_interrupted_move_and_detects_corruption() {
-        let dir = tempfile::tempdir().unwrap();
-        let a = dir.path().join("a");
-        let b = dir.path().join("b");
-        fs::write(&a, b"old").unwrap();
-        let mut plan = Plan::default();
-        plan.rename(&a, &b, None).unwrap();
         let journal = Journal::save(&plan.changed()).unwrap();
-        fs::hard_link(&a, &b).unwrap();
-        fs::remove_file(&a).unwrap();
-        recover(&journal.directory, true).unwrap();
-        assert!(!a.exists());
+        fs::hard_link(&from, &to).unwrap();
+        fs::remove_file(&from).unwrap();
+        assert_eq!(recover(&journal.directory, true).unwrap().files.len(), 2);
+        assert!(!from.exists());
+        assert_eq!(fs::read(&to).unwrap(), b"unchanged payload");
         recover(&journal.directory, false).unwrap();
-        assert_eq!(fs::read(&a).unwrap(), b"old");
-        assert!(!b.exists());
+        assert_eq!(fs::read(&from).unwrap(), b"unchanged payload");
+        assert!(!to.exists());
         fs::write(journal.directory.join("0.before"), b"corrupt").unwrap();
+        assert!(recover(&journal.directory, true).is_err());
         assert!(recover(&journal.directory, false).is_err());
-        fs::remove_dir_all(journal.directory).unwrap();
+        assert_eq!(fs::read(&from).unwrap(), b"unchanged payload");
+        fs::remove_dir_all(&journal.directory).unwrap();
     }
+
     #[test]
-    fn rollback_preserves_external_changes_and_retains_recovery_data() {
-        let dir = tempfile::tempdir().unwrap();
-        let a = dir.path().join("a");
-        let b = dir.path().join("b");
-        fs::write(&a, b"old").unwrap();
-        let mut plan = Plan::default();
-        plan.update(&a, b"new".to_vec()).unwrap();
-        plan.create(&b, b"new".to_vec()).unwrap();
-        let error = plan
-            .commit_with_hook(false, &mut |step| {
-                if step == 1 {
-                    fs::write(&a, b"external")?;
-                    bail!("injected");
-                }
-                Ok(())
-            })
-            .unwrap_err();
-        let error = error.downcast_ref::<CommitError>().unwrap();
-        assert!(error.rollback.starts_with("incomplete"));
-        assert_eq!(fs::read(&a).unwrap(), b"external");
-        assert!(recover(&error.journal, false).is_err());
-        fs::remove_dir_all(&error.journal).unwrap();
+    fn rollback_and_recovery_refuse_unknown_external_changes_at_every_entry() {
+        for external_at in ["a", "b"] {
+            let directory = tempfile::tempdir().unwrap();
+            let a = directory.path().join("a");
+            let b = directory.path().join("b");
+            let external = directory.path().join(external_at);
+            fs::write(&a, b"old").unwrap();
+            let mut plan = Plan::default();
+            plan.update(&a, b"new".to_vec()).unwrap();
+            plan.create(&b, b"created".to_vec()).unwrap();
+            let error = plan
+                .commit_with_hook(false, &mut |step| {
+                    if step == 1 {
+                        fs::write(&external, b"external")?;
+                        bail!("injected failure");
+                    }
+                    Ok(())
+                })
+                .unwrap_err();
+            let error = error.downcast_ref::<CommitError>().unwrap();
+            assert!(error.rollback.starts_with("incomplete"));
+            assert_eq!(fs::read(&external).unwrap(), b"external");
+            for check in [true, false] {
+                assert!(recover(&error.journal, check).is_err());
+            }
+            assert_eq!(fs::read(&external).unwrap(), b"external");
+            fs::remove_dir_all(&error.journal).unwrap();
+        }
     }
 }

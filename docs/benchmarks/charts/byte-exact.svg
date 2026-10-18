@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1040" height="596" viewBox="0 0 1040 596" role="img" aria-labelledby="title desc">
+<title id="title">Observed file results</title><desc id="desc">Strict byte-exact tasks and extra tasks that match only after CRLF to LF normalization. Final newline remains significant.</desc>
+<style>text{font-family:Segoe UI,Arial,sans-serif;fill:#192b3a;font-size:13px}.small{font-size:11px;fill:#526575}.title{font-size:21px;font-weight:600}.tick{fill:#dfe6eb;stroke:none}</style>
+<rect width="1040" height="596" fill="#fff"/>
+<text x="28" y="36" class="title">Observed file results</text>
+<text x="28.00" y="61.00" class="small" text-anchor="start">Dark green: byte-exact. Pale green: additional LF-normalized matches. Final newline remains significant.</text>
+<text x="28.00" y="80.00" class="small" text-anchor="start">Tasks count only when every repetition agrees with the oracle; this is a fixed fixture set.</text>
+<text x="28.00" y="118.00" class="" text-anchor="start">xnip-edit</text>
+<rect x="255" y="102" width="540" height="22" rx="3" fill="#edf0f3"/>
+<rect x="255" y="102" width="540.00" height="22" fill="#b8ded4"/>
+<rect x="255" y="102" width="540.00" height="22" fill="#007f73"/>
+<text x="815.00" y="118.00" class="" text-anchor="start">13/13 exact | 13/13 LF</text>
+<text x="28.00" y="154.00" class="" text-anchor="start">codex-apply-patch</text>
+<rect x="255" y="138" width="540" height="22" rx="3" fill="#edf0f3"/>
+<rect x="255" y="138" width="498.46" height="22" fill="#b8ded4"/>
+<rect x="255" y="138" width="498.46" height="22" fill="#007f73"/>
+<text x="815.00" y="154.00" class="" text-anchor="start">12/13 exact | 12/13 LF</text>
+<text x="28.00" y="190.00" class="" text-anchor="start">gemini-edit-context</text>
+<rect x="255" y="174" width="540" height="22" rx="3" fill="#edf0f3"/>
+<rect x="255" y="174" width="540.00" height="22" fill="#b8ded4"/>
+<rect x="255" y="174" width="540.00" height="22" fill="#007f73"/>
+<text x="815.00" y="190.00" class="" text-anchor="start">13/13 exact | 13/13 LF</text>
+<text x="28.00" y="226.00" class="" text-anchor="start">gemini-edit-minimal</text>
+<rect x="255" y="210" width="540" height="22" rx="3" fill="#edf0f3"/>
+<rect x="255" y="210" width="540.00" height="22" fill="#b8ded4"/>
+<rect x="255" y="210" width="540.00" height="22" fill="#007f73"/>
+<text x="815.00" y="226.00" class="" text-anchor="start">13/13 exact | 13/13 LF</text>
+<text x="28.00" y="262.00" class="" text-anchor="start">opencode-edit</text>
+<rect x="255" y="246" width="540" height="22" rx="3" fill="#edf0f3"/>
+<rect x="255" y="246" width="540.00" height="22" fill="#b8ded4"/>
+<rect x="255" y="246" width="540.00" height="22" fill="#007f73"/>
+<text x="815.00" y="262.00" class="" text-anchor="start">13/13 exact | 13/13 LF</text>
+<text x="28.00" y="298.00" class="" text-anchor="start">opencode-apply-patch</text>
+<rect x="255" y="282" width="540" height="22" rx="3" fill="#edf0f3"/>
+<rect x="255" y="282" width="498.46" height="22" fill="#b8ded4"/>
+<rect x="255" y="282" width="456.92" height="22" fill="#007f73"/>
+<text x="815.00" y="298.00" class="" text-anchor="start">11/13 exact | 12/13 LF</text>
+<text x="28.00" y="334.00" class="" text-anchor="start">aider-diff-platform</text>
+<rect x="255" y="318" width="540" height="22" rx="3" fill="#edf0f3"/>
+<rect x="255" y="318" width="498.46" height="22" fill="#b8ded4"/>
+<rect x="255" y="318" width="41.54" height="22" fill="#007f73"/>
+<text x="815.00" y="334.00" class="" text-anchor="start">1/13 exact | 12/13 LF</text>
+<text x="28.00" y="370.00" class="" text-anchor="start">aider-diff-lf</text>
+<rect x="255" y="354" width="540" height="22" rx="3" fill="#edf0f3"/>
+<rect x="255" y="354" width="498.46" height="22" fill="#b8ded4"/>
+<rect x="255" y="354" width="456.92" height="22" fill="#007f73"/>
+<text x="815.00" y="370.00" class="" text-anchor="start">11/13 exact | 12/13 LF</text>
+<text x="28.00" y="406.00" class="" text-anchor="start">aider-whole-platform</text>
+<rect x="255" y="390" width="540" height="22" rx="3" fill="#edf0f3"/>
+<rect x="255" y="390" width="498.46" height="22" fill="#b8ded4"/>
+<rect x="255" y="390" width="41.54" height="22" fill="#007f73"/>
+<text x="815.00" y="406.00" class="" text-anchor="start">1/13 exact | 12/13 LF</text>
+<text x="28.00" y="442.00" class="" text-anchor="start">aider-whole-lf</text>
+<rect x="255" y="426" width="540" height="22" rx="3" fill="#edf0f3"/>
+<rect x="255" y="426" width="498.46" height="22" fill="#b8ded4"/>
+<rect x="255" y="426" width="456.92" height="22" fill="#007f73"/>
+<text x="815.00" y="442.00" class="" text-anchor="start">11/13 exact | 12/13 LF</text>
+<text x="28.00" y="478.00" class="" text-anchor="start">aider-udiff-platform</text>
+<rect x="255" y="462" width="540" height="22" rx="3" fill="#edf0f3"/>
+<rect x="255" y="462" width="498.46" height="22" fill="#b8ded4"/>
+<rect x="255" y="462" width="41.54" height="22" fill="#007f73"/>
+<text x="815.00" y="478.00" class="" text-anchor="start">1/13 exact | 12/13 LF</text>
+<text x="28.00" y="514.00" class="" text-anchor="start">aider-udiff-lf</text>
+<rect x="255" y="498" width="540" height="22" rx="3" fill="#edf0f3"/>
+<rect x="255" y="498" width="498.46" height="22" fill="#b8ded4"/>
+<rect x="255" y="498" width="456.92" height="22" fill="#007f73"/>
+<text x="815.00" y="514.00" class="" text-anchor="start">11/13 exact | 12/13 LF</text>
+<text x="28.00" y="572.00" class="small" text-anchor="start">Line-ending policies and accepted encodings differ. These observations are not a general product quality score.</text>
+</svg>

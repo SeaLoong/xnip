@@ -1,6 +1,6 @@
 //! `xnip_replace` 工具：替换/删除一段区域。
 //!
-//! 与 cli `xnip replace` 行为一致（PLAN §6.7.3），但**不暴露 dry-run/check/revert**——
+//! 与 CLI `xnip replace` 共享替换操作，但**不暴露 dry-run/check/revert**——
 //! 需要精确文本块编辑及预览时可使用 `xnip_edit`；范围预览仍通过 CLI。
 //!
 //! 保留 `was`/`was_file`（并发保护）与 `backup`（用户安全旁路）。
@@ -19,6 +19,7 @@ use crate::core::ops::replace::{replace_pattern, replace_range};
 use super::common::{ContentInput, LocatorInput, err_to_internal, locate_to_mcp_err};
 
 #[derive(Debug, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
 pub struct Args {
     /// 目标文件路径。
     pub file: PathBuf,

@@ -2,7 +2,8 @@ name: release
 
 on:
   push:
-    tags: ['v*']
+    # Development tags are published by CI, including with an optional release token.
+    tags: ['v*', '!v*-dev.*']
   workflow_dispatch:
 
 permissions:
@@ -10,150 +11,47 @@ permissions:
 
 env:
   CARGO_TERM_COLOR: always
+  XNIP_AUTO_UPDATE: "0"
 
 jobs:
   checks:
-    uses: ./.github/workflows/ci.yml
-
-  build:
-    needs: checks
-    name: build (${{ matrix.target }})
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - target: x86_64-unknown-linux-musl
-            os: ubuntu-latest
-            cross: true
-          - target: aarch64-unknown-linux-musl
-            os: ubuntu-latest
-            cross: true
-          - target: x86_64-apple-darwin
-            os: macos-latest
-            cross: false
-          - target: aarch64-apple-darwin
-            os: macos-latest
-            cross: false
-          - target: x86_64-pc-windows-msvc
-            os: windows-latest
-            cross: false
-          - target: aarch64-pc-windows-msvc
-            os: windows-latest
-            cross: false
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.target }}
-
-      - uses: Swatinem/rust-cache@v2
-        with:
-          key: ${{ matrix.target }}
-
-      - name: Install cross
-        if: matrix.cross == true
-        run: cargo install cross --version 0.2.5 --locked
-
-      - name: Build
-        shell: bash
-        env:
-          XNIP_BUILD_COMMIT: ${{ github.sha }}
-        run: |
-          if [ "${{ matrix.cross }}" = "true" ]; then
-            cross build --locked --release --target ${{ matrix.target }} --bin xnip
-          else
-            cargo build --locked --release --target ${{ matrix.target }} --bin xnip
-          fi
-
-      - name: Package
-        id: package
-        shell: bash
-        run: |
-          set -eu
-          version="v$(cargo metadata --no-deps --format-version 1 | python3 -c 'import json,sys; print(next(p["version"] for p in json.load(sys.stdin)["packages"] if p["name"] == "xnip"))')"
-          if [[ "$GITHUB_REF" == refs/tags/* && "$GITHUB_REF_NAME" != "$version" ]]; then
-            echo "Tag $GITHUB_REF_NAME does not match package $version" >&2
-            exit 1
-          fi
-          target="${{ matrix.target }}"
-          stem="xnip-${version}-${target}"
-          cd target/${target}/release
-          cp ../../../LICENSE ../../../README.md .
-          if [[ "${target}" == *windows* ]]; then
-            7z a "${stem}.zip" xnip.exe LICENSE README.md
-            asset="${stem}.zip"
-          else
-            tar czf "${stem}.tar.gz" xnip LICENSE README.md
-            asset="${stem}.tar.gz"
-          fi
-          # SHA256
-          if command -v shasum >/dev/null 2>&1; then
-            shasum -a 256 "${asset}" > "${asset}.sha256"
-          else
-            sha256sum "${asset}" > "${asset}.sha256"
-          fi
-          echo "asset=${asset}" >> "$GITHUB_OUTPUT"
-          echo "asset_path=target/${target}/release/${asset}" >> "$GITHUB_OUTPUT"
-          echo "sha_path=target/${target}/release/${asset}.sha256" >> "$GITHUB_OUTPUT"
-
-      - name: Smoke test native release binary
-        shell: bash
-        run: |
-          set -eu
-          target="${{ matrix.target }}"
-          case "$target" in
-            x86_64-unknown-linux-musl|aarch64-apple-darwin)
-              "target/$target/release/xnip" --version
-              "target/$target/release/xnip" doctor
-              ;;
-            x86_64-pc-windows-msvc)
-              "target/$target/release/xnip.exe" --version
-              "target/$target/release/xnip.exe" doctor
-              ;;
-          esac
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: xnip-${{ matrix.target }}
-          path: |
-            ${{ steps.package.outputs.asset_path }}
-            ${{ steps.package.outputs.sha_path }}
-
-  publish:
-    name: publish complete release
-    needs: build
+    # The reusable CI declares a gated publisher; its actual check jobs stay read-only.
     permissions:
       contents: write
-    if: startsWith(github.ref, 'refs/tags/v')
+    uses: ./.github/workflows/ci.yml
+
+  version:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      prerelease: ${{ steps.version.outputs.prerelease }}
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
-      - name: Sync integrations from docs/SKILL.md
-        run: cargo run --locked -p xtask -- sync-integrations
-      - name: Package per-platform integration assets
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Verify tag matches Cargo
+        id: version
+        env:
+          XNIP_REF: ${{ github.ref }}
+          XNIP_REF_NAME: ${{ github.ref_name }}
         shell: bash
         run: |
           set -eu
-          mkdir -p dist
-          for d in integrations/*/; do
-            if [ -f "$d/package.sh" ]; then
-              ( cd "$d" && bash ./package.sh "../../dist" )
-            fi
-          done
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: xnip-*
-          path: dist
-          merge-multiple: true
-      - name: Include installers
-        run: cp install.sh install.ps1 dist/
-      - name: Publish complete release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: dist/*
-          fail_on_unmatched_files: true
-          generate_release_notes: true
+          arguments=()
+          if [[ "$XNIP_REF" == refs/tags/* ]]; then
+            arguments+=(--tag "$XNIP_REF_NAME")
+          fi
+          python .github/scripts/release.py version --github-output "${arguments[@]}"
+
+  artifacts:
+    needs: [checks, version]
+    permissions:
+      contents: write
+    uses: ./.github/workflows/build-release.yml
+    secrets:
+      RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+    with:
+      version: ${{ needs.version.outputs.version }}
+      prerelease: ${{ needs.version.outputs.prerelease == 'true' }}
+      publish: ${{ startsWith(github.ref, 'refs/tags/v') }}

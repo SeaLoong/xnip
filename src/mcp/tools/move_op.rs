@@ -1,6 +1,6 @@
 //! `xnip_move` 工具：搬移连续行块。
 //!
-//! 与 cli `xnip move` 行为一致（PLAN §6.7.5），不暴露 dry-run/revert。
+//! 与 CLI `xnip move` 共享移动操作，不暴露 dry-run/revert。
 
 use std::path::PathBuf;
 
@@ -18,6 +18,7 @@ use crate::core::ops::move_op::move_lines;
 use super::common::{any_to_invalid_params, err_to_internal, locate_to_mcp_err};
 
 #[derive(Debug, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
 pub struct Args {
     /// 目标文件路径。
     pub file: PathBuf,

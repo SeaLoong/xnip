@@ -36,6 +36,8 @@ pub struct Outcome {
     pub changed: bool,
     pub replacements: usize,
     pub diff: String,
+    /// Recovery snapshots retained if successful rename cleanup failed.
+    pub journal: Option<PathBuf>,
 }
 
 #[derive(Debug, Error)]
@@ -82,11 +84,23 @@ pub fn execute(path: &Path, request: &Request) -> Result<Outcome, EditError> {
         let mut plan = super::transaction::Plan::default();
         plan.rename(path, to, request.old.as_deref())
             .map_err(transaction_error)?;
-        let preview = plan.preview();
-        if !request.check && !request.dry_run {
-            plan.commit(request.backup).map_err(transaction_error)?;
-        }
+        let preview = if request.dry_run {
+            plan.preview()
+        } else {
+            super::transaction::Report {
+                files: plan.changed_files(),
+                ..super::transaction::Report::default()
+            }
+        };
+        let journal = if !request.check && !request.dry_run {
+            plan.commit(request.backup)
+                .map_err(transaction_error)?
+                .journal
+        } else {
+            None
+        };
         return Ok(Outcome {
+            journal,
             changed: !preview.files.is_empty(),
             replacements: 0,
             diff: if request.dry_run {
@@ -193,6 +207,7 @@ pub fn execute(path: &Path, request: &Request) -> Result<Outcome, EditError> {
         changed,
         replacements,
         diff,
+        journal: None,
     })
 }
 

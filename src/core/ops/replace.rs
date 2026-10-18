@@ -1,6 +1,6 @@
 //! `replace`：替换/删除（空文本即删除）。
 //!
-//! 两套核心路径（PLAN §6.7.3）：
+//! 两套核心路径：
 //!
 //! 1. **range 模式**（`Lines` / `MatchLine` / `Between` / `BetweenRe`）
 //!    - 把 `[start_line, end_line]` 整段替换为 payload
@@ -155,102 +155,4 @@ fn compute_newline_flags(content: &[u8], lines: &[&[u8]]) -> Vec<bool> {
             content.get(end_idx) == Some(&b'\n')
         })
         .collect()
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use regex::bytes::Regex as ByteRegex;
-
-    #[test]
-    fn replace_single_line() {
-        let r = replace_range(b"a\nb\nc\n", 2, 2, b"X").unwrap();
-        assert_eq!(r, b"a\nX\nc\n");
-    }
-
-    #[test]
-    fn replace_range_multi() {
-        let r = replace_range(b"a\nb\nc\nd\n", 2, 3, b"X\nY").unwrap();
-        assert_eq!(r, b"a\nX\nY\nd\n");
-    }
-
-    #[test]
-    fn replace_with_empty_deletes_range() {
-        let r = replace_range(b"a\nb\nc\nd\n", 2, 3, b"").unwrap();
-        assert_eq!(r, b"a\nd\n");
-    }
-
-    #[test]
-    fn replace_first_line() {
-        let r = replace_range(b"a\nb\n", 1, 1, b"X").unwrap();
-        assert_eq!(r, b"X\nb\n");
-    }
-
-    #[test]
-    fn replace_last_line_keeps_trailing_newline() {
-        let r = replace_range(b"a\nb\n", 2, 2, b"X").unwrap();
-        assert_eq!(r, b"a\nX\n");
-    }
-
-    #[test]
-    fn replace_last_line_without_trailing_newline_does_not_add_one() {
-        let r = replace_range(b"a\nb", 2, 2, b"X").unwrap();
-        assert_eq!(r, b"a\nX");
-    }
-
-    #[test]
-    fn replace_with_payload_having_newline_does_not_double_append() {
-        let r = replace_range(b"a\nb\nc\n", 2, 2, b"X\n").unwrap();
-        assert_eq!(r, b"a\nX\nc\n");
-    }
-
-    #[test]
-    fn replace_zero_line_errors() {
-        let e = replace_range(b"a\n", 0, 1, b"X").unwrap_err();
-        assert!(matches!(e, ReplaceError::ZeroLine));
-    }
-
-    #[test]
-    fn replace_inverted_range_errors() {
-        let e = replace_range(b"a\nb\n", 2, 1, b"X").unwrap_err();
-        assert!(matches!(e, ReplaceError::InvalidRange { .. }));
-    }
-
-    #[test]
-    fn replace_out_of_bounds_errors() {
-        let e = replace_range(b"a\n", 1, 5, b"X").unwrap_err();
-        assert!(matches!(e, ReplaceError::OutOfBounds { .. }));
-    }
-
-    #[test]
-    fn pattern_replace_all() {
-        let re = ByteRegex::new("foo").unwrap();
-        let (out, n) = replace_pattern(b"foo bar foo baz\n", &re, "BAZ", Count::All);
-        assert_eq!(out, b"BAZ bar BAZ baz\n");
-        assert_eq!(n, 2);
-    }
-
-    #[test]
-    fn pattern_replace_first_only() {
-        let re = ByteRegex::new("foo").unwrap();
-        let (out, n) = replace_pattern(b"foo foo foo\n", &re, "X", Count::First(1));
-        assert_eq!(out, b"X foo foo\n");
-        assert_eq!(n, 1);
-    }
-
-    #[test]
-    fn pattern_replace_with_capture_group() {
-        let re = ByteRegex::new(r"(\w+)=(\d+)").unwrap();
-        let (out, n) = replace_pattern(b"x=1 y=22\n", &re, "$2:$1", Count::All);
-        assert_eq!(out, b"1:x 22:y\n");
-        assert_eq!(n, 2);
-    }
-
-    #[test]
-    fn pattern_no_match_returns_original() {
-        let re = ByteRegex::new("xxx").unwrap();
-        let (out, n) = replace_pattern(b"foo\n", &re, "Y", Count::All);
-        assert_eq!(out, b"foo\n");
-        assert_eq!(n, 0);
-    }
 }

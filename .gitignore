@@ -12,6 +12,10 @@ target/
 .DS_Store
 Thumbs.db
 
+# Python runtime caches
+__pycache__/
+*.py[cod]
+
 # Test artifacts
 *.bak
 /tests/scratch/

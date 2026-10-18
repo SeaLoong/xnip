@@ -1,6 +1,6 @@
 //! `xnip indent <file> [--lines a-b | --all] (--add N | --remove N | --tabs-to-spaces N | --spaces-to-tabs N) [--dry-run] [--backup]`
 //!
-//! PLAN.md §6.7.6。
+//! Apply indentation changes to an explicit line selection.
 
 use std::path::PathBuf;
 
@@ -129,8 +129,7 @@ pub fn run(a: Args) -> Result<u8> {
     let new_bytes = apply_indent(&bytes, start, end, effective_op)?;
 
     if a.dry_run {
-        use std::io::Write;
-        std::io::stdout().lock().write_all(&new_bytes)?;
+        crate::output::human::print_legacy_preview(&new_bytes)?;
         return Ok(exit::SUCCESS);
     }
 

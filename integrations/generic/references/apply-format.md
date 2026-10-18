@@ -12,7 +12,7 @@ Recognized unified/apply_patch headers and `.patch`/`.diff` files prefer the pat
 
 ---
 
-## 1. Native (recommended; smallest token footprint)
+## 1. Native (compact line-oriented manifests)
 
 One operation per line. Lines beginning with `#` after optional whitespace are comments; avoid trailing inline comments. Blank lines are skipped.
 
@@ -151,18 +151,19 @@ Same schema as JSON. Multi-line text with `|` block scalars is more readable:
 1. Parse → unified op list
 2. Group by file
 3. Within a file: order ops by **start line descending** (so later ops don't shift earlier ones)
-4. **Phase 1** — for each file: read → apply ops → write a temp file in the same directory
-5. **Phase 2** — atomic-rename each temp file; if `--backup`, save `<file>.bak` first
-6. On phase-1 failure: nothing on disk changes; exit 3
-7. Before commit, persist recovery snapshots. On commit failure, attempt rollback and return exit 4 with the journal path and rollback status. See [recovery](recovery.md).
+4. **Phase 1** — read targets and validate the complete edit plan in memory; preview/check stop here without creating temporary files or directories
+5. **Phase 2** — persist recovery snapshots, optionally save `<file>.bak`, then stage and commit each changed target
+6. On phase-1 failure: targets remain unchanged; exit 3
+7. On commit failure, attempt rollback and return exit 4 with the journal path and rollback status. Writes are atomic per file; see [recovery](recovery.md).
 
 Modes:
 
-- `--check` — phase 1 only; prints `OK`
-- `--dry-run` — phase 1 + unified diff to stdout
+- `--check` — validates without writing; the compact check receipt goes to stderr
+- `--dry-run` — validates without writing; a bounded unified diff goes to stdout
 - `--from-stdin [--format ...]` — manifest from stdin
 - `--backup` — write `.bak` (default: off)
-- `--json` — emit NDJSON events on stdout (also with `--check`); conflicts with `--dry-run`
+- `--output compact|json|human` — compact receipts by default; JSON supplies one complete result and human expands receipts/previews
+- `--json` — emit NDJSON events on stdout (also with `--check`); conflicts with `--dry-run` and a nondefault `--output`
 - `--parallel <N>` — run phase 1 with up to N worker threads (rayon), capped by file count and available CPUs. Phase 2 stays serial. `0` or `1` = single-threaded.
 - `--stdin-file <PATH>` — supply the bytes that op-level `@-` consumes from a file
   instead of reading process stdin. Required when `--from-stdin` is used together with
@@ -196,7 +197,7 @@ Modes:
 
 Direct `file` targets resolve relative to the process working directory. `files-from` list paths, entries within those lists, and payload `text-file`/`@path` paths resolve relative to the manifest directory (or the working directory for stdin manifests). `was-file` is read during parsing and resolves relative to the process working directory. Use absolute paths when sharing manifests across working directories.
 
-Targets are canonicalized before grouping; diagnostics may therefore show absolute paths. Anchors are resolved against the original file before descending-line ordering. Keep line ranges disjoint. Pattern edits cannot be mixed with line-based edits on the same file, and a move must be the only operation on its file: use separate manifests for those dependent edits. A pattern with zero matches fails validation. JSON/YAML reject unknown fields and invalid `where` values.
+Targets are canonicalized before grouping; diagnostics may therefore show absolute paths. Anchors are resolved against the original file before descending-line ordering. Overlapping ranges and multiple insertions at one anchor are rejected. Pattern edits cannot be mixed with line-based edits on the same file, and a move must be the only operation on its file. Use `--sequential` for dependent edits. A pattern with zero matches fails validation. JSON/YAML reject unknown fields and invalid `where` values.
 
 ## File lifecycle operations and ordered plans
 

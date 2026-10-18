@@ -1,12 +1,12 @@
 //! `indent`：缩进调整 / tab-space 互转。
 //!
-//! 4 种算子（PLAN §6.7.6）：
+//! 4 种算子：
 //! - `Add(n)`：每行行首加 `n` 个空格
 //! - `Remove(n)`：每行行首删去最多 `n` 个空格（不足则尽量删）
 //! - `TabsToSpaces(n)`：行首每个 `\t` 展开为 `n` 个空格
 //! - `SpacesToTabs(n)`：行首每 `n` 个连续空格折叠为 `\t`
 //!
-//! Revert（PLAN §6.8）：
+//! Revert：
 //! - `Add(n)` ↔ `Remove(n)`
 //! - `TabsToSpaces(n)` ↔ `SpacesToTabs(n)`（前提：区域内行首空格数都是 n 的倍数）
 //!
@@ -140,98 +140,5 @@ fn apply_op_to_line(line: &[u8], op: IndentOp) -> Vec<u8> {
             v.extend_from_slice(&line[leading_spaces..]);
             v
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn apply(content: &[u8], s: usize, e: usize, op: IndentOp) -> Vec<u8> {
-        apply_indent(content, s, e, op).unwrap()
-    }
-
-    #[test]
-    fn add_two_spaces_to_each_line() {
-        let r = apply(b"a\nb\nc\n", 1, 3, IndentOp::Add(2));
-        assert_eq!(r, b"  a\n  b\n  c\n");
-    }
-
-    #[test]
-    fn add_only_to_subrange() {
-        let r = apply(b"a\nb\nc\n", 2, 2, IndentOp::Add(2));
-        assert_eq!(r, b"a\n  b\nc\n");
-    }
-
-    #[test]
-    fn remove_spaces_with_exact_amount() {
-        let r = apply(b"  a\n  b\n", 1, 2, IndentOp::Remove(2));
-        assert_eq!(r, b"a\nb\n");
-    }
-
-    #[test]
-    fn remove_spaces_clamped_when_not_enough() {
-        let r = apply(b" a\n", 1, 1, IndentOp::Remove(4));
-        assert_eq!(r, b"a\n");
-    }
-
-    #[test]
-    fn remove_does_not_touch_non_space_chars() {
-        let r = apply(b"\ta\n", 1, 1, IndentOp::Remove(2));
-        assert_eq!(r, b"\ta\n");
-    }
-
-    #[test]
-    fn tabs_to_spaces_basic() {
-        let r = apply(b"\t\ta\n\tb\n", 1, 2, IndentOp::TabsToSpaces(4));
-        assert_eq!(r, b"        a\n    b\n");
-    }
-
-    #[test]
-    fn tabs_to_spaces_only_leading_tabs() {
-        let r = apply(b"\ta\tb\n", 1, 1, IndentOp::TabsToSpaces(4));
-        // 行内 \t 不动
-        assert_eq!(r, b"    a\tb\n");
-    }
-
-    #[test]
-    fn spaces_to_tabs_clean_division() {
-        let r = apply(b"        a\n    b\n", 1, 2, IndentOp::SpacesToTabs(4));
-        assert_eq!(r, b"\t\ta\n\tb\n");
-    }
-
-    #[test]
-    fn spaces_to_tabs_with_leftover() {
-        let r = apply(b"      a\n", 1, 1, IndentOp::SpacesToTabs(4));
-        // 6 = 1 tab + 2 leftover spaces
-        assert_eq!(r, b"\t  a\n");
-    }
-
-    #[test]
-    fn round_trip_add_then_remove_is_identity() {
-        let orig = b"a\nb\n  c\n";
-        let after_add = apply(orig, 1, 3, IndentOp::Add(2));
-        let back = apply(&after_add, 1, 3, IndentOp::Remove(2));
-        assert_eq!(back, orig);
-    }
-
-    #[test]
-    fn round_trip_t2s_then_s2t_when_clean() {
-        let orig = b"\ta\n\t\tb\n";
-        let s = apply(orig, 1, 2, IndentOp::TabsToSpaces(4));
-        let back = apply(&s, 1, 2, IndentOp::SpacesToTabs(4));
-        assert_eq!(back, orig);
-    }
-
-    #[test]
-    fn out_of_bounds_errors() {
-        let e = apply_indent(b"a\n", 1, 5, IndentOp::Add(2)).unwrap_err();
-        assert!(matches!(e, IndentError::OutOfBounds { .. }));
-    }
-
-    #[test]
-    fn zero_unit_for_t2s_errors() {
-        let e = apply_indent(b"\ta\n", 1, 1, IndentOp::TabsToSpaces(0)).unwrap_err();
-        assert!(matches!(e, IndentError::ZeroUnit));
     }
 }

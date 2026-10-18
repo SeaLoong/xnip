@@ -5,6 +5,9 @@ use std::path::PathBuf;
 #[derive(Debug, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct Args {
+    /// Preview payload byte limit; default 12000, 0 for full output.
+    #[serde(default)]
+    pub max_bytes: Option<usize>,
     /// Recovery directory returned by a failed/interrupted transaction.
     pub journal: PathBuf,
     /// Validate and preview rollback without writes.
@@ -25,5 +28,6 @@ pub fn run(args: Args) -> Result<CallToolResult, McpError> {
     Ok(super::common::ok_change(
         &summary,
         if args.dry_run { &report.diff } else { "" },
+        args.max_bytes,
     ))
 }

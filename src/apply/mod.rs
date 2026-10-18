@@ -2,10 +2,10 @@
 //!
 //! 数据模型设计：
 //! - 三个 parser（`parse_native` / `parse_json` / `parse_yaml`）的共同输出是
-//!   `Vec<Op>`，三格式语义等价（PLAN §11 G6）
+//!   `Vec<Op>`，三种清单格式语义等价。
 //! - 执行器 [`commit::execute`] 接管 op 列表，按文件分组、组内降序排序、两阶段提交
 //!
-//! 详见 PLAN §6.9。
+//! 清单语义见 `docs/apply-format.md`。
 
 pub mod commit;
 pub mod detect;
@@ -13,6 +13,9 @@ pub mod parse_json;
 pub mod parse_native;
 pub mod parse_yaml;
 pub mod patch;
+
+#[cfg(test)]
+mod contract_tests;
 
 use std::path::PathBuf;
 
@@ -50,7 +53,7 @@ impl OpContent {
     }
 }
 
-/// 缩进 op 的具体算子（PLAN §6.7.6）。
+/// 缩进 op 的具体算子。
 #[derive(Debug, Clone, Copy)]
 pub enum IndentKind {
     /// `+N` / `by: N`（正数 = 加；负数 = 删）。

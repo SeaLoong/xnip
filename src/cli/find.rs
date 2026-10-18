@@ -1,104 +1,58 @@
-//! `xnip find <files...> [--pattern RE | --match-line RE] [--max-matches N] [--first-only]`
-//!
-//! PLAN.md §6.7.2。
+//! CLI adapter for bounded multi-file search.
 
+use std::io::Write;
 use std::path::PathBuf;
 
-use anyhow::{Context, Result, bail};
+use anyhow::Result;
 use clap::Args as ClapArgs;
-use regex::Regex;
-use regex::bytes::Regex as ByteRegex;
 
-use crate::core::content;
-use crate::core::ops::find::{FindMode, FindOpts, scan, write_hits};
+use crate::core::read::FindQuery;
 use crate::output::exit;
 
 #[derive(Debug, ClapArgs)]
 pub struct Args {
-    /// 要搜索的文件列表。
+    /// Files to search, in output order.
     #[arg(required = true, num_args = 1..)]
     pub files: Vec<PathBuf>,
-
-    /// 字节级跨行命中正则。输出 `path:line:col`。
+    /// Byte regex; emits path:line:column.
     #[arg(long, value_name = "REGEX", conflicts_with = "match_line")]
     pub pattern: Option<String>,
-
-    /// 整行命中正则。输出 `path:line`。
+    /// Line regex; emits path:line.
     #[arg(long, value_name = "REGEX")]
     pub match_line: Option<String>,
-
-    /// 总命中数上限。
+    /// Maximum total hits (default 100; 0 unlimited).
     #[arg(long, value_name = "N")]
     pub max_matches: Option<usize>,
-
-    /// 每个文件首次命中即停。
-    #[arg(long, default_value_t = false)]
+    /// Maximum output bytes (default 12000; 0 unlimited).
+    #[arg(long, value_name = "N")]
+    pub max_bytes: Option<usize>,
+    /// Keep only the first hit per file.
+    #[arg(long)]
     pub first_only: bool,
 }
 
 #[allow(clippy::needless_pass_by_value)]
 pub fn run(a: Args) -> Result<u8> {
-    if a.pattern.is_none() && a.match_line.is_none() {
-        bail!("missing locator: one of --pattern / --match-line is required");
+    let result = FindQuery::new(
+        a.pattern.as_deref(),
+        a.match_line.as_deref(),
+        a.first_only,
+        a.max_matches,
+        a.max_bytes,
+    )?
+    .run(&a.files)?;
+    std::io::stdout().lock().write_all(&result.bytes)?;
+    if let Some(notice) = result.notice() {
+        eprintln!("{notice}");
     }
-
-    // 编译一次正则
-    let line_re = a
-        .match_line
-        .as_deref()
-        .map(Regex::new)
-        .transpose()
-        .with_context(|| "invalid --match-line regex")?;
-    let pat_re = a
-        .pattern
-        .as_deref()
-        .map(ByteRegex::new)
-        .transpose()
-        .with_context(|| "invalid --pattern regex")?;
-
-    let mode = if let Some(re) = &line_re {
-        FindMode::MatchLine(re)
+    for error in &result.load_errors {
+        eprintln!("xnip find: {error}");
+    }
+    Ok(if result.load_error_count > 0 {
+        exit::IO
+    } else if result.items == 0 {
+        exit::USAGE
     } else {
-        FindMode::Pattern(pat_re.as_ref().expect("locator presence checked"))
-    };
-
-    let mut opts = FindOpts {
-        mode,
-        max_matches: a.max_matches,
-        first_only: a.first_only,
-    };
-
-    // 顺序扫描；M4 再加并发
-    let mut files_with_hits = Vec::with_capacity(a.files.len());
-    let mut total_hits = 0usize;
-    let mut load_failed = false;
-    for path in a.files {
-        opts.max_matches = a.max_matches.map(|cap| cap.saturating_sub(total_hits));
-        let bytes = match content::load_path(&path) {
-            Ok(b) => b,
-            Err(e) => {
-                load_failed = true;
-                eprintln!("xnip find: {e}");
-                continue;
-            }
-        };
-        let hits = scan(&bytes, &opts);
-        total_hits += hits.len();
-        files_with_hits.push((path, hits));
-    }
-
-    let stdout = std::io::stdout();
-    let out = stdout.lock();
-    let use_col = a.pattern.is_some();
-    let _written = write_hits(&files_with_hits, use_col, a.max_matches, out)?;
-
-    if load_failed {
-        return Ok(exit::IO);
-    }
-    if total_hits == 0 {
-        // 与 grep 语义一致：未命中不算用户错误，但退码 ≠ 0 方便脚本判定
-        // PLAN 未明确，这里取 USAGE（与"找不到定位"语义一致）
-        return Ok(exit::USAGE);
-    }
-    Ok(exit::SUCCESS)
+        exit::SUCCESS
+    })
 }

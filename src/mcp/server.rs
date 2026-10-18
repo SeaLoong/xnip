@@ -1,16 +1,4 @@
-//! MCP server bootstrap：把 `XnipServer` 与 stdio 传输 wire 起来。
-//!
-//! rmcp 1.7 API 形态（参考官方 `tests/test_tool_macros.rs::MinimalServer`）：
-//! ```ignore
-//! XnipServer::new()
-//!     .serve(rmcp::transport::stdio())
-//!     .await?
-//!     .waiting()
-//!     .await?;
-//! ```
-//!
-//! 这里把它包装成同步入口 `serve_stdio()`，由 `cli/mcp.rs` 调用，
-//! 内部启动 tokio 单线程 runtime（避免 panic=abort 与多 worker 冲突）。
+//! Stdio MCP server, selected tool catalog and schema presentation.
 
 use anyhow::{Context, Result};
 use rmcp::{
@@ -28,20 +16,50 @@ use super::tools;
 /// 因此 `XnipServer` 自身只持有 `ToolRouter`(rmcp 宏要求字段名为 `tool_router`)。
 #[derive(Debug, Clone)]
 pub struct XnipServer {
-    // rmcp 的 #[tool_router] / #[tool_handler] 宏在实现块里使用此字段，
-    // 但文本分析器看不到跨宏读路径，会报 dead_code。
-    #[allow(dead_code)]
     tool_router: ToolRouter<Self>,
+}
+
+/// Which editing tools are advertised to the client.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
+pub enum Toolset {
+    /// Five tools for everyday editing, reading and recovery.
+    #[default]
+    Compact,
+    /// All tools, including specialized line operations and diagnostics.
+    Full,
 }
 
 impl XnipServer {
     pub fn new() -> Self {
+        Self::with_toolset(Toolset::Compact)
+    }
+
+    pub fn with_toolset(toolset: Toolset) -> Self {
         // Probe handles before Tokio starts its blocking stdin reader. Doing
         // this inside xnip_doctor can wait forever on a live Windows pipe.
         crate::doctor::capture_stdio_status();
-        Self {
-            tool_router: Self::tool_router(),
+        let mut tool_router = Self::tool_router();
+        if toolset == Toolset::Compact {
+            tool_router.map.retain(|name, _| {
+                matches!(
+                    name.as_ref(),
+                    "xnip_edit" | "xnip_apply" | "xnip_peek" | "xnip_find" | "xnip_recover"
+                )
+            });
         }
+        for route in tool_router.map.values_mut() {
+            // Schema titles describe Rust types, not facts a caller needs.
+            let mut schema = serde_json::Value::Object((*route.attr.input_schema).clone());
+            compact_schema(&mut schema);
+            route.attr.input_schema =
+                std::sync::Arc::new(schema.as_object().expect("object schema").clone());
+            if let Some(output) = &mut route.attr.output_schema {
+                let mut schema = serde_json::Value::Object((**output).clone());
+                compact_schema(&mut schema);
+                *output = std::sync::Arc::new(schema.as_object().expect("object schema").clone());
+            }
+        }
+        Self { tool_router }
     }
 }
 
@@ -57,7 +75,7 @@ impl XnipServer {
         title = "Recover file changes",
         annotations(read_only_hint = false, destructive_hint = true, open_world_hint = false),
         output_schema = tools::common::change_schema(),
-        description = "Restore files from a recovery journal after a failed/interrupted transaction. dry_run validates and previews without writes. Refuses external-content conflicts. Only recover a known transaction after its writer has stopped."
+        description = "Restore a known failed transaction after its writer stops. Refuses external changes. dry_run previews."
     )]
     async fn xnip_recover(
         &self,
@@ -70,7 +88,7 @@ impl XnipServer {
         title = "Edit files",
         annotations(read_only_hint = false, destructive_hint = true, open_world_hint = false),
         output_schema = tools::common::change_schema(),
-        description = "Create a file, replace an exact literal text block, delete a regular file, or rename to an absent destination. Replacement requires unique old text unless all=true. Supports dry_run/check without writes, including create/delete, and optional backups. Existing context may suffice; no mandatory read-before-edit call."
+        description = "Create, replace exact text, delete, or rename. old must match uniquely unless all=true. dry_run/check never write."
     )]
     async fn xnip_edit(
         &self,
@@ -89,7 +107,7 @@ impl XnipServer {
             destructive_hint = false,
             open_world_hint = false
         ),
-        description = "Print numbered lines from a file. Provide exactly one of `lines` (range like '30' or '30-45'), `match_line` (regex on whole line), or `all=true`. Use `context` (only with `match_line`) for surrounding lines, and `max_lines` to cap output. Read-only."
+        description = "Read numbered lines. Choose lines, match_line, or all. Output is bounded; truncation is explicit."
     )]
     async fn xnip_peek(
         &self,
@@ -105,7 +123,7 @@ impl XnipServer {
             destructive_hint = false,
             open_world_hint = false
         ),
-        description = "Search and locate matches across one or more files. Provide one of `pattern` (cross-line byte regex, output `path:line:col`) or `match_line` (whole-line regex, output `path:line`). Read-only."
+        description = "Find regex matches. Choose pattern (path:line:byte-column) or match_line (path:line)."
     )]
     async fn xnip_find(
         &self,
@@ -183,7 +201,7 @@ impl XnipServer {
         title = "Apply file changes",
         annotations(read_only_hint = false, destructive_hint = true, open_world_hint = false),
         output_schema = tools::common::change_schema(),
-        description = "Apply a batch of edits with validation before writing. Provide path or manifest_text in native/json/yaml/patch format. Supports create/delete/rename/edit and sequential planning. dry_run/check do not write. Commit failures attempt rollback and retain a recovery journal; conflicts require inspection."
+        description = "Batch exact replacements with edits, or native/json/yaml/patch via path or manifest_text. Validates before writing. Failed commits attempt rollback; inspect the journal. dry_run/check never write."
     )]
     async fn xnip_apply(
         &self,
@@ -201,13 +219,16 @@ impl XnipServer {
         ),
         description = "Self-diagnose xnip environment: version, build commit, runtime info. No arguments."
     )]
-    async fn xnip_doctor(&self) -> Result<rmcp::model::CallToolResult, McpError> {
+    async fn xnip_doctor(
+        &self,
+        _params: rmcp::handler::server::wrapper::Parameters<tools::doctor::Args>,
+    ) -> Result<rmcp::model::CallToolResult, McpError> {
         tools::doctor::run()
     }
 }
 // rmcp generates async trait methods; their signatures are owned by the SDK.
 #[allow(unknown_lints, clippy::unused_async_trait_impl)]
-#[tool_handler]
+#[tool_handler(router = self.tool_router)]
 impl ServerHandler for XnipServer {
     fn get_info(&self) -> ServerInfo {
         let mut info = ServerInfo::new(ServerCapabilities::builder().enable_tools().build())
@@ -221,7 +242,7 @@ impl ServerHandler for XnipServer {
 
 /// 顶层指令文本：告诉 LLM 这个 server 是什么、有哪些约定。
 /// 越精炼越好——LLM 上下文宝贵，不写废话。
-const INSTRUCTIONS: &str = "xnip edits local files using 1-based inclusive line numbers or exact text. Use xnip_edit for file creation, unique literal block replacement, deletion, no-clobber rename and non-writing previews/checks. Reuse known context; inspect only what is needed for a reliable edit. xnip_apply also supports dry_run/check, file lifecycle operations and text patches. Legacy line tools commit immediately. Batch commits attempt rollback on failure and retain recovery snapshots; detected external conflicts block restoration. Expected-content checks are not locks; backup=true preserves a .bak sidecar.";
+const INSTRUCTIONS: &str = "Reuse known context; read only missing context. Prefer edit for exact blocks and file lifecycle; apply batches. Lines are 1-based inclusive. Results distinguish write/preview/check; written=false means no write. Truncation is explicit; max_bytes=0 requests full output. Expected text is a precondition, not a writer lock. Specialized tools: restart with --toolset full.";
 
 /// 启动 stdio MCP server 并阻塞至连接关闭。
 ///
@@ -233,6 +254,11 @@ const INSTRUCTIONS: &str = "xnip edits local files using 1-based inclusive line 
 /// # Errors
 /// runtime 构造失败、序列化失败、传输错误等。
 pub fn serve_stdio() -> Result<()> {
+    serve_stdio_with_toolset(Toolset::Compact)
+}
+
+/// Serve the selected toolset over stdio.
+pub fn serve_stdio_with_toolset(toolset: Toolset) -> Result<()> {
     let rt = tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()
@@ -240,7 +266,7 @@ pub fn serve_stdio() -> Result<()> {
 
     rt.block_on(async {
         let transport = (tokio::io::stdin(), tokio::io::stdout());
-        let service = XnipServer::new()
+        let service = XnipServer::with_toolset(toolset)
             .serve(transport)
             .await
             .context("MCP handshake failed")?;
@@ -251,4 +277,44 @@ pub fn serve_stdio() -> Result<()> {
             .context("MCP service ended with error")?;
         Ok::<_, anyhow::Error>(())
     })
+}
+
+/// Remove presentation-only schema annotations; retain validation and field guidance.
+fn compact_schema(value: &mut serde_json::Value) {
+    match value {
+        serde_json::Value::Object(map) => {
+            map.remove("title");
+            map.remove("$schema");
+            if map.get("default") == Some(&serde_json::Value::Null) {
+                map.remove("default");
+            }
+            for child in map.values_mut() {
+                compact_schema(child);
+            }
+            // Optional fields are omitted, rather than advertised with null branches.
+            if let Some(serde_json::Value::Array(types)) = map.get_mut("type") {
+                types.retain(|kind| kind != "null");
+                if types.len() == 1 {
+                    let kind = types[0].clone();
+                    map.insert("type".into(), kind);
+                }
+            }
+            if let Some(serde_json::Value::Array(choices)) = map.get_mut("anyOf") {
+                choices.retain(|choice| {
+                    choice.get("type").and_then(serde_json::Value::as_str) != Some("null")
+                });
+                if choices.len() == 1 {
+                    let only = choices[0].as_object().cloned();
+                    if let Some(only) = only {
+                        map.remove("anyOf");
+                        for (key, value) in only {
+                            map.entry(key).or_insert(value);
+                        }
+                    }
+                }
+            }
+        }
+        serde_json::Value::Array(values) => values.iter_mut().for_each(compact_schema),
+        _ => {}
+    }
 }

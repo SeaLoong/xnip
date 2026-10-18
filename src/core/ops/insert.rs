@@ -5,7 +5,7 @@
 //! - 插入内容支持任意字节
 //! - 插入内容若不以 `\n` 结尾，自动补一个（保证插入后仍然是整行结构）
 //!
-//! Revert（PLAN §6.8）：`insert/replace` 互逆；insert 的反向通过 `replace` 删除
+//! Revert：insert 的反向通过 `replace` 删除
 //! 对应行段实现。本模块只关心 forward 计算。
 
 use thiserror::Error;
@@ -128,70 +128,4 @@ fn has_newline_after(content: &[u8], line: &[u8]) -> bool {
     let line_start = line.as_ptr() as usize;
     let line_end_idx = line_start - base + line.len();
     content.get(line_end_idx) == Some(&b'\n')
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn insert_before_first_line() {
-        let r = insert_at(b"a\nb\n", 1, Position::Before, b"X").unwrap();
-        assert_eq!(r, b"X\na\nb\n");
-    }
-
-    #[test]
-    fn insert_after_last_line() {
-        let r = insert_at(b"a\nb\n", 2, Position::After, b"X").unwrap();
-        assert_eq!(r, b"a\nb\nX\n");
-    }
-
-    #[test]
-    fn insert_after_middle() {
-        let r = insert_at(b"a\nb\nc\n", 2, Position::After, b"X").unwrap();
-        assert_eq!(r, b"a\nb\nX\nc\n");
-    }
-
-    #[test]
-    fn insert_multiline_payload() {
-        let r = insert_at(b"a\nb\n", 1, Position::After, b"X\nY").unwrap();
-        assert_eq!(r, b"a\nX\nY\nb\n");
-    }
-
-    #[test]
-    fn insert_into_empty_file() {
-        let r = insert_at(b"", 1, Position::Before, b"X").unwrap();
-        assert_eq!(r, b"X\n");
-    }
-
-    #[test]
-    fn insert_into_file_without_trailing_newline() {
-        let r = insert_at(b"a\nb", 2, Position::After, b"X").unwrap();
-        // Inserting a line must not merge it into the unterminated last line.
-        assert_eq!(r, b"a\nb\nX\n");
-    }
-
-    #[test]
-    fn insert_zero_line_errors() {
-        let e = insert_at(b"a\n", 0, Position::Before, b"X").unwrap_err();
-        assert!(matches!(e, InsertError::ZeroLine));
-    }
-
-    #[test]
-    fn insert_out_of_bounds_errors() {
-        let e = insert_at(b"a\n", 5, Position::After, b"X").unwrap_err();
-        assert!(matches!(e, InsertError::OutOfBounds { .. }));
-    }
-
-    #[test]
-    fn payload_with_trailing_newline_not_double_appended() {
-        let r = insert_at(b"a\n", 1, Position::Before, b"X\n").unwrap();
-        assert_eq!(r, b"X\na\n");
-    }
-
-    #[test]
-    fn empty_payload_inserts_nothing() {
-        let r = insert_at(b"a\nb\n", 1, Position::After, b"").unwrap();
-        assert_eq!(r, b"a\nb\n");
-    }
 }

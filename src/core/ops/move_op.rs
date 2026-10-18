@@ -2,7 +2,7 @@
 //!
 //! 文件名 `move_op.rs` 因 `move` 是 Rust 关键字。
 //!
-//! 算法（PLAN §6.7.5）：
+//! 算法：
 //! 1. 抽取源区段字节（含其各行尾 `\n`，但最后一行 \n 仅当原本就有）
 //! 2. 计算"删源后"目标行号的位移：
 //!    - 若 `to_line < from_start` → 不变
@@ -205,118 +205,4 @@ fn extract_lines_with_newline(content: &[u8], start: usize, end: usize) -> Vec<u
         }
     }
     out
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn move_block_forward() {
-        // 把第 1 行移到第 3 行之后 → 1234 → 234 1
-        let r = move_lines(b"1\n2\n3\n4\n", 1, 1, 3, Position::After).unwrap();
-        assert_eq!(r, b"2\n3\n1\n4\n");
-    }
-
-    #[test]
-    fn move_block_backward() {
-        // 把第 3 行移到第 1 行之前 → 1234 → 3 124
-        let r = move_lines(b"1\n2\n3\n4\n", 3, 3, 1, Position::Before).unwrap();
-        assert_eq!(r, b"3\n1\n2\n4\n");
-    }
-
-    #[test]
-    fn move_multiline_block() {
-        // 把第 2-3 行移到第 5 行之后 → 12345 → 1 4 5 23
-        let r = move_lines(b"1\n2\n3\n4\n5\n", 2, 3, 5, Position::After).unwrap();
-        assert_eq!(r, b"1\n4\n5\n2\n3\n");
-    }
-
-    #[test]
-    fn move_to_before_first_line() {
-        let r = move_lines(b"1\n2\n3\n", 3, 3, 1, Position::Before).unwrap();
-        assert_eq!(r, b"3\n1\n2\n");
-    }
-
-    #[test]
-    fn move_target_inside_source_errors() {
-        let e = move_lines(b"1\n2\n3\n", 1, 2, 2, Position::After).unwrap_err();
-        assert!(matches!(e, MoveError::TargetInsideSource { .. }));
-    }
-
-    #[test]
-    fn move_zero_line_errors() {
-        let e = move_lines(b"1\n", 0, 1, 1, Position::After).unwrap_err();
-        assert!(matches!(e, MoveError::ZeroLine));
-    }
-
-    #[test]
-    fn move_out_of_bounds_errors() {
-        let e = move_lines(b"1\n2\n", 1, 5, 1, Position::After).unwrap_err();
-        assert!(matches!(e, MoveError::InvalidSource { .. }));
-    }
-
-    #[test]
-    fn move_target_out_of_bounds_errors() {
-        let e = move_lines(b"1\n2\n", 1, 1, 5, Position::After).unwrap_err();
-        assert!(matches!(e, MoveError::InvalidSource { .. }));
-    }
-
-    #[test]
-    fn move_preserves_byte_content() {
-        let body = "α\nβ\nγ\n".as_bytes();
-        let r = move_lines(body, 1, 1, 3, Position::After).unwrap();
-        assert_eq!(r, "β\nγ\nα\n".as_bytes());
-    }
-
-    #[test]
-    fn move_round_trip_via_inverse() {
-        let original = b"a\nb\nc\nd\ne\n";
-        // forward: 1-2 → after 5
-        let after = move_lines(original, 1, 2, 5, Position::After).unwrap();
-        // 现在 after = c\nd\ne\na\nb\n；source 是 4-5（即 a\nb\n），目标是 1 before
-        let back = move_lines(&after, 4, 5, 1, Position::Before).unwrap();
-        assert_eq!(back, original);
-    }
-
-    #[test]
-    fn reverse_params_t_lt_s_after() {
-        let original = b"a\nb\nc\nd\ne\n";
-        // forward: 4-5 → after 1（块到第 1 行之后）
-        let (s, e, t, p) = (4, 5, 1, Position::After);
-        let after = move_lines(original, s, e, t, p).unwrap();
-        let (rs, re_, rt, rp) = reverse_params(s, e, t, p).unwrap();
-        let back = move_lines(&after, rs, re_, rt, rp).unwrap();
-        assert_eq!(back, original);
-    }
-
-    #[test]
-    fn reverse_params_t_lt_s_before() {
-        let original = b"a\nb\nc\nd\ne\n";
-        let (s, e, t, p) = (3, 4, 1, Position::Before);
-        let after = move_lines(original, s, e, t, p).unwrap();
-        let (rs, re_, rt, rp) = reverse_params(s, e, t, p).unwrap();
-        let back = move_lines(&after, rs, re_, rt, rp).unwrap();
-        assert_eq!(back, original);
-    }
-
-    #[test]
-    fn reverse_params_t_gt_e_after() {
-        let original = b"a\nb\nc\nd\ne\n";
-        let (s, e, t, p) = (1, 2, 5, Position::After);
-        let after = move_lines(original, s, e, t, p).unwrap();
-        let (rs, re_, rt, rp) = reverse_params(s, e, t, p).unwrap();
-        let back = move_lines(&after, rs, re_, rt, rp).unwrap();
-        assert_eq!(back, original);
-    }
-
-    #[test]
-    fn reverse_params_t_gt_e_before() {
-        let original = b"a\nb\nc\nd\ne\n";
-        let (s, e, t, p) = (1, 2, 5, Position::Before);
-        let after = move_lines(original, s, e, t, p).unwrap();
-        let (rs, re_, rt, rp) = reverse_params(s, e, t, p).unwrap();
-        let back = move_lines(&after, rs, re_, rt, rp).unwrap();
-        assert_eq!(back, original);
-    }
 }

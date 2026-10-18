@@ -8,6 +8,15 @@ use serde::Serialize;
 use crate::core::edit::{Operation, Outcome, Request};
 use crate::core::transaction::Report;
 
+/// Transport presentation; JSON is a single complete result, not a progress stream.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
+pub enum Output {
+    #[default]
+    Compact,
+    Json,
+    Human,
+}
+
 #[derive(Debug, Clone, Copy, Serialize, JsonSchema, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum Mode {
@@ -72,7 +81,10 @@ impl ChangeSummary {
                 .as_ref()
                 .map(|p| p.to_string_lossy().into_owned()),
             replacements: (request.operation == Operation::Replace).then_some(outcome.replacements),
-            journal: None,
+            journal: outcome
+                .journal
+                .as_ref()
+                .map(|path| path.to_string_lossy().into_owned()),
         }
     }
 
@@ -94,6 +106,57 @@ impl ChangeSummary {
                 .as_ref()
                 .map(|p| p.to_string_lossy().into_owned()),
         }
+    }
+
+    fn status(&self) -> &'static str {
+        match (self.mode, self.written, self.has_changes) {
+            (Mode::Preview, _, _) => "preview",
+            (Mode::Check, _, _) => "check",
+            (Mode::Write, false, _) => "unchanged",
+            (Mode::Write, true, _) => "written",
+        }
+    }
+
+    /// MCP already carries operation and paths in its call and structured result.
+    pub fn mcp_receipt(&self) -> String {
+        let mut text = self.status().to_owned();
+        if matches!(self.operation.as_str(), "apply" | "recover") {
+            let _ = write!(text, "; {} paths", self.files.len());
+        }
+        if let Some(count) = self.replacements.filter(|count| *count > 1) {
+            let _ = write!(text, "; {count} matches");
+        }
+        if self.mode != Mode::Write {
+            text.push_str("; written=false");
+        }
+        if let Some(journal) = &self.journal {
+            let _ = write!(text, "; journal={}", display_path(journal));
+        }
+        text
+    }
+
+    /// A short CLI receipt with an explicit mode, operation and target.
+    pub fn compact(&self) -> String {
+        let status = self.status();
+        let target = if matches!(self.operation.as_str(), "apply" | "recover") {
+            format!("{} paths", self.files.len())
+        } else {
+            self.files.first().map_or_else(String::new, display_path)
+        };
+        let mut text = format!("{status} {}: {target}", self.operation);
+        if let Some(to) = &self.destination {
+            let _ = write!(text, " -> {}", display_path(to));
+        }
+        if let Some(count) = self.replacements {
+            let _ = write!(text, " ({count} matches)");
+        }
+        if self.mode != Mode::Write {
+            text.push_str("; written=false");
+        }
+        if let Some(journal) = &self.journal {
+            let _ = write!(text, "; journal={}", display_path(journal));
+        }
+        text
     }
 
     /// Plain text works in terminals and clients without Markdown rendering.
@@ -175,7 +238,55 @@ pub fn display_path(path: impl AsRef<Path>) -> String {
     }
 }
 
-/// CLI-only: keep stdout a complete diff, with color only on supported terminals.
+/// Emit a file-change result using the selected CLI presentation.
+pub fn emit_change(summary: &ChangeSummary, diff: &str) -> std::io::Result<()> {
+    use std::io::Write;
+    match crate::output::globals::get().output {
+        Output::Json => {
+            let mut value = serde_json::to_value(summary).expect("summary serializes");
+            if !diff.is_empty() {
+                value["diff"] = serde_json::Value::String(diff.to_owned());
+            }
+            serde_json::to_writer(std::io::stdout().lock(), &value)?;
+            writeln!(std::io::stdout().lock())?;
+        }
+        Output::Human => {
+            print_diff(diff)?;
+            crate::note!("{}", summary.render());
+        }
+        Output::Compact => {
+            print_diff(&super::budget::truncate_with_hint(
+                diff,
+                super::budget::DEFAULT_MAX_BYTES,
+                "use --output human for full output",
+            ))?;
+            crate::note!("{}", summary.compact());
+        }
+    }
+    Ok(())
+}
+
+/// Legacy line previews retain raw bytes and use the same default output budget.
+pub fn print_legacy_preview(bytes: &[u8]) -> std::io::Result<()> {
+    use std::io::Write;
+    let max = if crate::output::globals::get().output == Output::Human {
+        0
+    } else {
+        super::budget::DEFAULT_MAX_BYTES
+    };
+    let selected = super::budget::prefix(bytes, max);
+    std::io::stdout().lock().write_all(selected)?;
+    if selected.len() < bytes.len() {
+        eprintln!(
+            "[truncated: {}/{} bytes; use --output human for full output]",
+            selected.len(),
+            bytes.len()
+        );
+    }
+    Ok(())
+}
+
+/// CLI-only: print diff text, with color only on supported terminals.
 pub fn print_diff(diff: &str) -> std::io::Result<()> {
     use std::io::Write;
     let colored;
@@ -190,28 +301,89 @@ pub fn print_diff(diff: &str) -> std::io::Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::{ChangeSummary, Mode, display_path};
+    use crate::core::edit::{Outcome, Request};
+    use std::path::Path;
 
     #[test]
-    fn display_paths_preserve_unicode_and_quote_controls() {
-        assert_eq!(display_path("src/文件.rs"), "src/文件.rs");
-        assert_eq!(display_path("my file.txt"), "\"my file.txt\"");
-        let displayed = display_path("line\nnext\u{1b}[31m");
-        assert!(!displayed.contains('\n'));
-        assert!(!displayed.contains('\u{1b}'));
+    fn receipts_distinguish_committed_preview_check_and_noop() {
+        for (dry_run, check, changed, expected, written) in [
+            (false, false, true, "written replace:", true),
+            (true, false, true, "preview replace:", false),
+            (false, true, true, "check replace:", false),
+            (false, false, false, "unchanged replace:", false),
+        ] {
+            let request = Request {
+                dry_run,
+                check,
+                ..Default::default()
+            };
+            let outcome = Outcome {
+                changed,
+                replacements: 1,
+                diff: String::new(),
+                journal: None,
+            };
+            let summary = ChangeSummary::edit(Path::new("文件.rs"), &request, &outcome);
+            assert!(summary.compact().starts_with(expected));
+            assert_eq!(summary.written, written);
+            assert_eq!(summary.has_changes, changed);
+            assert_eq!(summary.mode == Mode::Write, !dry_run && !check);
+            assert!(!summary.compact().contains('\n'));
+            let status = expected.split_whitespace().next().unwrap();
+            assert_eq!(
+                summary.mcp_receipt(),
+                if dry_run || check {
+                    format!("{status}; written=false")
+                } else {
+                    status.into()
+                }
+            );
+        }
+    }
+
+    #[test]
+    fn retained_rename_journal_remains_visible_after_a_successful_write() {
+        let request = Request {
+            operation: crate::core::edit::Operation::Rename,
+            to: Some("b".into()),
+            ..Default::default()
+        };
+        let outcome = Outcome {
+            changed: true,
+            replacements: 0,
+            diff: String::new(),
+            journal: Some("retained-journal".into()),
+        };
+        let summary = ChangeSummary::edit(Path::new("a"), &request, &outcome);
+        assert!(summary.written);
+        assert!(summary.compact().contains("journal=retained-journal"));
+        assert!(summary.mcp_receipt().contains("journal=retained-journal"));
         assert_eq!(
-            serde_json::from_str::<String>(&displayed).unwrap(),
-            "line\nnext\u{1b}[31m"
+            serde_json::to_value(summary).unwrap()["journal"],
+            "retained-journal"
         );
     }
 
-    #[cfg(windows)]
     #[test]
-    fn windows_display_shortens_extended_prefixes_only_in_prose() {
-        assert_eq!(display_path(r"\\?\C:\project\a.rs"), r"C:\project\a.rs");
-        assert_eq!(
-            display_path(r"\\?\UNC\server\share\a.rs"),
-            r"\\server\share\a.rs"
-        );
+    fn display_paths_cannot_forge_extra_receipt_lines() {
+        for path in ["line\nnext", "escape\u{1b}[31m", "quoted\"name", "文件.rs"] {
+            let displayed = display_path(path);
+            assert!(!displayed.chars().any(char::is_control));
+            if displayed.starts_with('"') {
+                assert_eq!(serde_json::from_str::<String>(&displayed).unwrap(), path);
+            } else {
+                assert_eq!(displayed, path);
+            }
+        }
+        assert_eq!(display_path("has spaces.txt"), "\"has spaces.txt\"");
+        #[cfg(windows)]
+        {
+            assert_eq!(display_path(r"\\?\C:\a.rs"), r"C:\a.rs");
+            assert_eq!(
+                display_path(r"\\?\UNC\server\share\a.rs"),
+                r"\\server\share\a.rs"
+            );
+        }
     }
 }

@@ -1,6 +1,6 @@
 # CLI usage
 
-v0.2.0 uses [xnip edit](edit.md) for creation, exact block replacement, file deletion and rename; published v0.1.1 provides line/anchor editing of existing files. Line numbers are 1-based and ranges include both endpoints. Use `xnip COMMAND --help` for every option and its default.
+Use [xnip edit](edit.md) for creation, exact block replacement, deletion and rename. Line numbers are 1-based and ranges include both endpoints. Use `xnip COMMAND --help` for every option and its default.
 
 ## A runnable first edit
 
@@ -29,14 +29,14 @@ xnip replace sample.txt --lines 2 --text BETA --backup
 xnip find sample.txt --pattern BETA
 ```
 
-The preview prints the complete proposed file; only the second replace writes. The original remains in `sample.txt.bak`. Restore exact original bytes by copying that backup over the target, or use Git when the file is tracked.
+The preview prints the proposed file within the default byte budget; only the second replace writes. The original remains in `sample.txt.bak`. Restore exact original bytes by copying that backup over the target, or use Git when the file is tracked.
 
 ## Commands
 
 | Command | Typical use | Output |
 |---|---|---|
 | `edit FILE --old OLD --text NEW` | Exact block replacement; `--create` and `--delete` handle whole files | Status or dry-run diff |
-| `peek FILE --lines 3-8` | Inspect a range; `--all` reads every line | Numbered lines |
+| `peek FILE --lines 3-8` | Inspect a range; `--all` selects every line within the output budget | Numbered lines |
 | `find FILE... --pattern RE` | Search explicit files | `path:line:column`, byte-based columns |
 | `replace FILE --lines 3 --text TEXT` | Replace a line; empty text deletes it | Status on stderr |
 | `insert FILE --lines 3 --position after --text TEXT` | Add complete lines | Status on stderr |
@@ -49,25 +49,25 @@ The preview prints the complete proposed file; only the second replace writes. T
 
 `find` takes files, not directories; glob expansion is the shell's responsibility and differs across shells. `--match-line` searches one line at a time and prints no column. `--max-matches N` caps the total output and `--first-only` caps each file to one hit. Regexes use Rust regex syntax; lookaround and backreferences in the pattern are not supported. Replacement strings support capture expansion such as `$1` and `${name}`.
 
-## Reading command results (current source; after v0.2.0)
+## Reading command results
 
-`edit`, `apply` and `recover` use short status summaries on stderr. For example:
+`edit`, `apply` and `recover` default to compact receipts on stderr:
 
 ```text
-Updated: config.toml
-  Matched blocks: 1
-
-Renamed: src/old.rs -> src/new.rs
-
-Preview (no files written): 2 path(s)
-  Operation: apply
-  src/main.rs
-  src/lib.rs
+written replace: config.toml (1 matches)
+written rename: src/old.rs -> src/new.rs
+preview apply: 2 paths; written=false
 ```
 
-`Unchanged` means no content/existence change was needed; `Check passed` and `Preview` explicitly mean no files were written. Batch counts refer to affected paths (a rename has two endpoints). At most 20 paths are listed in a human batch summary, with an omitted count for larger batches. Use `apply --json` for the complete machine-readable path list.
+Use `--output json` for a single complete JSON record on stdout, with `operation`, `mode`, `has_changes`, `written`, `files` and an optional preview `diff`. Use `--output human` for expanded status and a complete diff. `apply --json` retains its NDJSON progress events; it conflicts with a nondefault `--output`.
 
-`edit`, `apply` and `recover` previews print full unified diffs on stdout. Interactive terminals receive colored additions, deletions and hunk headers; redirected output, `--no-color` or `NO_COLOR` keeps plain text. `--quiet` hides status summaries while retaining requested diff/data output and errors. `apply --check` still prints `OK` on stdout, and `apply --json` retains its NDJSON event format. Human status prose is intended for reading, not parsing.
+Default compact previews limit diff payloads to 12,000 bytes with an explicit notice. JSON/human modes include the complete requested diff. `--quiet` suppresses status, while preserving requested data and errors. `apply --check` emits its check receipt on stderr; scripts should use `--output json` and inspect `mode` and `written`.
+
+Interactive terminals receive colored diffs; redirected output, `--no-color` or `NO_COLOR` produces plain text. Human prose is for reading, not parsing.
+
+## Read budgets
+
+All `peek` modes default to 200 lines and 12,000 payload bytes. `find` defaults to 100 total hits and 12,000 bytes. Truncation is explicit. Use `--max-lines 0 --max-bytes 0` for a full read or `--max-matches 0 --max-bytes 0` for all search hits. Limits constrain returned context, not file loading memory.
 
 ## Locators and payloads
 
@@ -81,7 +81,7 @@ Line edits use LF separators and do not automatically convert new text to the ta
 
 ## Preview and validation
 
-`edit` and `replace` support `--check`; the older insert/move/indent commands currently offer `--dry-run` without a separate check flag. Check validates without writing. `edit` and `apply` dry runs print unified diffs; other single-file dry runs print the complete proposed contents. `--backup` appends `.bak` to the full target name and replaces an existing backup. `--quiet` suppresses success notices, `--no-color` disables ANSI output, and `--trace` adds diagnostics on stderr.
+`edit` and `replace` support `--check`; the older insert/move/indent commands currently offer `--dry-run` without a separate check flag. Check validates without writing. `edit` and `apply` dry runs print unified diffs; legacy single-file dry runs print proposed raw contents. Both are limited to 12,000 payload bytes by default; `--output human` requests full previews. `--backup` appends `.bak` to the full target name and replaces an existing backup. `--quiet` suppresses success notices, `--no-color` disables ANSI output, and `--trace` adds diagnostics on stderr.
 
 For line-based replacement, use `--was-file expected.txt` to compare the original range exactly, including line endings. `--was` provides the same comparison with a literal shell argument. Pattern replacement rejects these preconditions instead of ignoring them. A precondition is not a file lock; avoid simultaneous external writers.
 

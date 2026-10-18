@@ -1,129 +1,50 @@
-//! `xnip_find` 工具：在多个文件里搜索定位。
-//!
-//! 与 cli `xnip find` 一致（PLAN §6.7.2）。复用 `core::ops::find::{scan, write_hits}`。
+//! MCP adapter for bounded multi-file search.
 
-use std::path::PathBuf;
-
-use regex::Regex;
-use regex::bytes::Regex as ByteRegex;
 use rmcp::{ErrorData as McpError, model::CallToolResult};
 use schemars::JsonSchema;
 use serde::Deserialize;
+use std::path::PathBuf;
 
-use crate::core::content;
-use crate::core::ops::find::{FindMode, FindOpts, scan, write_hits};
-
-use super::common::err_to_internal;
+use super::common::any_to_invalid_params;
+use crate::core::read::FindQuery;
 
 #[derive(Debug, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
 pub struct Args {
-    /// 要搜索的文件路径列表（必填，至少 1 个）。
+    /// Files to search, in output order.
     pub files: Vec<PathBuf>,
-
-    /// 字节级跨行命中正则（与 `match_line` 互斥）。命中输出 `path:line:col`。
+    /// Byte regex; emits path:line:column.
     #[serde(default)]
     pub pattern: Option<String>,
-
-    /// 整行命中正则。命中输出 `path:line`。
+    /// Line regex; emits path:line.
     #[serde(default)]
     pub match_line: Option<String>,
-
-    /// 总命中数上限。
+    /// Maximum total hits; default 100, 0 unlimited.
     #[serde(default)]
     pub max_matches: Option<usize>,
-
-    /// 每个文件首次命中即停。
+    /// Maximum output bytes; default 12000, 0 unlimited.
+    #[serde(default)]
+    pub max_bytes: Option<usize>,
+    /// Keep only the first hit per file.
     #[serde(default)]
     pub first_only: Option<bool>,
 }
 
 pub fn run(a: Args) -> Result<CallToolResult, McpError> {
-    if a.files.is_empty() {
-        return Err(McpError::invalid_params(
-            "`files` must contain at least one path",
-            None,
-        ));
+    let result = FindQuery::new(
+        a.pattern.as_deref(),
+        a.match_line.as_deref(),
+        a.first_only.unwrap_or(false),
+        a.max_matches,
+        a.max_bytes,
+    )
+    .and_then(|query| query.run(&a.files))
+    .map_err(any_to_invalid_params)?;
+    if result.items == 0 && result.load_error_count > 0 {
+        return Err(McpError::invalid_params(result.into_text(), None));
     }
-    if a.pattern.is_none() && a.match_line.is_none() {
-        return Err(McpError::invalid_params(
-            "missing locator: one of `pattern` / `match_line` is required",
-            None,
-        ));
-    }
-    if a.pattern.is_some() && a.match_line.is_some() {
-        return Err(McpError::invalid_params(
-            "`pattern` and `match_line` are mutually exclusive",
-            None,
-        ));
-    }
-
-    // 编译正则
-    let line_re = a
-        .match_line
-        .as_deref()
-        .map(Regex::new)
-        .transpose()
-        .map_err(|e| McpError::invalid_params(format!("invalid match_line regex: {e}"), None))?;
-    let pat_re = a
-        .pattern
-        .as_deref()
-        .map(ByteRegex::new)
-        .transpose()
-        .map_err(|e| McpError::invalid_params(format!("invalid pattern regex: {e}"), None))?;
-
-    let mode = if let Some(re) = &line_re {
-        FindMode::MatchLine(re)
-    } else {
-        FindMode::Pattern(pat_re.as_ref().expect("locator presence checked"))
-    };
-
-    let mut opts = FindOpts {
-        mode,
-        max_matches: a.max_matches,
-        first_only: a.first_only.unwrap_or(false),
-    };
-
-    let mut files_with_hits = Vec::with_capacity(a.files.len());
-    let mut total_hits = 0usize;
-    let mut load_errors: Vec<String> = Vec::new();
-    for path in a.files {
-        opts.max_matches = a.max_matches.map(|cap| cap.saturating_sub(total_hits));
-        match content::load_path(&path) {
-            Ok(bytes) => {
-                let hits = scan(&bytes, &opts);
-                total_hits += hits.len();
-                files_with_hits.push((path, hits));
-            }
-            Err(e) => {
-                load_errors.push(format!("{}: {e}", path.display()));
-            }
-        }
-    }
-
-    let use_col = a.pattern.is_some();
-    let mut buf = Vec::new();
-    write_hits(&files_with_hits, use_col, a.max_matches, &mut buf).map_err(err_to_internal)?;
-
-    if total_hits == 0 {
-        if !load_errors.is_empty() {
-            // 文件全打不开 → 当作错误
-            return Err(McpError::invalid_params(
-                format!("no matches; load errors: {}", load_errors.join("; ")),
-                None,
-            ));
-        }
+    if result.items == 0 {
         return Ok(super::common::ok_text("(no matches)"));
     }
-
-    // 命中文本 + 末尾追加 load errors（如有）
-    let mut text = String::from_utf8_lossy(&buf).into_owned();
-    if !load_errors.is_empty() {
-        text.push_str("\n[xnip_find] partial load errors:\n");
-        for e in &load_errors {
-            text.push_str("  - ");
-            text.push_str(e);
-            text.push('\n');
-        }
-    }
-    Ok(super::common::ok_text(text))
+    Ok(super::common::ok_text(result.into_text()))
 }

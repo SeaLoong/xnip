@@ -1,6 +1,6 @@
 //! 5 种 Locator + resolve(content) → 行号区间。
 //!
-//! 行的定义（PLAN.md §6.4 / §6.1）：
+//! 行的定义：
 //! - 字节流按 LF (`\n`) 切分；CRLF 文件 `\r` 留在行内
 //! - 行号 **1-based 闭区间**
 //! - 末尾若不以 `\n` 结尾，仍算一个完整行
@@ -72,6 +72,8 @@ pub enum LocateError {
     InvalidRange { start: usize, end: usize },
     #[error("zero is not a valid 1-based line number")]
     ZeroLine,
+    #[error("literal anchors must not be empty")]
+    EmptyAnchor,
     #[error("--match-line regex did not match (occurrence {occurrence})")]
     MatchLineNotFound { occurrence: usize },
     #[error("--between start anchor not found (occurrence {occurrence})")]
@@ -191,14 +193,19 @@ pub fn resolve(loc: &Locator, content: &[u8]) -> Result<Resolved, LocateError> {
             start_occ,
             end_occ,
             inclusive,
-        } => resolve_between_with(
-            &lines,
-            *start_occ,
-            *end_occ,
-            *inclusive,
-            |line| line.windows(start.len()).any(|w| w == start.as_slice()),
-            |line| line.windows(end.len()).any(|w| w == end.as_slice()),
-        ),
+        } => {
+            if start.is_empty() || end.is_empty() {
+                return Err(LocateError::EmptyAnchor);
+            }
+            resolve_between_with(
+                &lines,
+                *start_occ,
+                *end_occ,
+                *inclusive,
+                |line| line.windows(start.len()).any(|w| w == start.as_slice()),
+                |line| line.windows(end.len()).any(|w| w == end.as_slice()),
+            )
+        }
         Locator::BetweenRe {
             start,
             end,
@@ -294,198 +301,4 @@ where
         start_line,
         end_line,
     })
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn lines(c: &[u8]) -> Vec<String> {
-        split_lines(c)
-            .iter()
-            .map(|l| String::from_utf8_lossy(l).into_owned())
-            .collect()
-    }
-
-    #[test]
-    fn split_lines_empty() {
-        assert_eq!(split_lines(b"").len(), 0);
-    }
-
-    #[test]
-    fn split_lines_no_trailing_newline() {
-        assert_eq!(lines(b"a\nb"), vec!["a", "b"]);
-    }
-
-    #[test]
-    fn split_lines_with_trailing_newline() {
-        assert_eq!(lines(b"a\nb\n"), vec!["a", "b"]);
-    }
-
-    #[test]
-    fn split_lines_preserves_cr() {
-        assert_eq!(lines(b"a\r\nb\r\n"), vec!["a\r", "b\r"]);
-    }
-
-    #[test]
-    fn split_lines_blank_line() {
-        assert_eq!(lines(b"a\n\nb\n"), vec!["a", "", "b"]);
-    }
-
-    #[test]
-    fn lines_simple_range() {
-        let r = resolve(&Locator::Lines { start: 2, end: 3 }, b"a\nb\nc\nd\n").unwrap();
-        assert_eq!(
-            r,
-            Resolved {
-                start_line: 2,
-                end_line: 3
-            }
-        );
-    }
-
-    #[test]
-    fn lines_single_line() {
-        let r = resolve(&Locator::Lines { start: 1, end: 1 }, b"only\n").unwrap();
-        assert_eq!(
-            r,
-            Resolved {
-                start_line: 1,
-                end_line: 1
-            }
-        );
-    }
-
-    #[test]
-    fn lines_zero_is_invalid() {
-        let e = resolve(&Locator::Lines { start: 0, end: 1 }, b"a\n").unwrap_err();
-        matches!(e, LocateError::ZeroLine);
-    }
-
-    #[test]
-    fn lines_inverted_range_invalid() {
-        let e = resolve(&Locator::Lines { start: 3, end: 2 }, b"a\nb\nc\n").unwrap_err();
-        matches!(e, LocateError::InvalidRange { .. });
-    }
-
-    #[test]
-    fn lines_out_of_bounds() {
-        let e = resolve(&Locator::Lines { start: 1, end: 99 }, b"a\nb\n").unwrap_err();
-        matches!(e, LocateError::OutOfBounds { .. });
-    }
-
-    #[test]
-    fn match_line_first_occurrence() {
-        let loc = Locator::MatchLine {
-            regex: Regex::new(r"^foo").unwrap(),
-            occurrence: 1,
-        };
-        let r = resolve(&loc, b"bar\nfoo\nbaz\nfoo\n").unwrap();
-        assert_eq!(r.start_line, 2);
-        assert_eq!(r.end_line, 2);
-    }
-
-    #[test]
-    fn match_line_nth_occurrence() {
-        let loc = Locator::MatchLine {
-            regex: Regex::new(r"^foo").unwrap(),
-            occurrence: 2,
-        };
-        let r = resolve(&loc, b"bar\nfoo\nbaz\nfoo\n").unwrap();
-        assert_eq!(r.start_line, 4);
-    }
-
-    #[test]
-    fn match_line_no_match() {
-        let loc = Locator::MatchLine {
-            regex: Regex::new(r"^xxx").unwrap(),
-            occurrence: 1,
-        };
-        let e = resolve(&loc, b"a\nb\n").unwrap_err();
-        matches!(e, LocateError::MatchLineNotFound { .. });
-    }
-
-    #[test]
-    fn between_inclusive() {
-        let loc = Locator::Between {
-            start: b"BEGIN".to_vec(),
-            end: b"END".to_vec(),
-            start_occ: 1,
-            end_occ: 1,
-            inclusive: true,
-        };
-        let r = resolve(&loc, b"x\n// BEGIN\ninner\n// END\ny\n").unwrap();
-        assert_eq!(r.start_line, 2);
-        assert_eq!(r.end_line, 4);
-    }
-
-    #[test]
-    fn between_exclusive() {
-        let loc = Locator::Between {
-            start: b"BEGIN".to_vec(),
-            end: b"END".to_vec(),
-            start_occ: 1,
-            end_occ: 1,
-            inclusive: false,
-        };
-        let r = resolve(&loc, b"x\n// BEGIN\ninner1\ninner2\n// END\ny\n").unwrap();
-        assert_eq!(r.start_line, 3);
-        assert_eq!(r.end_line, 4);
-    }
-
-    #[test]
-    fn between_start_not_found() {
-        let loc = Locator::Between {
-            start: b"BEGIN".to_vec(),
-            end: b"END".to_vec(),
-            start_occ: 1,
-            end_occ: 1,
-            inclusive: true,
-        };
-        let e = resolve(&loc, b"x\ny\n").unwrap_err();
-        matches!(e, LocateError::BetweenStartNotFound { .. });
-    }
-
-    #[test]
-    fn between_end_not_found_after_start() {
-        let loc = Locator::Between {
-            start: b"BEGIN".to_vec(),
-            end: b"END".to_vec(),
-            start_occ: 1,
-            end_occ: 1,
-            inclusive: true,
-        };
-        let e = resolve(&loc, b"// BEGIN\ninner\n").unwrap_err();
-        matches!(e, LocateError::BetweenEndNotFound { .. });
-    }
-
-    #[test]
-    fn between_re_inclusive() {
-        let loc = Locator::BetweenRe {
-            start: Regex::new(r"^function foo").unwrap(),
-            end: Regex::new(r"^\}").unwrap(),
-            start_occ: 1,
-            end_occ: 1,
-            inclusive: true,
-        };
-        let body = b"x\nfunction foo() {\n  return 1;\n}\ny\n";
-        let r = resolve(&loc, body).unwrap();
-        assert_eq!(r.start_line, 2);
-        assert_eq!(r.end_line, 4);
-    }
-
-    #[test]
-    fn pattern_locator_not_resolvable() {
-        let loc = Locator::Pattern {
-            regex: ByteRegex::new(r"foo").unwrap(),
-            count: Count::All,
-        };
-        let e = resolve(&loc, b"foo\n").unwrap_err();
-        matches!(e, LocateError::PatternNotResolvable);
-    }
-
-    #[test]
-    fn count_default_is_all() {
-        assert_eq!(Count::default(), Count::All);
-    }
 }

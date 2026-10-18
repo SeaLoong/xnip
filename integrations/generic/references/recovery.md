@@ -8,7 +8,7 @@ Before modifying target files, xnip creates a private `xnip-transaction-*` direc
 
 Journaling adds disk IO and temporary space proportional to original plus planned file contents; files are also planned in memory. Preview/check modes skip snapshot creation.
 
-The journal path is printed on stderr unless quiet output is selected, and is included in commit-failure errors. If a quiet process crashes before returning an error, look for its recent `xnip-transaction-*` directory in the system temporary directory and inspect its recorded target paths. Do not select a journal based only on its age.
+The journal path is available through `--trace` and is included in commit-failure errors. If a process crashes before returning an error, look for its recent `xnip-transaction-*` directory in the system temporary directory and inspect its recorded target paths. Do not select a journal based only on its age.
 
 Successful commits remove their journal. If cleanup fails, the retained path is available in the execution report. Failed commits retain it whether automatic rollback succeeds or not. Journals contain file contents: keep them private and remove a retained directory only after verifying recovery and deciding its snapshots are no longer needed.
 

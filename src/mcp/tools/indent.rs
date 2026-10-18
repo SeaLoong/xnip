@@ -1,6 +1,6 @@
 //! `xnip_indent` 工具：调整行首缩进 / tabs↔spaces 转换。
 //!
-//! 与 cli `xnip indent` 行为一致（PLAN §6.7.6）。
+//! 与 CLI `xnip indent` 共享缩进操作。
 
 use std::path::PathBuf;
 
@@ -16,6 +16,7 @@ use crate::core::ops::indent::{IndentOp, apply_indent};
 use super::common::{any_to_invalid_params, err_to_internal};
 
 #[derive(Debug, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
 pub struct Args {
     /// 目标文件路径。
     pub file: PathBuf,

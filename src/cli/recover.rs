@@ -22,15 +22,12 @@ pub fn run(args: &Args) -> Result<u8> {
             return Ok(crate::output::exit::CHECK);
         }
     };
-    if args.dry_run {
-        crate::output::human::print_diff(&report.diff)?;
-    }
     let mut summary = crate::output::human::ChangeSummary::batch(
         "recover",
         crate::output::human::Mode::new(args.dry_run, args.check),
         &report,
     );
     summary.journal = Some(args.journal.to_string_lossy().into_owned());
-    crate::note!("{}", summary.render());
+    crate::output::human::emit_change(&summary, if args.dry_run { &report.diff } else { "" })?;
     Ok(crate::output::exit::SUCCESS)
 }

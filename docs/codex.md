@@ -1,12 +1,12 @@
 # Codex integration without a skill command
 
-xnip is an editing tool. For automatic use without a `$xnip-editing` entry, install the [Codex instruction package](../integrations/codex/AGENTS.md) as ordinary agent instructions and a guide. This integration is available in source after v0.2.0; its archive will ship with the next release.
+xnip is an editing tool. For automatic use without a `$xnip-editing` entry, install the [Codex instruction package](../integrations/codex/AGENTS.md) as ordinary agent instructions and a guide.
 
 ## Install
 
 1. Install the xnip executable using the [normal installation instructions](../README.md#install). Optionally configure its [MCP server](mcp.md#client-configuration) for structured editing calls.
 2. Create `~/.codex/guides/xnip-editing/`. Copy `guide.md` and the complete `references/` directory from `integrations/codex/` into it. Keep these files outside skill discovery directories.
-3. Merge the short `integrations/codex/AGENTS.md` section into `~/.codex/AGENTS.md`. Preserve existing instructions. If `CODEX_HOME` is customized, use that home and update the guide path in the section.
+3. Merge the short `integrations/codex/AGENTS.md` section into the active global instruction file, normally `~/.codex/AGENTS.md`. If a nonempty `AGENTS.override.md` exists there, Codex loads it instead. Preserve existing instructions. If `CODEX_HOME` is customized, use that home and update the guide path in the section. See [official instruction discovery](https://learn.chatgpt.com/docs/agent-configuration/agents-md#how-codex-discovers-guidance).
 4. If migrating from the old installation, move `~/.codex/skills/xnip-editing/` outside the skills directory, preserving any local customizations. Check `~/.agents/skills/` and repository skill directories for additional installed copies.
 5. Start a new Codex task/session so it loads the instructions and refreshes skill discovery. An existing conversation may retain an already-attached skill until its context is refreshed.
 

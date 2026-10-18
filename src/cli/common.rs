@@ -15,7 +15,7 @@ use crate::core::location::{Count, Locator};
 
 /// 写命令公用的 5 个定位维度（至少且最多 1 个有效）。
 ///
-/// PLAN.md §6.4 / §6.9.2。
+/// Shared locator arguments for line and marker operations.
 #[derive(Debug, Args, Default, Clone)]
 pub struct LocatorArgs {
     /// 行号区间（1-based 闭区间），如 `--lines 30` 或 `--lines 30-45`。
@@ -255,42 +255,111 @@ impl ContentArgs {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::{ContentArgs, LocatorArgs};
+    use crate::core::location::{Count, Locator};
 
     #[test]
-    fn parse_line_range_single() {
-        assert_eq!(parse_line_range("30").unwrap(), (30, 30));
+    fn callers_choose_one_locator_and_positive_match_count() {
+        assert!(LocatorArgs::default().into_locator().is_err());
+        assert!(
+            LocatorArgs {
+                lines: Some("1".into()),
+                match_line: Some("x".into()),
+                ..Default::default()
+            }
+            .into_locator()
+            .is_err()
+        );
+        for invalid in ["0", "garbage", "-1"] {
+            assert!(
+                LocatorArgs {
+                    pattern: Some("x".into()),
+                    count: Some(invalid.into()),
+                    ..Default::default()
+                }
+                .into_locator()
+                .is_err()
+            );
+        }
+        let locator = LocatorArgs {
+            pattern: Some("x".into()),
+            count: Some("2".into()),
+            ..Default::default()
+        }
+        .into_locator()
+        .unwrap();
+        assert!(matches!(
+            locator,
+            Locator::Pattern {
+                count: Count::First(2),
+                ..
+            }
+        ));
     }
 
     #[test]
-    fn parse_line_range_pair() {
-        assert_eq!(parse_line_range("30-45").unwrap(), (30, 45));
+    fn literal_and_regex_markers_reach_the_correct_editing_semantics() {
+        for input in ["START..END", "中文..结束"] {
+            let locator = LocatorArgs {
+                between: Some(input.into()),
+                inclusive: true,
+                ..Default::default()
+            }
+            .into_locator()
+            .unwrap();
+            assert!(matches!(
+                locator,
+                Locator::Between {
+                    inclusive: true,
+                    ..
+                }
+            ));
+        }
+        assert!(
+            LocatorArgs {
+                between: Some("missing separator".into()),
+                ..Default::default()
+            }
+            .into_locator()
+            .is_err()
+        );
+        assert!(
+            LocatorArgs {
+                between_re: Some("[..END".into()),
+                ..Default::default()
+            }
+            .into_locator()
+            .is_err()
+        );
     }
 
     #[test]
-    fn parse_line_range_invalid() {
-        assert!(parse_line_range("abc").is_err());
-        assert!(parse_line_range("1-x").is_err());
-    }
-
-    #[test]
-    fn parse_count_default_is_all() {
-        assert_eq!(parse_count(None).unwrap(), Count::All);
-    }
-
-    #[test]
-    fn parse_count_all_keyword() {
-        assert_eq!(parse_count(Some("all")).unwrap(), Count::All);
-        assert_eq!(parse_count(Some("ALL")).unwrap(), Count::All);
-    }
-
-    #[test]
-    fn parse_count_number() {
-        assert_eq!(parse_count(Some("3")).unwrap(), Count::First(3));
-    }
-
-    #[test]
-    fn parse_count_zero_invalid() {
-        assert!(parse_count(Some("0")).is_err());
+    fn empty_payload_is_a_deletion_but_absent_payload_is_an_error() {
+        assert!(ContentArgs::default().into_content(true).is_err());
+        assert!(
+            ContentArgs::default()
+                .into_content(false)
+                .unwrap()
+                .is_none()
+        );
+        let content = ContentArgs {
+            text: Some(String::new()),
+            ..Default::default()
+        }
+        .into_content(true)
+        .unwrap()
+        .unwrap();
+        assert!(
+            matches!(content, crate::core::content::Content::Inline(bytes) if bytes.is_empty())
+        );
+        assert!(
+            ContentArgs {
+                text: Some("x".into()),
+                repl: Some("y".into()),
+                ..Default::default()
+            }
+            .into_content(true)
+            .is_err()
+        );
     }
 }

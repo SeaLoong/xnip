@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1160" height="648" viewBox="0 0 1160 648" role="img" aria-labelledby="title desc">
+<title id="title">Relative native edit input</title><desc id="desc">Per-task native input divided by xnip input. Geometric means use equal task weights. Exact subsets differ across backends.</desc>
+<style>text{font-family:Segoe UI,Arial,sans-serif;fill:#192b3a;font-size:13px}.small{font-size:11px;fill:#526575}.title{font-size:21px;font-weight:600}.tick{fill:#dfe6eb;stroke:none}</style>
+<rect width="1160" height="648" fill="#fff"/>
+<text x="28" y="36" class="title">Relative native edit input</text>
+<text x="28.00" y="61.00" class="small" text-anchor="start">xnip = 1x | tokens | log axis | higher means more native input</text>
+<text x="28.00" y="82.00" class="small" text-anchor="start">Filled bar: all tasks, including incompatible outputs. Orange diamond: both tools byte-exact.</text>
+<text x="873.00" y="101.00" class="" text-anchor="start">All tasks</text>
+<text x="990.00" y="101.00" class="" text-anchor="start">Exact subset</text>
+<line x1="250.00" y1="98" x2="250.00" y2="568" stroke="#e1e7ed" stroke-dasharray="1 0"/>
+<text x="250.00" y="590.00" class="small" text-anchor="middle">0.5x</text>
+<line x1="419.53" y1="98" x2="419.53" y2="568" stroke="#768b9a" stroke-dasharray="4 3"/>
+<text x="419.53" y="590.00" class="small" text-anchor="middle">1x</text>
+<line x1="589.06" y1="98" x2="589.06" y2="568" stroke="#e1e7ed" stroke-dasharray="1 0"/>
+<text x="589.06" y="590.00" class="small" text-anchor="middle">2x</text>
+<line x1="813.17" y1="98" x2="813.17" y2="568" stroke="#e1e7ed" stroke-dasharray="1 0"/>
+<text x="813.17" y="590.00" class="small" text-anchor="middle">5x</text>
+<text x="28.00" y="126.00" class="" text-anchor="start">xnip-edit</text>
+<rect x="419.53" y="114" width="1.00" height="16" rx="3" fill="#007f73"/>
+<path d="M 419.53 115 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="126.00" class="" text-anchor="start">1.00x (13)</text>
+<text x="990.00" y="126.00" class="" text-anchor="start">1.00x (13)</text>
+<text x="28.00" y="164.00" class="" text-anchor="start">codex-apply-patch</text>
+<rect x="419.53" y="152" width="234.52" height="16" rx="3" fill="#3b6fac"/>
+<path d="M 665.06 153 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="164.00" class="" text-anchor="start">2.61x (13)</text>
+<text x="990.00" y="164.00" class="" text-anchor="start">2.73x (12)</text>
+<text x="28.00" y="202.00" class="" text-anchor="start">gemini-edit-context</text>
+<rect x="419.53" y="190" width="327.07" height="16" rx="3" fill="#9165b6"/>
+<path d="M 746.60 191 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="202.00" class="" text-anchor="start">3.81x (13)</text>
+<text x="990.00" y="202.00" class="" text-anchor="start">3.81x (13)</text>
+<text x="28.00" y="240.00" class="" text-anchor="start">gemini-edit-minimal</text>
+<rect x="419.53" y="228" width="132.37" height="16" rx="3" fill="#9165b6"/>
+<path d="M 551.91 229 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="240.00" class="" text-anchor="start">1.72x (13)</text>
+<text x="990.00" y="240.00" class="" text-anchor="start">1.72x (13)</text>
+<text x="28.00" y="278.00" class="" text-anchor="start">opencode-edit</text>
+<rect x="419.53" y="266" width="25.60" height="16" rx="3" fill="#c46a24"/>
+<path d="M 445.14 267 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="278.00" class="" text-anchor="start">1.11x (13)</text>
+<text x="990.00" y="278.00" class="" text-anchor="start">1.11x (13)</text>
+<text x="28.00" y="316.00" class="" text-anchor="start">opencode-apply-patch</text>
+<rect x="419.53" y="304" width="271.54" height="16" rx="3" fill="#c46a24"/>
+<path d="M 713.84 305 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="316.00" class="" text-anchor="start">3.04x (13)</text>
+<text x="990.00" y="316.00" class="" text-anchor="start">3.33x (11)</text>
+<text x="28.00" y="354.00" class="" text-anchor="start">aider-diff-platform</text>
+<rect x="419.53" y="342" width="226.02" height="16" rx="3" fill="#6c7785"/>
+<path d="M 534.48 343 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="354.00" class="" text-anchor="start">2.52x (13)</text>
+<text x="990.00" y="354.00" class="" text-anchor="start">1.60x (1)</text>
+<text x="28.00" y="392.00" class="" text-anchor="start">aider-diff-lf</text>
+<rect x="419.53" y="380" width="226.02" height="16" rx="3" fill="#6c7785"/>
+<path d="M 669.36 381 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="392.00" class="" text-anchor="start">2.52x (13)</text>
+<text x="990.00" y="392.00" class="" text-anchor="start">2.78x (11)</text>
+<text x="28.00" y="430.00" class="" text-anchor="start">aider-whole-platform</text>
+<rect x="419.53" y="418" width="156.18" height="16" rx="3" fill="#6c7785"/>
+<path d="M 364.95 419 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="430.00" class="" text-anchor="start">1.89x (13)</text>
+<text x="990.00" y="430.00" class="" text-anchor="start">0.80x (1)</text>
+<text x="28.00" y="468.00" class="" text-anchor="start">aider-whole-lf</text>
+<rect x="419.53" y="456" width="156.18" height="16" rx="3" fill="#6c7785"/>
+<path d="M 617.64 457 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="468.00" class="" text-anchor="start">1.89x (13)</text>
+<text x="990.00" y="468.00" class="" text-anchor="start">2.25x (11)</text>
+<text x="28.00" y="506.00" class="" text-anchor="start">aider-udiff-platform</text>
+<rect x="419.53" y="494" width="250.79" height="16" rx="3" fill="#6c7785"/>
+<path d="M 557.80 495 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="506.00" class="" text-anchor="start">2.79x (13)</text>
+<text x="990.00" y="506.00" class="" text-anchor="start">1.76x (1)</text>
+<text x="28.00" y="544.00" class="" text-anchor="start">aider-udiff-lf</text>
+<rect x="419.53" y="532" width="250.79" height="16" rx="3" fill="#6c7785"/>
+<path d="M 692.35 533 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="544.00" class="" text-anchor="start">2.79x (13)</text>
+<text x="990.00" y="544.00" class="" text-anchor="start">3.05x (11)</text>
+<text x="28.00" y="630.00" class="small" text-anchor="start">Counts in parentheses are paired tasks. Exact subsets have different sizes; these bars are not a common-corpus quality ranking.</text>
+</svg>

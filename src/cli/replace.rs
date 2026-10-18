@@ -1,6 +1,6 @@
 //! `xnip replace <file> [Locator] [Content] [--was|--was-file] [--dry-run] [--check] [--backup] [--revert]`
 //!
-//! PLAN.md §6.7.3。
+//! Replace line ranges or byte-pattern matches.
 
 use std::path::PathBuf;
 
@@ -109,7 +109,7 @@ pub fn run(a: Args) -> Result<u8> {
         }
         loc => {
             // range 模式
-            // revert 语义（PLAN §6.8）：与 forward 完全互逆。
+            // Supported range reversal requires explicit original bytes.
             //
             // 实现：当 `--revert` + `--was` 同时给定时，等价于"以 was 内容回写 locator 区域，
             // 同时校验当前 locator 区域确实是 --text 给的内容"——即把 text 与 was 互换。
@@ -217,8 +217,7 @@ fn commit_or_dry_run(
     backup: bool,
 ) -> Result<u8> {
     if dry_run {
-        use std::io::Write;
-        std::io::stdout().lock().write_all(new_bytes)?;
+        crate::output::human::print_legacy_preview(new_bytes)?;
         return Ok(exit::SUCCESS);
     }
     atomic::atomic_write(path, new_bytes, backup)?;

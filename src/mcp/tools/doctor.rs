@@ -6,6 +6,10 @@ use rmcp::{ErrorData as McpError, model::CallToolResult};
 
 use super::common::{io_to_mcp_err, ok_bytes_as_text};
 
+#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct Args {}
+
 pub fn run() -> Result<CallToolResult, McpError> {
     let mut buf = Vec::new();
     crate::doctor::report(&mut buf).map_err(io_to_mcp_err)?;

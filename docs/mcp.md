@@ -1,6 +1,6 @@
 # MCP Server (`xnip mcp`)
 
-`xnip mcp` starts a [Model Context Protocol](https://modelcontextprotocol.io/) **stdio server** that exposes xnip's 10 capabilities (edit / peek / find / replace / insert / move / indent / apply / recover / doctor) as structured tools to LLM agents — eliminating the quote-escaping, exit-code parsing, and stdout/stderr confusion that comes with shell invocations.
+`xnip mcp` starts a [Model Context Protocol](https://modelcontextprotocol.io/) stdio server. It exposes five everyday tools (edit / apply / peek / find / recover) by default; `--toolset full` exposes all ten. Structured arguments carry multiline old/new text without shell escaping, and structured receipts identify whether a change was committed.
 
 ## When to use MCP vs CLI
 
@@ -8,7 +8,7 @@
 |---|---|
 | Default editing with structured old/new content and an existing MCP connection | MCP |
 | Manual terminal use, shell scripts, CI pipelines | CLI |
-| Create/delete or exact block replacement with preview/check | `xnip_edit` or CLI `edit` on v0.2.0+ |
+| Create/delete or exact block replacement with preview/check | `xnip_edit` or CLI `edit` |
 | Line/range/batch previews, revert or NDJSON | CLI |
 | Need `--text-stdin` / `apply --from-stdin` / op-level `@-` | CLI (MCP process stdin is occupied by the protocol) |
 
@@ -24,15 +24,15 @@ xnip mcp
 
 For the primary editing workflow use [xnip_edit](edit.md#mcp); it accepts literal old/new blocks and supports preview/check without writes. Reuse context already available rather than issuing a mandatory peek before every edit.
 
-No sub-arguments. All "calls" arrive as `initialize` / `tools/list` / `tools/call` requests from the MCP client over stdio.
+Use `xnip mcp --toolset full` when a client needs specialized replace/insert/move/indent or doctor tools. All calls arrive as `initialize` / `tools/list` / `tools/call` requests over stdio. Restart an existing server to discover a changed toolset.
 
 ## Tool list
 
-v0.2.0 has 10 tools; released v0.1.1 has 8 and does not include `xnip_edit` or `xnip_recover`. Names correspond to CLI subcommands:
+The table lists all ten tools; `xnip_replace`, `xnip_insert`, `xnip_move`, `xnip_indent` and `xnip_doctor` require `--toolset full`. Names correspond to CLI subcommands:
 
 | MCP Tool | CLI equivalent | Type |
 |---|---|---|
-| `xnip_edit` | `xnip edit` | create / exact block replace / delete; optional preview/check |
+| `xnip_edit` | `xnip edit` | create / exact block replace / delete / rename; optional preview/check |
 | `xnip_peek` | `xnip peek` | read-only |
 | `xnip_find` | `xnip find` | read-only |
 | `xnip_replace` | `xnip replace` | write (atomic) |
@@ -47,10 +47,10 @@ Most input fields use CLI names with underscores, for example `--match-line` bec
 
 ### Differences from CLI
 
-The older tools do **not** expose the following top-level flags; `xnip_edit` and `xnip_apply` are the exceptions for `dry_run` and `check`, and `xnip_recover` exposes `dry_run`:
+The specialized write tools commit after validation. For nonwriting modes, `xnip_edit` and `xnip_apply` expose `dry_run` and `check`, while `xnip_recover` exposes `dry_run`:
 
-- `--dry-run` — not available on older tools; the older MCP write tools commit immediately after validation. Use the CLI for previews.
-- `--check` — not available; use CLI check mode when validation must not write.
+- `--dry-run` — specialized write tools use the CLI for previews.
+- `--check` — use `xnip_edit`, `xnip_apply` or CLI check mode when validation must not write.
 - `--revert` — no top-level tool argument. An `xnip_apply` manifest may contain supported `revert` modifiers, with the same limitations as CLI apply.
 - `--json` — MCP is already a structured JSON protocol; redundant
 - `--text-stdin` / `apply --from-stdin` / op-level `@-` — MCP process stdin is occupied by the protocol
@@ -59,11 +59,10 @@ MCP **retains**:
 
 - `was` / `was_file` (`xnip_replace`, line-based mode only) — check the original bytes; this is not a filesystem lock
 - `backup` (write commands) — opt-in `.bak` copy as a safety escape hatch
-- `manifest_text` (`xnip_apply` only) — inline manifest text, ideal for LLMs generating short manifests without writing a file first
+- `edits` (`xnip_apply` only) — ordered exact replacements as a JSON array
+- `manifest_text` (`xnip_apply` only) — inline manifests for lifecycle, line operations and patches
 
 ## Result display
-
-Available in current source, after the v0.2.0 release.
 
 All tools advertise a human-readable `title` and read/write annotations. Tool names and arguments remain compatible. Titles are display hints: Codex and other clients choose whether to use them, how to show arguments, and whether to render Markdown. xnip cannot force a native editor card, hide the client's argument JSON or customize its layout through these fields. Write tools remain marked as potentially destructive even when an individual call requests a preview.
 
@@ -80,16 +79,20 @@ All tools advertise a human-readable `title` and read/write annotations. Tool na
 | `replacements` | Matched literal blocks for exact replacement, including identical replacements |
 | `journal` | Retained recovery snapshot directory, when applicable |
 
-Text starts with `Created`, `Updated`, `Deleted`, `Renamed`, `Restored`, `Unchanged`, `Preview (no files written)` or `Check passed (no files written)`. The human batch path list shows at most 20 entries with an explicit omitted count; `files` remains complete. A rename counts as two affected paths, not two independent edits. Display paths omit Windows extended-length prefixes; structured paths retain them. Non-UTF-8 filesystem paths use lossy text for display/metadata, as in other xnip reports.
+Text starts with `written`, `unchanged`, `preview` or `check`. A single successful write returns only `written`; operation, input paths and one-match counts are not repeated. Preview/check explicitly include `written=false`. Batch receipts add a path count, multiple replacements add a match count, and retained recovery journals remain visible. Structured `files` stays complete; a rename has two affected paths. Diagnostic display paths omit Windows extended-length prefixes; structured paths retain them. Non-UTF-8 paths use lossy display text.
 
-Preview diffs remain complete and appear in a `diff` code block after the summary, with a fence long enough to contain source-code backticks. Diffs are not duplicated in structured metadata. Text is deliberately human-readable rather than a second serialized JSON copy; clients requiring machine-readable results should read `structuredContent`. Clients that ignore it still receive the summary and complete preview. Successful writes and checks do not include a diff. Read/search output and existing JSON-RPC error semantics remain unchanged.
+Preview payloads default to 12,000 bytes and follow the receipt as plain unified diff text. Truncation is explicit; pass `max_bytes: 0` for the complete preview. The notice is outside the payload budget. Diffs are not duplicated in structured metadata. Read `structuredContent` for machine-readable receipts. Successful writes and checks omit the diff.
+
+`peek` defaults to 200 lines, `find` to 100 total hits; both default to 12,000 payload bytes. Each limit accepts `0` for unlimited output. Set both the item limit and `max_bytes` to zero when complete output is needed. Truncated displays are unsuitable as exact original bytes for an edit.
+
+Unknown MCP arguments are rejected, including nested direct edits. Optional fields can be omitted; schemas no longer spend context advertising null alternatives.
 
 ```text
-Renamed: src/old.rs -> src/new.rs
-
-Preview (no files written): config.toml
-  Operation: replace
-  Matched blocks: 1
+written
+written; 3 matches
+written; 2 paths
+preview; written=false
+check; written=false
 ```
 
 See the [MCP tool specification](https://modelcontextprotocol.io/specification/2025-06-18/server/tools) for the standard metadata. Restart/reconnect an existing MCP server after upgrading its executable so that the client discovers the new titles and schemas.
@@ -102,7 +105,7 @@ Tool call failures return a JSON-RPC `error` object (not `result.isError=true`):
 |---|---|---|
 | Missing / conflicting / invalid-type params | `-32602` (`invalid_params`) | User input error; fix the args and retry |
 | Locator not found / `was` mismatch / pattern no match | `-32600` (`invalid_request`) | Precondition not met; may need to `xnip_peek` current state first |
-| File IO failure / `apply` phase-2 partial commit | `-32603` (`internal_error`) | System-level error; human intervention needed |
+| Target file IO failure / batch or whole-file rename commit failure | `-32603` (`internal_error`) | Inspect the system error and any retained recovery journal |
 
 ## Client configuration
 
@@ -163,7 +166,20 @@ You should see `serverInfo: {name: "xnip", version: "..."}` followed by a list o
 
 ## Tool call examples
 
-### `xnip_peek` — read before editing
+### Direct batch replacements
+
+Use `edits` for ordered exact replacements without encoding a manifest as a string:
+
+```json
+{"name":"xnip_apply","arguments":{"edits":[
+  {"file":"src/a.rs","old":"old_name","text":"new_name"},
+  {"file":"src/b.rs","old":"old_name","text":"new_name"}
+],"check":true}}
+```
+
+The whole plan is validated before any write. Replacements can depend on earlier replacements on the same file. `edits` conflicts with `path`, `manifest_text`, `format` and `patch_root`; an empty array is rejected. Use manifest inputs for file lifecycle, line operations and patches.
+
+### `xnip_peek` — inspect missing context
 
 ```json
 {
@@ -214,7 +230,7 @@ Phase 2: persist snapshots, commit targets individually, and attempt rollback on
 | Client reports "Failed to connect" | Run `command -v xnip` (POSIX) or `Get-Command xnip` (PowerShell); the `command` in client config must be an absolute path or be on the client's `PATH` |
 | `tools/list` returns 0 tools | Run `xnip --version`, check the configured executable path, and restart the client |
 | `xnip_apply` reports "manifest contains op content `@-`" | MCP does not read process stdin; use inline `text` or `text_file` instead |
-| Edit written but LLM sees no change | Have the LLM call `xnip_peek` to re-read; do not let the LLM treat tool reply text as "current file state" |
+| Client shows a generic tool card | Inspect `structuredContent.mode` and `written`; verify only the missing task outcome, and avoid replaying a successful edit |
 
 ## Internal architecture
 
@@ -224,7 +240,7 @@ Phase 2: persist snapshots, commit targets individually, and attempt rollback on
 - Shared core operations and end-to-end tests cover byte transformations and file writes
 - The Tokio runtime is created only for `xnip mcp`; binary size varies with target and build settings
 
-Dependencies: `rmcp 1.7` (official Rust SDK) + `tokio 1` (`rt, macros, io-std`) + `schemars 1.2` (auto-generates tool input JsonSchema). MSRV 1.89 (required by the YAML parser).
+Dependency versions and runtime features are declared in `Cargo.toml`; CI verifies Rust 1.89 compatibility.
 
 ## Working directory and trust
 

@@ -1,13 +1,4 @@
-//! `xnip doctor`：自检环境与版本。
-//!
-//! 检查项（PLAN §7.5 简化）：
-//! - xnip 版本与 build commit
-//! - 平台（OS / arch）
-//! - Rust 编译期 target triple
-//! - 当前 cwd 是否可写
-//! - stdin / stdout / stderr 是否 TTY
-//!
-//! 输出格式：人类可读（默认）；JSON（`--json`）后续接入 `output::json`。
+//! Build, platform, filesystem and stdio diagnostics.
 
 use std::io::Write;
 use std::sync::OnceLock;
@@ -62,25 +53,23 @@ fn probe_cwd_writable() -> std::io::Result<bool> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[test]
-    fn report_writes_version_and_platform() {
-        let mut buf = Vec::new();
-        report(&mut buf).unwrap();
-        let s = String::from_utf8(buf).unwrap();
-        assert!(s.starts_with("xnip "), "report: {s}");
-        assert!(s.contains("os:"));
-        assert!(s.contains("arch:"));
-    }
-
-    #[test]
-    fn report_includes_tty_flags() {
-        let mut buf = Vec::new();
-        report(&mut buf).unwrap();
-        let s = String::from_utf8(buf).unwrap();
-        assert!(s.contains("stdin-tty:"));
-        assert!(s.contains("stdout-tty:"));
-        assert!(s.contains("stderr-tty:"));
+    fn diagnostic_reports_the_running_build_and_stream_capabilities() {
+        let mut bytes = Vec::new();
+        super::report(&mut bytes).unwrap();
+        let report = String::from_utf8(bytes).unwrap();
+        for expected in [
+            crate::VERSION,
+            crate::BUILD_COMMIT,
+            std::env::consts::OS,
+            std::env::consts::ARCH,
+            env!("XNIP_TARGET"),
+            "cwd-writable:",
+            "stdin-tty:",
+            "stdout-tty:",
+            "stderr-tty:",
+        ] {
+            assert!(report.contains(expected), "missing {expected}: {report}");
+        }
     }
 }

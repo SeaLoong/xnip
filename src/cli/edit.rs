@@ -78,11 +78,8 @@ pub fn run(args: Args) -> Result<u8> {
     };
     match execute(&args.file, &request) {
         Ok(outcome) => {
-            if args.dry_run {
-                crate::output::human::print_diff(&outcome.diff)?;
-            }
             let summary = crate::output::human::ChangeSummary::edit(&args.file, &request, &outcome);
-            crate::note!("{}", summary.render());
+            crate::output::human::emit_change(&summary, &outcome.diff)?;
             Ok(exit::SUCCESS)
         }
         Err(EditError::Check(message)) => {

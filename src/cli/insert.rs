@@ -1,6 +1,6 @@
 //! `xnip insert <file> [Locator] [--position before|after] [--text...]`
 //!
-//! PLAN.md §6.7.4。Locator 必须解析为单点行（`Lines a-a` 即可，区间用 `replace`）。
+//! Locator 必须解析为单点行（`Lines a-a` 即可，区间用 `replace`）。
 
 use std::path::PathBuf;
 
@@ -134,8 +134,7 @@ pub fn run(a: Args) -> Result<u8> {
 
     // 5) dry-run / 写盘
     if a.dry_run {
-        use std::io::Write;
-        std::io::stdout().lock().write_all(&new_bytes)?;
+        crate::output::human::print_legacy_preview(&new_bytes)?;
         return Ok(exit::SUCCESS);
     }
 

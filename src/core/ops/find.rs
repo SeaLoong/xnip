@@ -1,10 +1,7 @@
-//! `find`：搜索定位，输出 `path:line[:col]` 列表。
+//! Ordered regex search over borrowed bytes.
 //!
-//! 两种模式（PLAN.md §6.7.2）：
-//! - `--match-line RE`：整行命中；输出 `path:line`（无 col）
-//! - `--pattern RE`：跨行字节级匹配；输出 `path:line:col`（1-based byte col）
-//!
-//! 跨文件并发：M2 暂用顺序扫描；M4 加 `rayon`。
+//! Line searches return path:line; cross-line byte patterns also return a
+//! 1-based byte column. Visitors can stop early without retaining hit lists.
 
 use std::io::Write;
 
@@ -42,51 +39,61 @@ pub enum FindError {
     Io(#[from] std::io::Error),
 }
 
-/// 在单个文件字节流里搜索，返回所有命中。
+/// Collect matches for callers that need the complete bounded hit list.
 pub fn scan(content: &[u8], opts: &FindOpts<'_>) -> Vec<Hit> {
+    let mut hits = Vec::new();
+    visit(content, opts, |hit| {
+        hits.push(hit);
+        true
+    });
+    hits
+}
+
+/// Visit matches in order without retaining them. Return false to stop scanning.
+pub fn visit(content: &[u8], opts: &FindOpts<'_>, mut on_hit: impl FnMut(Hit) -> bool) {
     let cap =
         if opts.first_only { 1 } else { usize::MAX }.min(opts.max_matches.unwrap_or(usize::MAX));
-    let mut out = Vec::new();
     if cap == 0 {
-        return out;
+        return;
     }
     match opts.mode {
         FindMode::MatchLine(re) => {
+            let mut matched = 0;
             for (idx, line) in content.split_inclusive(|b| *b == b'\n').enumerate() {
                 let line = line.strip_suffix(b"\n").unwrap_or(line);
                 if re.is_match(&String::from_utf8_lossy(line)) {
-                    out.push(Hit {
+                    matched += 1;
+                    if !on_hit(Hit {
                         line: idx + 1,
                         col: 0,
-                    });
-                    if out.len() == cap {
+                    }) || matched == cap
+                    {
                         break;
                     }
                 }
             }
         }
         FindMode::Pattern(re) => {
-            // Matches arrive in offset order. Scan each preceding byte only once,
-            // without allocating a line index for the entire file.
             let mut cursor = 0;
             let mut line = 1;
             let mut line_start = 0;
-            for m in re.find_iter(content).take(cap) {
-                for (i, byte) in content[cursor..m.start()].iter().enumerate() {
+            for found in re.find_iter(content).take(cap) {
+                for (index, byte) in content[cursor..found.start()].iter().enumerate() {
                     if *byte == b'\n' {
                         line += 1;
-                        line_start = cursor + i + 1;
+                        line_start = cursor + index + 1;
                     }
                 }
-                cursor = m.start();
-                out.push(Hit {
+                cursor = found.start();
+                if !on_hit(Hit {
                     line,
-                    col: m.start() - line_start + 1,
-                });
+                    col: found.start() - line_start + 1,
+                }) {
+                    break;
+                }
             }
         }
     }
-    out
 }
 
 /// 把多文件命中按 `path:line[:col]` 写入 writer，返回总命中数（即输出行数）。
@@ -114,120 +121,4 @@ pub fn write_hits<W: Write>(
         }
     }
     Ok(written)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use std::path::PathBuf;
-
-    #[test]
-    fn match_line_finds_all_hits() {
-        let re = Regex::new(r"^foo").unwrap();
-        let opts = FindOpts {
-            mode: FindMode::MatchLine(&re),
-            max_matches: None,
-            first_only: false,
-        };
-        let hits = scan(b"foo\nbar\nfoo\n", &opts);
-        assert_eq!(hits, vec![Hit { line: 1, col: 0 }, Hit { line: 3, col: 0 }]);
-    }
-
-    #[test]
-    fn match_line_first_only_stops_at_one() {
-        let re = Regex::new(r"^foo").unwrap();
-        let opts = FindOpts {
-            mode: FindMode::MatchLine(&re),
-            max_matches: None,
-            first_only: true,
-        };
-        let hits = scan(b"foo\nfoo\nfoo\n", &opts);
-        assert_eq!(hits, vec![Hit { line: 1, col: 0 }]);
-    }
-
-    #[test]
-    fn pattern_returns_byte_col() {
-        let re = ByteRegex::new(r"foo").unwrap();
-        let opts = FindOpts {
-            mode: FindMode::Pattern(&re),
-            max_matches: None,
-            first_only: false,
-        };
-        let hits = scan(b"abc foo def\nxxfooyy\n", &opts);
-        // line1 "abc foo def" → offset 4 → col 5
-        // line2 "xxfooyy"     → offset 12 - line_start(12) → col 3
-        assert_eq!(hits, vec![Hit { line: 1, col: 5 }, Hit { line: 2, col: 3 }]);
-    }
-
-    #[test]
-    fn pattern_at_line_start_col_is_one() {
-        let re = ByteRegex::new(r"foo").unwrap();
-        let opts = FindOpts {
-            mode: FindMode::Pattern(&re),
-            max_matches: None,
-            first_only: false,
-        };
-        let hits = scan(b"foo\n", &opts);
-        assert_eq!(hits, vec![Hit { line: 1, col: 1 }]);
-    }
-
-    #[test]
-    fn no_hits_returns_empty() {
-        let re = Regex::new(r"xxx").unwrap();
-        let opts = FindOpts {
-            mode: FindMode::MatchLine(&re),
-            max_matches: None,
-            first_only: false,
-        };
-        assert_eq!(scan(b"a\nb\n", &opts), Vec::<Hit>::new());
-    }
-
-    #[test]
-    fn write_hits_uses_path_line_for_match_line() {
-        let mut buf = Vec::new();
-        let entries = vec![(
-            PathBuf::from("a.rs"),
-            vec![Hit { line: 3, col: 0 }, Hit { line: 7, col: 0 }],
-        )];
-        let n = write_hits(&entries, false, None, &mut buf).unwrap();
-        assert_eq!(n, 2);
-        assert_eq!(String::from_utf8(buf).unwrap(), "a.rs:3\na.rs:7\n");
-    }
-
-    #[test]
-    fn write_hits_uses_path_line_col_for_pattern() {
-        let mut buf = Vec::new();
-        let entries = vec![(PathBuf::from("a.rs"), vec![Hit { line: 3, col: 5 }])];
-        let n = write_hits(&entries, true, None, &mut buf).unwrap();
-        assert_eq!(n, 1);
-        assert_eq!(String::from_utf8(buf).unwrap(), "a.rs:3:5\n");
-    }
-
-    #[test]
-    fn write_hits_respects_max_matches() {
-        let mut buf = Vec::new();
-        let entries = vec![(
-            PathBuf::from("a"),
-            vec![
-                Hit { line: 1, col: 0 },
-                Hit { line: 2, col: 0 },
-                Hit { line: 3, col: 0 },
-            ],
-        )];
-        let n = write_hits(&entries, false, Some(2), &mut buf).unwrap();
-        assert_eq!(n, 2);
-        assert_eq!(String::from_utf8(buf).unwrap(), "a:1\na:2\n");
-    }
-
-    #[test]
-    fn write_hits_iterates_multiple_files_in_order() {
-        let mut buf = Vec::new();
-        let entries = vec![
-            (PathBuf::from("a"), vec![Hit { line: 1, col: 0 }]),
-            (PathBuf::from("b"), vec![Hit { line: 2, col: 0 }]),
-        ];
-        let n = write_hits(&entries, false, None, &mut buf).unwrap();
-        assert_eq!(n, 2);
-        assert_eq!(String::from_utf8(buf).unwrap(), "a:1\nb:2\n");
-    }
 }

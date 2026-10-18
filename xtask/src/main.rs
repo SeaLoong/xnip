@@ -46,8 +46,6 @@ fn sync_skill_files() -> std::io::Result<()> {
         "patch.md",
         "recovery.md",
         "edit.md",
-        "architecture.md",
-        "releasing.md",
     ];
     let mut body = std::fs::read_to_string(root.join("docs/SKILL.md"))?.replace("\r\n", "\n");
     for name in references {
@@ -86,8 +84,32 @@ fn sync_skill_files() -> std::io::Result<()> {
         for reference in references {
             let reference_text = std::fs::read_to_string(root.join("docs").join(reference))?
                 .replace(
+                    "(architecture.md#persistence-and-limits)",
+                    "(https://github.com/SeaLoong/xnip/blob/master/docs/architecture.md#persistence-and-limits)",
+                )
+                .replace(
                     "(../CONTRIBUTING.md)",
                     "(https://github.com/SeaLoong/xnip/blob/master/CONTRIBUTING.md)",
+                )
+                .replace(
+                    "(../GLOSSARY.md)",
+                    "(https://github.com/SeaLoong/xnip/blob/master/GLOSSARY.md)",
+                )
+                .replace(
+                    "(benchmarks/README.md)",
+                    "(https://github.com/SeaLoong/xnip/blob/master/docs/benchmarks/README.md)",
+                )
+                .replace(
+                    "(updates.md)",
+                    "(https://github.com/SeaLoong/xnip/blob/master/docs/updates.md)",
+                )
+                .replace(
+                    "(update-testing.md)",
+                    "(https://github.com/SeaLoong/xnip/blob/master/docs/update-testing.md)",
+                )
+                .replace(
+                    "(mcp.md#result-display)",
+                    "(https://github.com/SeaLoong/xnip/blob/master/docs/mcp.md#result-display)",
                 );
             std::fs::write(directory.join("references").join(reference), reference_text)?;
         }

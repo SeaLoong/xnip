@@ -1,142 +1,123 @@
-[中文](./README.zh.md) | English
+[中文](README.zh.md) | English
 
 # xnip
 
-> Precise text editing CLI for LLM agents.
+**Precise text edits with less repeated context.** Give your coding agent a known old block and its replacement. xnip edits that block, preserves untouched bytes, and returns a compact result.
 
-xnip compresses the LLM agent "read section → generate new section → replace" loop into a single command: **file path + position + new content**.
+- **Reuse what the agent already knows.** Read missing context when needed; a known edit goes straight to the editor.
+- **Send the change.** Exact blocks avoid copying an unchanged file or a long source line into every edit.
+- **Keep results small.** Short receipts, bounded reads/previews and five default MCP tools keep routine context compact.
+- **Keep the edit precise.** Missing or ambiguous blocks fail before writing; an explicit `all` enables global replacement. Exact edits preserve CRLF and final-newline bytes.
+- **Use one editor across harnesses.** CLI and stdio MCP share file lifecycle, batch, patch, line and anchor operations.
 
-- Standalone Rust binary for supported macOS, Linux and Windows targets
-- 11 commands: `edit` / `peek` / `find` / `replace` / `insert` / `move` / `indent` / `apply` / `recover` / `mcp` / `doctor`
-- `apply` accepts native, JSON, YAML and text patch formats for validated batch edits with per-file atomic writes
-- Atomic writes, `--dry-run` preview, constrained `--revert`
-- **`xnip mcp`**: built-in [Model Context Protocol](https://modelcontextprotocol.io/) stdio server for Claude Desktop / Cursor / Cline / Continue / Zed
+## Measured editing costs
+
+The benchmark runs real **Codex, Gemini CLI, OpenCode and aider editing executors** against xnip: **13 scenarios × 12 profiles × 3 repetitions**, with expected file bytes checked after each run. Counts use `tiktoken 0.14.0 / o200k_base`.
+
+![Measured native editing input relative to xnip](docs/benchmarks/charts/overview.svg)
+
+Selected profiles below report **native / xnip**, with **xnip = 1.00x**. Geometric means give each scenario equal weight.
+
+| Editor / profile | All edit input | Byte-exact paired input | Exact pairs | Input + captured return, all |
+|---|---:|---:|---:|---:|
+| xnip edit | 1.00x | 1.00x | 13/13 | 1.00x |
+| OpenCode edit | 1.11x | 1.11x | 13/13 | 1.20x |
+| Codex apply_patch | 2.61x | 2.73x | 12/13 | 3.05x |
+| Gemini context | 3.81x | 3.81x | 13/13 | 4.35x |
+| aider diff / LF | 2.52x | 2.78x | 11/13 | unknown return |
+| aider whole / LF | 1.89x | 2.25x | 11/13 | unknown return |
+
+**Where it helps:** changing a substring in the long-line fixture needs **22 xnip input tokens**, versus **10,037** for Codex's patch. A local change in a 2,000-line file needs **36**, versus **19,007** for aider whole / LF. Unchanged text dominates those alternatives.
+
+**Where the gap is small:** OpenCode's literal editor is close to xnip. A native patch can also batch efficiently: Codex's same-file batch uses **45 input tokens** versus **46** for separate xnip edits. xnip also has `apply` for batching; this native profile measures `edit`.
+
+“All” includes supplied inputs with incompatible output bytes. The exact-pair column keeps only tasks where both editors produce the expected bytes in every repetition; its cohorts differ by profile. Captured return is the observed tool text, and aider's unavailable return stays unknown. These are editor measurements, rather than complete agent-session or billing totals.
+
+[Full results and per-task charts](docs/benchmarks/results.md) · [Raw evidence](docs/benchmarks/results.json) · [Method and reproduction](docs/benchmarks/README.md)
 
 ## Install
 
-Prebuilt binaries do not require Rust. Building from source requires **Rust 1.89+**.
+Prebuilt stable releases need no Rust. Both installers verify the downloaded archive's SHA256:
 
-### From source
-
-```sh
-git clone https://github.com/SeaLoong/xnip
-cd xnip
-cargo install --path . --locked
-```
-
-### Prebuilt binaries
-
-Download from [GitHub Releases](https://github.com/SeaLoong/xnip/releases), or use the installers below. Both verify the archive SHA256 before installation.
-
-```sh
+~~~sh
 # macOS / Linux
 curl -fsSL https://github.com/SeaLoong/xnip/releases/latest/download/install.sh | sh
+~~~
 
+~~~powershell
 # Windows
-iwr -useb https://github.com/SeaLoong/xnip/releases/latest/download/install.ps1 | iex
+Invoke-RestMethod https://github.com/SeaLoong/xnip/releases/latest/download/install.ps1 | Invoke-Expression
+~~~
 
-# Any platform with Rust, directly from the release tag
-cargo install --git https://github.com/SeaLoong/xnip --tag v0.2.0 --locked xnip
-```
+Or download a binary from [GitHub Releases](https://github.com/SeaLoong/xnip/releases). See [installation](docs/installation.md) for supported platforms, PATH, pinned versions, checksums and removal.
 
-See [installation and troubleshooting](docs/installation.md) for platform selection, version pinning, PATH setup, checksums and removal. The GitHub release is the distribution channel; crates.io installation is not currently advertised.
+Source installation needs **Rust 1.89+**:
 
-## Default editing entry point
+~~~sh
+cargo install --git https://github.com/SeaLoong/xnip --tag v0.3.0 --locked xnip
+~~~
 
-v0.2.0 adds `xnip edit` / `xnip_edit`: create missing files, replace unique literal blocks, delete regular files, rename to absent destinations, and preview/check each operation. Batch plans also import text patches and retain recovery snapshots on failure. Upgrade from v0.1.1 to use the file editing and recovery workflow. See [the edit reference](docs/edit.md).
+## Edit
 
-```sh
+~~~sh
 xnip edit config.txt --old 'PORT=8080' --text 'PORT=3000'
 xnip edit src/new.txt --create --text-file content.txt
-```
+xnip edit old-name.txt --rename-to new-name.txt
+xnip edit obsolete.txt --delete
+xnip apply edits.json --dry-run
+xnip apply edits.json
+~~~
 
-## Quick start
+Literal replacement requires a unique nonempty old block. Extend it with surrounding context when ambiguous; use `--all` for an intentional global change. `--dry-run` previews and `--check` validates; both leave files unchanged. For portable multiline content, use payload files or stdin.
 
-```sh
-# Show lines 30-45
-xnip peek src/Foo.vue --lines 30-45
+Known line ranges, anchors, moves and indentation have dedicated commands. Use `peek` or `find` to fill gaps in known context; repository discovery and semantic analysis use the harness's search/language tools. Start with the [CLI tutorial](docs/cli.md), [edit reference](docs/edit.md) or [examples](docs/examples.md).
 
-# Locate matches
-xnip find --pattern '^const PORT' src/Foo.vue
+Reads default to 200 lines / 100 search hits / 12,000 payload bytes; previews default to 12,000 bytes. Truncation is explicit; zero disables the corresponding limit. `edit/apply/recover` return compact receipts; `--output json` provides complete machine results and `--output human` expands status and previews.
 
-# Replace a line (preview first)
-xnip replace src/Foo.vue --lines 30 --text "const X = 1;" --dry-run
+## Agent integration
 
-# Cross-file constant rename
-printf '%s\n' 'replace --files-from list.txt s/OLD_NAME/NEW_NAME/g' | xnip apply --from-stdin
+Use the CLI already on PATH, or configure `xnip mcp` for structured arguments. MCP advertises `edit/apply/peek/find/recover` by default; `--toolset full` adds specialized line tools and diagnostics. Several known blocks fit one `xnip_apply({edits:[{file,old,text},...]})` call. Client setup and result fields are in [MCP](docs/mcp.md).
 
-# Validated batch edit
-xnip apply edits.txt
-```
-
-Start with the [runnable tutorial](docs/cli.md), then consult the [agent guide](docs/SKILL.md), [examples](docs/examples.md), [manifest reference](docs/apply-format.md) and [exit codes](docs/error-codes.md).
-
-## Integrating with LLM agents
-
-xnip is intended to serve as the normal text editing interface. Its agent guidance selects an operation and reuses known context, without requiring a doctor/peek/find sequence before every write. Repository discovery and semantic analysis remain separate from applying text edits.
-
-### Install agent guidance
-
-For Codex, use [automatic editing instructions](docs/codex.md): a short AGENTS section and an on-demand guide outside skill directories. This setup provides no `$xnip-editing` command. Other clients can use the [generic/GitHub skill](.github/skills/xnip-editing/SKILL.md) or [Claude Code skill](integrations/claude-code/SKILL.md), including its `references` directory.
-
-| Client | Integration | Placement |
+| Client | Guidance | Placement |
 |---|---|---|
-| Codex | [instructions and guide](integrations/codex/) | Merge AGENTS section; guide under `~/.codex/guides/xnip-editing/` |
-| Claude Code | `integrations/claude-code/` | `.claude/skills/xnip/` |
-| Cursor | [rule](integrations/cursor/xnip.mdc) | Project rule, with automatic always-on injection disabled |
-| Copilot | [short instruction](integrations/copilot/xnip.md) | Project instructions |
+| Codex | [instructions and guide](docs/codex.md) | Merge AGENTS section; guide under `~/.codex/guides/xnip-editing/` |
+| Claude Code | [skill](integrations/claude-code/SKILL.md) | `.claude/skills/xnip/`, including references |
+| Cursor | [rule](integrations/cursor/xnip.mdc) | Project rule, `alwaysApply: false` |
+| Copilot | [instruction](integrations/copilot/xnip.md) | Project instructions |
 | Aider | [convention](integrations/aider/CONVENTIONS.md) | Project conventions |
-| Other agents | [generic skill](integrations/generic/SKILL.md) | Load for editing tasks; include its references |
+| Other agents | [generic skill](integrations/generic/SKILL.md) | Load for editing; include references |
 
-The [AGENTS.md snippet](integrations/agents-md/AGENTS.md) is a compact project-level alternative. Avoid duplicating the full manual in every prompt.
+The [AGENTS snippet](integrations/agents-md/AGENTS.md) is a short project-level alternative. The canonical [agent guide](docs/SKILL.md) selects operations and loads detailed rules on demand.
 
-### Choose CLI or MCP
+## Silent updates
 
-CLI uses an existing shell capability. MCP is useful when structured old/new text avoids shell quoting; its registration is an explicit setup choice. Both can implement the same default editing workflow. The v0.2 server exposes ten tools: `xnip_edit` and `xnip_apply` support preview/check, and `xnip_recover` previews or restores a journal. Legacy line-based MCP tools commit immediately. The published v0.1.1 server exposes the original eight tools.
+A detached singleton worker checks releases and stages verified binaries without blocking edits or showing update messages. Installation normally waits until earlier usage becomes idle and the next invocation opens an opportunity. CLI uses a 30-minute idle window; MCP follows connection lifetime. Prepared releases have a 24-hour maximum deferral. Existing sessions continue running their loaded image.
 
-Client configurations are maintained in the [MCP reference](docs/mcp.md). Neither installing a skill nor reading its instructions requires automatically registering another MCP server.
+See [update scheduling and private state](docs/updates.md). Set `XNIP_AUTO_UPDATE=0` for pinned/offline deployments.
 
-## Design
+## Limits
 
-- **Project-agnostic** — no project config, no language detection, no assumptions about structure
-- **Cross-platform** — the same commands, with a native binary for each OS and architecture
-- **Machine-friendly** — stderr for humans, stdout for machines; optional `--json` NDJSON
-- **Atomic writes** — tmpfile in same dir → validate → atomic rename; `.bak` is opt-in (`--backup`)
-- **Symmetric revert** — `--revert` supports constrained inverse operations; see the limitations below
+- Batches validate all operations before committing, then write one file at a time. Commit failures attempt rollback; inspect the [recovery journal](docs/recovery.md) before retrying after exit 4.
+- Preconditions check observed bytes; they do not lock out external writers. Rewritten files preserve ordinary permissions, with [filesystem metadata limits](docs/architecture.md#persistence-and-limits).
+- Backups append `.bak` to the complete filename and replace an existing sidecar. Git/backups provide exact recovery; `--revert` has [restricted inverse semantics](docs/apply-format.md#--revert-semantics).
+- Line operations split on LF and require the caller to supply CRLF payloads when needed. CLI strings follow shell quoting.
+- MCP uses the launching user's permissions and working directory, for trusted local clients.
 
-Historical design plan: [`PLAN.md`](./PLAN.md) · Version history: [`CHANGELOG.md`](./CHANGELOG.md)
+## Documentation and development
 
-## License
+| Need | Reference |
+|---|---|
+| Installation and client setup | [installation](docs/installation.md), [Codex](docs/codex.md), [MCP](docs/mcp.md) |
+| Editing and automation | [CLI](docs/cli.md), [edit](docs/edit.md), [manifests](docs/apply-format.md), [patches](docs/patch.md), [exit codes](docs/error-codes.md) |
+| Failure recovery | [recovery](docs/recovery.md) |
+| Design and verification | [architecture](docs/architecture.md), [glossary](GLOSSARY.md), [tests](docs/testing.md), [update tests](docs/update-testing.md), [benchmarks](docs/benchmarks/README.md) |
+| Contribution and release | [contributing](CONTRIBUTING.md), [release procedure](docs/releasing.md), [changelog](CHANGELOG.md) |
 
-MIT — see [`LICENSE`](./LICENSE).
-
-## Safety and usage limits
-
-- `apply` validates all operations before writing, but commits files one at a time. Commit failures return exit 4 after attempting rollback and retain a recovery journal. Inspect the rollback status before retrying; [recovery](docs/recovery.md) refuses detected external conflicts. This is not atomic visibility across files.
-- Backups append `.bak`: `main.rs` becomes `main.rs.bak`. An existing backup is replaced. This changes the older extension-replacement behavior (`main.bak`).
-- Existing symlinks are followed and file permissions preserved. Atomic replacement does not preserve hard-link identity, ownership, ACLs or extended attributes. Avoid concurrent writers: `--was` checks the bytes read, but does not lock the file.
-- `--revert` is not an undo log. Pattern revert accepts only a nonempty literal pattern and a nonempty replacement without capture expansion; pre-existing replacement text can make even literal reversal ambiguous. Range replacement revert requires the replacement to occupy the same range. Indentation conversion and edits at an unterminated EOF may not round-trip exactly. Use Git/backups for exact recovery.
-- Line operations split on LF; existing CR bytes are retained, but inserted text is not automatically converted to CRLF. Supply CRLF payloads when required.
-- CLI `--text` receives literal shell arguments. Use `--text-file` or stdin for portable multiline content. `apply --json --check` emits only NDJSON; `--json` and `--dry-run` are mutually exclusive.
-- MCP runs with the launching user's filesystem permissions and working directory; it is intended for trusted local clients.
-
-## Development and release
-
-```sh
+~~~sh
+cargo test --workspace --locked
 cargo fmt --all --check
 cargo clippy --workspace --all-targets --locked -- -D warnings
-cargo test --workspace --locked
-cargo +1.89.0 check --workspace --all-targets --locked
-cargo deny check
-cargo bench --locked
-cargo package --locked
 cargo run --locked -p xtask -- sync-integrations
-```
+~~~
 
-Use `python3 tests/install_sh.py` on Linux/macOS, or build with `cargo build --locked` and run `./tests/install_ps1.ps1` in PowerShell. Installer tests use local archives and mock HTTP, including checksum-failure recovery.
-
-Before publishing, update the package version and changelog, run CI, and push a matching `vX.Y.Z` tag. Release CI checks the tag against Cargo metadata, builds six targets, and publishes all archives, SHA256 sidecars, installers and integration packages only after all builds succeed. Manual workflow runs build artifacts without publishing. Publishing to crates.io is a separate maintainer action (`cargo publish --locked`). See [architecture and remaining limits](docs/architecture.md).
-
-Contributor workflow: [CONTRIBUTING.md](CONTRIBUTING.md). Maintainer release procedure: [docs/releasing.md](docs/releasing.md).
-
-[Patch import](docs/patch.md) · [Transaction recovery](docs/recovery.md)
+Additional platform, dependency, MSRV and packaging checks are in [CONTRIBUTING.md](CONTRIBUTING.md). MIT; see [LICENSE](LICENSE) and [third-party notices](THIRD_PARTY_LICENSES.md).

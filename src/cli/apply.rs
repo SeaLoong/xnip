@@ -1,6 +1,6 @@
 //! `xnip apply <path>` — 批量应用清单文件。
 //!
-//! PLAN.md §6.9。
+//! Manifest ordering and modes are documented in `docs/apply-format.md`.
 
 use std::io::Read;
 use std::path::PathBuf;
@@ -62,6 +62,9 @@ pub struct Args {
 
 #[allow(clippy::needless_pass_by_value)]
 pub fn run(a: Args) -> Result<u8> {
+    if a.json && crate::output::globals::get().output != crate::output::human::Output::Compact {
+        bail!("--json progress events conflict with --output; select one result format");
+    }
     if a.path.is_none() && !a.from_stdin {
         bail!("either MANIFEST path or --from-stdin is required");
     }
@@ -187,17 +190,12 @@ pub fn run(a: Args) -> Result<u8> {
 
     match execute_report(ops, &opts) {
         Ok(report) => {
-            if a.check {
-                println!("OK");
-            } else if a.dry_run {
-                crate::output::human::print_diff(&report.diff)?;
-            }
             let summary = crate::output::human::ChangeSummary::batch(
                 "apply",
                 crate::output::human::Mode::new(a.dry_run, a.check),
                 &report,
             );
-            crate::note!("{}", summary.render());
+            crate::output::human::emit_change(&summary, if a.dry_run { &report.diff } else { "" })?;
             Ok(exit::SUCCESS)
         }
         Err(e @ ExecError::Phase1 { .. }) => {

@@ -1,0 +1,184 @@
+name: release artifacts
+
+on:
+  workflow_call:
+    secrets:
+      RELEASE_TOKEN:
+        required: false
+    inputs:
+      version:
+        description: Exact Cargo version to build and package
+        required: true
+        type: string
+      prerelease:
+        default: false
+        type: boolean
+      publish:
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  XNIP_AUTO_UPDATE: "0"
+
+jobs:
+  build:
+    name: build (${{ matrix.target }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-musl
+            os: ubuntu-latest
+            cross: true
+          - target: aarch64-unknown-linux-musl
+            os: ubuntu-latest
+            cross: true
+          - target: x86_64-apple-darwin
+            os: macos-latest
+            cross: false
+          - target: aarch64-apple-darwin
+            os: macos-latest
+            cross: false
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+            cross: false
+          - target: aarch64-pc-windows-msvc
+            os: windows-latest
+            cross: false
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
+      - name: Set version in this build checkout
+        shell: bash
+        env:
+          XNIP_VERSION: ${{ inputs.version }}
+        run: python .github/scripts/release.py stamp --version "$XNIP_VERSION"
+      - name: Install cross
+        if: matrix.cross == true
+        run: cargo install cross --version 0.2.5 --locked
+      - name: Build
+        shell: bash
+        env:
+          XNIP_CROSS: ${{ matrix.cross }}
+          XNIP_TARGET: ${{ matrix.target }}
+        run: |
+          set -eu
+          XNIP_BUILD_COMMIT="$(git rev-parse 'HEAD^{commit}')"
+          export XNIP_BUILD_COMMIT
+          if [ "$XNIP_CROSS" = true ]; then
+            cross build --locked --release --target "$XNIP_TARGET" --bin xnip
+          else
+            cargo build --locked --release --target "$XNIP_TARGET" --bin xnip
+          fi
+      - name: Package binary and checksum
+        shell: bash
+        env:
+          XNIP_VERSION: ${{ inputs.version }}
+          XNIP_TARGET: ${{ matrix.target }}
+        run: |
+          set -eu
+          stem="xnip-v$XNIP_VERSION-$XNIP_TARGET"
+          output="$GITHUB_WORKSPACE/dist-binaries"
+          mkdir -p "$output"
+          cd "target/$XNIP_TARGET/release"
+          cp ../../../LICENSE ../../../README.md ../../../THIRD_PARTY_LICENSES.md .
+          if [[ "$XNIP_TARGET" == *windows* ]]; then
+            7z a "$output/$stem.zip" xnip.exe LICENSE README.md THIRD_PARTY_LICENSES.md
+            asset="$stem.zip"
+          else
+            tar czf "$output/$stem.tar.gz" xnip LICENSE README.md THIRD_PARTY_LICENSES.md
+            asset="$stem.tar.gz"
+          fi
+          cd "$output"
+          if command -v shasum >/dev/null 2>&1; then
+            shasum -a 256 "$asset" > "$asset.sha256"
+          else
+            sha256sum "$asset" > "$asset.sha256"
+          fi
+      - name: Smoke test native binary and embedded version
+        shell: bash
+        env:
+          XNIP_VERSION: ${{ inputs.version }}
+          XNIP_TARGET: ${{ matrix.target }}
+        run: |
+          set -eu
+          case "$XNIP_TARGET" in
+            x86_64-unknown-linux-musl|aarch64-apple-darwin)
+              binary="target/$XNIP_TARGET/release/xnip"
+              ;;
+            x86_64-pc-windows-msvc)
+              binary="target/$XNIP_TARGET/release/xnip.exe"
+              ;;
+            *) exit 0 ;;
+          esac
+          test "$("$binary" --version)" = "xnip $XNIP_VERSION"
+          "$binary" doctor
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ inputs.version }}-${{ matrix.target }}
+          overwrite: true
+          if-no-files-found: error
+          path: |
+            dist-binaries/xnip-v${{ inputs.version }}-${{ matrix.target }}.*
+  publish:
+    name: publish complete release
+    needs: build
+    if: inputs.publish
+    permissions:
+      contents: write
+    concurrency:
+      group: publish-release-${{ inputs.version }}
+      cancel-in-progress: false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Generate integration assets
+        shell: bash
+        run: |
+          set -eu
+          cargo run --locked -p xtask -- sync-integrations
+          mkdir -p dist
+          for directory in integrations/*/; do
+            if [ -f "$directory/package.sh" ]; then
+              (cd "$directory" && bash ./package.sh "../../dist")
+            fi
+          done
+          cp install.sh install.ps1 dist/
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: release-${{ inputs.version }}-*
+          path: dist
+          merge-multiple: true
+      - name: Validate every asset and publish from a draft
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
+          GH_REPO: ${{ github.repository }}
+          XNIP_VERSION: ${{ inputs.version }}
+          XNIP_PRERELEASE: ${{ inputs.prerelease }}
+        shell: bash
+        run: |
+          set -eu
+          arguments=()
+          if [ "$XNIP_PRERELEASE" = true ]; then
+            arguments+=(--prerelease)
+          fi
+          source_commit="$(git rev-parse 'HEAD^{commit}')"
+          python .github/scripts/publish_release.py --tag "v$XNIP_VERSION" --sha "$source_commit" --dist dist "${arguments[@]}"

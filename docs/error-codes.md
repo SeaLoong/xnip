@@ -9,7 +9,7 @@ agents should branch on them rather than parsing stderr text.
 | 1    | `USAGE`   | User error: bad CLI args, locator not found, parse error, unknown subcommand. |
 | 2    | `IO`      | IO error: cannot create tempfile, permission denied, disk full. |
 | 3    | `CHECK`   | Validation failure: `--was` mismatch; `--check` rejected the plan; pattern matched nothing. |
-| 4    | `PARTIAL` | `apply` phase 2 partial commit: commit failed; rollback was attempted, inspect status and recovery journal. |
+| 4    | `PARTIAL` | Batch or whole-file rename commit failed; rollback was attempted, inspect status and recovery journal. |
 
 ## Exit-code reference per command
 
@@ -19,6 +19,7 @@ agents should branch on them rather than parsing stderr text.
 - `1` invalid arguments/operation or unsupported target type
 - `2` IO/persistence failure
 - `3` existing create target, missing/ambiguous old block, failed deletion precondition or detected concurrent change
+- `4` whole-file rename commit failed; rollback was attempted and a recovery journal was retained
 
 ### `peek`
 
@@ -73,4 +74,4 @@ When `--json` is set on `apply`, execution-phase errors are emitted on stdout as
 
 `kind` is one of `phase1`, `phase2`, `io`. The exit code still follows the table above.
 
-`--check` is not a universal exit-code override: malformed CLI arguments and unresolved single-command locators still return 1; IO failures return 2. Batch phase-1 failures return 3. With `--max-matches 0`, find emits no hits and returns 1 unless an input IO failure requires 2.
+`--check` is not a universal exit-code override: malformed CLI arguments and unresolved single-command locators still return 1; IO failures return 2. Batch phase-1 failures return 3. `find --max-matches 0` removes the hit cap; `--max-bytes 0` also removes the output byte cap.

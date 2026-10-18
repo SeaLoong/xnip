@@ -48,11 +48,15 @@ pub struct Cli {
     /// 启用详细 trace 日志到 stderr（前缀 `[xnip trace]`）。
     #[arg(long, global = true, default_value_t = false)]
     pub trace: bool,
+
+    /// File-change results: compact summary, JSON record, or full human preview.
+    #[arg(long, global = true, value_enum, default_value_t = crate::output::human::Output::Compact)]
+    pub output: crate::output::human::Output,
 }
 
 #[derive(Debug, Subcommand)]
 pub enum Command {
-    /// Create a file, replace an exact text block, or delete a file.
+    /// Create, replace exact text, delete or rename a file.
     Edit(edit::Args),
     /// Print numbered lines in a range (read-only).
     Peek(peek::Args),
@@ -105,6 +109,7 @@ where
         quiet: cli.quiet,
         no_color,
         trace: cli.trace,
+        output: cli.output,
     });
     crate::trace!(
         "cli flags: quiet={} no_color={} trace={}",
@@ -121,6 +126,11 @@ where
         return Ok(ExitCode::SUCCESS);
     };
 
+    let _usage = if matches!(command, Command::Doctor) {
+        None
+    } else {
+        crate::update::begin_usage(matches!(command, Command::Mcp(_)))
+    };
     let code = match command {
         Command::Edit(a) => edit::run(a)?,
         Command::Peek(a) => peek::run(a)?,
@@ -130,7 +140,7 @@ where
         Command::Move(a) => move_op::run(a)?,
         Command::Indent(a) => indent::run(a)?,
         Command::Apply(a) => apply::run(a)?,
-        Command::Mcp(a) => mcp::run(a)?,
+        Command::Mcp(a) => mcp::run(&a),
         Command::Recover(a) => recover::run(&a)?,
         Command::Doctor => {
             let stdout = std::io::stdout();

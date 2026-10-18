@@ -1,6 +1,6 @@
 //! 原子写入：tmpfile 同目录 → fsync → atomic rename；可选 `--backup` 写 `.bak`。
 //!
-//! 设计要点（PLAN.md §6.1 / §7.3.2）：
+//! 设计要点：
 //!
 //! - **同目录 tmpfile**：保证 rename 在同一文件系统下原子（POSIX & NTFS）
 //! - **fsync**：写入后调用 `sync_all`，避免 crash 后 tmpfile 数据不完整
@@ -168,80 +168,4 @@ pub fn backup(target: &Path) -> Result<(), AtomicError> {
         source: e.error,
     })?;
     Ok(())
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use std::fs;
-    use tempfile::tempdir;
-
-    #[test]
-    fn writes_new_file_when_missing() {
-        let dir = tempdir().unwrap();
-        let target = dir.path().join("a.txt");
-        atomic_write(&target, b"hello", false).unwrap();
-        assert_eq!(fs::read(&target).unwrap(), b"hello");
-        assert!(!bak_path(&target).exists());
-    }
-
-    #[test]
-    fn overwrites_existing_file() {
-        let dir = tempdir().unwrap();
-        let target = dir.path().join("a.txt");
-        fs::write(&target, b"old").unwrap();
-        atomic_write(&target, b"new", false).unwrap();
-        assert_eq!(fs::read(&target).unwrap(), b"new");
-        assert!(!bak_path(&target).exists());
-    }
-
-    #[test]
-    fn writes_bak_when_requested_and_existing() {
-        let dir = tempdir().unwrap();
-        let target = dir.path().join("a.txt");
-        fs::write(&target, b"old").unwrap();
-        atomic_write(&target, b"new", true).unwrap();
-        assert_eq!(fs::read(&target).unwrap(), b"new");
-        assert_eq!(fs::read(bak_path(&target)).unwrap(), b"old");
-    }
-
-    #[test]
-    fn no_bak_when_target_missing_even_if_requested() {
-        let dir = tempdir().unwrap();
-        let target = dir.path().join("a.txt");
-        atomic_write(&target, b"new", true).unwrap();
-        assert_eq!(fs::read(&target).unwrap(), b"new");
-        assert!(!bak_path(&target).exists());
-    }
-
-    #[test]
-    fn bak_overwrites_previous_bak() {
-        let dir = tempdir().unwrap();
-        let target = dir.path().join("a.txt");
-        fs::write(&target, b"v1").unwrap();
-        atomic_write(&target, b"v2", true).unwrap();
-        assert_eq!(fs::read(bak_path(&target)).unwrap(), b"v1");
-        atomic_write(&target, b"v3", true).unwrap();
-        assert_eq!(fs::read(bak_path(&target)).unwrap(), b"v2");
-    }
-
-    #[test]
-    fn bytes_are_transparent_including_nul() {
-        let dir = tempdir().unwrap();
-        let target = dir.path().join("a.bin");
-        let payload = b"\x00\xff\x01\xfe utf8: \xe4\xbd\xa0\xe5\xa5\xbd";
-        atomic_write(&target, payload, false).unwrap();
-        assert_eq!(fs::read(&target).unwrap(), payload);
-    }
-
-    #[test]
-    fn relative_path_in_cwd_works() {
-        // Avoid mutating the process-wide working directory in a parallel test suite.
-        let cwd = std::env::current_dir().unwrap();
-        let dir = tempfile::tempdir_in(&cwd).unwrap();
-        let target = dir.path().join("rel.txt");
-        let relative = target.strip_prefix(&cwd).unwrap();
-        atomic_write(relative, b"x", false).unwrap();
-        assert_eq!(fs::read(target).unwrap(), b"x");
-    }
 }

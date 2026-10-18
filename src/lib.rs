@@ -1,16 +1,7 @@
-//! xnip — Precise text editing CLI for LLM agents.
+//! Precise byte-preserving text editing for agents.
 //!
-//! 库形态导出，便于集成测试与未来嵌入；二进制入口见 `src/main.rs`。
-//!
-//! 顶层模块组织遵循 `PLAN.md` 7.1：
-//! - [`cli`]：clap derive 结构与子命令分发
-//! - [`core`]：定位 / 内容 / 原子写入 / diff / revert / ops 七命令纯函数实现
-//! - [`apply`]：批量编辑清单解析（native / json / yaml）+ 两阶段提交
-//! - [`output`]：人类向输出 / NDJSON / 退出码常量
-//! - [`doctor`]：环境自检
-//!
-
-#![doc(html_root_url = "https://docs.rs/xnip/0.2.0")]
+//! CLI and MCP adapters share read queries, edit plans and persistence contracts.
+//! See `docs/architecture.md` for the module map and operational limits.
 
 pub mod apply;
 pub mod cli;
@@ -18,6 +9,7 @@ pub mod core;
 pub mod doctor;
 pub mod mcp;
 pub mod output;
+pub mod update;
 
 /// 当前 crate 版本（编译期注入）。
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

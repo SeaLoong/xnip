@@ -30,7 +30,7 @@ cast_possible_wrap = "allow"
 
 [package]
 name = "xnip"
-version = "0.2.0"
+version = "0.3.0"
 description = "Precise text editing CLI for LLM agents"
 edition.workspace = true
 rust-version.workspace = true
@@ -66,6 +66,13 @@ is-terminal = "0.4"
 nu-ansi-term = "0.50"
 rayon = "1.12"
 
+# Background release delivery; foreground editing never performs network IO.
+ureq = { version = "3.4", default-features = false, features = ["rustls"] }
+semver = "1"
+flate2 = "1"
+tar = { version = "0.4", default-features = false }
+zip = { version = "9", default-features = false, features = ["deflate-flate2"] }
+
 # MCP server 模式（`xnip mcp`）依赖：
 # - rmcp: 官方 Rust SDK,server + macros 用于声明工具,transport-io 提供 stdio 传输
 # - tokio: rmcp 的异步运行时;只启用 `rt`(单线程)避免 panic=abort 与多线程 worker 冲突
@@ -74,6 +81,9 @@ rmcp = { version = "1.7", features = ["server", "macros", "transport-io"] }
 tokio = { version = "1", features = ["rt", "macros", "io-std"] }
 # JsonSchema for MCP tool input schemas; rmcp 1.7 依赖同版本
 schemars = "1.2"
+
+[target.'cfg(windows)'.dependencies]
+winsafe = { version = "0.0.29", default-features = false, features = ["kernel"] }
 
 [dev-dependencies]
 assert_cmd = "2.2"

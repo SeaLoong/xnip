@@ -1,4 +1,4 @@
-//! 退出码常量，与 PLAN.md §6.1 对齐。
+//! Exit-code constants documented in `docs/error-codes.md`.
 //!
 //! `0` 成功；`1` 用户错误；`2` 写入/IO 失败；`3` 校验失败；`4` 部分提交回滚。
 

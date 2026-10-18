@@ -5,7 +5,6 @@
 //! - 输出助手：把 `String` / `Vec<u8>` 包装成 [`CallToolResult`]
 #![allow(clippy::doc_markdown)] // intra-doc link 不需要反引号
 
-use std::fmt::Write as _;
 use std::path::PathBuf;
 
 use rmcp::{
@@ -163,19 +162,20 @@ pub fn ok_bytes_as_text(bytes: &[u8]) -> CallToolResult {
     )])
 }
 
-/// Concise summary followed by the full preview. Metadata is separate from text
-/// so clients can inspect results without parsing prose or duplicating the diff.
-pub fn ok_change(summary: &crate::output::human::ChangeSummary, diff: &str) -> CallToolResult {
-    let mut text = summary.render();
+/// A compact receipt and bounded preview. Structured metadata omits the diff.
+pub fn ok_change(
+    summary: &crate::output::human::ChangeSummary,
+    diff: &str,
+    max_bytes: Option<usize>,
+) -> CallToolResult {
+    let mut text = summary.mcp_receipt();
+    let diff = crate::output::budget::truncate(
+        diff,
+        max_bytes.unwrap_or(crate::output::budget::DEFAULT_MAX_BYTES),
+    );
     if !diff.is_empty() {
-        // A source file may itself contain Markdown fences. Choose a longer one.
-        let longest = diff.split(|c| c != '`').map(str::len).max().unwrap_or(0);
-        let fence = "`".repeat(3.max(longest + 1));
-        let _ = write!(text, "\n\n{fence}diff\n{diff}");
-        if !diff.ends_with('\n') {
-            text.push('\n');
-        }
-        text.push_str(&fence);
+        text.push('\n');
+        text.push_str(&diff);
     }
     let mut result = ok_text(text);
     result.structured_content = Some(serde_json::to_value(summary).expect("summary serializes"));

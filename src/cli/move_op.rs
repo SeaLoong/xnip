@@ -1,6 +1,6 @@
 //! `xnip move <file> --from <range-locator> --to <line> [--position before|after] [--dry-run] [--backup]`
 //!
-//! PLAN.md §6.7.5。
+//! Move a selected line block to a line anchor.
 
 use std::path::PathBuf;
 
@@ -120,8 +120,7 @@ pub fn run(a: Args) -> Result<u8> {
     let new_bytes = move_lines(&bytes, eff_s, eff_e, eff_to, eff_pos)?;
 
     if a.dry_run {
-        use std::io::Write;
-        std::io::stdout().lock().write_all(&new_bytes)?;
+        crate::output::human::print_legacy_preview(&new_bytes)?;
         return Ok(exit::SUCCESS);
     }
 
