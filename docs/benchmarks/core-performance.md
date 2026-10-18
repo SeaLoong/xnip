@@ -2,8 +2,8 @@
 
 These measurements compare execution strategies in the same working-tree build.
 They are separate from [native editor input costs](README.md): no agent, model or
-token usage is measured. The build reports `xnip 0.3.1`; source and executable
-hashes identify the measured implementation.
+token usage is measured. The measured crate version is `0.4.0`; source commits
+and executable hashes identify the measured implementation.
 
 ## In-process strategy comparisons
 
@@ -14,24 +14,24 @@ used 10 samples after a one-second warmup and a two-second measurement request.
 
 | Operation | Mean | 95% confidence interval |
 |---|---:|---:|
-| Replace one middle line, byte-span copy, 10,000 lines | 48.21 µs | 46.87–49.59 µs |
-| Same result, reference line splitting/joining | 273.06 µs | 268.28–277.53 µs |
-| Independent replacement check, 1 edit, 100,000 lines | 3.28 ms | 3.25–3.31 ms |
-| Independent replacement check, 8 edits, 100,000 lines | 3.90 ms | 3.87–3.94 ms |
-| Independent replacement check, 32 edits, 100,000 lines | 6.77 ms | 6.53–7.06 ms |
-| Eight exact edits, owned read then update, 100,000 lines | 18.81 ms | 18.54–19.09 ms |
-| Same edits, borrowed plan transformation | 11.47 ms | 11.27–11.67 ms |
-| 128 equal-length exact edits, fresh output buffers, 100,000 lines | 156.49 ms | 153.95–159.41 ms |
-| Same equal-length edits, copy-on-write reuse | 45.38 ms | 44.69–46.10 ms |
-| 128 growing/shrinking exact edits, fresh output buffers, 100,000 lines | 229.82 ms | 224.81–235.24 ms |
-| Same growing/shrinking edits, copy-on-write reuse | 82.71 ms | 81.39–84.10 ms |
-| 128 identical replacements, fresh output buffers, 100,000 lines | 157.66 ms | 155.35–160.18 ms |
-| Same validated no-ops, copy-on-write path | 45.84 ms | 44.57–47.43 ms |
+| Replace one middle line, byte-span copy, 10,000 lines | 47.33 µs | 46.70–48.15 µs |
+| Same result, reference line splitting/joining | 272.39 µs | 263.90–281.94 µs |
+| Independent replacement check, 1 edit, 100,000 lines | 3.99 ms | 3.76–4.26 ms |
+| Independent replacement check, 8 edits, 100,000 lines | 4.68 ms | 4.57–4.80 ms |
+| Independent replacement check, 32 edits, 100,000 lines | 7.84 ms | 7.35–8.43 ms |
+| Eight exact edits, owned read then update, 100,000 lines | 20.93 ms | 20.19–21.68 ms |
+| Same edits, borrowed plan transformation | 11.51 ms | 11.09–11.97 ms |
+| 128 equal-length exact edits, fresh output buffers, 100,000 lines | 181.23 ms | 169.66–195.49 ms |
+| Same equal-length edits, copy-on-write reuse | 46.10 ms | 44.48–47.91 ms |
+| 128 growing/shrinking exact edits, fresh output buffers, 100,000 lines | 225.23 ms | 217.24–235.23 ms |
+| Same growing/shrinking edits, copy-on-write reuse | 86.27 ms | 84.69–87.70 ms |
+| 128 identical replacements, fresh output buffers, 100,000 lines | 179.31 ms | 170.38–186.79 ms |
+| Same validated no-ops, copy-on-write path | 60.77 ms | 55.55–68.30 ms |
 
-In this run, reference line joining took 5.66 times the byte-span time. Owned
-read/update took 1.64 times the borrowed transformation time. For 128 edits,
-fresh-buffer/COW time ratios were 3.45 for equal lengths, 2.78 for growing/shrinking
-content and 3.44 for validated no-ops. These compare current strategies in the
+In this run, reference line joining took 5.75 times the byte-span time. Owned
+read/update took 1.82 times the borrowed transformation time. For 128 edits,
+fresh-buffer/COW time ratios were 3.93 for equal lengths, 2.61 for growing/shrinking
+content and 2.95 for validated no-ops. These compare current strategies in the
 same benchmark executable; they are not before/after release speedups.
 
 The line-join reference handles the fixed LF-terminated single-line fixture and
@@ -57,19 +57,23 @@ Reproduce from a stable source tree:
 ```sh
 XNIP_AUTO_UPDATE=0 cargo bench --bench large_file --locked -- \
   'replace_range_10k|batch_check_100k|plan_exact_100k|plan_exact_reuse_100k' \
-  --sample-size 10 --warm-up-time 1 --measurement-time 2
+  --sample-size 10 --warm-up-time 1 --measurement-time 2 \
+  --save-baseline release-0.4.0 --noplot
 ```
 
 Criterion writes estimates and raw samples under `target/criterion/NAME/new/`.
-The committed JSON copies those estimates; historical `change/` comparisons from
-unrelated cached runs are excluded.
+The committed JSON copies the current estimates and samples, including outliers.
+Source and benchmark-executable hashes were stable across the run, and all
+sample files were regenerated during this measurement. The named baseline keeps
+the run separate from historical `change/` comparisons.
 
 ## Whole-process planning probes
 
 [CLI samples and provenance](core-performance-results.json) come from
-[core_perf.py](../../benches/core_perf.py). The script runs the actual release
-binary with updates disabled and five repetitions of `apply --check --quiet`.
-It includes startup, manifest parsing and cached local reads.
+[core_perf.py](../../benches/core_perf.py). The script runs the actual `xnip 0.4.0`
+release binary with updates disabled and five repetitions of `apply --check --quiet`.
+Its source commit matches the Criterion report. Measurements include startup,
+manifest parsing and cached local reads.
 
 Every case first performs an unmeasured execution and compares all resulting
 bytes with an independent expected result, including unchanged bytes for the
@@ -86,19 +90,19 @@ into 2,097,152 short lines, with 1 or 32 grouped changes.
 
 | Lines | Strategy | Edits | Median | Minimum | Maximum observed working set |
 |---:|---|---:|---:|---:|---:|
-| 65,536 | Grouped lines | 1 | 96.65 ms | 88.80 ms | 19.61 MiB |
-| 65,536 | Ordered exact, shorter | 1 | 97.94 ms | 92.11 ms | 15.62 MiB |
-| 65,536 | Grouped lines | 8 | 94.43 ms | 89.10 ms | 19.61 MiB |
-| 65,536 | Ordered exact, shorter | 8 | 93.65 ms | 90.96 ms | 15.60 MiB |
-| 65,536 | Grouped lines | 32 | 93.00 ms | 90.24 ms | 19.65 MiB |
-| 65,536 | Ordered exact, shorter | 32 | 103.14 ms | 101.33 ms | 15.62 MiB |
-| 65,536 | Grouped lines | 128 | 100.16 ms | 97.55 ms | 19.68 MiB |
-| 65,536 | Ordered exact, shorter | 128 | 190.14 ms | 180.58 ms | 15.71 MiB |
-| 65,536 | Ordered exact, equal length | 128 | 160.78 ms | 155.37 ms | 15.67 MiB |
-| 65,536 | Ordered exact, growth/shrinkage | 128 | 187.37 ms | 174.99 ms | 19.71 MiB |
-| 65,536 | Ordered exact, validated no-op | 128 | 161.71 ms | 154.60 ms | 11.65 MiB |
-| 2,097,152 | Grouped lines | 1 | 105.44 ms | 101.85 ms | 19.62 MiB |
-| 2,097,152 | Grouped lines | 32 | 100.03 ms | 97.55 ms | 19.65 MiB |
+| 65,536 | Grouped lines | 1 | 90.54 ms | 83.49 ms | 19.62 MiB |
+| 65,536 | Ordered exact, shorter | 1 | 90.92 ms | 88.16 ms | 15.61 MiB |
+| 65,536 | Grouped lines | 8 | 94.63 ms | 87.50 ms | 19.69 MiB |
+| 65,536 | Ordered exact, shorter | 8 | 91.96 ms | 88.80 ms | 15.65 MiB |
+| 65,536 | Grouped lines | 32 | 89.14 ms | 87.70 ms | 19.64 MiB |
+| 65,536 | Ordered exact, shorter | 32 | 107.55 ms | 104.56 ms | 15.64 MiB |
+| 65,536 | Grouped lines | 128 | 109.47 ms | 106.57 ms | 19.71 MiB |
+| 65,536 | Ordered exact, shorter | 128 | 172.78 ms | 168.19 ms | 15.71 MiB |
+| 65,536 | Ordered exact, equal length | 128 | 156.36 ms | 151.43 ms | 15.67 MiB |
+| 65,536 | Ordered exact, growth/shrinkage | 128 | 186.71 ms | 173.28 ms | 19.69 MiB |
+| 65,536 | Ordered exact, validated no-op | 128 | 162.23 ms | 151.31 ms | 11.72 MiB |
+| 2,097,152 | Grouped lines | 1 | 97.74 ms | 91.54 ms | 19.61 MiB |
+| 2,097,152 | Grouped lines | 32 | 97.04 ms | 96.05 ms | 19.65 MiB |
 
 Each CLI sample combines a fresh process start, manifest parsing, cached file
 reads and validation. Those costs are not measured separately, so no portion of

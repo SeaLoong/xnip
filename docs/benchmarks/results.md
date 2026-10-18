@@ -3,7 +3,7 @@
 The real native editors and xnip edited fresh copies of the same 13 fixtures. No model calls were performed. These results measure captured tool payloads and file behavior, not complete agent sessions or billed tokens.
 
 Counter: {"encoding": "o200k_base", "tokenizer": "tiktoken", "unit": "tokens", "version": "0.14.0"}. Repetitions per task/profile: 3.
-Platform: win32. xnip binary SHA-256: c2d6994578eda51a5782aa66e5159ebdb94d7123cba4e8e3e9bd6f66b251aff4.
+Platform: win32. xnip binary SHA-256: 4079e7da2a9fcb0bc89c106be20d8a88c4c351f26b5803e0790d005545578016.
 Raw calls, expected bytes, per-repetition hashes and source provenance: [results.json](results.json). Derived statistics: [relative-results.json](relative-results.json).
 Raw execution provenance stays unchanged; derived JSON separately records the sampled and current report-renderer fingerprints.
 
@@ -644,16 +644,16 @@ The useful optimization target is less redundant context and fewer calls when th
 
 | Backend / profile | Version | Byte-exact cases | LF-normalized cases | Stable outcomes |
 |---|---|---:|---:|---:|
-| xnip-edit | 0.3.1 | 13/13 | 13/13 | 13/13 |
-| xnip-relative | 0.3.1 | 13/13 | 13/13 | 13/13 |
-| xnip-adaptive-guarded | 0.3.1 | 13/13 | 13/13 | 13/13 |
-| xnip-adaptive-snapshot | 0.3.1 | 13/13 | 13/13 | 13/13 |
-| xnip-cli-native-guarded | 0.3.1 | 13/13 | 13/13 | 13/13 |
-| xnip-cli-native-snapshot | 0.3.1 | 13/13 | 13/13 | 13/13 |
-| xnip-cli-compact-guarded | 0.3.1 | 13/13 | 13/13 | 13/13 |
-| xnip-cli-compact-snapshot | 0.3.1 | 13/13 | 13/13 | 13/13 |
-| xnip-adaptive-guarded-text | 0.3.1 | 13/13 | 13/13 | 13/13 |
-| xnip-adaptive-snapshot-text | 0.3.1 | 13/13 | 13/13 | 13/13 |
+| xnip-edit | 0.4.0 | 13/13 | 13/13 | 13/13 |
+| xnip-relative | 0.4.0 | 13/13 | 13/13 | 13/13 |
+| xnip-adaptive-guarded | 0.4.0 | 13/13 | 13/13 | 13/13 |
+| xnip-adaptive-snapshot | 0.4.0 | 13/13 | 13/13 | 13/13 |
+| xnip-cli-native-guarded | 0.4.0 | 13/13 | 13/13 | 13/13 |
+| xnip-cli-native-snapshot | 0.4.0 | 13/13 | 13/13 | 13/13 |
+| xnip-cli-compact-guarded | 0.4.0 | 13/13 | 13/13 | 13/13 |
+| xnip-cli-compact-snapshot | 0.4.0 | 13/13 | 13/13 | 13/13 |
+| xnip-adaptive-guarded-text | 0.4.0 | 13/13 | 13/13 | 13/13 |
+| xnip-adaptive-snapshot-text | 0.4.0 | 13/13 | 13/13 | 13/13 |
 | codex-apply-patch | codex-cli 0.163.0-alpha.10.2 | 12/13 | 12/13 | 13/13 |
 | codex-apply-patch-unique | codex-cli 0.163.0-alpha.10.2 | 12/13 | 12/13 | 13/13 |
 | gemini-edit-context | 0.27.2 | 13/13 | 13/13 | 13/13 |

@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "created_at_utc": "2026-10-18T17:54:56.176874+00:00",
-  "version": "xnip 0.3.1",
+  "created_at_utc": "2026-10-18T19:12:20.187095+00:00",
+  "version": "xnip 0.4.0",
   "binary": "F:\\Code\\xnip\\target\\release\\xnip.exe",
-  "binary_sha256": "c2d6994578eda51a5782aa66e5159ebdb94d7123cba4e8e3e9bd6f66b251aff4",
+  "binary_sha256": "4079e7da2a9fcb0bc89c106be20d8a88c4c351f26b5803e0790d005545578016",
   "source_files_sha256": {
     "benches/core_perf.py": "8a910862b69e45a9e286fdd1f523720a1fb643951d2dca80b4d31e0eb50662d6",
     "benches/edit_cost.py": "a90ff4479cff35d4bce61a83058da5afa18ef9afef8094110953cec9ec935fa3",
@@ -18,8 +18,8 @@
     "benches/native/setup_aider.py": "8d1cb2a564d62b80d82bdc8a0670239051a03ca036c20736e82ff1e4e640476e",
     "benches/native_report.py": "4ea9ea217f34cf4ef6c16453deb065b34273a0b7ca18a823bac9145376323876",
     "benches/native_tools.py": "b19eeb634f4da49f5dd647b3c304a12087fffd2895ceaab424ff3f2629fca048",
-    "Cargo.lock": "cb83534c31926041845bb63c7f577aee126ffb824e72a66587f53b568cfe5422",
-    "Cargo.toml": "2942f3e1e355fc465b0e9f5d87a416f71d77ef91507825913889b75c74f9f3d5",
+    "Cargo.lock": "c5e6edfc451fe8d5802c3620b68d917d198ea3c392ea2b663abff4c5690792b0",
+    "Cargo.toml": "bc9537c369b65eee47b1789a6297a73b199d600cd2f1bdffabbc3ac3ada49bf7",
     "src/apply/commit.rs": "8f2de36f67064d6f7d5d87ab45699605e50c7fe94585814b8aafa21b12fab50c",
     "src/apply/compact.rs": "568492a7b1b3fe0934db76bab2c5df1c4210f5492efa7b4ccdf0dce60ec8a896",
     "src/apply/contract_tests.rs": "18568870a4b425cb01b867f7abf493172b18ef20beb1bfeae2471178593ea600",
@@ -86,7 +86,7 @@
     "src/update/mod.rs": "ed12819424f09fcafd204797c7a31b5754350d178235cd23422a455aefbcb23d",
     "src/update/policy.rs": "faeb72c58f1f9497d60b7e4d1eea97ed7f36eb90c9ef4b0b333aedc75764847e"
   },
-  "git_commit": "369d3227afd036ee592623901ef2fefd4bfbc6b5",
+  "git_commit": "3549a70e32b2d679f097d8478a2bb9b4f03d5742",
   "platform": "Windows-11-10.0.26200-SP0",
   "python": "3.14.2",
   "cpu": "AMD64 Family 25 Model 33 Stepping 2, AuthenticAMD",
@@ -110,29 +110,29 @@
       "checks_unchanged": true,
       "runs": [
         {
-          "elapsed_ms": 88.80259998841211,
+          "elapsed_ms": 91.13660000730306,
           "peak_working_set_bytes": 20557824
         },
         {
-          "elapsed_ms": 92.58810000028461,
+          "elapsed_ms": 90.53540002787486,
           "peak_working_set_bytes": 20553728
         },
         {
-          "elapsed_ms": 96.64889995474368,
+          "elapsed_ms": 92.38950000144541,
+          "peak_working_set_bytes": 20574208
+        },
+        {
+          "elapsed_ms": 83.4861000184901,
           "peak_working_set_bytes": 20553728
         },
         {
-          "elapsed_ms": 96.92979999817908,
-          "peak_working_set_bytes": 20566016
-        },
-        {
-          "elapsed_ms": 100.5521000479348,
-          "peak_working_set_bytes": 20537344
+          "elapsed_ms": 88.35570001974702,
+          "peak_working_set_bytes": 20553728
         }
       ],
-      "median_ms": 96.64889995474368,
-      "min_ms": 88.80259998841211,
-      "max_peak_working_set_bytes": 20566016
+      "median_ms": 90.53540002787486,
+      "min_ms": 83.4861000184901,
+      "max_peak_working_set_bytes": 20574208
     },
     {
       "kind": "ordered_exact",
@@ -143,161 +143,161 @@
       "checks_unchanged": true,
       "runs": [
         {
-          "elapsed_ms": 105.33079999731854,
-          "peak_working_set_bytes": 16375808
+          "elapsed_ms": 90.91590001480654,
+          "peak_working_set_bytes": 16371712
         },
         {
-          "elapsed_ms": 99.80249998625368,
-          "peak_working_set_bytes": 16363520
-        },
-        {
-          "elapsed_ms": 97.93640003772452,
-          "peak_working_set_bytes": 16355328
-        },
-        {
-          "elapsed_ms": 92.11319999303669,
-          "peak_working_set_bytes": 16343040
-        },
-        {
-          "elapsed_ms": 93.56529999058694,
-          "peak_working_set_bytes": 16351232
-        }
-      ],
-      "median_ms": 97.93640003772452,
-      "min_ms": 92.11319999303669,
-      "max_peak_working_set_bytes": 16375808
-    },
-    {
-      "kind": "grouped_lines",
-      "bytes": 4194304,
-      "lines": 65536,
-      "edits": 8,
-      "write_oracle_passed": true,
-      "checks_unchanged": true,
-      "runs": [
-        {
-          "elapsed_ms": 89.10260000266135,
-          "peak_working_set_bytes": 20549632
-        },
-        {
-          "elapsed_ms": 94.80710001662374,
-          "peak_working_set_bytes": 20557824
-        },
-        {
-          "elapsed_ms": 99.38560001319274,
-          "peak_working_set_bytes": 20561920
-        },
-        {
-          "elapsed_ms": 94.05610000248998,
-          "peak_working_set_bytes": 20553728
-        },
-        {
-          "elapsed_ms": 94.42979999585077,
-          "peak_working_set_bytes": 20561920
-        }
-      ],
-      "median_ms": 94.42979999585077,
-      "min_ms": 89.10260000266135,
-      "max_peak_working_set_bytes": 20561920
-    },
-    {
-      "kind": "ordered_exact",
-      "bytes": 4194304,
-      "lines": 65536,
-      "edits": 8,
-      "write_oracle_passed": true,
-      "checks_unchanged": true,
-      "runs": [
-        {
-          "elapsed_ms": 100.0433000153862,
-          "peak_working_set_bytes": 16351232
-        },
-        {
-          "elapsed_ms": 92.10949996486306,
-          "peak_working_set_bytes": 16359424
-        },
-        {
-          "elapsed_ms": 93.64589996403083,
-          "peak_working_set_bytes": 16338944
-        },
-        {
-          "elapsed_ms": 94.95190001325682,
-          "peak_working_set_bytes": 16355328
-        },
-        {
-          "elapsed_ms": 90.95610002987087,
-          "peak_working_set_bytes": 16347136
-        }
-      ],
-      "median_ms": 93.64589996403083,
-      "min_ms": 90.95610002987087,
-      "max_peak_working_set_bytes": 16359424
-    },
-    {
-      "kind": "grouped_lines",
-      "bytes": 4194304,
-      "lines": 65536,
-      "edits": 32,
-      "write_oracle_passed": true,
-      "checks_unchanged": true,
-      "runs": [
-        {
-          "elapsed_ms": 90.2436999604106,
-          "peak_working_set_bytes": 20586496
-        },
-        {
-          "elapsed_ms": 92.2928000218235,
-          "peak_working_set_bytes": 20590592
-        },
-        {
-          "elapsed_ms": 92.9980999790132,
-          "peak_working_set_bytes": 20598784
-        },
-        {
-          "elapsed_ms": 94.31180002866313,
-          "peak_working_set_bytes": 20606976
-        },
-        {
-          "elapsed_ms": 97.00050001265481,
-          "peak_working_set_bytes": 20602880
-        }
-      ],
-      "median_ms": 92.9980999790132,
-      "min_ms": 90.2436999604106,
-      "max_peak_working_set_bytes": 20606976
-    },
-    {
-      "kind": "ordered_exact",
-      "bytes": 4194304,
-      "lines": 65536,
-      "edits": 32,
-      "write_oracle_passed": true,
-      "checks_unchanged": true,
-      "runs": [
-        {
-          "elapsed_ms": 104.28610001690686,
-          "peak_working_set_bytes": 16363520
-        },
-        {
-          "elapsed_ms": 103.14150003250688,
-          "peak_working_set_bytes": 16379904
-        },
-        {
-          "elapsed_ms": 101.33460001088679,
+          "elapsed_ms": 88.16400001524016,
           "peak_working_set_bytes": 16367616
         },
         {
-          "elapsed_ms": 103.89880003640428,
-          "peak_working_set_bytes": 16363520
+          "elapsed_ms": 91.18239994859323,
+          "peak_working_set_bytes": 16351232
         },
         {
-          "elapsed_ms": 102.54539997549728,
-          "peak_working_set_bytes": 16371712
+          "elapsed_ms": 89.9842000217177,
+          "peak_working_set_bytes": 16355328
+        },
+        {
+          "elapsed_ms": 94.69840000383556,
+          "peak_working_set_bytes": 16338944
         }
       ],
-      "median_ms": 103.14150003250688,
-      "min_ms": 101.33460001088679,
-      "max_peak_working_set_bytes": 16379904
+      "median_ms": 90.91590001480654,
+      "min_ms": 88.16400001524016,
+      "max_peak_working_set_bytes": 16371712
+    },
+    {
+      "kind": "grouped_lines",
+      "bytes": 4194304,
+      "lines": 65536,
+      "edits": 8,
+      "write_oracle_passed": true,
+      "checks_unchanged": true,
+      "runs": [
+        {
+          "elapsed_ms": 87.50439999857917,
+          "peak_working_set_bytes": 20537344
+        },
+        {
+          "elapsed_ms": 94.62649998022243,
+          "peak_working_set_bytes": 20553728
+        },
+        {
+          "elapsed_ms": 92.5771999754943,
+          "peak_working_set_bytes": 20643840
+        },
+        {
+          "elapsed_ms": 116.27800000132993,
+          "peak_working_set_bytes": 20549632
+        },
+        {
+          "elapsed_ms": 99.23110000090674,
+          "peak_working_set_bytes": 20545536
+        }
+      ],
+      "median_ms": 94.62649998022243,
+      "min_ms": 87.50439999857917,
+      "max_peak_working_set_bytes": 20643840
+    },
+    {
+      "kind": "ordered_exact",
+      "bytes": 4194304,
+      "lines": 65536,
+      "edits": 8,
+      "write_oracle_passed": true,
+      "checks_unchanged": true,
+      "runs": [
+        {
+          "elapsed_ms": 95.80420004203916,
+          "peak_working_set_bytes": 16343040
+        },
+        {
+          "elapsed_ms": 88.80060003139079,
+          "peak_working_set_bytes": 16347136
+        },
+        {
+          "elapsed_ms": 95.77200002968311,
+          "peak_working_set_bytes": 16355328
+        },
+        {
+          "elapsed_ms": 90.4055000282824,
+          "peak_working_set_bytes": 16347136
+        },
+        {
+          "elapsed_ms": 91.96150000207126,
+          "peak_working_set_bytes": 16412672
+        }
+      ],
+      "median_ms": 91.96150000207126,
+      "min_ms": 88.80060003139079,
+      "max_peak_working_set_bytes": 16412672
+    },
+    {
+      "kind": "grouped_lines",
+      "bytes": 4194304,
+      "lines": 65536,
+      "edits": 32,
+      "write_oracle_passed": true,
+      "checks_unchanged": true,
+      "runs": [
+        {
+          "elapsed_ms": 91.10550000332296,
+          "peak_working_set_bytes": 20590592
+        },
+        {
+          "elapsed_ms": 89.14320002077147,
+          "peak_working_set_bytes": 20578304
+        },
+        {
+          "elapsed_ms": 90.36959998775274,
+          "peak_working_set_bytes": 20578304
+        },
+        {
+          "elapsed_ms": 87.7129000145942,
+          "peak_working_set_bytes": 20586496
+        },
+        {
+          "elapsed_ms": 87.69800001755357,
+          "peak_working_set_bytes": 20586496
+        }
+      ],
+      "median_ms": 89.14320002077147,
+      "min_ms": 87.69800001755357,
+      "max_peak_working_set_bytes": 20590592
+    },
+    {
+      "kind": "ordered_exact",
+      "bytes": 4194304,
+      "lines": 65536,
+      "edits": 32,
+      "write_oracle_passed": true,
+      "checks_unchanged": true,
+      "runs": [
+        {
+          "elapsed_ms": 105.64329999033362,
+          "peak_working_set_bytes": 16375808
+        },
+        {
+          "elapsed_ms": 107.5503999600187,
+          "peak_working_set_bytes": 16371712
+        },
+        {
+          "elapsed_ms": 104.55869999714196,
+          "peak_working_set_bytes": 16371712
+        },
+        {
+          "elapsed_ms": 111.57060001278296,
+          "peak_working_set_bytes": 16400384
+        },
+        {
+          "elapsed_ms": 109.4611999578774,
+          "peak_working_set_bytes": 16384000
+        }
+      ],
+      "median_ms": 107.5503999600187,
+      "min_ms": 104.55869999714196,
+      "max_peak_working_set_bytes": 16400384
     },
     {
       "kind": "grouped_lines",
@@ -308,29 +308,29 @@
       "checks_unchanged": true,
       "runs": [
         {
-          "elapsed_ms": 98.77440001582727,
+          "elapsed_ms": 106.56650003511459,
+          "peak_working_set_bytes": 20619264
+        },
+        {
+          "elapsed_ms": 117.7029000245966,
+          "peak_working_set_bytes": 20615168
+        },
+        {
+          "elapsed_ms": 109.54029997810721,
+          "peak_working_set_bytes": 20615168
+        },
+        {
+          "elapsed_ms": 109.47249998571351,
           "peak_working_set_bytes": 20611072
         },
         {
-          "elapsed_ms": 97.54930000053719,
-          "peak_working_set_bytes": 20639744
-        },
-        {
-          "elapsed_ms": 100.91249999823049,
-          "peak_working_set_bytes": 20619264
-        },
-        {
-          "elapsed_ms": 115.74600002495572,
-          "peak_working_set_bytes": 20619264
-        },
-        {
-          "elapsed_ms": 100.16049997648224,
-          "peak_working_set_bytes": 20635648
+          "elapsed_ms": 107.216700038407,
+          "peak_working_set_bytes": 20668416
         }
       ],
-      "median_ms": 100.16049997648224,
-      "min_ms": 97.54930000053719,
-      "max_peak_working_set_bytes": 20639744
+      "median_ms": 109.47249998571351,
+      "min_ms": 106.56650003511459,
+      "max_peak_working_set_bytes": 20668416
     },
     {
       "kind": "ordered_exact",
@@ -341,28 +341,28 @@
       "checks_unchanged": true,
       "runs": [
         {
-          "elapsed_ms": 188.56450001476333,
-          "peak_working_set_bytes": 16388096
-        },
-        {
-          "elapsed_ms": 194.73699998343363,
+          "elapsed_ms": 177.54050000803545,
           "peak_working_set_bytes": 16478208
         },
         {
-          "elapsed_ms": 193.96889995550737,
+          "elapsed_ms": 172.78139997506514,
+          "peak_working_set_bytes": 16408576
+        },
+        {
+          "elapsed_ms": 168.4739000047557,
           "peak_working_set_bytes": 16375808
         },
         {
-          "elapsed_ms": 180.57920003775507,
-          "peak_working_set_bytes": 16400384
+          "elapsed_ms": 173.96980000194162,
+          "peak_working_set_bytes": 16388096
         },
         {
-          "elapsed_ms": 190.13509998330846,
-          "peak_working_set_bytes": 16388096
+          "elapsed_ms": 168.18729997612536,
+          "peak_working_set_bytes": 16379904
         }
       ],
-      "median_ms": 190.13509998330846,
-      "min_ms": 180.57920003775507,
+      "median_ms": 172.78139997506514,
+      "min_ms": 168.18729997612536,
       "max_peak_working_set_bytes": 16478208
     },
     {
@@ -374,28 +374,28 @@
       "checks_unchanged": true,
       "runs": [
         {
-          "elapsed_ms": 164.67770002782345,
-          "peak_working_set_bytes": 16396288
-        },
-        {
-          "elapsed_ms": 161.21120000025257,
-          "peak_working_set_bytes": 16416768
-        },
-        {
-          "elapsed_ms": 155.3702999954112,
-          "peak_working_set_bytes": 16420864
-        },
-        {
-          "elapsed_ms": 160.78340000240132,
+          "elapsed_ms": 156.35799994925037,
           "peak_working_set_bytes": 16429056
         },
         {
-          "elapsed_ms": 157.69319998798892,
-          "peak_working_set_bytes": 16396288
+          "elapsed_ms": 153.5446000052616,
+          "peak_working_set_bytes": 16384000
+        },
+        {
+          "elapsed_ms": 151.43159998115152,
+          "peak_working_set_bytes": 16424960
+        },
+        {
+          "elapsed_ms": 163.7586000142619,
+          "peak_working_set_bytes": 16416768
+        },
+        {
+          "elapsed_ms": 162.49930002959445,
+          "peak_working_set_bytes": 16416768
         }
       ],
-      "median_ms": 160.78340000240132,
-      "min_ms": 155.3702999954112,
+      "median_ms": 156.35799994925037,
+      "min_ms": 151.43159998115152,
       "max_peak_working_set_bytes": 16429056
     },
     {
@@ -407,29 +407,29 @@
       "checks_unchanged": true,
       "runs": [
         {
-          "elapsed_ms": 192.28219997603446,
-          "peak_working_set_bytes": 20656128
-        },
-        {
-          "elapsed_ms": 174.98980002710596,
-          "peak_working_set_bytes": 20631552
-        },
-        {
-          "elapsed_ms": 187.37210001563653,
-          "peak_working_set_bytes": 20672512
-        },
-        {
-          "elapsed_ms": 198.09560000430793,
-          "peak_working_set_bytes": 20615168
-        },
-        {
-          "elapsed_ms": 185.57470000814646,
+          "elapsed_ms": 173.27729996759444,
           "peak_working_set_bytes": 20611072
+        },
+        {
+          "elapsed_ms": 173.87509997934103,
+          "peak_working_set_bytes": 20639744
+        },
+        {
+          "elapsed_ms": 197.9010000359267,
+          "peak_working_set_bytes": 20643840
+        },
+        {
+          "elapsed_ms": 194.50080004753545,
+          "peak_working_set_bytes": 20623360
+        },
+        {
+          "elapsed_ms": 186.70770002063364,
+          "peak_working_set_bytes": 20631552
         }
       ],
-      "median_ms": 187.37210001563653,
-      "min_ms": 174.98980002710596,
-      "max_peak_working_set_bytes": 20672512
+      "median_ms": 186.70770002063364,
+      "min_ms": 173.27729996759444,
+      "max_peak_working_set_bytes": 20643840
     },
     {
       "kind": "ordered_noop",
@@ -440,29 +440,29 @@
       "checks_unchanged": true,
       "runs": [
         {
-          "elapsed_ms": 165.67509999731556,
-          "peak_working_set_bytes": 12181504
+          "elapsed_ms": 174.79429999366403,
+          "peak_working_set_bytes": 12230656
         },
         {
-          "elapsed_ms": 162.46979997958988,
-          "peak_working_set_bytes": 12181504
+          "elapsed_ms": 172.67820000415668,
+          "peak_working_set_bytes": 12222464
         },
         {
-          "elapsed_ms": 154.5977999921888,
-          "peak_working_set_bytes": 12193792
-        },
-        {
-          "elapsed_ms": 156.9040000322275,
-          "peak_working_set_bytes": 12201984
-        },
-        {
-          "elapsed_ms": 161.70789999887347,
+          "elapsed_ms": 158.10669999336824,
           "peak_working_set_bytes": 12218368
+        },
+        {
+          "elapsed_ms": 162.22930001094937,
+          "peak_working_set_bytes": 12214272
+        },
+        {
+          "elapsed_ms": 151.3050000066869,
+          "peak_working_set_bytes": 12292096
         }
       ],
-      "median_ms": 161.70789999887347,
-      "min_ms": 154.5977999921888,
-      "max_peak_working_set_bytes": 12218368
+      "median_ms": 162.22930001094937,
+      "min_ms": 151.3050000066869,
+      "max_peak_working_set_bytes": 12292096
     },
     {
       "kind": "grouped_lines",
@@ -473,29 +473,29 @@
       "checks_unchanged": true,
       "runs": [
         {
-          "elapsed_ms": 118.02090000128374,
-          "peak_working_set_bytes": 20553728
+          "elapsed_ms": 97.74190001189709,
+          "peak_working_set_bytes": 20566016
         },
         {
-          "elapsed_ms": 118.58180002309382,
+          "elapsed_ms": 98.39149995241314,
           "peak_working_set_bytes": 20549632
         },
         {
-          "elapsed_ms": 105.4407999617979,
-          "peak_working_set_bytes": 20570112
+          "elapsed_ms": 103.09310001321137,
+          "peak_working_set_bytes": 20566016
         },
         {
-          "elapsed_ms": 101.853400003165,
+          "elapsed_ms": 91.53709997190163,
           "peak_working_set_bytes": 20545536
         },
         {
-          "elapsed_ms": 103.922100039199,
-          "peak_working_set_bytes": 20578304
+          "elapsed_ms": 93.30170002067462,
+          "peak_working_set_bytes": 20545536
         }
       ],
-      "median_ms": 105.4407999617979,
-      "min_ms": 101.853400003165,
-      "max_peak_working_set_bytes": 20578304
+      "median_ms": 97.74190001189709,
+      "min_ms": 91.53709997190163,
+      "max_peak_working_set_bytes": 20566016
     },
     {
       "kind": "grouped_lines",
@@ -506,28 +506,28 @@
       "checks_unchanged": true,
       "runs": [
         {
-          "elapsed_ms": 97.5464999792166,
+          "elapsed_ms": 97.03799994895235,
+          "peak_working_set_bytes": 20594688
+        },
+        {
+          "elapsed_ms": 104.15830003330484,
+          "peak_working_set_bytes": 20602880
+        },
+        {
+          "elapsed_ms": 96.05120000196621,
           "peak_working_set_bytes": 20590592
         },
         {
-          "elapsed_ms": 100.36689997650683,
+          "elapsed_ms": 97.00949996476993,
+          "peak_working_set_bytes": 20590592
+        },
+        {
+          "elapsed_ms": 98.54789997916669,
           "peak_working_set_bytes": 20586496
-        },
-        {
-          "elapsed_ms": 98.31969998776913,
-          "peak_working_set_bytes": 20602880
-        },
-        {
-          "elapsed_ms": 100.03129998221993,
-          "peak_working_set_bytes": 20582400
-        },
-        {
-          "elapsed_ms": 103.08380000060424,
-          "peak_working_set_bytes": 20602880
         }
       ],
-      "median_ms": 100.03129998221993,
-      "min_ms": 97.5464999792166,
+      "median_ms": 97.03799994895235,
+      "min_ms": 96.05120000196621,
       "max_peak_working_set_bytes": 20602880
     }
   ]
