@@ -153,6 +153,7 @@ class GroupBoundaryContracts(unittest.TestCase):
 
     def test_native_harness_sources_and_contracts_select_the_real_ubuntu_checks(self):
         for path in ["benches/native/dsh_setup.mjs", "benches/native/dsh_package-lock.json",
+                     "benches/native/node_runtime.mjs", "tests/node_runtime_contract.mjs",
                      "benches/native/pi_adapter.mjs", "benches/native/pi_package.json",
                      "benches/native/goose_adapter.py", "benches/native/goose_sources.json",
                      "benches/native/goose_adapter/Cargo.lock", "benches/native/goose_adapter/src/main.rs",

@@ -5,7 +5,8 @@ Tests cover observable bytes, commit state, rejected writes, output budgets and 
 ## Run the checks
 
 ```sh
-cargo test --workspace --locked
+# Keep dev binaries small for npm payload checks; assertions remain enabled.
+CARGO_PROFILE_DEV_DEBUG=0 cargo test --workspace --locked
 cargo fmt --all --check
 cargo clippy --workspace --all-targets --locked -- -D warnings
 cargo +1.89.0 check --workspace --all-targets --locked

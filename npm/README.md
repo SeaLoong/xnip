@@ -39,7 +39,7 @@ preparation; DSH has its own Node requirement. Tests use Node 24.
 ```powershell
 cargo build --release --locked
 python npm/prepare.py --host-binary target/release/xnip.exe --out target/npm-local --pack
-npm install --prefix target/npm-install --cache target/npm-cache --offline --ignore-scripts --no-audit --no-fund ./target/npm-local/tarballs/xnip-0.5.0.tgz
+npm install --prefix target/npm-install --cache target/npm-cache --offline --ignore-scripts --no-audit --no-fund ./target/npm-local/tarballs/xnip-0.5.1.tgz
 node target/npm-install/node_modules/xnip/bin/xnip.cjs --version
 ```
 
@@ -50,7 +50,7 @@ it is not a cross-platform release. Local GNU Linux binaries receive explicit
 installation with a matching host tarball:
 
 ```sh
-npm install --global --offline --ignore-scripts ./xnip-0.5.0.tgz
+npm install --global --offline --ignore-scripts ./xnip-0.5.1.tgz
 xnip --version
 ```
 

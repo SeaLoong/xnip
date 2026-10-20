@@ -29,6 +29,9 @@ concurrency:
 
 env:
   CARGO_TERM_COLOR: always
+  # Linux debug symbols can exceed the native payload cap used by npm acceptance.
+  # Keep development assertions while omitting symbols in every local CI build.
+  CARGO_PROFILE_DEV_DEBUG: "0"
   RUSTFLAGS: "-D warnings"
   XNIP_AUTO_UPDATE: "0"
 
@@ -242,6 +245,7 @@ jobs:
       - name: Offline script contracts
         run: |
           node --test tests/verified_ci_contract.cjs
+          node --test tests/node_runtime_contract.mjs
           node --test tests/dsh_integration_contract.cjs
           python tests/ci_scope_contract.py
           python tests/release_contract.py

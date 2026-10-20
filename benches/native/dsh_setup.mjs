@@ -6,6 +6,7 @@ import { fileURLToPath, pathToFileURL } from "node:url"
 import { createRequire } from "node:module"
 import { execFileSync } from "node:child_process"
 import { createHash } from "node:crypto"
+import { resolveNpmCli } from "./node_runtime.mjs"
 
 export const COMMIT = "687f282e8625c6b8d11ff58211a90524be2e4317"
 export const VERSION = "0.2.1-rc.2"
@@ -42,7 +43,7 @@ export async function verifyPrepared(directory = CACHE) {
   if (metadata.commit !== COMMIT || metadata.version !== VERSION) throw new Error("DSH cache revision mismatch")
   const lock = await fs.readFile(path.join(HERE, "dsh_package-lock.json"))
   if (hash(lock) !== metadata.dependency_lock_sha256) throw new Error("DSH dependency lock changed; prepare again")
-  for (const file of ["dsh_setup.mjs", "dsh_runtime.ts", "dsh_package.json"]) {
+  for (const file of ["dsh_setup.mjs", "dsh_runtime.ts", "dsh_package.json", "node_runtime.mjs"]) {
     if (hash(await fs.readFile(path.join(HERE, file))) !== metadata.build_inputs[file]) throw new Error("DSH adapter build input changed: " + file)
   }
   if (hash(await fs.readFile(path.join(directory, "runtime.mjs"))) !== metadata.runtime_bundle_sha256) throw new Error("DSH runtime bundle hash mismatch")
@@ -110,7 +111,7 @@ export async function prepare({ directory = CACHE, source } = {}) {
   const lockPath = path.join(HERE, "dsh_package-lock.json")
   const lock = await fs.readFile(lockPath)
   await fs.copyFile(lockPath, path.join(directory, "package-lock.json"))
-  const npm = path.join(path.dirname(process.execPath), "node_modules/npm/bin/npm-cli.js")
+  const npm = resolveNpmCli()
   execFileSync(process.execPath, [npm, "ci", "--prefix", directory, "--ignore-scripts", "--legacy-peer-deps", "--no-audit", "--no-fund"], {
     cwd: ROOT, stdio: ["ignore", "pipe", "pipe"], timeout: 180000,
   })
@@ -148,7 +149,7 @@ export async function prepare({ directory = CACHE, source } = {}) {
   })
   const sourceFiles = [...copies].map(([file, bytes]) => ({ file, bytes: bytes.length, sha256: hash(bytes), source_url: "https://github.com/deepseek-ai/deepseek-harness/blob/" + COMMIT + "/" + file })).sort((a, b) => a.file.localeCompare(b.file, "en"))
   const buildInputs = {}
-  for (const file of ["dsh_setup.mjs", "dsh_runtime.ts", "dsh_package.json"]) buildInputs[file] = hash(await fs.readFile(path.join(HERE, file)))
+  for (const file of ["dsh_setup.mjs", "dsh_runtime.ts", "dsh_package.json", "node_runtime.mjs"]) buildInputs[file] = hash(await fs.readFile(path.join(HERE, file)))
   const metadata = {
     backend: "deepseek-harness", version: VERSION, commit: COMMIT, source_repository: UPSTREAM,
     execution_level: "official ToolRuntime and filesystem executors; no model or UI",

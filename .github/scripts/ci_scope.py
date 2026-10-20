@@ -33,12 +33,13 @@ RELEASE_SCRIPTS = {".github/scripts/release.py", ".github/scripts/publish_releas
 RUST_PREFIXES = ("src/", ".cargo/", "xtask/", "installer/")
 INTEGRATION_PREFIXES = ("integrations/", ".github/skills/", "xtask/")
 HARNESS_PREFIXES = ("benches/native/dsh_", "benches/native/pi_", "benches/native/goose_")
-HARNESS_RUNNERS = {"benches/native_tools.py", "benches/harness_backends.py", "benches/harness_report.py"}
+HARNESS_RUNNERS = {"benches/native_tools.py", "benches/harness_backends.py", "benches/harness_report.py",
+                   "benches/native/node_runtime.mjs"}
 NPM_TESTS = {"tests/npm_contract.py", "tests/npm_prepare_contract.py", "tests/npm_release_smoke.py"}
 HARNESS_TESTS = {
     "tests/dsh_adapter_contract.py", "tests/dsh_integration_contract.cjs",
     "tests/dsh_integration_live.cjs", "tests/dsh_packaged_live.cjs", "tests/pi_contract.mjs",
-    "tests/goose_native_contract.py",
+    "tests/goose_native_contract.py", "tests/node_runtime_contract.mjs",
 }
 PACKAGED_HARNESSES = ("integrations/dsh/", "integrations/pi/")
 LIVE_INTEGRATIONS = (*PACKAGED_HARNESSES, "integrations/goose/")

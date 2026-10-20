@@ -7,6 +7,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { createRequire } from "node:module";
 import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
+import { resolveNpmCli } from "./node_runtime.mjs";
 
 export const COMMIT = "fdce48eb404ec014adaf2ac10a3a53bc6b1740c2";
 export const VERSION = "1.3.0";
@@ -46,7 +47,7 @@ async function prepareRuntime() {
   if (!installed) {
     await fs.writeFile(path.join(CACHE, "package.json"), manifest);
     await fs.writeFile(path.join(CACHE, "package-lock.json"), lock);
-    const npmCli = path.join(path.dirname(process.execPath), "node_modules/npm/bin/npm-cli.js");
+    const npmCli = resolveNpmCli();
     execFileSync(process.execPath, [npmCli, "ci", "--prefix", CACHE, "--ignore-scripts", "--no-audit", "--no-fund"],
       { cwd: ROOT, stdio: ["ignore", "pipe", "pipe"], timeout: 240000 });
   }

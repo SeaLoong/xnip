@@ -393,6 +393,12 @@ class PublicationContracts(unittest.TestCase):
 
 
 class WorkflowConsumerContracts(unittest.TestCase):
+    def test_ci_local_builds_omit_symbols_without_relaxing_assertions_or_public_payload_cap(self):
+        workflow = (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+        environment = workflow.split("\nenv:\n", 1)[1].split("\njobs:", 1)[0]
+        self.assertIn('CARGO_PROFILE_DEV_DEBUG: "0"', environment)
+        self.assertNotIn("CARGO_PROFILE_DEV_DEBUG_ASSERTIONS", workflow)
+        self.assertEqual(publisher.prepare.MAX_EXECUTABLE, 128 * 1024 * 1024)
     def test_six_native_install_jobs_pin_node_architecture_and_assert_host_identity(self):
         workflow = (ROOT / ".github/workflows/build-release.yml").read_text(encoding="utf-8")
         job = workflow.split("  npm-install:\n", 1)[1].split("\n  publish:", 1)[0]

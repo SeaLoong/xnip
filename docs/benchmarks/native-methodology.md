@@ -24,6 +24,8 @@ Pi is pinned to official commit `fdce48eb404ec014adaf2ac10a3a53bc6b1740c2` / 1.3
 
 Goose is pinned to official commit `9920efa16d078777a4d9715b2f00d8800a4da188` / 1.55.0. Its unchanged EditTools file_edit_with_cwd/file_write_with_cwd compile against a separately locked Rust crate and perform real IO. Single literal edit requires a unique match; separate calls provide multiple edits. Compiled official tool declarations provide native API schemas. Its raw MCP CallToolResult, including annotations, is retained; the final Goose provider projection is not executed and remains unknown. See [Goose details](../goose.md).
 
+DSH/Pi dependency preparation shares a Node/npm locator: Windows uses the executable-adjacent node_modules layout, POSIX uses the prefix lib/node_modules layout, and a real PATH npm target supplies a distro fallback. It invokes the resolved npm JavaScript with the running Node and never executes a cmd/shell shim. Layout fixtures test this locator only; real editor/bridge contracts still execute the official tools.
+
 Native source files, binary hashes, package versions, lockfiles and adapter fingerprints remain in the raw report. Claude Code and Cursor are unavailable in this experiment and receive no invented schema or simulated score.
 
 ## Path and context configurations
