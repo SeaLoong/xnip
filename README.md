@@ -12,7 +12,7 @@
 
 ## Measured editing costs
 
-The benchmark executes real **Codex, Gemini CLI, OpenCode, aider, DSH, Pi and Goose editors** against the 0.5.1 source build: **13 scenarios × 41 editor profiles × 3 repetitions**, plus six separate host→xnip MCP profiles. Every eligible profile produces the expected file bytes in every repetition. Counts use `tiktoken 0.14.0 / o200k_base`.
+The benchmark executes real **Codex, Gemini CLI, OpenCode, aider, DSH, Pi and Goose editors** against the 0.5.2 source build: **13 scenarios × 41 editor profiles × 3 repetitions**, plus six separate host→xnip MCP profiles. Every eligible profile produces the expected file bytes in every repetition. Counts use `tiktoken 0.14.0 / o200k_base`.
 
 ![Best observed byte-exact editing input](docs/benchmarks/charts/readme-frontier.svg)
 
@@ -55,13 +55,13 @@ remains explicit.
 
 For unpublished development builds or offline verification, install a matching
 private host tarball using
-`npm install --global --offline --ignore-scripts ./xnip-0.5.1.tgz`.
+`npm install --global --offline --ignore-scripts ./xnip-0.5.2.tgz`.
 See the [npm guide](npm/README.md) for platform packages, local preparation and
 the CI publication path.
 
 ### Standalone binaries and source
 
-Release **0.5.1** includes DSH/Pi/Goose integration and npm distribution.
+Release **0.5.2** includes DSH/Pi/Goose integration and npm distribution.
 See the [changelog](CHANGELOG.md). Without Node, use either SHA256-verifying installer:
 
 ~~~sh
@@ -79,7 +79,7 @@ See [installation](docs/installation.md) for targets, PATH, pinned versions,
 checksums and removal. Source installation needs **Rust 1.89+**:
 
 ~~~sh
-cargo install --git https://github.com/SeaLoong/xnip --tag v0.5.1 --locked xnip
+cargo install --git https://github.com/SeaLoong/xnip --tag v0.5.2 --locked xnip
 ~~~
 
 ## Edit
@@ -120,7 +120,7 @@ Use the CLI already on PATH, or configure `xnip mcp` for structured arguments. M
 | Aider | [convention](integrations/aider/CONVENTIONS.md) | Project conventions |
 | DSH | [bundle and MCP plugin](docs/dsh.md) | Explicitly activate the local package bundle; official MCP bridge |
 | Pi | [extension](docs/pi.md) | Local package entry registers an MCP server per session |
-| Goose | [stdio extension](docs/goose.md) | Merge extension config or use `--with-extension`; xnip 0.5.1+ |
+| Goose | [stdio extension](docs/goose.md) | Merge extension config or use `--with-extension`; xnip 0.5.2+ |
 | Other agents | [generic skill](integrations/generic/SKILL.md) | Load for editing; include references |
 
 The [npm distribution](npm/README.md) packages the same native executable and includes both `xnip/dsh` and `xnip/pi`; a separate `dsh-xnip` package is unnecessary for this MCP integration. CI validates six platform packages and publishes them before the parent package. Local host tarballs remain private for offline testing. Node is required only for the npm wrapper and JavaScript host integrations.

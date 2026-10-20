@@ -2,6 +2,7 @@
 import hashlib
 import json
 import math
+import os
 import subprocess
 import sys
 import tempfile
@@ -883,14 +884,118 @@ class PublicDisclosureContract(unittest.TestCase):
             public_report({"metadata":{"/home/private-person/a":1,"<HOME>/a":2}},
                           homes=["/home/private-person"])
 
-    def test_sessions_are_under_repository_target_and_cleaned_after_use(self):
+    def test_sessions_are_outside_actual_homes_and_cleaned_after_use(self):
         import report_privacy
-        self.assertTrue(report_privacy.SESSION_ROOT.is_relative_to(ROOT/"target"))
+        homes=[Path(value).resolve() for value in report_privacy.home_values() if value]
         with report_privacy.fixture_session("contract-") as temporary:
-            directory=Path(temporary)
-            self.assertTrue(directory.is_relative_to(report_privacy.SESSION_ROOT))
+            directory=Path(temporary).resolve()
+            self.assertFalse(any(directory.is_relative_to(home) for home in homes))
             self.assertTrue(directory.is_dir())
         self.assertFalse(directory.exists())
+
+    def test_preferred_repository_root_wins_only_when_outside_home(self):
+        import report_privacy
+        with tempfile.TemporaryDirectory() as temporary:
+            base=Path(temporary); home=base/"home"
+            preferred=base/"repo/target/native-bench/sessions"
+            outside=base/"outside-temp"
+            with report_privacy.fixture_session("safe-",homes=[home],preferred_root=preferred,
+                    temporary_roots=[outside],configured_root="") as created:
+                self.assertEqual(Path(created).parent,preferred.resolve())
+            self.assertFalse(outside.exists())
+
+    def test_checkout_and_system_temp_inside_home_use_actual_external_io(self):
+        import report_privacy
+        with tempfile.TemporaryDirectory() as temporary:
+            base=Path(temporary); home=base/"home"; home.mkdir()
+            preferred=home/"work/repo/target/native-bench/sessions"
+            unsafe_temp=home/"work/_temp"
+            outside=base/"outside-temp"
+            with mock.patch.object(report_privacy,"system_temp_roots",return_value=[unsafe_temp,outside]):
+                with report_privacy.fixture_session("runner-",homes=[home],preferred_root=preferred,
+                        configured_root="") as created:
+                    directory=Path(created)
+                    self.assertEqual(directory.parent,outside.resolve())
+                    file=directory/"fixture.txt"; file.write_bytes(b"original\r\nEOF")
+                    payload={"calls":[{"input":{"file":str(file),"old":"original","text":"edited"}}]}
+                    public=report_privacy.public_report(payload,homes=[home])
+                    self.assertEqual(public["calls"],payload["calls"])
+                    self.assertEqual(file.read_bytes(),b"original\r\nEOF")
+            self.assertFalse(preferred.exists())
+            self.assertFalse(unsafe_temp.exists())
+
+    def test_home_userprofile_and_path_home_are_all_checked(self):
+        import report_privacy
+        with tempfile.TemporaryDirectory() as temporary:
+            base=Path(temporary)
+            with mock.patch.object(Path,"home",return_value=base/"path-home"), mock.patch.dict(os.environ,{
+                    "HOME":str(base/"env-home"),"USERPROFILE":str(base/"profile"),
+                    "XNIP_BENCH_SESSION_ROOT":""}):
+                with report_privacy.fixture_session("union-",
+                        preferred_root=base/"profile/repo/sessions",
+                        temporary_roots=[base/"env-home/temp",base/"safe-temp"]) as created:
+                    self.assertEqual(Path(created).parent,(base/"safe-temp").resolve())
+
+    def test_no_safe_or_writable_candidate_fails_without_creating_home_directories(self):
+        import report_privacy
+        with tempfile.TemporaryDirectory() as temporary:
+            base=Path(temporary); home=base/"home"; home.mkdir()
+            with self.assertRaisesRegex(ValueError,"no writable benchmark session directory"):
+                report_privacy.fixture_session("blocked-",homes=[home],
+                    preferred_root=home/"repo/sessions",temporary_roots=[home/"tmp"],configured_root="")
+            self.assertEqual(list(home.iterdir()),[])
+            blocked=base/"not-a-directory"; blocked.write_bytes(b"not a writable directory")
+            with self.assertRaisesRegex(ValueError,"no writable benchmark session directory"):
+                report_privacy.fixture_session("blocked-",homes=[home],
+                    preferred_root=blocked,temporary_roots=[blocked],configured_root="")
+
+    def test_configured_session_root_is_explicit_and_never_falls_back_if_unsafe(self):
+        import report_privacy
+        with tempfile.TemporaryDirectory() as temporary:
+            base=Path(temporary); home=base/"home"
+            with report_privacy.fixture_session("configured-",homes=[home],
+                    preferred_root=base/"preferred",temporary_roots=[base/"tmp"],
+                    configured_root=base/"configured") as created:
+                self.assertEqual(Path(created).parent,(base/"configured").resolve())
+            with self.assertRaisesRegex(ValueError,"configured XNIP_BENCH_SESSION_ROOT"):
+                report_privacy.fixture_session("unsafe-",homes=[home],
+                    preferred_root=base/"preferred",temporary_roots=[base/"tmp"],
+                    configured_root=home/"unsafe")
+            self.assertFalse((base/"preferred").exists())
+            self.assertFalse((base/"tmp").exists())
+            self.assertFalse((home/"unsafe").exists())
+
+    def test_resolved_alias_and_home_substring_collision_choose_another_root(self):
+        import report_privacy
+        with tempfile.TemporaryDirectory() as temporary:
+            base=Path(temporary); home=base/"home"
+            for home_value,preferred in [(home,base/"public/../home/repo"),
+                    (home,base/"home-backup/repo"),("/home/runner",base/"nested/home/runner-copy/repo")]:
+                with report_privacy.fixture_session("alias-",homes=[home_value],preferred_root=preferred,
+                        temporary_roots=[base/"outside"],configured_root="") as created:
+                    self.assertEqual(Path(created).parent,(base/"outside").resolve())
+
+
+    def test_unusable_system_temp_lookup_still_keeps_platform_fallback(self):
+        import report_privacy
+        with mock.patch.object(tempfile,"gettempdir",side_effect=FileNotFoundError("no usable temp")):
+            roots=report_privacy.system_temp_roots()
+        if os.name=="posix":
+            self.assertEqual(roots,[Path("/tmp")])
+        elif os.name=="nt":
+            windows=os.environ.get("SystemRoot") or os.environ.get("WINDIR")
+            self.assertEqual(roots,[Path(windows)/"Temp"] if windows else [])
+
+    def test_protected_error_reports_safe_pointer_without_original_home_value(self):
+        from report_privacy import public_report
+        home="/home/private-person"
+        with self.assertRaises(ValueError) as caught:
+            public_report({"cases":[{"results":[{"calls":[{"input":{"file":home+"/private.txt"}}]}]}]},
+                          homes=[home])
+        message=str(caught.exception)
+        self.assertIn("/cases/0/results/0/calls/0/input/file",message)
+        self.assertNotIn(home,message)
+        self.assertNotIn("private-person",message)
 
 if __name__ == "__main__":
     unittest.main()

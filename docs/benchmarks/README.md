@@ -6,7 +6,7 @@ This benchmark executes each available harness's own editing implementation and 
 - [README summary frontier](charts/readme-frontier.svg), [per-task frontier](charts/frontier.svg), [literal-baseline overview](charts/overview.svg), [input ratios](charts/input-ratios.svg), [scenario matrix](charts/scenario-ratios.svg), [file results](charts/byte-exact.svg).
 - [Native methodology](native-methodology.md), [editing-strategy diagnosis](editing-strategies.md), [runner](../../benches/native_tools.py), [report generator](../../benches/native_report.py), [native adapters](../../benches/native/).
 - [Supplementary representation results](representation-results.md) and [method](representation-methodology.md) measure current xnip interfaces, schemas, prompts and output budgets separately.
-- [Core performance](core-performance.md) retains the 0.4.0 in-memory/CLI kernel measurements (the kernel is unchanged); the new harness run uses 0.5.1. Its evidence includes [Criterion samples](core-criterion-results.json) and [CLI samples](core-performance-results.json).
+- [Core performance](core-performance.md) retains the 0.4.0 in-memory/CLI kernel measurements (the kernel is unchanged); the new harness run uses 0.5.2. Its evidence includes [Criterion samples](core-criterion-results.json) and [CLI samples](core-performance-results.json).
 
 ## Execution matrix
 

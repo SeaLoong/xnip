@@ -12,7 +12,7 @@
 
 ## 实测编辑成本
 
-Benchmark 对当前 0.5.1 源码构建，实际运行 **Codex、Gemini CLI、OpenCode、aider、DSH、Pi、Goose 的编辑器**：**13 个场景 × 41 种编辑配置 × 3 次重复**，另测六种宿主→xnip MCP 配置。只有每次都得到预期文件字节的配置才进入有效对比。计数使用 `tiktoken 0.14.0 / o200k_base`。
+Benchmark 对当前 0.5.2 源码构建，实际运行 **Codex、Gemini CLI、OpenCode、aider、DSH、Pi、Goose 的编辑器**：**13 个场景 × 41 种编辑配置 × 3 次重复**，另测六种宿主→xnip MCP 配置。只有每次都得到预期文件字节的配置才进入有效对比。计数使用 `tiktoken 0.14.0 / o200k_base`。
 
 ![字节正确配置中的最佳实测编辑输入](docs/benchmarks/charts/readme-frontier.svg)
 
@@ -53,13 +53,13 @@ xnip --version
 npm 安装的子进程关闭原生自动更新；DSH/Pi 插件仍需显式启用。
 
 未发布的开发构建或离线验证，可通过
-`npm install --global --offline --ignore-scripts ./xnip-0.5.1.tgz`
+`npm install --global --offline --ignore-scripts ./xnip-0.5.2.tgz`
 安装匹配平台的私有 host tarball。
 平台包、本地构建和 CI 发布步骤见 [npm 指南](npm/README.md)。
 
 ### 独立二进制与源码
 
-**0.5.1** 包含 DSH/Pi/Goose 接入与 npm 分发，详情见[变更记录](CHANGELOG.md)。
+**0.5.2** 包含 DSH/Pi/Goose 接入与 npm 分发，详情见[变更记录](CHANGELOG.md)。
 不使用 Node 时，可使用以下校验 SHA256 的安装器：
 
 ~~~sh
@@ -77,7 +77,7 @@ Invoke-RestMethod https://github.com/SeaLoong/xnip/releases/latest/download/inst
 源码安装需要 **Rust 1.89+**：
 
 ~~~sh
-cargo install --git https://github.com/SeaLoong/xnip --tag v0.5.1 --locked xnip
+cargo install --git https://github.com/SeaLoong/xnip --tag v0.5.2 --locked xnip
 ~~~
 
 ## 编辑
@@ -118,7 +118,7 @@ xnip apply edits.json
 | Aider | [约定](integrations/aider/CONVENTIONS.md) | 项目约定 |
 | DSH | [bundle 与 MCP 插件](docs/dsh.md) | 显式启用本地包 bundle，经官方 MCP bridge 接入 |
 | Pi | [extension](docs/pi.md) | 从本地包加载，按会话注册 MCP server |
-| Goose | [stdio extension](docs/goose.md) | 合并配置或使用 `--with-extension`；需 xnip 0.5.1+ |
+| Goose | [stdio extension](docs/goose.md) | 合并配置或使用 `--with-extension`；需 xnip 0.5.2+ |
 | 其他 agent | [通用 skill](integrations/generic/SKILL.md) | 编辑任务按需加载，保留 references |
 
 [npm 分发](npm/README.md)打包同一个原生程序，包内同时提供 `xnip/dsh` 与 `xnip/pi`；当前 MCP 接入无需另建 `dsh-xnip` 包。CI 验证六个平台包后先发平台包，再发主包；本地 host tarball 保持 private，用于离线验证。仅 npm wrapper 和 JavaScript host 集成需要 Node。

@@ -4,7 +4,7 @@ User-visible changes are recorded here. Versions follow Semantic Versioning; com
 
 ## [Unreleased]
 
-## [0.5.1] - 2026-10-21
+## [0.5.2] - 2026-10-21
 
 DSH, Pi and Goose integrations, expanded native-editor benchmarks, and npm distribution of the same Rust CLI/MCP executable.
 
@@ -122,8 +122,8 @@ First public release of xnip, a CLI and MCP stdio server for precise local text 
 - MCP write tools commit immediately; preview/check modes are available through the CLI. The server uses the launching user's filesystem permissions and is intended for trusted local clients.
 - Native CLI arguments are literal shell arguments; no automatic `\n` decoding or newline-style conversion is performed.
 
-[Unreleased]: https://github.com/SeaLoong/xnip/compare/v0.5.1...HEAD
-[0.5.1]: https://github.com/SeaLoong/xnip/releases/tag/v0.5.1
+[Unreleased]: https://github.com/SeaLoong/xnip/compare/v0.5.2...HEAD
+[0.5.2]: https://github.com/SeaLoong/xnip/releases/tag/v0.5.2
 [0.4.0]: https://github.com/SeaLoong/xnip/releases/tag/v0.4.0
 [0.3.1]: https://github.com/SeaLoong/xnip/releases/tag/v0.3.1
 [0.2.0]: https://github.com/SeaLoong/xnip/releases/tag/v0.2.0

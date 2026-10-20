@@ -58890,11 +58890,11 @@
   },
   "disclosure_redaction": {
     "source": "results.json#/disclosure_redaction",
-    "scope": "Machine HOME prefixes are redacted only in public display metadata after all measurements. Session workspaces are under repository target/native-bench/sessions. Fixture bytes, serialized edit payloads and tool inputs are unchanged; a HOME match there fails closed.",
+    "scope": "Machine HOME prefixes are redacted only in public display metadata after all measurements. Session workspaces resolve outside every HOME/USERPROFILE root: repository target/native-bench/sessions when safe, otherwise an external temporary directory; XNIP_BENCH_SESSION_ROOT must satisfy the same checks. Fixture bytes, serialized edit payloads and tool inputs are unchanged; a HOME match there fails closed.",
     "cost_scope": "All cost numbers use the original pre-redaction captured strings, including instruction/DTO layers. Redacted display strings must not be recounted as the originals.",
     "original_values_retained": false
   },
-  "source_json_sha256": "5e5298587cf3a4ecf5ab12847b90f5c78e09dd57085b52785c90896811579cb0",
-  "report_generator_sha256": "f9698c7bd3be0168bd88f337474ed3c6cb13286267093163aa8fdcf534290fa7",
-  "recorded_generator_sha256": "f9698c7bd3be0168bd88f337474ed3c6cb13286267093163aa8fdcf534290fa7"
+  "source_json_sha256": "9c9dd8e1c10755382d5725121ab98a3dcf1da30fe9925dcbae5c4aa386304ef5",
+  "report_generator_sha256": "2cb16bf53cba8625576fe58b7d5c023c973bd617f93d0779f7f9051939f34c59",
+  "recorded_generator_sha256": "2cb16bf53cba8625576fe58b7d5c023c973bd617f93d0779f7f9051939f34c59"
 }

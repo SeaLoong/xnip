@@ -722,7 +722,7 @@ def render(report, stats):
         f"Counter: {json.dumps(report['counter'], ensure_ascii=False, sort_keys=True)}. Repetitions per task/profile: {report['repeats']}.",
         f"Platform: {report['platform']}. xnip binary SHA-256: {report['xnip_binary_sha256']}.",
         "Raw calls, expected bytes, per-repetition hashes and source provenance: [results.json](results.json). Derived statistics: [relative-results.json](relative-results.json).",
-        "Published display metadata replaces machine HOME prefixes with `<HOME>`; the JSON disclosure_redaction ledger hashes affected original strings. Costs retain the actual pre-redaction measurements, while fixture bytes, serialized payloads and tool inputs remain unchanged. Sessions use repository target/native-bench/sessions.",
+        "Published display metadata replaces machine HOME prefixes with `<HOME>`; the JSON disclosure_redaction ledger hashes affected original strings. Costs retain the actual pre-redaction measurements, while fixture bytes, serialized payloads and tool inputs remain unchanged. Sessions use repository target/native-bench/sessions only when outside HOME/USERPROFILE; otherwise they use an external temporary directory.",
         "Sampling fingerprints stay as recorded; derived JSON separately records the sampled and current report-renderer fingerprints.", "",
         *frontier_markdown(stats.get("frontier") or frontier_statistics(report)),
         *policy_frontier_markdown(stats.get("policy_frontiers") or policy_frontiers(report)),

@@ -584,7 +584,7 @@ def render(report):
                "", "Timing includes local scheduling and storage; CLI startup and persistent MCP have different scopes.",
                "The fixtures include cases where xnip loses on payload size. Format size does not predict model reliability.",
                "JSON includes fixture bytes, generated payloads, actual responses, schema snapshots and retry transcripts.",
-        "Sessions use repository target/native-bench/sessions. Public display metadata replaces machine HOME prefixes with `<HOME>` after measurement; the disclosure_redaction ledger retains original-string hashes. Fixture bytes, serialized payloads and tool inputs are unchanged, and all costs use pre-redaction strings.", ""]
+        "Sessions use repository target/native-bench/sessions only when outside HOME/USERPROFILE, otherwise an external temporary directory. Public display metadata replaces machine HOME prefixes with `<HOME>` after measurement; the disclosure_redaction ledger retains original-string hashes. Fixture bytes, serialized payloads and tool inputs are unchanged, and all costs use pre-redaction strings.", ""]
     return "\n".join(output)
 
 
