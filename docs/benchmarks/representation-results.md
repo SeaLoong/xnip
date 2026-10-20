@@ -1,8 +1,8 @@
 # Supplementary representation cost benchmark
 
-Counter: {"encoding":"o200k_base","tokenizer":"tiktoken","unit":"tokens","version":"0.14.0"}. Revision: 3549a70e32b2d679f097d8478a2bb9b4f03d5742; modified source: False.
-Working-tree binary SHA-256: 4079e7da2a9fcb0bc89c106be20d8a88c4c351f26b5803e0790d005545578016 (unchanged across run).
-Source tree SHA-256: b2b694c843dc0492769a8ea97d5e2b9a71ee6d656852ed6c6c587909dbc43c6b; includes tracked and untracked build/instruction inputs. Individual file hashes are in JSON.
+Counter: {"encoding":"o200k_base","tokenizer":"tiktoken","unit":"tokens","version":"0.14.0"}. Revision: 0b7155cab1c647923ac37adb407d775af404bf4e; modified source: True.
+Working-tree binary SHA-256: 713ff9a0bce7e7ff4b183f4bfaad3e8eb5297cb311da4e8ad9ca96204bbf2207 (unchanged across run).
+Source tree SHA-256: cd250f818477f8a149f674a0c6dc13d61e43a5e869cb625d2bb5b26070bd80d1; includes tracked and untracked build/instruction inputs. Individual file hashes are in JSON.
 Comparison scope: current xnip options and harness editing representations; no historical versions.
 Background auto-update is disabled for every xnip subprocess with XNIP_AUTO_UPDATE=0.
 All xnip execution rows check final bytes. Other harness formats are serialization examples; no external agent/model was run.
@@ -11,7 +11,7 @@ Token counts, when enabled, are exact for the named tokenizer and serialized tex
 | MCP catalog | Tools | Cost |
 |---|---:|---:|
 | compact / structured | 5 | 2303 |
-| full / structured | 10 | 4366 |
+| full / structured | 10 | 4150 |
 | compact / text | 5 | 1754 |
 
 | Current instruction entry point | Cost |
@@ -105,3 +105,4 @@ Guarded maps retain old-content checks. Snapshot variants explicitly allow whole
 Timing includes local scheduling and storage; CLI startup and persistent MCP have different scopes.
 The fixtures include cases where xnip loses on payload size. Format size does not predict model reliability.
 JSON includes fixture bytes, generated payloads, actual responses, schema snapshots and retry transcripts.
+Sessions use repository target/native-bench/sessions. Public display metadata replaces machine HOME prefixes with `<HOME>` after measurement; the disclosure_redaction ledger retains original-string hashes. Fixture bytes, serialized payloads and tool inputs are unchanged, and all costs use pre-redaction strings.

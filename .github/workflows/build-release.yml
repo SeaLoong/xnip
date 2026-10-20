@@ -1,11 +1,16 @@
 # Reusable build/package/publish implementation; entry points are ci.yml and release.yml.
-# Verification belongs to the caller. See docs/ci.md for the workflow contract.
+# Callers verify sources; this workflow verifies packed targets before publication.
+# See docs/ci.md for the complete workflow contract.
 name: release artifacts
 
 on:
   workflow_call:
     secrets:
       RELEASE_TOKEN:
+        required: false
+      NPM_TOKEN:
+        required: false
+      NODE_AUTH_TOKEN:
         required: false
     inputs:
       version:
@@ -111,6 +116,26 @@ jobs:
           else
             sha256sum "$asset" > "$asset.sha256"
           fi
+      - name: Record archive build provenance for npm preparation
+        shell: bash
+        env:
+          XNIP_VERSION: ${{ inputs.version }}
+          XNIP_TARGET: ${{ matrix.target }}
+        run: |
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+          import subprocess
+          version, target = os.environ["XNIP_VERSION"], os.environ["XNIP_TARGET"]
+          extension = ".zip" if "windows" in target else ".tar.gz"
+          archive = Path("dist-binaries") / f"xnip-v{version}-{target}{extension}"
+          commit = subprocess.check_output(["git", "rev-parse", "HEAD^{commit}"], text=True).strip()
+          proof = {"schema_version": 1, "version": version, "target": target,
+                   "source_commit": commit, "archive_sha256": hashlib.sha256(archive.read_bytes()).hexdigest()}
+          Path(str(archive) + ".build.json").write_text(json.dumps(proof) + "\n", encoding="utf-8")
+          PY
       - name: Smoke test native binary and embedded version
         shell: bash
         env:
@@ -136,15 +161,9 @@ jobs:
           if-no-files-found: error
           path: |
             dist-binaries/xnip-v${{ inputs.version }}-${{ matrix.target }}.*
-  publish:
-    name: publish complete release
+  collect:
+    name: prepare complete GitHub and npm candidates
     needs: build
-    if: inputs.publish
-    permissions:
-      contents: write
-    concurrency:
-      group: publish-release-${{ inputs.version }}
-      cancel-in-progress: false
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -154,6 +173,14 @@ jobs:
           python-version: "3.13"
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.13.0"
+      - name: Set exact package version
+        shell: bash
+        env:
+          XNIP_VERSION: ${{ inputs.version }}
+        run: python .github/scripts/release.py stamp --version "$XNIP_VERSION"
       - name: Generate integration assets
         shell: bash
         run: |
@@ -169,9 +196,132 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           pattern: release-${{ inputs.version }}-*
-          path: dist
+          path: dist-binaries
           merge-multiple: true
-      - name: Validate every asset and publish from a draft
+      - name: Prepare seven public npm packs and validate the separate 21 GitHub assets
+        shell: bash
+        env:
+          XNIP_VERSION: ${{ inputs.version }}
+          XNIP_PRERELEASE: ${{ inputs.prerelease }}
+        run: |
+          set -eu
+          source_commit="$(git rev-parse 'HEAD^{commit}')"
+          python npm/prepare.py --public --dist dist-binaries --out dist-npm --pack --source-commit "$source_commit"
+          arguments=()
+          if [ "$XNIP_PRERELEASE" = true ]; then arguments+=(--prerelease); fi
+          python .github/scripts/publish_npm.py --prepared dist-npm --source-commit "$source_commit" --check "${arguments[@]}"
+          python - <<'PY'
+          import importlib.util
+          import os
+          from pathlib import Path
+          import shutil
+          spec = importlib.util.spec_from_file_location("publisher", ".github/scripts/publish_release.py")
+          module = importlib.util.module_from_spec(spec)
+          import sys
+          sys.modules[spec.name] = module
+          spec.loader.exec_module(module)
+          tag = "v" + os.environ["XNIP_VERSION"]
+          for name in module.expected_names(tag):
+              source = Path("dist-binaries") / name
+              if source.is_file():
+                  shutil.copyfile(source, Path("dist") / name)
+          module.validate_dist(tag, Path("dist"))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: delivery-${{ inputs.version }}
+          overwrite: true
+          if-no-files-found: error
+          path: |
+            dist/
+            dist-npm/
+  npm-install:
+    name: npm install (${{ matrix.platform }})
+    needs: collect
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux-x64
+            os: ubuntu-latest
+          - platform: linux-arm64
+            os: ubuntu-24.04-arm
+          - platform: darwin-x64
+            os: macos-15-intel
+          - platform: darwin-arm64
+            os: macos-latest
+          - platform: win32-x64
+            os: windows-latest
+          - platform: win32-arm64
+            os: windows-11-arm
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.13.0"
+          architecture: ${{ endsWith(matrix.platform, '-arm64') && 'arm64' || 'x64' }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: delivery-${{ inputs.version }}
+          path: candidate
+      - name: Verify packed installation on the actual target architecture
+        env:
+          XNIP_EXPECT_PLATFORM: ${{ matrix.platform }}
+        shell: bash
+        run: |
+          set -eu
+          source_commit="$(git rev-parse 'HEAD^{commit}')"
+          python tests/npm_release_smoke.py --prepared candidate/dist-npm --source-commit "$source_commit"
+  publish:
+    name: publish verified npm and GitHub release
+    needs: [collect, npm-install]
+    if: inputs.publish
+    permissions:
+      contents: write
+      id-token: write
+    concurrency:
+      group: publish-delivery-${{ inputs.prerelease && 'development' || 'stable' }}
+      cancel-in-progress: false
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      XNIP_NPM_AUTH: ${{ vars.XNIP_NPM_AUTH || 'token' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.13.0"
+      - name: Configure token authentication
+        if: env.XNIP_NPM_AUTH == 'token'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24.13.0"
+          registry-url: https://registry.npmjs.org
+      - uses: actions/download-artifact@v4
+        with:
+          name: delivery-${{ inputs.version }}
+          path: candidate
+      - name: Publish six immutable platform packs before the parent
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN || secrets.NODE_AUTH_TOKEN }}
+          XNIP_PRERELEASE: ${{ inputs.prerelease }}
+        shell: bash
+        run: |
+          set -eu
+          arguments=()
+          if [ "$XNIP_PRERELEASE" = true ]; then arguments+=(--prerelease); fi
+          source_commit="$(git rev-parse 'HEAD^{commit}')"
+          if [ "$XNIP_NPM_AUTH" = oidc ]; then unset NODE_AUTH_TOKEN; fi
+          python .github/scripts/publish_npm.py --prepared candidate/dist-npm --source-commit "$source_commit" --auth "$XNIP_NPM_AUTH" "${arguments[@]}"
+      - name: Validate every GitHub asset and publish from a draft
         env:
           GH_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
           GH_REPO: ${{ github.repository }}
@@ -185,4 +335,4 @@ jobs:
             arguments+=(--prerelease)
           fi
           source_commit="$(git rev-parse 'HEAD^{commit}')"
-          python .github/scripts/publish_release.py --tag "v$XNIP_VERSION" --sha "$source_commit" --dist dist "${arguments[@]}"
+          python .github/scripts/publish_release.py --tag "v$XNIP_VERSION" --sha "$source_commit" --dist candidate/dist "${arguments[@]}"

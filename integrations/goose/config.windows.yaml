@@ -1,0 +1,11 @@
+# Replace cmd/cwd with existing absolute paths, then merge into Goose config.yaml.
+# YAML single quotes preserve Windows backslashes and spaces.
+extensions:
+  xnip:
+    name: xnip
+    type: stdio
+    cmd: 'C:\path to\xnip\target\release\xnip.exe'
+    args: [mcp, --receipts, text]
+    cwd: 'C:\path to\project'
+    enabled: true
+    timeout: 300

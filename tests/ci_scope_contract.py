@@ -11,6 +11,7 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import textwrap
 import unittest
 
 
@@ -78,10 +79,12 @@ def repository():
 
 
 class GroupBoundaryContracts(unittest.TestCase):
-    def assert_scope(self, path: str, rust=False, integrations=False, full=False):
+    def assert_scope(self, path: str, rust=False, integrations=False, full=False, npm=None, harnesses=None):
         self.assertEqual(
             ci_scope.classify([path]),
-            {"rust": rust, "integrations": integrations, "full": full},
+            {"rust": rust, "integrations": integrations,
+             "npm": rust or full if npm is None else npm,
+             "harnesses": rust or full if harnesses is None else harnesses, "full": full},
         )
 
     def test_runtime_build_installers_and_unknown_inputs_require_rust(self):
@@ -106,7 +109,8 @@ class GroupBoundaryContracts(unittest.TestCase):
             "docs/benchmarks/charts/overview.svg", "benches/edit_cost.py",
             "benches/native/codex_adapter.py", "tests/release_contract.py",
             "tests/publish_release_contract.py", ".github/scripts/release.py",
-            ".github/scripts/publish_release.py",
+            ".github/scripts/publish_release.py", ".github/scripts/publish_npm.py",
+            "tests/publish_npm_contract.py",
         ]:
             with self.subTest(path=path):
                 self.assert_scope(path)
@@ -141,14 +145,76 @@ class GroupBoundaryContracts(unittest.TestCase):
             with self.subTest(path=path):
                 self.assert_scope(path, rust=True, integrations=True, full=True)
 
+    def test_local_npm_inputs_select_three_os_package_checks_without_core_rebuilds(self):
+        for path in ["npm/prepare.py", "npm/xnip/lib/native.cjs", "npm/xnip/bin/xnip.cjs",
+                     "npm/xnip/package.json", "npm/README.md", *ci_scope.NPM_TESTS]:
+            with self.subTest(path=path):
+                self.assert_scope(path, npm=True)
+
+    def test_native_harness_sources_and_contracts_select_the_real_ubuntu_checks(self):
+        for path in ["benches/native/dsh_setup.mjs", "benches/native/dsh_package-lock.json",
+                     "benches/native/pi_adapter.mjs", "benches/native/pi_package.json",
+                     "benches/native/goose_adapter.py", "benches/native/goose_sources.json",
+                     "benches/native/goose_adapter/Cargo.lock", "benches/native/goose_adapter/src/main.rs",
+                     *ci_scope.HARNESS_TESTS, *ci_scope.HARNESS_RUNNERS]:
+            with self.subTest(path=path):
+                self.assert_scope(path, harnesses=True)
+        for path in ["integrations/dsh/index.mjs", "integrations/dsh/cordis.patch.yml", "integrations/pi/index.mjs"]:
+            with self.subTest(path=path):
+                self.assert_scope(path, integrations=True, npm=True, harnesses=True)
+        self.assert_scope("integrations/goose/config.windows.yaml", integrations=True, harnesses=True)
+
+    def test_pure_harness_documentation_and_hints_do_not_rebuild_platform_packages(self):
+        for path in ["integrations/dsh/README.md", "integrations/pi/README.md",
+                     "integrations/goose/README.md", "integrations/goose/.goosehints"]:
+            with self.subTest(path=path):
+                self.assert_scope(path, integrations=True)
+        for path in ["docs/dsh.md", "docs/pi.md", "docs/goose.md"]:
+            self.assert_scope(path)
+
     def test_empty_and_mixed_scopes_combine_without_losing_checks(self):
         self.assertEqual(
-            ci_scope.classify([]), {"rust": False, "integrations": False, "full": False},
+            ci_scope.classify([]), {"rust": False, "integrations": False, "npm": False, "harnesses": False, "full": False},
         )
         self.assertEqual(
             ci_scope.classify(["src/main.rs", "integrations/codex/guide.md", "README.md"]),
-            {"rust": True, "integrations": True, "full": False},
+            {"rust": True, "integrations": True, "npm": True, "harnesses": True, "full": False},
         )
+
+
+class RequiredGateContracts(unittest.TestCase):
+    def gate(self, flags, **statuses):
+        workflow = (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+        script = textwrap.dedent(workflow.split("          python3 - <<'PY'\n", 1)[1]
+                                .split("          PY\n", 1)[0])
+        needs = {name: {"result": statuses.get(name, "success")} for name in
+                 ["scope", "quality", "test", "harnesses", "compatibility", "contracts"]}
+        needs["scope"]["outputs"] = {key: str(flags.get(key, False)).lower() for key in
+                                    ["rust", "integrations", "npm", "harnesses", "full"]}
+        return subprocess.run([sys.executable, "-c", script], capture_output=True, text=True,
+                              env={**os.environ, "XNIP_NEEDS": json.dumps(needs)})
+
+    def test_new_selected_jobs_cannot_pass_by_skipping(self):
+        for flags, skipped in [({"npm": True}, "test"), ({"harnesses": True}, "harnesses")]:
+            with self.subTest(flags=flags):
+                result = self.gate(flags, **{skipped: "skipped"})
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("Selected checks must run", result.stderr)
+                self.assertEqual(self.gate(flags).returncode, 0)
+
+    def test_docs_only_can_skip_every_unselected_expensive_job(self):
+        result = self.gate({}, quality="skipped", test="skipped", harnesses="skipped", compatibility="skipped")
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_full_verification_requires_every_scope_and_successful_job(self):
+        full = {key: True for key in ["rust", "integrations", "npm", "harnesses", "full"]}
+        self.assertEqual(self.gate(full).returncode, 0)
+        for missing in ["npm", "harnesses"]:
+            with self.subTest(missing=missing):
+                result = self.gate({**full, missing: False})
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("Full verification must enable every check", result.stderr)
+        self.assertNotEqual(self.gate(full, harnesses="failure").returncode, 0)
 
 
 class GitHistoryContracts(unittest.TestCase):
@@ -164,9 +230,9 @@ class GitHistoryContracts(unittest.TestCase):
             result, output = repo.cli(payload, head, initial_output="existing=value\n")
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(
-                output, "existing=value\nrust=true\nintegrations=false\nfull=false\n",
+                output, "existing=value\nrust=true\nintegrations=false\nnpm=true\nharnesses=true\nfull=false\n",
             )
-            self.assertEqual(result.stdout, "rust=true\nintegrations=false\nfull=false\n")
+            self.assertEqual(result.stdout, "rust=true\nintegrations=false\nnpm=true\nharnesses=true\nfull=false\n")
 
     def test_documentation_only_and_empty_pushes_skip_expensive_groups(self):
         with repository() as repo:
@@ -177,7 +243,7 @@ class GitHistoryContracts(unittest.TestCase):
                 with self.subTest(before=base):
                     result, output = repo.cli({"before": base}, head)
                     self.assertEqual(result.returncode, 0, result.stderr)
-                    self.assertEqual(output, "rust=false\nintegrations=false\nfull=false\n")
+                    self.assertEqual(output, "rust=false\nintegrations=false\nnpm=false\nharnesses=false\nfull=false\n")
 
     def test_deleted_files_still_select_their_original_scope(self):
         with repository() as repo:
@@ -187,7 +253,7 @@ class GitHistoryContracts(unittest.TestCase):
             head = repo.commit("delete integration")
             result, output = repo.cli({"before": before}, head)
             self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertEqual(output, "rust=false\nintegrations=true\nfull=false\n")
+            self.assertEqual(output, "rust=false\nintegrations=true\nnpm=false\nharnesses=false\nfull=false\n")
 
     def test_renames_inspect_old_and_new_paths(self):
         with repository() as repo:
@@ -198,7 +264,7 @@ class GitHistoryContracts(unittest.TestCase):
             head = repo.commit("move runtime into docs")
             result, output = repo.cli({"before": before}, head)
             self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertEqual(output, "rust=true\nintegrations=false\nfull=false\n")
+            self.assertEqual(output, "rust=true\nintegrations=false\nnpm=true\nharnesses=true\nfull=false\n")
 
     def test_initial_push_compares_against_empty_tree(self):
         with repository() as repo:
@@ -206,7 +272,7 @@ class GitHistoryContracts(unittest.TestCase):
             head = repo.commit("initial integration")
             result, output = repo.cli({"before": "0" * len(head)}, head)
             self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertEqual(output, "rust=false\nintegrations=true\nfull=false\n")
+            self.assertEqual(output, "rust=false\nintegrations=true\nnpm=false\nharnesses=false\nfull=false\n")
 
     @unittest.skipIf(os.name == "nt", "Windows filenames cannot contain newlines")
     def test_nul_delimited_diff_preserves_newlines_in_paths(self):
@@ -216,7 +282,7 @@ class GitHistoryContracts(unittest.TestCase):
             head = repo.commit("unusual runtime filename")
             result, output = repo.cli({"before": before}, head)
             self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertEqual(output, "rust=true\nintegrations=false\nfull=false\n")
+            self.assertEqual(output, "rust=true\nintegrations=false\nnpm=true\nharnesses=true\nfull=false\n")
 
     def test_pr_uses_merge_base_and_the_checked_out_synthetic_merge(self):
         with repository() as repo:
@@ -232,7 +298,7 @@ class GitHistoryContracts(unittest.TestCase):
             event = {"pull_request": {"base": {"sha": base}, "head": {"sha": feature}}}
             result, output = repo.cli(event, merge, event_name="pull_request", ref="refs/pull/1/merge")
             self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertEqual(output, "rust=true\nintegrations=true\nfull=false\n")
+            self.assertEqual(output, "rust=true\nintegrations=true\nnpm=true\nharnesses=true\nfull=false\n")
 
     def test_manual_unknown_and_tag_events_always_select_every_group(self):
         with repository() as repo:
@@ -246,7 +312,7 @@ class GitHistoryContracts(unittest.TestCase):
                 with self.subTest(event_name=event_name, ref=ref):
                     result, output = repo.cli({}, head, event_name=event_name, ref=ref)
                     self.assertEqual(result.returncode, 0, result.stderr)
-                    self.assertEqual(output, "rust=true\nintegrations=true\nfull=true\n")
+                    self.assertEqual(output, "rust=true\nintegrations=true\nnpm=true\nharnesses=true\nfull=true\n")
 
     def test_default_branch_runtime_push_is_a_complete_release_baseline(self):
         with repository() as repo:
@@ -256,19 +322,19 @@ class GitHistoryContracts(unittest.TestCase):
             event = {"before": before, "repository": {"default_branch": "main"}}
             result, output = repo.cli(event, head)
             self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertEqual(output, "rust=true\nintegrations=true\nfull=true\n")
+            self.assertEqual(output, "rust=true\nintegrations=true\nnpm=true\nharnesses=true\nfull=true\n")
             for ref in ["refs/heads/feature", "refs/heads/main-other", "main"]:
                 with self.subTest(ref=ref):
                     result, output = repo.cli(event, head, ref=ref)
                     self.assertEqual(result.returncode, 0, result.stderr)
-                    self.assertEqual(output, "rust=true\nintegrations=false\nfull=false\n")
+                    self.assertEqual(output, "rust=true\nintegrations=false\nnpm=true\nharnesses=true\nfull=false\n")
             pr = {
                 "repository": {"default_branch": "main"},
                 "pull_request": {"base": {"sha": before}, "head": {"sha": head}},
             }
             result, output = repo.cli(pr, head, event_name="pull_request")
             self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertEqual(output, "rust=true\nintegrations=false\nfull=false\n")
+            self.assertEqual(output, "rust=true\nintegrations=false\nnpm=true\nharnesses=true\nfull=false\n")
 
     def test_default_branch_docs_and_integration_pushes_remain_scoped(self):
         with repository() as repo:
@@ -278,19 +344,19 @@ class GitHistoryContracts(unittest.TestCase):
             event = {"before": before, "repository": {"default_branch": "main"}}
             result, output = repo.cli(event, docs)
             self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertEqual(output, "rust=false\nintegrations=false\nfull=false\n")
+            self.assertEqual(output, "rust=false\nintegrations=false\nnpm=false\nharnesses=false\nfull=false\n")
             repo.write("integrations/codex/guide.md")
             integration = repo.commit("integration only")
             result, output = repo.cli(event, integration)
             self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertEqual(output, "rust=false\nintegrations=true\nfull=false\n")
+            self.assertEqual(output, "rust=false\nintegrations=true\nnpm=false\nharnesses=false\nfull=false\n")
 
     def test_force_all_promotes_a_docs_push_to_complete_validation(self):
         with repository() as repo:
             head = repo.commit("docs only")
             result, output = repo.cli({"before": head}, head, extra_args=("--force-all",))
             self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertEqual(output, "rust=true\nintegrations=true\nfull=true\n")
+            self.assertEqual(output, "rust=true\nintegrations=true\nnpm=true\nharnesses=true\nfull=true\n")
 
     def test_missing_malformed_and_unavailable_shas_fail_without_output(self):
         with repository() as repo:

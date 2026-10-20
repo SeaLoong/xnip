@@ -15,20 +15,20 @@
 <text x="434.40" y="329.00" class="small" text-anchor="middle">1x</text>
 <line x1="588.79" y1="136" x2="588.79" y2="306" stroke="#e2e9ed" stroke-dasharray="1 0"/>
 <text x="588.79" y="329.00" class="small" text-anchor="middle">2x</text>
-<rect x="434.40" y="145" width="69.78" height="16" rx="3" fill="#007f73"/>
-<circle cx="504.17" cy="153" r="4" fill="#007f73"/>
+<rect x="434.40" y="145" width="46.28" height="16" rx="3" fill="#007f73"/>
+<circle cx="480.67" cy="153" r="4" fill="#007f73"/>
 <text x="28.00" y="157.00" class="" text-anchor="start">MCP · guarded</text>
-<text x="663.00" y="157.00" class="" text-anchor="start">1.37x (13/13)</text>
+<text x="663.00" y="157.00" class="" text-anchor="start">1.23x (13/13)</text>
 <text x="786.00" y="157.00" class="" text-anchor="start">13 / 0 / 0 / 0</text>
 <rect x="434.40" y="188" width="52.23" height="16" rx="3" fill="#b67418"/>
 <circle cx="486.62" cy="196" r="4" fill="#b67418"/>
 <text x="28.00" y="200.00" class="" text-anchor="start">MCP · snapshot-enabled</text>
 <text x="663.00" y="200.00" class="" text-anchor="start">1.26x (13/13)</text>
 <text x="786.00" y="200.00" class="" text-anchor="start">12 / 1 / 0 / 0</text>
-<rect x="434.40" y="231" width="121.48" height="16" rx="3" fill="#007f73"/>
-<circle cx="555.87" cy="239" r="4" fill="#007f73"/>
+<rect x="434.40" y="231" width="97.98" height="16" rx="3" fill="#007f73"/>
+<circle cx="532.38" cy="239" r="4" fill="#007f73"/>
 <text x="28.00" y="243.00" class="" text-anchor="start">CLI stdin · guarded</text>
-<text x="663.00" y="243.00" class="" text-anchor="start">1.73x (13/13)</text>
+<text x="663.00" y="243.00" class="" text-anchor="start">1.55x (13/13)</text>
 <text x="786.00" y="243.00" class="" text-anchor="start">13 / 0 / 0 / 0</text>
 <rect x="434.40" y="274" width="131.16" height="16" rx="3" fill="#b67418"/>
 <circle cx="565.56" cy="282" r="4" fill="#b67418"/>

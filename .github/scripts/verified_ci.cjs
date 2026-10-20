@@ -92,7 +92,7 @@ module.exports = async function verifiedCi({
       throw new Error(`CI gate did not pass: ${gate.html_url || run.html_url}`);
     }
     const markers = (gate.steps || []).filter((step) =>
-      step.name === "Full verification");
+      step.name === "Full verification (Rust, integrations, npm, harnesses)");
     if (markers.length > 1) {
       throw new Error("CI returned multiple full-verification markers");
     }

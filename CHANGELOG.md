@@ -4,6 +4,17 @@ User-visible changes are recorded here. Versions follow Semantic Versioning; com
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-21
+
+DSH, Pi and Goose integrations, expanded native-editor benchmarks, and npm distribution of the same Rust CLI/MCP executable.
+
+- Add DSH bundle/MCP, Pi session extension and Goose stdio configurations, with explicit cwd, lifecycle and local-package setup.
+- Extend horizontal native-editor benchmarks with pinned official DSH, Pi and Goose executors, guarded and whole-write strategies, observable read prerequisites, byte-level checks and separate host MCP accounting.
+- Upgrade the MCP SDK for Goose's default modern discovery negotiation while retaining legacy initialization; test both protocol lifecycles, error recovery and clean EOF shutdown.
+- Distribute `xnip` through a parent npm package and six platform packages, with `xnip/native`, `xnip/dsh` and `xnip/pi` entries. Verify native payload hashes, embedded build identities, immutable execution caches and offline local tarballs. Keep local preparation private and require an explicit, complete public release.
+- Cover real harness registration/disposal, editing semantics, package integrity, concurrent first launch, active-session package removal and abrupt wrapper shutdown. Add scoped CI checks and refresh integration, benchmark and packaging documentation.
+- Build and validate npm tarballs from the same six-platform release artifacts in CI, publish platform packages before the parent with explicit stable/development channels, verify registry integrity, and preserve resumable release behavior.
+
 ## [0.4.0] - 2026-10-19
 
 Smaller edit representations, reusable batch buffers and concise MCP receipts. Whole-file writes, literal insertion and compact file groups share the same validation and recovery path.
@@ -110,7 +121,8 @@ First public release of xnip, a CLI and MCP stdio server for precise local text 
 - MCP write tools commit immediately; preview/check modes are available through the CLI. The server uses the launching user's filesystem permissions and is intended for trusted local clients.
 - Native CLI arguments are literal shell arguments; no automatic `\n` decoding or newline-style conversion is performed.
 
-[Unreleased]: https://github.com/SeaLoong/xnip/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/SeaLoong/xnip/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/SeaLoong/xnip/releases/tag/v0.5.0
 [0.4.0]: https://github.com/SeaLoong/xnip/releases/tag/v0.4.0
 [0.3.1]: https://github.com/SeaLoong/xnip/releases/tag/v0.3.1
 [0.2.0]: https://github.com/SeaLoong/xnip/releases/tag/v0.2.0

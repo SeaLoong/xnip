@@ -13,33 +13,38 @@
     },
     "scope": "all xnip subprocesses"
   },
-  "runner_sha256": "a90ff4479cff35d4bce61a83058da5afa18ef9afef8094110953cec9ec935fa3",
-  "git_commit": "3549a70e32b2d679f097d8478a2bb9b4f03d5742",
-  "modified_source": false,
-  "source_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-  "tracked_worktree_diff_sha256": "8d62282842eff5ea2ce9041c34729a83bd7d439c97b1b9b5b4fcae13611fff53",
+  "runner_sha256": "0c235a250315cbae7269e41a4b33920b0ff781ac8c4df8896eef7f4745d22d4b",
+  "git_commit": "0b7155cab1c647923ac37adb407d775af404bf4e",
+  "modified_source": true,
+  "source_diff_sha256": "80ac5673ec3683d2b7341d228db1bacef504897711e881264376065c01117b9a",
+  "tracked_worktree_diff_sha256": "e0996408d95eeca845b4c1af914a555377ba8fb843de6e7aab42a2aca6b0da19",
   "platform": "Windows-11-10.0.26200-SP0",
   "python": "3.14.2",
-  "binary_sha256": "4079e7da2a9fcb0bc89c106be20d8a88c4c351f26b5803e0790d005545578016",
+  "binary_sha256": "713ff9a0bce7e7ff4b183f4bfaad3e8eb5297cb311da4e8ad9ca96204bbf2207",
   "repeats": 3,
   "source_tree": {
     "algorithm": "sha256(sorted length-prefixed UTF-8 path and raw bytes)",
-    "sha256": "b2b694c843dc0492769a8ea97d5e2b9a71ee6d656852ed6c6c587909dbc43c6b",
+    "sha256": "cd250f818477f8a149f674a0c6dc13d61e43a5e869cb625d2bb5b26070bd80d1",
     "files": [
       {
         "path": "Cargo.lock",
-        "bytes": 53972,
-        "sha256": "c5e6edfc451fe8d5802c3620b68d917d198ea3c392ea2b663abff4c5690792b0"
+        "bytes": 54169,
+        "sha256": "dc83c51bcf2954171dccc1b97cfa839d305042c28efc6e8266cbbbb9fb282803"
       },
       {
         "path": "Cargo.toml",
-        "bytes": 2897,
-        "sha256": "bc9537c369b65eee47b1789a6297a73b199d600cd2f1bdffabbc3ac3ada49bf7"
+        "bytes": 2875,
+        "sha256": "1b6a5227193467cfdb535e6256c79affd51c5ef5a99af1a436b9db9193454175"
       },
       {
         "path": "benches/edit_cost.py",
-        "bytes": 37369,
-        "sha256": "a90ff4479cff35d4bce61a83058da5afa18ef9afef8094110953cec9ec935fa3"
+        "bytes": 37739,
+        "sha256": "0c235a250315cbae7269e41a4b33920b0ff781ac8c4df8896eef7f4745d22d4b"
+      },
+      {
+        "path": "benches/report_privacy.py",
+        "bytes": 4274,
+        "sha256": "0910bfe6a15a24e51c53feb4804930c9e308e037cee67c6fba7189294f272eaa"
       },
       {
         "path": "build.rs",
@@ -298,8 +303,8 @@
       },
       {
         "path": "src/main.rs",
-        "bytes": 1209,
-        "sha256": "c52b3167a46dc369c891e99df0cfa9d10e174e77e09d506870ef7076d290b912"
+        "bytes": 1530,
+        "sha256": "5e9a4eac9a63b2756a9b901fcc2aff4312d1fbe2ac36b0a8a62a611ed002f4bf"
       },
       {
         "path": "src/mcp/mod.rs",
@@ -308,8 +313,8 @@
       },
       {
         "path": "src/mcp/server.rs",
-        "bytes": 17045,
-        "sha256": "93590657c812ec7a515a6a3609ded21dfe14ff95a445dea1f2471463bfc9ecf7"
+        "bytes": 17061,
+        "sha256": "7faac2b99049164c61bb4395a0a18beab106099569ea710fe432129affd3a312"
       },
       {
         "path": "src/mcp/tools/apply.rs",
@@ -318,8 +323,8 @@
       },
       {
         "path": "src/mcp/tools/common.rs",
-        "bytes": 6886,
-        "sha256": "bdb9f83129d328ee3aac8aa7ab2bf70e53a94d130eb8186eab8d8affe76e68bb"
+        "bytes": 6896,
+        "sha256": "bba1a27f1cc660e3eba2bf8e0485025f44ce57adf980a781e27bc8843b0de72c"
       },
       {
         "path": "src/mcp/tools/doctor.rs",
@@ -1005,9 +1010,9 @@
         "xnip_replace"
       ],
       "cost": {
-        "utf8_bytes": 17806,
-        "characters": 16354,
-        "tokens": 4366
+        "utf8_bytes": 17118,
+        "characters": 15866,
+        "tokens": 4150
       },
       "payload": {
         "instructions": "Reuse known context; read only missing context. Prefer edit for exact blocks and file lifecycle; apply batches. Lines are 1-based inclusive. Omitted input flags are false. Results distinguish write/preview/check; written=false means no write. Truncation is explicit; max_bytes=0 requests full output. Expected text is a precondition, not a writer lock. Specialized tools: restart with --toolset full.",
@@ -1482,7 +1487,6 @@
             "description": "Insert text before/after a single-line anchor. Locator must resolve to one line; use `position`='before'|'after' (default 'after'). Provide `text` or `text_file`. Atomic write.",
             "inputSchema": {
               "additionalProperties": false,
-              "description": "与 cli `LocatorArgs` 同义的 5 维定位输入。字段名与 cli `--lines` / `--match-line` / ...\n一一对应，方便 LLM 理解。\n\n互斥规则：5 个 locator 字段（`lines` / `match_line` / `between` / `between_re` / `pattern`）\n必须有且仅有 1 个非空。校验委托给 `LocatorArgs::into_locator()`。",
               "properties": {
                 "backup": {
                   "description": "写文件前先备份为 `<file>.bak`。",
@@ -1754,7 +1758,6 @@
             "description": "Replace or delete a region in a file. Pick exactly one locator: `lines`/`match_line`/`between`/`between_re`/`pattern`. Provide `text` or `text_file` (or `repl` with `pattern`). Pass `was`/`was_file` to check the expected original bytes; `backup=true` keeps a `.bak` sidecar. Atomic write.",
             "inputSchema": {
               "additionalProperties": false,
-              "description": "与 cli `LocatorArgs` 同义的 5 维定位输入。字段名与 cli `--lines` / `--match-line` / ...\n一一对应，方便 LLM 理解。\n\n互斥规则：5 个 locator 字段（`lines` / `match_line` / `between` / `between_re` / `pattern`）\n必须有且仅有 1 个非空。校验委托给 `LocatorArgs::into_locator()`。",
               "properties": {
                 "backup": {
                   "description": "写文件前先备份为 `<file>.bak`。",
@@ -2510,7 +2513,7 @@
           "format": "xnip-single-edits",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 2.518,
+          "median_ms": 172.986,
           "response": {
             "calls": [
               {
@@ -2551,7 +2554,7 @@
           "format": "xnip-direct-edits",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 8.913,
+          "median_ms": 194.488,
           "response": {
             "content": [
               {
@@ -2586,7 +2589,7 @@
           "format": "line-edits-with-preconditions",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 97.563,
+          "median_ms": 304.726,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -2609,7 +2612,7 @@
           "format": "xnip-native-manifest",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 94.148,
+          "median_ms": 297.357,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -2632,7 +2635,7 @@
           "format": "xnip-files-guarded",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 9.023,
+          "median_ms": 38.511,
           "response": {
             "content": [
               {
@@ -2667,7 +2670,7 @@
           "format": "xnip-files-snapshot",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 7.965,
+          "median_ms": 38.118,
           "response": {
             "content": [
               {
@@ -2702,7 +2705,7 @@
           "format": "xnip-write-snapshot",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 8.333,
+          "median_ms": 25.97,
           "response": {
             "calls": [
               {
@@ -2742,7 +2745,7 @@
           "format": "xnip-compact-guarded",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 118.698,
+          "median_ms": 286.653,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -2765,7 +2768,7 @@
           "format": "xnip-compact-snapshot",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 125.395,
+          "median_ms": 301.121,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -2788,7 +2791,7 @@
           "format": "unified-diff",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 125.976,
+          "median_ms": 304.761,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -2811,7 +2814,7 @@
           "format": "apply-patch",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 117.774,
+          "median_ms": 294.252,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -3029,7 +3032,7 @@
           "format": "xnip-single-edits",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 2.87,
+          "median_ms": 36.62,
           "response": {
             "calls": [
               {
@@ -3070,7 +3073,7 @@
           "format": "xnip-direct-edits",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 8.64,
+          "median_ms": 37.891,
           "response": {
             "content": [
               {
@@ -3105,7 +3108,7 @@
           "format": "line-edits-with-preconditions",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 134.049,
+          "median_ms": 286.583,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -3128,7 +3131,7 @@
           "format": "xnip-native-manifest",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 113.113,
+          "median_ms": 160.868,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -3151,7 +3154,7 @@
           "format": "xnip-files-guarded",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 10.686,
+          "median_ms": 50.245,
           "response": {
             "content": [
               {
@@ -3186,7 +3189,7 @@
           "format": "xnip-files-snapshot",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 9.346,
+          "median_ms": 50.176,
           "response": {
             "content": [
               {
@@ -3221,7 +3224,7 @@
           "format": "xnip-write-snapshot",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 9.646,
+          "median_ms": 50.047,
           "response": {
             "calls": [
               {
@@ -3261,7 +3264,7 @@
           "format": "xnip-compact-guarded",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 122.965,
+          "median_ms": 157.728,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -3284,7 +3287,7 @@
           "format": "xnip-compact-snapshot",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 121.151,
+          "median_ms": 156.997,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -3307,7 +3310,7 @@
           "format": "unified-diff",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 97.499,
+          "median_ms": 158.195,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -3330,7 +3333,7 @@
           "format": "apply-patch",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 101.166,
+          "median_ms": 157.252,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -3548,7 +3551,7 @@
           "format": "xnip-single-edits",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 3.127,
+          "median_ms": 59.407,
           "response": {
             "calls": [
               {
@@ -3589,7 +3592,7 @@
           "format": "xnip-direct-edits",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 7.861,
+          "median_ms": 47.464,
           "response": {
             "content": [
               {
@@ -3624,7 +3627,7 @@
           "format": "line-edits-with-preconditions",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 109.532,
+          "median_ms": 158.644,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -3647,7 +3650,7 @@
           "format": "xnip-native-manifest",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 108.977,
+          "median_ms": 160.241,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -3670,7 +3673,7 @@
           "format": "xnip-files-guarded",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 8.034,
+          "median_ms": 47.638,
           "response": {
             "content": [
               {
@@ -3705,7 +3708,7 @@
           "format": "xnip-files-snapshot",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 8.282,
+          "median_ms": 23.091,
           "response": {
             "content": [
               {
@@ -3740,7 +3743,7 @@
           "format": "xnip-write-snapshot",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 8.602,
+          "median_ms": 47.254,
           "response": {
             "calls": [
               {
@@ -3780,7 +3783,7 @@
           "format": "xnip-compact-guarded",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 93.615,
+          "median_ms": 313.492,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -3803,7 +3806,7 @@
           "format": "xnip-compact-snapshot",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 98.029,
+          "median_ms": 292.771,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -3826,7 +3829,7 @@
           "format": "unified-diff",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 106.214,
+          "median_ms": 385.372,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -3849,7 +3852,7 @@
           "format": "apply-patch",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 97.721,
+          "median_ms": 391.548,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -4067,7 +4070,7 @@
           "format": "xnip-single-edits",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 3.426,
+          "median_ms": 23.583,
           "response": {
             "calls": [
               {
@@ -4108,7 +4111,7 @@
           "format": "xnip-direct-edits",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 9.103,
+          "median_ms": 24.324,
           "response": {
             "content": [
               {
@@ -4143,7 +4146,7 @@
           "format": "line-edits-with-preconditions",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 115.046,
+          "median_ms": 95.315,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -4166,7 +4169,7 @@
           "format": "xnip-native-manifest",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 111.771,
+          "median_ms": 71.693,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -4189,7 +4192,7 @@
           "format": "xnip-files-guarded",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 11.296,
+          "median_ms": 23.63,
           "response": {
             "content": [
               {
@@ -4224,7 +4227,7 @@
           "format": "xnip-files-snapshot",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 9.671,
+          "median_ms": 35.296,
           "response": {
             "content": [
               {
@@ -4259,7 +4262,7 @@
           "format": "xnip-write-snapshot",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 8.884,
+          "median_ms": 35.56,
           "response": {
             "calls": [
               {
@@ -4299,7 +4302,7 @@
           "format": "xnip-compact-guarded",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 621.272,
+          "median_ms": 72.849,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -4322,7 +4325,7 @@
           "format": "xnip-compact-snapshot",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 95.945,
+          "median_ms": 95.856,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -4345,7 +4348,7 @@
           "format": "unified-diff",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 101.386,
+          "median_ms": 107.471,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -4368,7 +4371,7 @@
           "format": "apply-patch",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 92.37,
+          "median_ms": 82.593,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -4586,7 +4589,7 @@
           "format": "xnip-single-edits",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 2.514,
+          "median_ms": 23.099,
           "response": {
             "calls": [
               {
@@ -4627,7 +4630,7 @@
           "format": "xnip-direct-edits",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 8.622,
+          "median_ms": 35.295,
           "response": {
             "content": [
               {
@@ -4662,7 +4665,7 @@
           "format": "line-edits-with-preconditions",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 102.751,
+          "median_ms": 71.088,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -4685,7 +4688,7 @@
           "format": "xnip-native-manifest",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 96.069,
+          "median_ms": 93.745,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -4708,7 +4711,7 @@
           "format": "xnip-files-guarded",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 9.54,
+          "median_ms": 32.721,
           "response": {
             "content": [
               {
@@ -4743,7 +4746,7 @@
           "format": "xnip-files-snapshot",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 8.453,
+          "median_ms": 71.996,
           "response": {
             "content": [
               {
@@ -4778,7 +4781,7 @@
           "format": "xnip-write-snapshot",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 7.8,
+          "median_ms": 23.47,
           "response": {
             "calls": [
               {
@@ -4818,7 +4821,7 @@
           "format": "xnip-compact-guarded",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 94.439,
+          "median_ms": 95.315,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -4841,7 +4844,7 @@
           "format": "xnip-compact-snapshot",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 93.035,
+          "median_ms": 94.292,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -5059,7 +5062,7 @@
           "format": "xnip-single-edits",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 2.605,
+          "median_ms": 23.418,
           "response": {
             "calls": [
               {
@@ -5100,7 +5103,7 @@
           "format": "xnip-direct-edits",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 8.857,
+          "median_ms": 24.213,
           "response": {
             "content": [
               {
@@ -5135,7 +5138,7 @@
           "format": "line-edits-with-preconditions",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 94.444,
+          "median_ms": 74.346,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -5158,7 +5161,7 @@
           "format": "xnip-native-manifest",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 94.795,
+          "median_ms": 70.11,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -5181,7 +5184,7 @@
           "format": "xnip-files-guarded",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 9.054,
+          "median_ms": 32.878,
           "response": {
             "content": [
               {
@@ -5216,7 +5219,7 @@
           "format": "xnip-files-snapshot",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 9.459,
+          "median_ms": 71.953,
           "response": {
             "content": [
               {
@@ -5251,7 +5254,7 @@
           "format": "xnip-write-snapshot",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 8.724,
+          "median_ms": 59.166,
           "response": {
             "calls": [
               {
@@ -5291,7 +5294,7 @@
           "format": "xnip-compact-guarded",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 93.671,
+          "median_ms": 109.798,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -5314,7 +5317,7 @@
           "format": "xnip-compact-snapshot",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 126.585,
+          "median_ms": 82.611,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -5532,7 +5535,7 @@
           "format": "xnip-single-edits",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 3.183,
+          "median_ms": 34.664,
           "response": {
             "calls": [
               {
@@ -5573,7 +5576,7 @@
           "format": "xnip-direct-edits",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 9.037,
+          "median_ms": 24.363,
           "response": {
             "content": [
               {
@@ -5608,7 +5611,7 @@
           "format": "line-edits-with-preconditions",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 141.907,
+          "median_ms": 94.024,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -5631,7 +5634,7 @@
           "format": "xnip-native-manifest",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 125.638,
+          "median_ms": 70.188,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -5654,7 +5657,7 @@
           "format": "xnip-files-guarded",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 13.418,
+          "median_ms": 23.479,
           "response": {
             "content": [
               {
@@ -5689,7 +5692,7 @@
           "format": "xnip-files-snapshot",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 14.006,
+          "median_ms": 23.372,
           "response": {
             "content": [
               {
@@ -5724,7 +5727,7 @@
           "format": "xnip-write-snapshot",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 15.232,
+          "median_ms": 47.351,
           "response": {
             "calls": [
               {
@@ -5764,7 +5767,7 @@
           "format": "xnip-compact-guarded",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 101.026,
+          "median_ms": 94.952,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -5787,7 +5790,7 @@
           "format": "xnip-compact-snapshot",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 104.68,
+          "median_ms": 82.679,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -5810,7 +5813,7 @@
           "format": "unified-diff",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 99.58,
+          "median_ms": 131.412,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -5833,7 +5836,7 @@
           "format": "apply-patch",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 96.651,
+          "median_ms": 130.078,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -6051,7 +6054,7 @@
           "format": "xnip-single-edits",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 3.224,
+          "median_ms": 48.218,
           "response": {
             "calls": [
               {
@@ -6092,7 +6095,7 @@
           "format": "xnip-direct-edits",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 8.287,
+          "median_ms": 96.05,
           "response": {
             "content": [
               {
@@ -6127,7 +6130,7 @@
           "format": "line-edits-with-preconditions",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 93.864,
+          "median_ms": 85.0,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -6150,7 +6153,7 @@
           "format": "xnip-native-manifest",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 90.238,
+          "median_ms": 107.927,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -6173,7 +6176,7 @@
           "format": "xnip-files-guarded",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 8.263,
+          "median_ms": 83.57,
           "response": {
             "content": [
               {
@@ -6208,7 +6211,7 @@
           "format": "xnip-files-snapshot",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 8.601,
+          "median_ms": 71.11,
           "response": {
             "content": [
               {
@@ -6243,7 +6246,7 @@
           "format": "xnip-write-snapshot",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 8.279,
+          "median_ms": 59.254,
           "response": {
             "calls": [
               {
@@ -6283,7 +6286,7 @@
           "format": "xnip-compact-guarded",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 107.337,
+          "median_ms": 132.673,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -6306,7 +6309,7 @@
           "format": "xnip-compact-snapshot",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 100.679,
+          "median_ms": 131.408,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -6329,7 +6332,7 @@
           "format": "unified-diff",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 107.114,
+          "median_ms": 143.759,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -6352,7 +6355,7 @@
           "format": "apply-patch",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 103.284,
+          "median_ms": 167.152,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -6570,7 +6573,7 @@
           "format": "xnip-single-edits",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 6.156,
+          "median_ms": 143.631,
           "response": {
             "calls": [
               {
@@ -6629,7 +6632,7 @@
           "format": "xnip-direct-edits",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 10.793,
+          "median_ms": 60.109,
           "response": {
             "content": [
               {
@@ -6664,7 +6667,7 @@
           "format": "line-edits-with-preconditions",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 110.392,
+          "median_ms": 72.777,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -6687,7 +6690,7 @@
           "format": "xnip-native-manifest",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 120.963,
+          "median_ms": 119.074,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -6710,7 +6713,7 @@
           "format": "xnip-files-guarded",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 11.297,
+          "median_ms": 47.057,
           "response": {
             "content": [
               {
@@ -6745,7 +6748,7 @@
           "format": "xnip-files-snapshot",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 10.729,
+          "median_ms": 71.193,
           "response": {
             "content": [
               {
@@ -6780,7 +6783,7 @@
           "format": "xnip-write-snapshot",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 10.043,
+          "median_ms": 94.538,
           "response": {
             "calls": [
               {
@@ -6820,7 +6823,7 @@
           "format": "xnip-compact-guarded",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 136.513,
+          "median_ms": 85.341,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -6843,7 +6846,7 @@
           "format": "xnip-compact-snapshot",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 120.532,
+          "median_ms": 106.86,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -6866,7 +6869,7 @@
           "format": "unified-diff",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 152.776,
+          "median_ms": 131.504,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -6889,7 +6892,7 @@
           "format": "apply-patch",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 121.695,
+          "median_ms": 120.179,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -7111,7 +7114,7 @@
           "format": "xnip-single-edits",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 9.171,
+          "median_ms": 171.576,
           "response": {
             "calls": [
               {
@@ -7188,7 +7191,7 @@
           "format": "xnip-direct-edits",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 22.764,
+          "median_ms": 276.253,
           "response": {
             "content": [
               {
@@ -7225,7 +7228,7 @@
           "format": "line-edits-with-preconditions",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 134.457,
+          "median_ms": 212.94,
           "response": {
             "exit": 0,
             "stderr": "written apply: 3 paths\n",
@@ -7248,7 +7251,7 @@
           "format": "xnip-native-manifest",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 122.942,
+          "median_ms": 164.937,
           "response": {
             "exit": 0,
             "stderr": "written apply: 3 paths\n",
@@ -7271,7 +7274,7 @@
           "format": "xnip-files-guarded",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 23.251,
+          "median_ms": 103.298,
           "response": {
             "content": [
               {
@@ -7308,7 +7311,7 @@
           "format": "xnip-files-snapshot",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 24.723,
+          "median_ms": 115.436,
           "response": {
             "content": [
               {
@@ -7345,7 +7348,7 @@
           "format": "xnip-write-snapshot",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 28.544,
+          "median_ms": 128.365,
           "response": {
             "calls": [
               {
@@ -7419,7 +7422,7 @@
           "format": "xnip-compact-guarded",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 127.473,
+          "median_ms": 165.282,
           "response": {
             "exit": 0,
             "stderr": "written apply: 3 paths\n",
@@ -7442,7 +7445,7 @@
           "format": "xnip-compact-snapshot",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 130.364,
+          "median_ms": 141.739,
           "response": {
             "exit": 0,
             "stderr": "written apply: 3 paths\n",
@@ -7465,7 +7468,7 @@
           "format": "unified-diff",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 123.259,
+          "median_ms": 176.382,
           "response": {
             "exit": 0,
             "stderr": "written apply: 3 paths\n",
@@ -7488,7 +7491,7 @@
           "format": "apply-patch",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 122.918,
+          "median_ms": 188.881,
           "response": {
             "exit": 0,
             "stderr": "written apply: 3 paths\n",
@@ -7706,7 +7709,7 @@
           "format": "xnip-single-edits",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 2.544,
+          "median_ms": 58.779,
           "response": {
             "calls": [
               {
@@ -7747,7 +7750,7 @@
           "format": "xnip-direct-edits",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 8.211,
+          "median_ms": 59.619,
           "response": {
             "content": [
               {
@@ -7782,7 +7785,7 @@
           "format": "line-edits-with-preconditions",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 107.903,
+          "median_ms": 83.467,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -7805,7 +7808,7 @@
           "format": "xnip-native-manifest",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 103.222,
+          "median_ms": 71.529,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -7828,7 +7831,7 @@
           "format": "xnip-files-guarded",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 10.22,
+          "median_ms": 71.383,
           "response": {
             "content": [
               {
@@ -7863,7 +7866,7 @@
           "format": "xnip-files-snapshot",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 10.429,
+          "median_ms": 95.096,
           "response": {
             "content": [
               {
@@ -7898,7 +7901,7 @@
           "format": "xnip-write-snapshot",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 8.527,
+          "median_ms": 82.848,
           "response": {
             "calls": [
               {
@@ -7938,7 +7941,7 @@
           "format": "xnip-compact-guarded",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 106.445,
+          "median_ms": 107.145,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -7961,7 +7964,7 @@
           "format": "xnip-compact-snapshot",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 97.3,
+          "median_ms": 131.722,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -7984,7 +7987,7 @@
           "format": "unified-diff",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 96.936,
+          "median_ms": 107.713,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -8007,7 +8010,7 @@
           "format": "apply-patch",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 91.6,
+          "median_ms": 82.589,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -8225,7 +8228,7 @@
           "format": "xnip-single-edits",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 2.911,
+          "median_ms": 23.021,
           "response": {
             "calls": [
               {
@@ -8266,7 +8269,7 @@
           "format": "xnip-direct-edits",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 8.821,
+          "median_ms": 46.72,
           "response": {
             "content": [
               {
@@ -8301,7 +8304,7 @@
           "format": "line-edits-with-preconditions",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 105.446,
+          "median_ms": 72.062,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -8324,7 +8327,7 @@
           "format": "xnip-native-manifest",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 101.802,
+          "median_ms": 82.761,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -8347,7 +8350,7 @@
           "format": "xnip-files-guarded",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 8.134,
+          "median_ms": 34.468,
           "response": {
             "content": [
               {
@@ -8382,7 +8385,7 @@
           "format": "xnip-files-snapshot",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 9.612,
+          "median_ms": 32.676,
           "response": {
             "content": [
               {
@@ -8417,7 +8420,7 @@
           "format": "xnip-write-snapshot",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 8.41,
+          "median_ms": 34.767,
           "response": {
             "calls": [
               {
@@ -8457,7 +8460,7 @@
           "format": "xnip-compact-guarded",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 103.449,
+          "median_ms": 94.867,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -8480,7 +8483,7 @@
           "format": "xnip-compact-snapshot",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 107.814,
+          "median_ms": 71.785,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -8503,7 +8506,7 @@
           "format": "unified-diff",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 100.501,
+          "median_ms": 94.212,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -8526,7 +8529,7 @@
           "format": "apply-patch",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 99.798,
+          "median_ms": 71.41,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -8744,7 +8747,7 @@
           "format": "xnip-single-edits",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 2.559,
+          "median_ms": 36.746,
           "response": {
             "calls": [
               {
@@ -8785,7 +8788,7 @@
           "format": "xnip-direct-edits",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 9.497,
+          "median_ms": 35.449,
           "response": {
             "content": [
               {
@@ -8820,7 +8823,7 @@
           "format": "line-edits-with-preconditions",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 107.224,
+          "median_ms": 85.927,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -8843,7 +8846,7 @@
           "format": "xnip-native-manifest",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 104.077,
+          "median_ms": 72.235,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -8866,7 +8869,7 @@
           "format": "xnip-files-guarded",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 10.395,
+          "median_ms": 35.929,
           "response": {
             "content": [
               {
@@ -8901,7 +8904,7 @@
           "format": "xnip-files-snapshot",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 9.446,
+          "median_ms": 58.775,
           "response": {
             "content": [
               {
@@ -8936,7 +8939,7 @@
           "format": "xnip-write-snapshot",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 9.229,
+          "median_ms": 35.96,
           "response": {
             "calls": [
               {
@@ -8976,7 +8979,7 @@
           "format": "xnip-compact-guarded",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 110.255,
+          "median_ms": 85.681,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -8999,7 +9002,7 @@
           "format": "xnip-compact-snapshot",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 136.221,
+          "median_ms": 84.515,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -9022,7 +9025,7 @@
           "format": "unified-diff",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 118.183,
+          "median_ms": 106.845,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -9045,7 +9048,7 @@
           "format": "apply-patch",
           "status": "expected-bytes-verified",
           "repeats": 3,
-          "median_ms": 114.315,
+          "median_ms": 108.878,
           "response": {
             "exit": 0,
             "stderr": "written apply: 1 paths\n",
@@ -9586,5 +9589,14 @@
       }
     }
   ],
-  "binary_sha256_verified": "4079e7da2a9fcb0bc89c106be20d8a88c4c351f26b5803e0790d005545578016"
+  "binary_sha256_verified": "713ff9a0bce7e7ff4b183f4bfaad3e8eb5297cb311da4e8ad9ca96204bbf2207",
+  "disclosure_redaction": {
+    "schema_version": 1,
+    "replacement": "<HOME>",
+    "changed_strings": 0,
+    "scope": "Machine HOME prefixes are redacted only in public display metadata after all measurements. Session workspaces are under repository target/native-bench/sessions. Fixture bytes, serialized edit payloads and tool inputs are unchanged; a HOME match there fails closed.",
+    "cost_scope": "All cost numbers use the original pre-redaction captured strings, including instruction/DTO layers. Redacted display strings must not be recounted as the originals.",
+    "original_values_retained": false,
+    "entries": []
+  }
 }

@@ -12,7 +12,7 @@
 
 ## 实测编辑成本
 
-Benchmark 实际运行 **Codex、Gemini CLI、OpenCode、aider 的编辑器**：**13 个场景 × 31 种配置 × 3 次重复**。只有每次都得到预期文件字节的配置才进入有效对比。计数使用 `tiktoken 0.14.0 / o200k_base`。
+Benchmark 对当前 0.5.0 源码构建，实际运行 **Codex、Gemini CLI、OpenCode、aider、DSH、Pi、Goose 的编辑器**：**13 个场景 × 41 种编辑配置 × 3 次重复**，另测六种宿主→xnip MCP 配置。只有每次都得到预期文件字节的配置才进入有效对比。计数使用 `tiktoken 0.14.0 / o200k_base`。
 
 ![字节正确配置中的最佳实测编辑输入](docs/benchmarks/charts/readme-frontier.svg)
 
@@ -20,16 +20,18 @@ Benchmark 实际运行 **Codex、Gemini CLI、OpenCode、aider 的编辑器**：
 
 | xnip 接口 / 允许的操作 | 原生最小 / xnip 最小 | xnip 更少 / 持平 / 原生更少 |
 |---|---:|---:|
-| MCP · 保留旧内容校验 | 1.37x | 13 / 0 / 0 |
+| MCP · 保留旧内容校验 | 1.23x | 13 / 0 / 0 |
 | MCP · 允许整文件写入 | 1.26x | 12 / 1 / 0 |
-| CLI stdin · 保留旧内容校验 | 1.73x | 13 / 0 / 0 |
+| CLI stdin · 保留旧内容校验 | 1.55x | 13 / 0 / 0 |
 | CLI stdin · 允许整文件写入 | 1.80x | 13 / 0 / 0 |
 
-**为什么使用：** 已知完整文件时，长行中的局部修改只需 **11 个 MCP 输入 token**，Codex 的唯一上下文补丁需要 **10,037**。文件分组还能省去重复路径和调用。在两组条件下，CLI stdin 策略的输入都在 13 个场景中更少；执行命令参数是另计的额外成本。
+**为什么使用：** 已知完整文件时，长行中的局部修改只需 **11 个 MCP 输入 token**，实测原生最佳输入（Goose）为 **18**，Codex 的唯一上下文补丁需要 **10,037**。文件分组还能省去重复路径和调用。在两组条件下，CLI stdin 策略的输入都在 13 个场景中更少；执行命令参数是另计的额外成本。
 
 **发送前先选择表达方式：** 已知完整当前内容且旧内容校验可选时，原生行清单、缩短后仍唯一的精确文本对，可能比整份文件更省。多行函数的 xnip MCP 输入为 **25 token**，aider whole 为 **26**；同文件批量为 **18 对 20**。明确要求的旧内容检查保持不变。允许整写的 MCP 组中，xnip 在 12 个任务中更少、1 个持平。
 
 **返回也更精简：** `xnip mcp --receipts text` 在 26 组配对中，让捕获的完整 JSON-RPC 返回 token 约减少 **56%**；输入、正文回执和最终文件字节与默认结构化模式一致。同样五个工具的发现目录也减少 **23.8%**（2,303 → 1,754 token）。
+
+**新增 harness 的结论：** Goose 的简短参数结构在多数原生旧内容校验输入中胜出；Pi 将同文件多处编辑按原始坐标处理。DSH 的 observed 配置计入编辑前实际必需的 read/view，其 bare 与 observed 策略分别比较，不混入上表；外部 xnip MCP 进程不继承 DSH 文件系统策略。[宿主交互证据](docs/benchmarks/host-exchange-results.json)分别记录真实公开工具名、schema 投影、指令与返回内容，Goose 的 provider 投影仍为未知。
 
 对比已加入原生相对路径、更紧凑的上下文，以及同样适用的已知文件字面裁剪配置。前沿只使用字节正确的结果，原有配置和字节不符结果均保留。aider 最终返回文本未知；CLI 命令参数、MCP 请求/返回、工具正文与启动耗时分别计量，不能当作完整 agent 会话或计费总量。
 
@@ -37,7 +39,28 @@ Benchmark 实际运行 **Codex、Gemini CLI、OpenCode、aider 的编辑器**：
 
 ## 安装
 
-本页功能已包含在 **v0.4.0** 中，发布详情见[变更记录](CHANGELOG.md)。稳定版预构建二进制无需 Rust。两种安装器均校验下载压缩包的 SHA256：
+### npm（首选）
+
+需要 Node **22.14+**；安装预先打包的程序无需 Rust。
+推荐从 npm 安装已发布版本：
+
+~~~sh
+npm install --global xnip
+xnip --version
+~~~
+
+通过 `npm install --global xnip@latest` 更新，升级后重启 MCP 会话。
+npm 安装的子进程关闭原生自动更新；DSH/Pi 插件仍需显式启用。
+
+未发布的开发构建或离线验证，可通过
+`npm install --global --offline --ignore-scripts ./xnip-0.5.0.tgz`
+安装匹配平台的私有 host tarball。
+平台包、本地构建和 CI 发布步骤见 [npm 指南](npm/README.md)。
+
+### 独立二进制与源码
+
+**0.5.0** 包含 DSH/Pi/Goose 接入与 npm 分发，详情见[变更记录](CHANGELOG.md)。
+不使用 Node 时，可使用以下校验 SHA256 的安装器：
 
 ~~~sh
 # macOS / Linux
@@ -49,12 +72,12 @@ curl -fsSL https://github.com/SeaLoong/xnip/releases/latest/download/install.sh 
 Invoke-RestMethod https://github.com/SeaLoong/xnip/releases/latest/download/install.ps1 | Invoke-Expression
 ~~~
 
-也可从 [GitHub Releases](https://github.com/SeaLoong/xnip/releases) 下载。支持平台、PATH、固定版本、校验与卸载见[安装说明](docs/installation.md)。
-
+也可从 [GitHub Releases](https://github.com/SeaLoong/xnip/releases) 下载。
+平台、PATH、固定版本、校验与卸载见[安装说明](docs/installation.md)。
 源码安装需要 **Rust 1.89+**：
 
 ~~~sh
-cargo install --git https://github.com/SeaLoong/xnip --tag v0.4.0 --locked xnip
+cargo install --git https://github.com/SeaLoong/xnip --tag v0.5.0 --locked xnip
 ~~~
 
 ## 编辑
@@ -93,7 +116,12 @@ xnip apply edits.json
 | Cursor | [规则](integrations/cursor/xnip.mdc) | 项目规则，`alwaysApply: false` |
 | Copilot | [简短指令](integrations/copilot/xnip.md) | 项目指令 |
 | Aider | [约定](integrations/aider/CONVENTIONS.md) | 项目约定 |
+| DSH | [bundle 与 MCP 插件](docs/dsh.md) | 显式启用本地包 bundle，经官方 MCP bridge 接入 |
+| Pi | [extension](docs/pi.md) | 从本地包加载，按会话注册 MCP server |
+| Goose | [stdio extension](docs/goose.md) | 合并配置或使用 `--with-extension`；需 xnip 0.5.0+ |
 | 其他 agent | [通用 skill](integrations/generic/SKILL.md) | 编辑任务按需加载，保留 references |
+
+[npm 分发](npm/README.md)打包同一个原生程序，包内同时提供 `xnip/dsh` 与 `xnip/pi`；当前 MCP 接入无需另建 `dsh-xnip` 包。CI 验证六个平台包后先发平台包，再发主包；本地 host tarball 保持 private，用于离线验证。仅 npm wrapper 和 JavaScript host 集成需要 Node。
 
 [AGENTS 片段](integrations/agents-md/AGENTS.md)提供项目级精简入口。[Agent 指南](docs/SKILL.md)负责选择操作，详细规则按需加载。Codex 使用普通指令与指南，不增加 `$xnip-editing` 菜单项。
 

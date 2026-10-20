@@ -6,23 +6,26 @@ This benchmark executes each available harness's own editing implementation and 
 - [README summary frontier](charts/readme-frontier.svg), [per-task frontier](charts/frontier.svg), [literal-baseline overview](charts/overview.svg), [input ratios](charts/input-ratios.svg), [scenario matrix](charts/scenario-ratios.svg), [file results](charts/byte-exact.svg).
 - [Native methodology](native-methodology.md), [editing-strategy diagnosis](editing-strategies.md), [runner](../../benches/native_tools.py), [report generator](../../benches/native_report.py), [native adapters](../../benches/native/).
 - [Supplementary representation results](representation-results.md) and [method](representation-methodology.md) measure current xnip interfaces, schemas, prompts and output budgets separately.
-- [Core performance](core-performance.md) compares current in-memory strategies and whole-process CLI planning, with [Criterion samples](core-criterion-results.json) and [CLI samples](core-performance-results.json).
+- [Core performance](core-performance.md) retains the 0.4.0 in-memory/CLI kernel measurements (the kernel is unchanged); the new harness run uses 0.5.0. Its evidence includes [Criterion samples](core-criterion-results.json) and [CLI samples](core-performance-results.json).
 
 ## Execution matrix
 
-The default matrix contains **13 unchanged scenarios and 31 profiles**, with three repetitions in the recorded tokenized run, plus matching-policy probes. Unavailable products are recorded rather than assigned a simulated score.
+The default matrix contains **13 unchanged scenarios and 41 editor profiles**, plus six separate host→xnip bridge profiles, with three repetitions in the recorded tokenized run, plus matching-policy probes. Unavailable products are recorded rather than assigned a simulated score.
 
 | Family | Profiles and execution |
 |---|---|
-| xnip MCP | Original absolute-path `xnip-edit`; case-root relative edit; pre-execution adaptive guarded/snapshot policies, each with default structured and opt-in text-only receipts |
+| xnip MCP | Original absolute-path `xnip-edit`; case-root relative edit; pre-execution adaptive guarded/snapshot policies, each with explicitly selected structured and text-only receipts |
 | xnip CLI | Real stdin native programs and compact maps, each with guarded and snapshot policies; cold process startup is recorded |
 | Codex | Real executable's apply_patch dispatcher; original three-line context and separately generated unique-context patches |
 | Gemini CLI | Real EditTool and StandardFileSystemService; prescribed/minimal inputs, absolute/relative variants and a complete-known-file trim profile |
 | OpenCode | Pinned official EditTool/ApplyPatchTool; absolute/relative literal edits, a complete-known-file trim profile and original/unique-context patches |
 | aider | Pinned native diff/whole/udiff kernels with platform/LF modes; additional unique-context diff and EOF-aware whole profiles |
+| DSH | Pinned real ToolRuntime and filesystem; observed fs edit/write and optional str editor include real read/view; explicit bare lanes stay separate |
+| Pi | Pinned real edit/write, original-coordinate multi-edit, fuzzy/BOM/EOL, mutation queue and IO |
+| Goose | Pinned real Rust EditTools edit/write; raw MCP DTO retained, provider-result boundary unknown |
 | Claude Code / Cursor | No independently callable official editing executor connected; not measured |
 
-All original twelve profiles and all original thirteen task names remain in the same run. The extra profiles distinguish path configuration, edit representation and allowed preconditions rather than replacing inconvenient original rows.
+All original 31 profiles and all original thirteen task names remain in the same run. The extra profiles distinguish path configuration, edit representation and allowed preconditions rather than replacing inconvenient original rows.
 
 **Guarded** policies retain a supplied old-content, anchor or whole-file precondition. **Snapshot** policies may use explicit whole-file upserts without an old-content check because the complete desired file is supplied. They can still select a guarded edit when it is smaller. Required-old probes always retain their original stale/ambiguous old bytes; snapshot policies cannot bypass them with a write.
 
@@ -30,19 +33,19 @@ The adaptive choice uses the complete serialized candidate input under the selec
 
 ## Read the frontier and cost layers
 
-The primary frontier selects the **best observed byte-exact supplied profile** per task, independently for input and input plus known returned text. The guarded pool accepts guarded profiles only. The snapshot-enabled pool symmetrically permits guarded and snapshot candidates on both sides, since allowing a whole write does not require using one. Xnip MCP and CLI pools remain separate, and winners retain their actual contract. Native candidates can span native transports; the winning profile and its transport are named.
+The primary frontier selects the **best observed byte-exact supplied profile** per task, independently for input and input plus known returned text. The guarded pool accepts guarded profiles only. The snapshot-enabled pool symmetrically permits guarded and snapshot candidates on both sides, since allowing a whole write does not require using one. Xnip MCP and CLI pools remain separate, and winners retain their actual contract. Native candidates can span native transports; the winning profile and its transport are named. DSH policies are excluded from that combined minimum and receive separate policy frontiers with required reads included. Host→xnip lanes stay in [host-exchange-results.json](host-exchange-results.json), with native catalogs, public names, prompt/schema/rendered content and internal DTOs measured separately.
 
 Ratios are native best / xnip best; values above 1 mean xnip's observed input is smaller. Each task gets one geometric-mean vote. The summary chart also reports xnip wins, ties, losses and unavailable comparisons. This derived frontier is not a claim of global optimality or a strategy replayed by the runner.
 
 | Layer | Counted evidence |
 |---|---|
 | Executor input | Complete tool argument object, native patch/edit message, or complete CLI stdin program |
-| Captured returned text | Actual tool text/error at the recorded native boundary; aider's final model-facing return remains unknown |
+| Captured returned text | Actual tool text/error at the recorded native boundary; aider's final model-facing return and Goose provider projection remain unknown |
 | Serialized MCP reply | Canonical serialization of the captured normalized JSON-RPC reply, including protocol/result/structured fields, when recorded |
 | CLI invocation | Executed argv displayed with host-platform quoting; binary path and `apply --format ... --from-stdin` are counted separately |
 | Serialized MCP request | Captured protocol request with tool name and arguments; overlaps executor input and is not added to it |
 
-Two paired `-text` strategies start MCP with `--receipts text`; their defaults keep structured receipts. The report compares actual full replies only when both profiles are byte-exact and their actual inputs and returned text match exactly. The supplementary suite also discovers a real compact/text tool catalog, so the output-schema change is measured rather than inferred.
+Two paired `-text` strategies start MCP with `--receipts text`; original structured counterparts explicitly choose `--receipts structured` while current xnip defaults to text. The report compares actual full replies only when both profiles are byte-exact and their actual inputs and returned text match exactly. The supplementary suite also discovers a real compact/text tool catalog, so the output-schema change is measured rather than inferred.
 
 Unknown values stay unknown. These layers describe different boundaries and must not be summed indiscriminately. The full MCP object may contain fields a host does not put into model context. No column represents billed usage.
 
@@ -55,10 +58,13 @@ Python 3.10+, Node 24, a built xnip and the selected native implementations are 
 ~~~sh
 cargo build --release --locked
 python benches/native/setup_aider.py
+node benches/native/dsh_setup.mjs
+node --test tests/pi_contract.mjs
+python benches/native/goose_adapter.py --check
 python benches/native_tools.py --xnip target/release/xnip --repeats 3 --json target/native-bench/results.json --markdown target/native-bench/results.md
 ~~~
 
-On Windows, use `target/release/xnip.exe`. Codex is discovered on PATH or in the desktop app's bundled binaries; select one with `--codex` or `XNIP_BENCH_CODEX`. Gemini uses the installed core package or `GEMINI_CORE_PATH`. OpenCode preparation uses SHA-verified pinned official sources and locked dependencies under target/native-bench. No account, inference provider or model call is required.
+On Windows, use `target/release/xnip.exe`. Codex is discovered on PATH or in the desktop app's bundled binaries; select one with `--codex` or `XNIP_BENCH_CODEX`. Gemini uses the installed core package or `GEMINI_CORE_PATH`. OpenCode preparation uses SHA-verified pinned official sources and locked dependencies under target/native-bench. No account, inference provider or model call is required. DSH preparation verifies pinned official source and isolated locked dependencies. Pi builds its source-verified native adapter at first use; Goose setup builds its isolated locked Rust executor. See [DSH](../dsh.md), [Pi](../pi.md) and [Goose](../goose.md) for exact boundaries and preparation. Omit added harnesses with `--harnesses ""` for the historical 31-profile matrix; `--skip-host-exchange` omits the separate bridges. A development-only `--only-profiles` subset still needs `xnip-edit` for relative reports.
 
 For the recorded tokenizer:
 

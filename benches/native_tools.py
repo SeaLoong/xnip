@@ -25,6 +25,8 @@ sys.path.insert(0, str(ROOT / "benches"))
 from edit_cost import Counter, Mcp, Scenario, scenarios, dump, execution_environment
 from native.codex_adapter import discover as codex_discover, apply_patch as codex_apply
 from native_report import write_report
+from harness_backends import register_harnesses, policy_probe_cases
+from report_privacy import fixture_session, public_report
 
 FENCE = chr(96) * 3
 TASKS = {
@@ -171,6 +173,22 @@ def probes():
          "expected": {"src/example.txt": "port=3000"},
          "edit": {"file": "src/example.txt", "old": "port=8080", "text": "port=3000"},
          "observation": "WholeFileCoder accepts an unclosed fence that preserves missing EOF; this is an alternate accepted encoding, not the canonical closed-fence profile."},
+        {"name": "identical-old-new", "files": {"src/example.txt": "same\n"},
+         "edit": {"file": "src/example.txt", "old": "same", "text": "same"},
+         "observation": "Preserve native no-op success/rejection rather than normalizing it to another tool's policy."},
+        {"name": "mixed-eol-preservation", "files": {"src/example.txt": "one=1\r\ntwo=2\nthree=3\r\n"},
+         "expected": {"src/example.txt": "one=1\r\ntwo=20\nthree=3\r\n"},
+         "edit": {"file": "src/example.txt", "old": "two=2", "text": "two=20"},
+         "observation": "Observe whole-file EOL normalization separately from byte-preserving edits."},
+        {"name": "ordered-same-file-dependency", "files": {"src/example.txt": "start\n"},
+         "expected": {"src/example.txt": "done\n"},
+         "edits": [{"file": "src/example.txt", "old": "start", "text": "middle"},
+                   {"file": "src/example.txt", "old": "middle", "text": "done"}],
+         "observation": "Original-coordinate native multi-edit and ordered xnip batches are distinct contracts."},
+        {"name": "late-batch-failure", "files": {"a": "old\n", "b": "keep\n"},
+         "edits": [{"file": "a", "old": "old", "text": "new"},
+                   {"file": "b", "old": "missing", "text": "bad"}],
+         "observation": "Keep actual earlier writes when separate native calls fail later; do not infer a cross-file transaction."},
     ]
 
 
@@ -789,8 +807,14 @@ def record(backend, root, case, counter, repeats=1, probe=False):
         with tempfile.TemporaryDirectory(prefix="case-", dir=root) as temporary:
             workspace = Path(temporary)
             reset_files(workspace, files)
-            calls = backend.execute(workspace, files, expected, edits, case["purpose"], probe)
-            actual = actual_files(workspace, files)
+            try:
+                calls = (backend.policy_probe(workspace, case) if case.get("policy_probe") else
+                         backend.execute(workspace, files, expected, edits, case["purpose"], probe))
+                actual = actual_files(workspace, files)
+            finally:
+                reset = getattr(backend, "reset_case", None)
+                if reset is not None:
+                    reset(workspace)
             result = observe(actual, expected)
             result["native_reported_ok"] = all(call["ok"] for call in calls)
             result["unchanged"] = actual == {name: data.encode("utf8") for name, data in files.items()}
@@ -808,7 +832,7 @@ def record(backend, root, case, counter, repeats=1, probe=False):
     required_probe = probe and case.get("requires_old_guard", True)
     selected_contract = (selection["selected_contract"] if selection else
                          "guarded" if required_probe else backend.contract_cohort)
-    operation = selection["selected"] if selection else backend.mode
+    operation = selection["selected"] if selection else getattr(backend, "operation", backend.mode)
     if required_probe:
         preconditions = "original supplied old bytes"
     elif selected_contract == "guarded":
@@ -817,6 +841,31 @@ def record(backend, root, case, counter, repeats=1, probe=False):
         preconditions = "known original coordinates; no supplied old guard"
     else:
         preconditions = "known complete final file; explicit whole write without old guard"
+    host_setup = next((call["host_setup"] for call in calls if "host_setup" in call), None)
+    def measure_optional(value):
+        return counter.measure(value if isinstance(value, str) else dump(value)) if value is not None else None
+    visible_known = all(call.get("returned_text_boundary_known",
+        getattr(backend, "returned_text_boundary_known", backend.family != "aider")) for call in calls)
+    host_layers = None
+    if host_setup is not None:
+        raw_results = [call.get("raw_mcp_tool_result") for call in calls]
+        actual_values = [call["native_result"].get("native_result", call["native_result"].get("result")) for call in calls]
+        host_layers = {
+            "api_tool_catalog": measure_optional(host_setup.get("tool_definitions")),
+            "model_schema_projection": measure_optional(host_setup.get("model_schema_projection")),
+            "prompt_contributions": measure_optional(host_setup.get("prompt")),
+            "server_instructions": measure_optional(host_setup.get("server_instructions")),
+            "public_name_arguments_projection": counter.total(dump(call.get("model_tool_input_projection",
+                {"name": call["tool"], "arguments": call["input"]})) for call in calls)
+                if backend.family != "goose" else None,
+            "model_rendered_content": output_cost if visible_known else None,
+            "raw_mcp_tool_result": counter.total(dump(value) for value in raw_results)
+                if all(value is not None for value in raw_results) else None,
+            "internal_native_dto": counter.total(dump(value) for value in actual_values)
+                if all(value is not None for value in actual_values) else None,
+            "full_jsonrpc_reply": None,
+            "scope": "independent captured layers; provider envelopes/billing unmeasured; never sum overlapping layers",
+        }
     return {"backend": backend.name, "family": backend.family, "repeats": repeats,
         "native_reported_ok": all(outcome["native_reported_ok"] for outcome in outcomes),
         "outcomes": outcomes, "stable_outcome": all(item == outcomes[0] for item in outcomes),
@@ -824,8 +873,23 @@ def record(backend, root, case, counter, repeats=1, probe=False):
         "adapter_return_cost": counter.total(dump(call["native_result"]) for call in calls),
         "contract_cohort": "guarded" if probe and case.get("requires_old_guard", True) else backend.contract_cohort,
         "transport": backend.transport,
-        "receipt_mode": backend.receipt_mode if backend.transport == "mcp" else None,
-        "returned_text_boundary_known": backend.family != "aider",
+        "receipt_mode": backend.receipt_mode if backend.transport in {"mcp", "host-mcp-bridge"} else None,
+        "returned_text_boundary_known": all(call.get("returned_text_boundary_known",
+            getattr(backend, "returned_text_boundary_known", backend.family != "aider")) for call in calls),
+        "frontier_eligible": getattr(backend, "frontier_eligible", True),
+        "frontier_exclusion": getattr(backend, "frontier_exclusion", None),
+        "frontier_group": getattr(backend, "frontier_group", "main"),
+        "policy_profile": getattr(backend, "policy_profile", "legacy-native-kernel"),
+        "input_conformance": getattr(backend, "input_conformance", "see profile contract"),
+        "path_configuration": getattr(backend, "path_configuration", "see profile contract"),
+        "source_provenance": {"metadata_key": backend.family,
+            "commit": getattr(backend, "metadata", {}).get("commit", getattr(backend, "metadata", {}).get("revision")),
+            "execution_level": getattr(backend, "metadata", {}).get("execution_level")},
+        "read_call_count": sum(call.get("role") == "required-read" for call in calls),
+        "edit_call_count": sum(call.get("role", "edit") == "edit" for call in calls),
+        "required_read_input_cost": counter.total(dump(call["input"]) for call in calls if call.get("role") == "required-read"),
+        "required_read_return_cost": counter.total(call["returned_text"] for call in calls if call.get("role") == "required-read"),
+        "host_setup": host_setup, "host_layer_costs": host_layers,
         "full_serialized_mcp_cost": counter.total(dump(call["serialized_mcp_result"]) for call in calls) if calls and all(call.get("serialized_mcp_result") is not None for call in calls) else None,
         "serialized_tool_request_cost": counter.total(dump(call["serialized_tool_request"]) for call in calls) if calls and all(call.get("serialized_tool_request") is not None for call in calls) else None,
         "invocation_cost": counter.total(call["invocation"] for call in calls) if calls and all(call.get("invocation") is not None for call in calls) else None,
@@ -845,10 +909,17 @@ def record(backend, root, case, counter, repeats=1, probe=False):
 
 
 def fingerprint():
-    paths = sorted([ROOT / "benches/native_tools.py", ROOT / "benches/native_report.py", ROOT / "benches/edit_cost.py",
-        *(ROOT / "benches/native").glob("*.py"), *(ROOT / "benches/native").glob("*.mjs"),
-        *(ROOT / "benches/native").glob("*.ts"), *(ROOT / "benches/native").glob("*.json")])
-    return {str(file.relative_to(ROOT)).replace("\\", "/"): hashlib.sha256(file.read_bytes()).hexdigest() for file in paths}
+    suffixes = {".py", ".mjs", ".cjs", ".ts", ".rs", ".json", ".toml", ".lock", ".yml", ".yaml", ".md"}
+    excluded = {"target", "__pycache__", "node_modules", ".git"}
+    roots = [ROOT / "benches/native", ROOT / "integrations/dsh", ROOT / "integrations/pi",
+             ROOT / "integrations/goose", ROOT / "npm/xnip"]
+    paths = set((ROOT / "benches").glob("*.py"))
+    for directory in roots:
+        if directory.exists():
+            paths.update(file for file in directory.rglob("*") if file.is_file()
+                and file.suffix in suffixes and not excluded.intersection(file.relative_to(directory).parts))
+    return {file.relative_to(ROOT).as_posix(): hashlib.sha256(file.read_bytes()).hexdigest()
+            for file in sorted(paths)}
 
 
 def main():
@@ -856,6 +927,11 @@ def main():
     parser.add_argument("--xnip", type=Path, default=ROOT / "target/debug" / ("xnip.exe" if os.name == "nt" else "xnip"))
     parser.add_argument("--codex", type=Path)
     parser.add_argument("--aider-python", type=Path, default=ROOT / "target/native-bench/aider-venv" / ("Scripts/python.exe" if os.name == "nt" else "bin/python"))
+    parser.add_argument("--harnesses", default="dsh,pi,goose",
+        help="additional real native harnesses; comma-separated or empty to retain legacy profiles only")
+    parser.add_argument("--skip-host-exchange", action="store_true",
+        help="omit the separately reported real host-to-xnip MCP lanes")
+    parser.add_argument("--only-profiles", help="comma-separated development subset; include xnip-edit for relative reports")
     parser.add_argument("--encoding")
     parser.add_argument("--tokenizer-path", type=Path, default=ROOT / "target/benchmark-python")
     parser.add_argument("--repeats", type=int, default=3)
@@ -869,6 +945,11 @@ def main():
         print(f"report regenerated from {args.report_only}; raw results unchanged")
         return 0
     if args.repeats < 1: parser.error("--repeats must be positive")
+    requested_profiles = set(filter(None, args.only_profiles.split(","))) if args.only_profiles else None
+    if requested_profiles is not None and "xnip-edit" not in requested_profiles:
+        parser.error("--only-profiles requires xnip-edit for relative reports")
+    def wants_family(family):
+        return requested_profiles is None or any(name.startswith(family + "-") for name in requested_profiles)
     if args.tokenizer_path.is_dir(): sys.path.insert(0, str(args.tokenizer_path))
     counter = Counter(args.encoding)
     initial = fingerprint()
@@ -877,7 +958,7 @@ def main():
     metadata = {}
     try:
         with contextlib.ExitStack() as scope:
-            temporary = scope.enter_context(tempfile.TemporaryDirectory(prefix="xnip-native-tool-benchmark-"))
+            temporary = scope.enter_context(fixture_session("native-"))
             root = Path(temporary)
             xnip = Mcp(args.xnip.resolve(), root)
             workers.append(xnip)
@@ -898,17 +979,21 @@ def main():
             for name, mode in [("xnip-adaptive-guarded-text", "xnip-mcp-guarded"),
                                ("xnip-adaptive-snapshot-text", "xnip-mcp-snapshot")]:
                 backends.append(Backend(name, "xnip", mode, {**xnip_info, "receipt_mode": "text"}, counter=counter))
-            codex = codex_discover(args.codex)
+            codex = (codex_discover(args.codex) if wants_family("codex") else
+                {"status": "excluded", "reason": "not selected by --only-profiles"})
             metadata["codex"] = codex
             if codex["status"] == "available":
                 backends.append(Backend("codex-apply-patch", "codex", "codex", codex))
                 backends.append(Backend("codex-apply-patch-unique", "codex", "codex-unique", codex, counter=counter))
-            else: unavailable.append({"name": "Codex apply_patch", "reason": codex.get("reason")})
+            elif codex["status"] != "excluded":
+                unavailable.append({"name": "Codex apply_patch", "reason": codex.get("reason")})
             for name, command in [
                 ("gemini", ["node", str(ROOT / "benches/native/gemini_adapter.mjs")]),
                 ("opencode", ["node", str(ROOT / "benches/native/opencode_adapter.mjs")]),
                 ("aider", [str(args.aider_python), str(ROOT / "benches/native/aider_adapter.py")]),
             ]:
+                if not wants_family(name):
+                    continue
                 try:
                     worker = Worker(command)
                     workers.append(worker)
@@ -941,20 +1026,32 @@ def main():
                             backends.append(Backend(f"aider-whole-eof-aware-{endings}", name, "aider-eof-aware", info, worker, "whole", endings, counter))
                 except (OSError, RuntimeError, queue.Empty) as error:
                     unavailable.append({"name": name, "reason": str(error)[:1500]})
+            extra, host_backends = register_harnesses(Worker, scope, workers, args, counter,
+                metadata, unavailable, mcp_plans, choose_plan, ROOT)
+            backends.extend(extra)
+            if requested_profiles is not None:
+                backends = [backend for backend in backends if backend.name in requested_profiles]
+                host_backends = [backend for backend in host_backends if backend.name in requested_profiles]
+                missing = requested_profiles - {backend.name for backend in [*backends, *host_backends]}
+                if missing:
+                    raise RuntimeError("selected profiles unavailable or unknown: " + ", ".join(sorted(missing)))
             unavailable.extend([
                 {"name": "Claude Code Edit / Write", "reason": "No independently invocable official native executor was available; not simulated or scored."},
                 {"name": "Cursor native edit", "reason": "Installed app has no verified independent native edit entry; not simulated or scored."},
             ])
-            cases = []
+            cases, host_exchanges = [], []
             for scenario in scenarios():
                 case = {"name": scenario.name, "files": scenario.files, "expected": scenario.expected(),
                     "edits": scenario.edits, "purpose": TASKS[scenario.name]}
                 print("native case: " + scenario.name, file=sys.stderr, flush=True)
                 case["results"] = [record(backend, root, case, counter, args.repeats) for backend in backends]
                 cases.append(case)
+                if host_backends:
+                    host_exchanges.append({"name": scenario.name, "purpose": case["purpose"],
+                        "results": [record(backend, root, case, counter, args.repeats) for backend in host_backends]})
             observations = []
             for probe in probes():
-                case = {**probe, "edits": [probe["edit"]], "purpose": probe["observation"],
+                case = {**probe, "edits": probe.get("edits") or [probe["edit"]], "purpose": probe["observation"],
                         "requires_old_guard": probe["name"] != "aider-accepted-unclosed-whole"}
                 if probe["name"] == "aider-accepted-unclosed-whole":
                     chosen = [backend for backend in backends if backend.family == "aider" and backend.format == "whole"]
@@ -962,9 +1059,16 @@ def main():
                     chosen = [backend for backend in backends if not backend.mode.startswith("gemini-context") and not (
                         backend.family == "aider" and backend.format != "diff") and not (
                         probe["name"] == "overlapping-literal" and (backend.mode.startswith("codex") or backend.mode.startswith("opencode-patch") or backend.family == "aider"))]
+                chosen = [backend for backend in chosen if not case["requires_old_guard"]
+                          or getattr(backend, "supports_old_guard", True)]
                 case["results"] = [record(backend, root, case, counter, args.repeats, True) for backend in chosen]
                 observations.append(case)
-            report = {"schema_version": 1, "scope": "paired real native editor execution versus xnip",
+            for case in policy_probe_cases():
+                chosen = [backend for backend in backends if backend.family == "dsh" and backend.operation == "edit"]
+                if chosen:
+                    case["results"] = [record(backend, root, case, counter, args.repeats, True) for backend in chosen]
+                    observations.append(case)
+            report = {"schema_version": 2, "scope": "paired real native editor execution versus xnip",
                 "model_calls_performed": 0, "platform": sys.platform, "python": sys.version, "counter": counter.metadata, "repeats": args.repeats,
                 "metadata": metadata, "unavailable": unavailable, "adapter_fingerprints": initial,
                 "xnip_binary_sha256": binary_hash,
@@ -972,6 +1076,14 @@ def main():
                     "version": backend.metadata.get("version", "source pin"), "mode": backend.mode,
                     "line_endings": backend.line_endings, "contract_cohort": backend.contract_cohort,
                     "transport": backend.transport, "receipt_mode": backend.receipt_mode if backend.transport == "mcp" else None,
+                    "returned_text_boundary_known": getattr(backend, "returned_text_boundary_known", backend.family != "aider"),
+                    "source_commit": backend.metadata.get("commit", backend.metadata.get("revision")),
+                    "execution_level": backend.metadata.get("execution_level"),
+                    "policy_profile": getattr(backend, "policy_profile", "legacy-native-kernel"),
+                    "input_conformance": getattr(backend, "input_conformance", "see profile contract"),
+                    "path_configuration": getattr(backend, "path_configuration", "see profile contract"),
+                    "frontier_eligible": getattr(backend, "frontier_eligible", True),
+                    "frontier_group": getattr(backend, "frontier_group", "main"),
                     "strategy_scope": "known-input minimum serialized candidate before execution" if "adaptive" in backend.name or backend.mode.startswith("xnip-cli") or backend.mode.endswith("-trim") else "fixed supplied-input profile"} for backend in backends],
                 "strategy_contracts": {
                     "guarded": "Requires old block/anchor or complete expected old file; guard probes retain the exact supplied old bytes.",
@@ -984,14 +1096,15 @@ def main():
                     "native_relative": "Original absolute literal profiles remain. OpenCode relative uses its instance.directory fallback; Gemini relative uses its own correctPath validation against getTargetDir. Actual requests and native-corrected parameters are retained.",
                     "timing": "CLI profiles include cold process startup; MCP profiles record initialization separately and time warm calls. No cross-transport latency ranking.",
                     "accounting": "Complete stdin programs or complete tool argument objects are executor input. Actual CLI invocation and canonical serialized captured JSON-RPC request/reply are independent additional columns.",
-                    "receipt_modes": "structured remains the default. Two opt-in --receipts text profiles use identical pre-input selection with no structuredContent or outputSchema; compare actual captured full replies separately from returned text.",
+                    "receipt_modes": "Original structured profiles explicitly select --receipts structured; current xnip defaults to text. Two text profiles use identical pre-input selection with no structuredContent or outputSchema; compare actual captured full replies separately from returned text.",
                 },
-                "cases": cases, "probes": observations}
+                "cases": cases, "probes": observations, "host_exchanges": host_exchanges}
     finally:
         for worker in reversed(workers):
             if worker.process.poll() is None: worker.close()
     if initial != fingerprint(): raise RuntimeError("adapter source changed during run; refusing mixed report")
     if binary_hash != hashlib.sha256(args.xnip.read_bytes()).hexdigest(): raise RuntimeError("xnip binary changed during run")
+    report = public_report(report)
     args.json.parent.mkdir(parents=True, exist_ok=True)
     args.markdown.parent.mkdir(parents=True, exist_ok=True)
     args.json.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf8")

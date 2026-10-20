@@ -14,6 +14,7 @@ xnip minimizes the context an agent must read and generate to make a correct tex
 | Smaller prompts | Canonical entry guide selects operations and discloses branch-specific references |
 | Behavioral verification | Fresh contract suites cover byte output, rejected writes, lifecycle, recovery, platform safety and transports |
 | Reproducible cost evidence | Paired native-editor/xnip execution records real bytes, inputs and results; representation costs are a supplementary experiment |
+| Harness reuse | DSH/Pi host registration and Goose stdio use the same MCP edit engine; local npm distribution runs the same pinned native executable |
 
 The [glossary](../GLOSSARY.md) defines editing terms. Benchmark methodology and measured results live under [benchmarks](benchmarks/README.md). Representation cost is distinct from model quality or native harness reliability.
 
@@ -49,6 +50,8 @@ MCP advertises `edit/apply/peek/find/recover` by default. `xnip mcp --toolset fu
 - `src/apply`: manifest/patch parsing and batch planning.
 - `src/output`: receipts, UTF-8-safe preview budgets, human/JSON output and exit codes.
 - `src/update`: background leases, singleton scheduling, release verification and platform replacement.
+- `npm`: private local package preparation, native payload verification and immutable execution cache; no npm publication workflow.
+- `integrations/dsh`, `integrations/pi`: host registration adapters for the existing MCP tools; `integrations/goose`: stdio configuration and concise editing hints.
 - `tests`: observable CLI/MCP and distribution contracts; core/apply contracts are colocated with their modules.
 - `benches`: core latency benchmarks and offline editing-cost comparisons.
 - `docs/SKILL.md`: canonical agent guide, copied by `xtask sync-integrations`.
@@ -58,6 +61,16 @@ MCP advertises `edit/apply/peek/find/recover` by default. `xnip mcp --toolset fu
 `edit/apply/recover` default to one compact receipt on stderr; previews print a bounded diff on stdout. `--output json` returns one complete JSON receipt, including a full diff when requested. `--output human` prints the full diff and expanded human receipt. `apply --json` is the existing NDJSON progress format and conflicts with a nondefault `--output`. Errors retain their exit codes.
 
 MCP ordinary writes return `written`, with no repeated input path or operation. Default structured receipts retain complete details. The server option `--receipts text` omits structured-result serialization and removes the advertised output schemas for edit/apply/recover, with the same engine and errors. Successful results omit the optional `isError` field. Counts and paths stay in structured metadata; retained journals remain visible in the text receipt. Preview/check explicitly state `written=false`; previews append a bounded diff without duplicating it in metadata. Checks and non-preview rename receipts do not build an unused diff. Preview payloads default to 12,000 bytes; `max_bytes=0` requests a full preview. Read output has independent item and byte budgets; zero disables the respective cap. A truncation notice may exceed the payload budget by a small fixed amount.
+
+## Harness and distribution adapters
+
+The DSH and Pi adapters register the existing xnip MCP process through each host's official extension interface. They set an absolute working directory and disable native automatic updates for that child. Host tool naming and model-facing projection remain responsibilities of the official bridges; xnip's raw result and a host's rendered text are distinct measurements. Goose uses the same stdio entry with its own extension configuration. The MCP adapter supports modern `server/discover` with per-request metadata and legacy 2025 initialization, preserving the public editing behavior and error categories.
+
+npm packages contain the same Rust executable, with version/target identity and SHA256 checked during preparation. Host-only local packages stay private and bundle their actual host payload; an explicit public release requires six matching source-commit attestations and complete platform artifacts. Public packages use exact-version optional dependencies and are verified again before publication. The launcher verifies the packaged executable before copying it into a version/platform/hash execution directory, then atomically publishes a complete directory. Existing entries are immutable, and their hash is checked again on use. Running Windows processes map this cache instead of `node_modules`, allowing package replacement or uninstall without interrupting an existing MCP session. Cache entries are intentionally not automatically collected while process lifetimes may be unknown.
+
+The wrapper owns the native process's input pipe and forwards stdout/stderr and exit behavior. Closing or abruptly losing the wrapper therefore closes MCP input instead of leaving the original harness writer inherited by the native child. Native automatic updating is disabled because npm owns the selected package version; the standalone updater retains its own policy. Preparation and contracts do not publish packages, edit a user profile or activate a host bundle.
+
+The native harness benchmark adapters live under `benches/native`, independently of product editing. Pinned official editors and bridges perform the actual matching, policy and IO; their isolated surroundings and source/dependency hashes are explicit. These fixtures do not establish full agent/model performance. See [DSH](dsh.md), [Pi](pi.md), [Goose](goose.md) and the [test map](testing.md).
 
 ## Persistence and limits
 

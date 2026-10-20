@@ -1,7 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1040" height="1280" viewBox="0 0 1040 1280" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" width="1040" height="1640" viewBox="0 0 1040 1640" role="img" aria-labelledby="title desc">
 <title id="title">Observed file results</title><desc id="desc">Strict byte-exact tasks and extra tasks that match only after CRLF to LF normalization. Final newline remains significant.</desc>
 <style>text{font-family:Segoe UI,Arial,sans-serif;fill:#192b3a;font-size:13px}.small{font-size:11px;fill:#526575}.title{font-size:21px;font-weight:600}.tick{fill:#dfe6eb;stroke:none}</style>
-<rect width="1040" height="1280" fill="#fff"/>
+<rect width="1040" height="1640" fill="#fff"/>
 <text x="28" y="36" class="title">Observed file results</text>
 <text x="28.00" y="61.00" class="small" text-anchor="start">Dark green: byte-exact. Pale green: additional LF-normalized matches. Final newline remains significant.</text>
 <text x="28.00" y="80.00" class="small" text-anchor="start">Tasks count only when every repetition agrees with the oracle; this is a fixed fixture set.</text>
@@ -160,5 +160,55 @@
 <rect x="255" y="1182" width="540.00" height="22" fill="#b8ded4"/>
 <rect x="255" y="1182" width="498.46" height="22" fill="#007f73"/>
 <text x="815.00" y="1198.00" class="" text-anchor="start">12/13 exact | 13/13 LF</text>
-<text x="28.00" y="1256.00" class="small" text-anchor="start">Line-ending policies and accepted encodings differ. These observations are not a general product quality score.</text>
+<text x="28.00" y="1234.00" class="" text-anchor="start">dsh-fs-observed-edit</text>
+<rect x="255" y="1218" width="540" height="22" rx="3" fill="#edf0f3"/>
+<rect x="255" y="1218" width="540.00" height="22" fill="#b8ded4"/>
+<rect x="255" y="1218" width="540.00" height="22" fill="#007f73"/>
+<text x="815.00" y="1234.00" class="" text-anchor="start">13/13 exact | 13/13 LF</text>
+<text x="28.00" y="1270.00" class="" text-anchor="start">dsh-fs-observed-write</text>
+<rect x="255" y="1254" width="540" height="22" rx="3" fill="#edf0f3"/>
+<rect x="255" y="1254" width="540.00" height="22" fill="#b8ded4"/>
+<rect x="255" y="1254" width="540.00" height="22" fill="#007f73"/>
+<text x="815.00" y="1270.00" class="" text-anchor="start">13/13 exact | 13/13 LF</text>
+<text x="28.00" y="1306.00" class="" text-anchor="start">dsh-fs-bare-edit</text>
+<rect x="255" y="1290" width="540" height="22" rx="3" fill="#edf0f3"/>
+<rect x="255" y="1290" width="540.00" height="22" fill="#b8ded4"/>
+<rect x="255" y="1290" width="540.00" height="22" fill="#007f73"/>
+<text x="815.00" y="1306.00" class="" text-anchor="start">13/13 exact | 13/13 LF</text>
+<text x="28.00" y="1342.00" class="" text-anchor="start">dsh-fs-bare-write</text>
+<rect x="255" y="1326" width="540" height="22" rx="3" fill="#edf0f3"/>
+<rect x="255" y="1326" width="540.00" height="22" fill="#b8ded4"/>
+<rect x="255" y="1326" width="540.00" height="22" fill="#007f73"/>
+<text x="815.00" y="1342.00" class="" text-anchor="start">13/13 exact | 13/13 LF</text>
+<text x="28.00" y="1378.00" class="" text-anchor="start">dsh-str-observed-edit</text>
+<rect x="255" y="1362" width="540" height="22" rx="3" fill="#edf0f3"/>
+<rect x="255" y="1362" width="540.00" height="22" fill="#b8ded4"/>
+<rect x="255" y="1362" width="540.00" height="22" fill="#007f73"/>
+<text x="815.00" y="1378.00" class="" text-anchor="start">13/13 exact | 13/13 LF</text>
+<text x="28.00" y="1414.00" class="" text-anchor="start">dsh-str-bare-edit</text>
+<rect x="255" y="1398" width="540" height="22" rx="3" fill="#edf0f3"/>
+<rect x="255" y="1398" width="540.00" height="22" fill="#b8ded4"/>
+<rect x="255" y="1398" width="540.00" height="22" fill="#007f73"/>
+<text x="815.00" y="1414.00" class="" text-anchor="start">13/13 exact | 13/13 LF</text>
+<text x="28.00" y="1450.00" class="" text-anchor="start">pi-native-edit</text>
+<rect x="255" y="1434" width="540" height="22" rx="3" fill="#edf0f3"/>
+<rect x="255" y="1434" width="540.00" height="22" fill="#b8ded4"/>
+<rect x="255" y="1434" width="540.00" height="22" fill="#007f73"/>
+<text x="815.00" y="1450.00" class="" text-anchor="start">13/13 exact | 13/13 LF</text>
+<text x="28.00" y="1486.00" class="" text-anchor="start">pi-native-write</text>
+<rect x="255" y="1470" width="540" height="22" rx="3" fill="#edf0f3"/>
+<rect x="255" y="1470" width="540.00" height="22" fill="#b8ded4"/>
+<rect x="255" y="1470" width="540.00" height="22" fill="#007f73"/>
+<text x="815.00" y="1486.00" class="" text-anchor="start">13/13 exact | 13/13 LF</text>
+<text x="28.00" y="1522.00" class="" text-anchor="start">goose-native-edit</text>
+<rect x="255" y="1506" width="540" height="22" rx="3" fill="#edf0f3"/>
+<rect x="255" y="1506" width="540.00" height="22" fill="#b8ded4"/>
+<rect x="255" y="1506" width="540.00" height="22" fill="#007f73"/>
+<text x="815.00" y="1522.00" class="" text-anchor="start">13/13 exact | 13/13 LF</text>
+<text x="28.00" y="1558.00" class="" text-anchor="start">goose-native-write</text>
+<rect x="255" y="1542" width="540" height="22" rx="3" fill="#edf0f3"/>
+<rect x="255" y="1542" width="540.00" height="22" fill="#b8ded4"/>
+<rect x="255" y="1542" width="540.00" height="22" fill="#007f73"/>
+<text x="815.00" y="1558.00" class="" text-anchor="start">13/13 exact | 13/13 LF</text>
+<text x="28.00" y="1616.00" class="small" text-anchor="start">Line-ending policies and accepted encodings differ. These observations are not a general product quality score.</text>
 </svg>

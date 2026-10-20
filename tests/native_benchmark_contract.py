@@ -662,5 +662,235 @@ class FrontierContract(unittest.TestCase):
         self.assertEqual(report.frontier_statistics(fixture)["tasks"][0]["native"]["guarded"]["best_input"]["backend"], "aaa-native")
 
 
+
+class HarnessContract(unittest.TestCase):
+    class Worker:
+        def __init__(self):
+            self.requests = []
+
+        def request(self, request):
+            self.requests.append(request)
+            return {"ok": True, "elapsed_ms": 1, "model_visible_result": "rendered",
+                    "native_result": {"internal": "not provider content"}}
+
+    def backend(self, family, mode="native", operation="edit"):
+        from harness_backends import HarnessBackend
+        worker = self.Worker()
+        return HarnessBackend(family + "-" + mode + "-" + operation, family, mode,
+                              operation, {"commit": "fixture"}, worker, bench.Counter(None))
+
+    def test_observed_dsh_real_read_is_a_separate_call_and_bare_has_none(self):
+        files = {"a": "old\n", "b": "other\n"}
+        expected = {"a": "new\n", "b": "another\n"}
+        edits = [{"file": name, "old": files[name], "text": expected[name]} for name in files]
+        with tempfile.TemporaryDirectory() as temporary:
+            observed = self.backend("dsh", "fs-observed")
+            calls = observed.execute(Path(temporary), files, expected, edits, "fixture")
+            self.assertEqual([call["tool"] for call in calls], ["read", "edit", "read", "edit"])
+            self.assertEqual([call["role"] for call in calls], ["required-read", "edit"] * 2)
+            self.assertEqual(next(request["arguments"]["limit"] for request in observed.worker.requests
+                                  if request.get("tool") == "read"), 1)
+            bare = self.backend("dsh", "fs-bare")
+            self.assertEqual([call["tool"] for call in bare.execute(
+                Path(temporary), files, expected, edits, "fixture")], ["edit", "edit"])
+            self.assertFalse(observed.frontier_eligible)
+            self.assertNotEqual(observed.frontier_group, bare.frontier_group)
+
+    def test_pi_batch_keeps_original_coordinates_and_exact_supplied_guard_on_probes(self):
+        files, expected = {"a": "start\nleft\n"}, {"a": "end\nright\n"}
+        edits = [{"file": "a", "old": "start", "text": "end"},
+                 {"file": "a", "old": "left", "text": "right"}]
+        backend = self.backend("pi")
+        calls = backend.execute(Path("/fixture"), files, expected, edits, "fixture")
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(calls[0]["input"], {"path": "a", "edits": [
+            {"oldText": "start", "newText": "end"}, {"oldText": "left", "newText": "right"}]})
+        edits = [{"file": "a", "old": "missing", "text": "new", "all": True}]
+        calls = backend.execute(Path("/fixture"), files, expected, edits, "fixture", True)
+        self.assertEqual(calls[0]["input"]["edits"][0]["oldText"], "missing")
+
+    def test_single_edit_global_fallback_uses_guard_only_on_positive_case(self):
+        files, expected = {"a": "same same"}, {"a": "new new"}
+        edits = [{"file": "a", "old": "same", "text": "new", "all": True}]
+        for family, mode, key in (("goose", "native", "before"), ("dsh", "str-bare", "old_str")):
+            backend = self.backend(family, mode)
+            calls = backend.execute(Path("/fixture"), files, expected, edits, "fixture")
+            self.assertEqual(calls[0]["input"][key], "same same")
+            calls = backend.execute(Path("/fixture"), files, expected, edits, "fixture", True)
+            self.assertEqual(calls[0]["input"][key], "same")
+        writer = self.backend("pi", operation="write")
+        self.assertEqual(writer.contract_cohort, "snapshot")
+        self.assertFalse(writer.supports_old_guard)
+
+    def test_infrastructure_errors_abort_instead_of_becoming_tool_rejections(self):
+        from harness_backends import check_worker, model_catalog
+        with self.assertRaisesRegex(RuntimeError, "infrastructure"):
+            check_worker({"ok": False, "adapter_error": "runtime source changed"})
+        check_worker({"ok": False, "error": "native ambiguity"})
+        self.assertEqual(model_catalog([{"name": "edit", "parameters": {"type": "object"},
+            "deferLoading": True, "outputSchema": {"type": "string"}}]),
+            [{"name": "edit", "description": "", "parameters": {"type": "object"}, "deferLoading": True}])
+
+    def test_record_counts_reads_and_resets_even_after_failure(self):
+        class Recorder:
+            name, family, mode, operation = "test-observed", "dsh", "fs-observed", "edit"
+            contract_cohort, transport, receipt_mode = "guarded", "native-function", None
+            returned_text_boundary_known, metadata = True, {"commit": "fixture"}
+            def __init__(self, fail=False):
+                self.resets, self.fail = [], fail
+            def reset_case(self, root):
+                self.resets.append(root)
+                self.workspace_existed_at_reset = root.exists()
+            def execute(self, root, files, expected, edits, purpose, probe):
+                if self.fail:
+                    raise RuntimeError("execution failed")
+                (root / "a").write_bytes(expected["a"].encode("utf8"))
+                return [{"tool": tool, "input": args, "native_result": {},
+                    "returned_text": text, "ok": True, "elapsed_ms": 1, "role": role}
+                    for tool, args, text, role in [
+                        ("read", {"path": "a", "limit": 1}, "old", "required-read"),
+                        ("edit", {"old": "old", "text": "new"}, "written", "edit")]]
+        case = {"files": {"a": "old"}, "expected": {"a": "new"},
+            "edits": [{"file": "a", "old": "old", "text": "new"}], "purpose": "contract"}
+        counter = bench.Counter(None)
+        with tempfile.TemporaryDirectory() as temporary:
+            backend = Recorder()
+            row = bench.record(backend, Path(temporary), case, counter, 2)
+            self.assertEqual(len(backend.resets), 2)
+            self.assertTrue(backend.workspace_existed_at_reset)
+            self.assertEqual((row["read_call_count"], row["edit_call_count"]), (1, 1))
+            self.assertEqual(row["input_cost"], counter.total([
+                bench.dump({"path": "a", "limit": 1}), bench.dump({"old": "old", "text": "new"})]))
+            self.assertEqual(row["required_read_return_cost"], counter.measure("old"))
+            self.assertTrue(row["outcomes"][0]["byte_exact"])
+            failing = Recorder(True)
+            with self.assertRaisesRegex(RuntimeError, "execution failed"):
+                bench.record(failing, Path(temporary), case, counter)
+            self.assertEqual(len(failing.resets), 1)
+
+    def test_host_costs_keep_dto_and_unknown_rpc_separate_from_rendered_text(self):
+        class Host:
+            name, family, mode, operation = "pi-xnip", "pi", "xnip-mcp", "bridge"
+            metadata, contract_cohort, transport, receipt_mode = {}, "guarded", "host-mcp-bridge", "text"
+            def execute(self, root, files, expected, edits, purpose, probe):
+                (root / "a").write_bytes(b"new")
+                return [{"tool": "mcp__xnip__xnip_edit", "input": {"file": "a", "old": "old", "text": "new"},
+                    "ok": True, "elapsed_ms": 1, "returned_text": "written", "returned_text_boundary_known": True,
+                    "native_result": {"native_result": {"value": "x" * 10000}},
+                    "host_setup": {"tool_definitions": [{"name": "mcp__xnip__xnip_edit"}],
+                        "model_schema_projection": [{"name": "mcp__xnip__xnip_edit", "parameters": {}}],
+                        "prompt": "bridge prompt", "server_instructions": "instructions"}}]
+        case = {"files": {"a": "old"}, "expected": {"a": "new"}, "edits": [], "purpose": "contract"}
+        with tempfile.TemporaryDirectory() as temporary:
+            row = bench.record(Host(), Path(temporary), case, bench.Counter(None))
+        layers = row["host_layer_costs"]
+        self.assertEqual(layers["model_rendered_content"]["utf8_bytes"], 7)
+        self.assertGreater(layers["internal_native_dto"]["utf8_bytes"], 10000)
+        self.assertIsNone(layers["raw_mcp_tool_result"])
+        self.assertIsNone(layers["full_jsonrpc_reply"])
+        self.assertEqual(row["receipt_mode"], "text")
+
+    def test_recursive_fingerprint_includes_rust_locks_and_nested_integration_sources(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            paths = ["benches/native/goose-runtime/src/main.rs", "benches/native/goose-runtime/Cargo.lock",
+                "integrations/pi/index.mjs", "npm/xnip/package.json", "benches/harness_backends.py",
+                "benches/native/target/skip.rs", "integrations/pi/node_modules/skip.js"]
+            for relative in paths:
+                file = root / relative
+                file.parent.mkdir(parents=True, exist_ok=True)
+                file.write_text(relative, encoding="utf8")
+            with mock.patch.object(bench, "ROOT", root):
+                hashes = bench.fingerprint()
+            self.assertEqual(set(hashes), set(paths[:5]))
+            self.assertEqual(hashes[paths[0]], hashlib.sha256(paths[0].encode()).hexdigest())
+
+    def test_declared_new_family_return_boundaries_override_historical_fallback(self):
+        fixture = fixture_report()
+        fixture["backends"][1]["family"] = "pi"
+        for case in fixture["cases"]:
+            case["results"][0]["returned_text_cost"]["tokens"] = 5
+            case["results"][1].update(family="pi", returned_text_boundary_known=True)
+            case["results"][1]["returned_text_cost"]["tokens"] = 2
+        stats = report.paired_statistics(fixture)
+        self.assertEqual(stats["pairs"][1]["native_captured_returned_text"], 2)
+        ET.fromstring(report.ratio_chart(stats))
+        for case in fixture["cases"]:
+            case["results"][1].update(family="goose", returned_text_boundary_known=False)
+        stats = report.paired_statistics(fixture)
+        self.assertIsNone(stats["pairs"][1]["native_captured_returned_text"])
+        self.assertIsNone(stats["pairs"][1]["input_plus_captured_returned_text_ratio"])
+
+    def test_dsh_policies_are_separate_and_never_win_the_pooled_frontier(self):
+        fixture = FrontierContract.fixture()
+        for name, group, cost in (("observed", "dsh-fs-observed", 3), ("bare", "dsh-fs-bare", 1)):
+            row = dict(fixture["cases"][0]["results"][4], backend=name, family="dsh",
+                frontier_group=group, frontier_eligible=False, returned_text_boundary_known=True)
+            row["input_cost"] = {"tokens": cost}
+            fixture["cases"][0]["results"].append(row)
+            fixture["backends"].append({"name": name, "family": "dsh"})
+        pooled = report.frontier_statistics(fixture)["tasks"][0]["native"]["guarded"]
+        self.assertEqual(pooled["best_input"]["backend"], "native-input")
+        groups = {item["policy_group"]: item for item in report.policy_frontiers(fixture)}
+        self.assertEqual(groups["dsh-fs-observed"]["tasks"][0]["native"]["guarded"]["best_input"]["backend"], "observed")
+        self.assertEqual(groups["dsh-fs-bare"]["tasks"][0]["native"]["guarded"]["best_input"]["backend"], "bare")
+        self.assertNotIn("bare", groups["dsh-fs-observed"]["tasks"][0]["native"]["guarded"]["eligible_profiles"])
+
+
+class PublicDisclosureContract(unittest.TestCase):
+    def test_display_redaction_preserves_costs_inputs_and_original_hashes(self):
+        from report_privacy import public_report
+        home = r"C:\Users\private-person"
+        original = {"metadata":{"executable":home+r"\AppData\tool.exe",
+            "escaped":json.dumps({"cwd":home})},
+            "cases":[{"files":{"a":"literal bytes\r\n"}, "expected":{"a":"changed"},
+                "edits":[{"file":"a","old":"literal","text":"changed"}],
+                "results":[{"calls":[{"input":{"file":"/workspace/a","old":"literal","text":"changed"},
+                    "returned_text":"native output"}],"input_cost":{"tokens":42}}]}]}
+        before=json.dumps(original,sort_keys=True)
+        public=public_report(original,homes=[home])
+        self.assertEqual(json.dumps(original,sort_keys=True),before)
+        self.assertEqual(public["cases"],original["cases"])
+        self.assertEqual(public["metadata"]["executable"],r"<HOME>\AppData\tool.exe")
+        self.assertNotIn("private-person",json.dumps(public))
+        ledger=public["disclosure_redaction"]
+        self.assertEqual(ledger["changed_strings"],2)
+        field=next(row for row in ledger["entries"] if row["json_pointer"]=="/metadata/executable")
+        self.assertEqual(field["original_sha256"],hashlib.sha256(original["metadata"]["executable"].encode()).hexdigest())
+        self.assertEqual(field["original_utf8_bytes"],len(original["metadata"]["executable"].encode()))
+        self.assertFalse(ledger["original_values_retained"])
+
+    def test_home_in_fixture_or_actual_tool_input_fails_instead_of_rewriting_payload(self):
+        from report_privacy import public_report
+        home="/home/private-person"
+        cases=[{"cases":[{"files":{"a":home}}]},
+               {"probes":[{"edits":[{"old":home,"text":"new"}]}]},
+               {"scenarios":[{"serializations":[{"payload":home}]}]},
+               {"calls":[{"input":{"file":home+"/a"}}]},
+               {"raw_calls":[{"native_input":{"path":home+"/a"}}]},
+               {"native_result":{"arguments":{"old_string":home}}}]
+        for value in cases:
+            with self.subTest(shape=list(value)),self.assertRaisesRegex(ValueError,"protected fixture/tool input"):
+                public_report(value,homes=[home])
+
+    def test_metadata_keys_are_redacted_without_collision_or_original_key_disclosure(self):
+        from report_privacy import public_report
+        value={"metadata":{"/home/private-person/a":"metadata value"}}
+        result=public_report(value,homes=["/home/private-person"])
+        self.assertEqual(result["metadata"],{"<HOME>/a":"metadata value"})
+        self.assertNotIn("private-person",json.dumps(result))
+        with self.assertRaisesRegex(ValueError,"collide"):
+            public_report({"metadata":{"/home/private-person/a":1,"<HOME>/a":2}},
+                          homes=["/home/private-person"])
+
+    def test_sessions_are_under_repository_target_and_cleaned_after_use(self):
+        import report_privacy
+        self.assertTrue(report_privacy.SESSION_ROOT.is_relative_to(ROOT/"target"))
+        with report_privacy.fixture_session("contract-") as temporary:
+            directory=Path(temporary)
+            self.assertTrue(directory.is_relative_to(report_privacy.SESSION_ROOT))
+            self.assertTrue(directory.is_dir())
+        self.assertFalse(directory.exists())
+
 if __name__ == "__main__":
     unittest.main()

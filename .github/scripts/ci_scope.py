@@ -29,9 +29,26 @@ RUST_PATHS = {
     "rust-toolchain.toml", "install.sh", "install.ps1",
     "tests/install_sh.py", "tests/install_ps1.ps1",
 }
-RELEASE_SCRIPTS = {".github/scripts/release.py", ".github/scripts/publish_release.py"}
+RELEASE_SCRIPTS = {".github/scripts/release.py", ".github/scripts/publish_release.py", ".github/scripts/publish_npm.py"}
 RUST_PREFIXES = ("src/", ".cargo/", "xtask/", "installer/")
 INTEGRATION_PREFIXES = ("integrations/", ".github/skills/", "xtask/")
+HARNESS_PREFIXES = ("benches/native/dsh_", "benches/native/pi_", "benches/native/goose_")
+HARNESS_RUNNERS = {"benches/native_tools.py", "benches/harness_backends.py", "benches/harness_report.py"}
+NPM_TESTS = {"tests/npm_contract.py", "tests/npm_prepare_contract.py", "tests/npm_release_smoke.py"}
+HARNESS_TESTS = {
+    "tests/dsh_adapter_contract.py", "tests/dsh_integration_contract.cjs",
+    "tests/dsh_integration_live.cjs", "tests/dsh_packaged_live.cjs", "tests/pi_contract.mjs",
+    "tests/goose_native_contract.py",
+}
+PACKAGED_HARNESSES = ("integrations/dsh/", "integrations/pi/")
+LIVE_INTEGRATIONS = (*PACKAGED_HARNESSES, "integrations/goose/")
+
+
+def executable_integration(path: str) -> bool:
+    """Project hints and README changes need generation, not host startup."""
+    return path.startswith(LIVE_INTEGRATIONS) and not (
+        path.lower().endswith(".md") or path.endswith("/.goosehints")
+    )
 
 
 class ScopeError(Exception):
@@ -62,8 +79,15 @@ def classify(paths: list[str]) -> dict[str, bool]:
         path in INTEGRATION_DOCS or path.startswith(INTEGRATION_PREFIXES)
         for path in paths
     )
+    npm = any(path.startswith("npm/") or path in NPM_TESTS or (
+        path.startswith(PACKAGED_HARNESSES) and executable_integration(path)
+    ) for path in paths)
+    harnesses = any(path in HARNESS_TESTS or path in HARNESS_RUNNERS or path.startswith(HARNESS_PREFIXES)
+        or executable_integration(path) for path in paths)
     rust = False
     for path in paths:
+        if path.startswith(("npm/", *HARNESS_PREFIXES)) or path in HARNESS_TESTS or path in HARNESS_RUNNERS or path in NPM_TESTS:
+            continue
         if (
             path in RUST_PATHS or path in EXECUTABLE_DOCS
             or path.startswith(RUST_PREFIXES)
@@ -81,7 +105,8 @@ def classify(paths: list[str]) -> dict[str, bool]:
             continue
         else:
             rust = True
-    return {"rust": rust or full, "integrations": integrations or full, "full": full}
+    return {"rust": rust or full, "integrations": integrations or full,
+            "npm": npm or rust or full, "harnesses": harnesses or rust or full, "full": full}
 
 
 def comparison_paths(root: Path, event: dict, event_name: str, head: str) -> list[str]:
@@ -117,7 +142,7 @@ def scope(
     if not event_name:
         raise ScopeError("GITHUB_EVENT_NAME is missing")
     if force_all or event_name not in {"push", "pull_request"} or ref.startswith("refs/tags/"):
-        return {"rust": True, "integrations": True, "full": True}
+        return {"rust": True, "integrations": True, "npm": True, "harnesses": True, "full": True}
     result = classify(comparison_paths(root, event, event_name, head))
     repository = event.get("repository")
     default_branch = repository.get("default_branch") if isinstance(repository, dict) else None
@@ -127,7 +152,7 @@ def scope(
         and ref == f"refs/heads/{default_branch}"
     ):
         # Default-branch runtime checks also validate the baseline consumed by releases.
-        return {"rust": True, "integrations": True, "full": True}
+        return {"rust": True, "integrations": True, "npm": True, "harnesses": True, "full": True}
     return result
 
 

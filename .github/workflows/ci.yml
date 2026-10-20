@@ -7,6 +7,13 @@ on:
   pull_request:
     branches: [master, main]
   workflow_call:
+    secrets:
+      RELEASE_TOKEN:
+        required: false
+      NPM_TOKEN:
+        required: false
+      NODE_AUTH_TOKEN:
+        required: false
     inputs:
       force_all:
         description: Run every check for an otherwise unverified release commit
@@ -33,6 +40,8 @@ jobs:
     outputs:
       rust: ${{ steps.scope.outputs.rust }}
       integrations: ${{ steps.scope.outputs.integrations }}
+      npm: ${{ steps.scope.outputs.npm }}
+      harnesses: ${{ steps.scope.outputs.harnesses }}
       full: ${{ steps.scope.outputs.full }}
       publish: ${{ steps.release.outputs.publish }}
       version: ${{ steps.release.outputs.version }}
@@ -100,7 +109,7 @@ jobs:
   test:
     name: test (${{ matrix.os }})
     needs: scope
-    if: needs.scope.outputs.rust == 'true'
+    if: needs.scope.outputs.rust == 'true' || needs.scope.outputs.npm == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -111,12 +120,97 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-      # cargo test includes doctests and builds the CLI used by installer tests.
+      - uses: actions/setup-python@v5
+        if: needs.scope.outputs.npm == 'true'
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-node@v4
+        if: needs.scope.outputs.npm == 'true'
+        with:
+          node-version: "24.13.0"
+      # cargo test includes doctests and builds the CLI reused by npm/installer tests.
       - run: cargo test --workspace --locked
+        if: needs.scope.outputs.rust == 'true'
+      - name: Build the CLI for packaging-only changes
+        if: needs.scope.outputs.rust != 'true'
+        run: cargo build --locked
+      - name: Private local npm pack/install and process contracts
+        if: needs.scope.outputs.npm == 'true'
+        run: |
+          python tests/npm_prepare_contract.py
+          python tests/npm_contract.py
       - name: Offline Windows installer contracts
-        if: runner.os == 'Windows'
+        if: runner.os == 'Windows' && needs.scope.outputs.rust == 'true'
         shell: pwsh
         run: ./tests/install_ps1.ps1
+
+  harnesses:
+    name: native harness and MCP integration contracts
+    needs: scope
+    if: needs.scope.outputs.harnesses == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.13.0"
+      - name: Build the actual xnip MCP server
+        run: cargo build --locked
+      - name: Prepare pinned official runtimes in the isolated benchmark directory
+        run: |
+          node benches/native/dsh_setup.mjs
+          node benches/native/dsh_setup.mjs --check
+          python benches/native/goose_adapter.py --setup
+          python benches/native/goose_adapter.py --check
+      - name: Install the actual private host package and official DSH host dependencies
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import os
+          import subprocess
+          import tempfile
+          from npm import prepare
+          root = Path.cwd()
+          temporary = Path(tempfile.mkdtemp(prefix="xnip-harness-", dir=os.environ["RUNNER_TEMP"]))
+          prefix = temporary / "installed"
+          cache = temporary / "npm-cache"
+          report = prepare.prepare(None, temporary / "prepared", True, root / "target/debug/xnip")
+          tarball = str(Path(report["output_directory"]) / next(item["filename"] for item in report["tarballs"] if item["name"] == "xnip"))
+          npm = prepare.npm_command()
+          common = ["--prefix", str(prefix), "--cache", str(cache), "--ignore-scripts", "--no-audit", "--no-fund"]
+          subprocess.run([*npm, "install", *common, "--offline", tarball], check=True)
+          subprocess.run([*npm, "install", *common, "--save-exact",
+              "@deepseek-ai/dsh-mcp-client@0.2.1-rc.2", "@deepseek-ai/dsh-tools@0.2.1-rc.2",
+              "@deepseek-ai/dsh-system-prompt@0.2.1-rc.2", "@deepseek-ai/cordis@4.0.5"], check=True)
+          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as output:
+              print(f"XNIP_DSH_TEST_INSTALL={prefix}", file=output)
+              print(f"XNIP_PI_TEST_PACKAGE={prefix / 'node_modules/xnip'}", file=output)
+              print(f"XNIP_NPM_CACHE_DIR={temporary / 'native-exec'}", file=output)
+          PY
+      - name: Real native editors and MCP bridges without model calls
+        env:
+          XNIP_DSH_TEST_RUNTIME: ${{ github.workspace }}/target/native-bench/dsh-0.2.1-rc.2/runtime.mjs
+          XNIP_DSH_TEST_BINARY: ${{ github.workspace }}/target/debug/xnip
+          XNIP_PI_TEST_EXECUTABLE: ${{ github.workspace }}/target/debug/xnip
+          XNIP_TEST_BINARY: ${{ github.workspace }}/target/debug/xnip
+        run: |
+          python tests/dsh_adapter_contract.py
+          node --test --test-reporter=junit --test-reporter-destination=target/harness-node.xml tests/dsh_integration_live.cjs tests/dsh_packaged_live.cjs tests/pi_contract.mjs
+          python tests/goose_native_contract.py
+          python - <<'PY'
+          import xml.etree.ElementTree as ET
+          result = ET.parse("target/harness-node.xml").getroot()
+          if not result.findall(".//testcase") or result.findall(".//skipped"):
+              raise SystemExit("Prepared native/installed-package checks must run without skips")
+          PY
+      - name: Paired four-profile runner and report smoke
+        run: |
+          python benches/native_tools.py --xnip target/debug/xnip --harnesses dsh,pi,goose --skip-host-exchange --only-profiles xnip-edit,dsh-fs-bare-edit,pi-native-edit,goose-native-edit --repeats 1 --json target/native-bench/ci/results.json --markdown target/native-bench/ci/results.md
 
   compatibility:
     name: minimum Rust and dependency policy
@@ -140,21 +234,26 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.13.0"
       - name: Validate workflows
         uses: docker://rhysd/actionlint:1.7.12
       - name: Offline script contracts
         run: |
           node --test tests/verified_ci_contract.cjs
+          node --test tests/dsh_integration_contract.cjs
           python tests/ci_scope_contract.py
           python tests/release_contract.py
           python tests/publish_release_contract.py
+          python tests/publish_npm_contract.py
           python tests/native_benchmark_contract.py
           sh -n install.sh
           python tests/install_sh.py
 
   ci:
     name: ci
-    needs: [scope, quality, test, compatibility, contracts]
+    needs: [scope, quality, test, harnesses, compatibility, contracts]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 2
@@ -177,15 +276,19 @@ jobs:
               required.update(("quality", "test", "compatibility"))
           if scope.get("integrations") == "true":
               required.add("quality")
+          if scope.get("npm") == "true":
+              required.add("test")
+          if scope.get("harnesses") == "true":
+              required.add("harnesses")
           if any(results[name]["result"] != "success" for name in required):
               raise SystemExit(f"Selected checks must run successfully: {sorted(required)}")
           if scope.get("full") == "true" and any(
-              scope.get(name) != "true" for name in ("rust", "integrations")
+              scope.get(name) != "true" for name in ("rust", "integrations", "npm", "harnesses")
           ):
               raise SystemExit("Full verification must enable every check")
           PY
       # release.yml only reuses successful gates carrying this marker.
-      - name: Full verification
+      - name: Full verification (Rust, integrations, npm, harnesses)
         if: needs.scope.outputs.full == 'true'
         run: echo "All release checks passed for this commit"
 
@@ -195,9 +298,12 @@ jobs:
     if: needs.scope.outputs.publish == 'true'
     permissions:
       contents: write
+      id-token: write
     uses: ./.github/workflows/build-release.yml
     secrets:
       RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
     with:
       version: ${{ needs.scope.outputs.version }}
       prerelease: true

@@ -1,0 +1,11 @@
+# Merge this extension entry into Goose's config.yaml.
+# Use a discovery-capable xnip 0.5.0+ build; set cmd to its absolute path if needed.
+# cwd is optional: omit it to inherit the Goose session working directory.
+extensions:
+  xnip:
+    name: xnip
+    type: stdio
+    cmd: xnip
+    args: [mcp, --receipts, text]
+    enabled: true
+    timeout: 300

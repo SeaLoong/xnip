@@ -8,3 +8,9 @@
 *.sh text eol=lf
 *.ps1 text eol=lf
 *.py text eol=lf
+
+# Measured evidence is linked by byte hashes; do not rewrite its serialization.
+docs/benchmarks/results.json -text whitespace=cr-at-eol
+docs/benchmarks/relative-results.json -text whitespace=cr-at-eol
+docs/benchmarks/host-exchange-results.json -text whitespace=cr-at-eol
+docs/benchmarks/representation-results.json -text whitespace=cr-at-eol

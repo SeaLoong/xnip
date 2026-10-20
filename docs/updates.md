@@ -75,4 +75,10 @@ The installation ID derives from the canonical executable path. `state.json` rec
 
 Timing overrides accept positive integer seconds. Explicitly disable updates when a deployment must remain pinned; choosing an installer tag alone does not disable future automatic updates. Release binaries use the official channel through the configured transport. Debug builds additionally accept a loopback-only `XNIP_UPDATE_RELEASE_URL` for isolated tests, which bypasses proxy routing; it is not a production channel override.
 
+The unpublished npm distribution always sets `XNIP_AUTO_UPDATE=0` for its native
+child. Package managers own those versions; the launcher verifies and copies the
+payload into an immutable execution cache, with no automatic cache collection.
+It must not let the native updater replace files inside a package store. See
+[local npm packaging and process lifetime](../npm/README.md).
+
 Tests and benchmarks explicitly set `XNIP_AUTO_UPDATE=0`, except updater contracts that use copied executables, private state and offline HTTP fixtures. See [updater contracts](update-testing.md).

@@ -1,0 +1,33 @@
+{
+  "backend": "goose",
+  "version": "1.55.0",
+  "commit": "9920efa16d078777a4d9715b2f00d8800a4da188",
+  "repository": "https://github.com/aaif-goose/goose",
+  "license": "Apache-2.0",
+  "files": [
+    {
+      "path": "crates/goose/src/agents/platform_extensions/developer/edit.rs",
+      "sha256": "05157d5216c83f90ea82c7516d4463401601303ac52c83606ccf0f9ebcc3e27b"
+    },
+    {
+      "path": "crates/goose/src/agents/platform_extensions/developer/mod.rs",
+      "sha256": "5171a7a8d18be1e090360555ccb7c3821e8de01995fa335b9cabc37ec0239b93"
+    },
+    {
+      "path": "crates/goose/src/agents/mcp_client.rs",
+      "sha256": "3a7ade30d4ea8cee3b41d96e338df1e92228fd7422417c19ac8123c1992aa686"
+    },
+    {
+      "path": "Cargo.toml",
+      "sha256": "f0f1afa56bc78e64592873101b9986b2151c4ccd616ba0ccb0f373b872438a2a"
+    },
+    {
+      "path": "Cargo.lock",
+      "sha256": "544825c89dc6bf7709f73e2e6d19e3b6ce4039e47d8b438dcd537f41642e7342"
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "44459b86c2e96fdbfd8a6b5c33d30d4b04b5293fcb2ec96fe4dcc4e0f90b8962"
+    }
+  ]
+}

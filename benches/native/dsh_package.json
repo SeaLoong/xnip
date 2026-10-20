@@ -1,0 +1,33 @@
+{
+  "name": "xnip-native-dsh-runtime",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "dependencies": {
+    "@deepseek-ai/cordis": "4.0.5",
+    "@deepseek-ai/schemastery": "3.18.5",
+    "@deepseek-ai/dsh-llm": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-scope": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-brand": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-util-values": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-sandbox": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-output-retention": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-attachment": "0.2.1-rc.2",
+    "@modelcontextprotocol/client": "2.2.0",
+    "chokidar": "5.0.0",
+    "diff": "9.0.0",
+    "esbuild": "0.28.2",
+    "koffi": "3.1.1",
+    "zod": "4.4.3",
+    "undici": "8.11.2",
+    "@deepseek-ai/cordis-plugin-loader": "1.0.6",
+    "@deepseek-ai/cordis-plugin-include": "1.0.10",
+    "@deepseek-ai/cordis-plugin-group": "1.0.5",
+    "@eslint-community/regexpp": "4.12.2",
+    "ajv": "8.20.0",
+    "js-yaml": "4.3.2",
+    "node-addon-require-builtin": "0.1.9",
+    "resolve.exports": "2.0.3",
+    "semver": "7.8.5"
+  }
+}

@@ -1,0 +1,5 @@
+# Enabled only when the user adds the xnip bundle to a DSH profile.
+- insert:
+    - id: xnip-mcp
+      name: ./index.mjs
+      config: {}

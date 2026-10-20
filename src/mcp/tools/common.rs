@@ -9,7 +9,7 @@ use std::path::PathBuf;
 
 use rmcp::{
     ErrorData as McpError,
-    model::{CallToolResult, Content},
+    model::{CallToolResult, ContentBlock},
 };
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -152,7 +152,7 @@ pub fn err_to_internal<E: std::fmt::Display>(e: E) -> McpError {
 
 /// 用单段文本构造成功结果。
 pub fn ok_text(s: impl Into<String>) -> CallToolResult {
-    let mut result = CallToolResult::success(vec![Content::text(s.into())]);
+    let mut result = CallToolResult::success(vec![ContentBlock::text(s.into())]);
     // MCP assumes success when isError is absent.
     result.is_error = None;
     result

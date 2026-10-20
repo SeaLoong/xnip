@@ -6,16 +6,16 @@ The relevant target is less complete observable edit exchange under a stated con
 
 ## What the current measurements show
 
-The current run executes 31 profiles on the same 13 scenarios, three times each. Only outputs that match expected file bytes in every repetition qualify for the best-observed frontier. Native and xnip use symmetric candidate permissions; snapshot-enabled includes guarded candidates on both sides.
+The current 0.5.0 run executes 41 editor profiles on the same 13 scenarios, three times each, plus six separate host→xnip bridge profiles on those tasks. All original 31 profiles remain. DSH observation/filesystem policies receive separate frontiers; they and the host bridge lanes are excluded from the pooled native minimum. Only outputs that match expected file bytes in every repetition qualify for the best-observed frontier. Native and xnip use symmetric candidate permissions; snapshot-enabled includes guarded candidates on both sides.
 
 | xnip transport / permitted operations | Geometric mean native best / xnip best input | xnip shorter / tied / native shorter |
 |---|---:|---:|
-| MCP guarded | 1.37x | 13 / 0 / 0 |
+| MCP guarded | 1.23x | 13 / 0 / 0 |
 | MCP snapshot-enabled | 1.26x | 12 / 1 / 0 |
-| CLI stdin guarded | 1.73x | 13 / 0 / 0 |
+| CLI stdin guarded | 1.55x | 13 / 0 / 0 |
 | CLI stdin snapshot-enabled | 1.80x | 13 / 0 / 0 |
 
-CLI minima span native programs and compact maps, with invocation cost reported separately; this table is executor input, not total shell/MCP session usage. The original twelve profiles remain visible beside the added configurations.
+CLI minima span native programs and compact maps, with invocation cost reported separately; this table is executor input, not total shell/MCP session usage. The original profiles remain visible beside the added configurations. Goose supplies the smallest guarded native input on 12 tasks, while OpenCode wins the global-replace native input. Across these 41 measured profiles, the MCP guarded input ratio is 1.23x.
 
 Five short-file cases exposed missing candidate strategies rather than an unavoidable JSON lower bound. The current run executes the alternatives through existing interfaces and verifies the goal bytes in every repetition:
 
@@ -31,11 +31,23 @@ Whole-file JSON has wrapper and escaping costs, but that does not establish a lo
 
 The same complete-file trimming opportunity is provided to accepted-relative OpenCode and Gemini literal profiles. Both new profiles are byte-exact on all thirteen tasks. Their permission cohort is snapshot-enabled, while their selected unique literal edits retain an actual guarded contract. This prevents crediting xnip for a one-sided input policy.
 
-CLI snapshot policies reuse the same trim helper and actual counter; native programs also reuse the line candidates, while compact maps receive trimmed pairs. On `large-local-change`, OpenCode's known-file trim costs **21** tokens, xnip MCP's trim costs **16**, and the native CLI trim costs **13**. All three retain the complete relative path and a unique old literal. Existing native literal manifests also reduce the guarded global replacement to **14** MCP input tokens and the multi-file batch to **29**; the known-file long-line candidate costs **11**. The complete `manifest_text` JSON wrapper is included. Every current input frontier task favors xnip except snapshot-enabled MCP `delete-block`, which ties at **12 / 12**; guarded deletion still favors xnip at **22 / 18**. These are best observed inputs among the supplied strategies, not proof that any interface has reached its shortest possible encoding. No failing or inconvenient profile is removed.
+CLI snapshot policies reuse the same trim helper and actual counter; native programs also reuse the line candidates, while compact maps receive trimmed pairs. On `large-local-change`, OpenCode's known-file trim costs **21** tokens, xnip MCP's trim costs **16**, and the native CLI trim costs **13**. All three retain the complete relative path and a unique old literal. Existing native literal manifests also reduce the guarded global replacement to **14** MCP input tokens and the multi-file batch to **29**; the known-file long-line candidate costs **11**. The complete `manifest_text` JSON wrapper is included. Every current input frontier task favors xnip except snapshot-enabled MCP `delete-block`, which ties at **12 / 12**; guarded deletion still favors xnip at **19 / 18**. These are best observed inputs among the supplied strategies, not proof that any interface has reached its shortest possible encoding. No failing or inconvenient profile is removed.
 
-Aider's final returned text is unknown, so its input counts cannot be turned into fabricated complete-exchange wins or losses. The known-return frontier names its own eligible winner independently.
+Aider's final returned text and Goose's provider-rendered output are unknown, so their input counts cannot be turned into fabricated complete-exchange wins or losses. The known-return frontier names its own eligible winner independently.
 
 The matched structured/text receipt experiment has 26 byte-exact pairs with identical actual inputs and returned text. Canonical full JSON-RPC reply counts sum to **1,600 versus 702 tokens**, saving 898 at that captured layer; the equal-pair text/default geometric mean is **0.440x**. The same five-tool compact catalog is **2,303 structured versus 1,754 text-receipt tokens**. These measured reply/catalog differences do not stand in for provider billing. [Current results](results.md), [raw evidence](results.json), [current catalogs and prompts](representation-results.md)
+
+## What the added harnesses change
+
+All ten added native profiles and all six real MCP bridge profiles meet the byte oracle on all thirteen tasks in all three repetitions. Their matching/IO behavior is still different: the mixed-EOL probe normalizes untouched line endings under DSH fs edit and Pi, while the raw str editor and Goose preserve them. Pi's original-coordinate multi-edit rejects a dependent start→middle→done batch; sequential DSH/Goose calls accept it. Late multi-file failures retain earlier independent writes. Those outcomes remain in the report rather than being silently repaired.
+
+Fixed supplied-input profiles relative to the original absolute-path xnip-edit baseline have input geometric means of **0.959x for DSH fs-bare edit**, **1.534x for fs-observed edit including its real read**, **1.252x for Pi edit**, and **0.989x for Goose edit**. These are distinct path/policy/input configurations, not complete-agent rankings. DSH bare and Goose can supply less input than that original literal xnip baseline; xnip's compact/adaptive profiles are separate measured alternatives.
+
+DSH's read-before-edit, stale-after-read and new-session probes show the actual observation policy rejecting mutations that bare kernels accept. The observed policy's additional real read is not a gratuitous serialization cost and cannot be removed while claiming the same freshness contract. Its policy-specific MCP guarded exchange comparison is **2.215x input / 5.737x input plus known text**, versus **1.384x / 2.063x** for fs-bare. These compare captured edit exchange with an external xnip process, not identical filesystem authority. See [policy-specific results](results.md#dsh-policy-specific-exchange-frontiers).
+
+The [host exchange records](host-exchange-results.json) separate actual native/editor catalogs from genuine host→xnip MCP catalogs. For tiny-config, DSH fs-observed's captured model schema projection costs **508 tokens**, versus **1,544** for its five-tool xnip bridge; Pi's native edit/write projection costs **323**, versus **1,544** for its bridge. DSH prompt contributions and Pi instructions/snippets are additional separately captured layers. These are editor-only/bridge-only fixture compositions, not a measured default AgentLoop or coexistence catalog.
+
+Thus a shorter edit/receipt does not establish a smaller complete session: the xnip tool catalog can add setup context. Goose's raw API catalog and raw MCP DTO are retained, while its provider projection stays unknown. No hypothetical request count, cache behavior or paid token savings is invented.
 
 ## Why a native payload can be smaller
 
@@ -91,13 +103,13 @@ Aider EOF-aware whole profiles are measured separately from canonical closed-fen
 
 ## Compact text and complete replies
 
-The default structured MCP receipt keeps machine-readable change metadata. Opt-in text receipts omit structuredContent and outputSchema while retaining written/unchanged/check/preview/journal text and errors. This changes the captured full reply/catalog boundary without changing per-edit arguments.
+The current default text MCP receipt omits structuredContent and outputSchema while retaining written/unchanged/check/preview/journal text and errors. Explicit --receipts structured keeps machine-readable change metadata; the original benchmark counterparts select it deliberately. This changes the captured full reply/catalog boundary without changing per-edit arguments.
 
 The report pairs the same adaptive strategy under structured and text-only receipt modes. It calculates a receipt-mode reduction only when both outputs are byte-exact and the actual inputs and returned text are identical. Equal token counts alone cannot establish identical content. Catalogs are discovered from real running servers under each advertised mode. [MCP receipt contract](../mcp.md), [paired receipt statistics](../../benches/native_report.py)
 
 Captured returned text and the full serialized JSON-RPC object are not interchangeable. A host may inject only text or expose additional structured fields. The report shows both observed layers without converting a wire reduction into a claim about a provider's billed usage.
 
-Aider's final model-facing return remains unknown. Empty editing-kernel stdout does not become a zero-token complete response, and its unknown value cannot win a combined input/return comparison.
+Aider's final model-facing return and Goose's provider projection remain unknown. Empty editing-kernel stdout or a raw internal MCP DTO does not become a zero-token complete response, and an unknown value cannot win a combined input/return comparison.
 
 ## Interpreting the current results
 

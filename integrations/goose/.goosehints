@@ -1,0 +1,5 @@
+Use the xnip extension for supported text edits; respect the user's editor choice. Goose normally exposes its tools as xnip__xnip_edit, xnip__xnip_apply and xnip__xnip_peek. Reuse known context and read only missing context.
+
+For exact changes, supply file/old/text with a unique nonempty old block. Add position:"before" or "after" for insertion; use all only for intentional global replacement. For a complete file, use operation:"write",text:CONTENT and optional old to check the entire original. Independent file edits use apply files:{"a":[["old","new"]],"b":"complete content"}.
+
+Read the receipt: written commits; unchanged is a no-op; preview/check never write. On failure, inspect the error and relevant context before retrying. For lifecycle operations, patches or recovery, consult https://github.com/SeaLoong/xnip/blob/master/docs/SKILL.md and load the applicable reference.

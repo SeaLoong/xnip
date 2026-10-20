@@ -27,12 +27,15 @@ EXACT_RELEASE_PATHS = {
     "LICENSE", "THIRD_PARTY_LICENSES.md", "xtask/Cargo.toml",
     "docs/SKILL.md", "docs/apply-format.md", "docs/error-codes.md",
     "docs/examples.md", "docs/patch.md", "docs/recovery.md", "docs/edit.md",
-    ".github/scripts/release.py", ".github/scripts/publish_release.py",
+    ".github/scripts/release.py", ".github/scripts/publish_release.py", ".github/scripts/publish_npm.py",
     ".github/workflows/build-release.yml",
     ".github/workflows/release.yml",
 }
 RELEASE_PREFIXES = (
-    ".cargo/", "integrations/", ".github/skills/xnip-editing/", "xtask/src/",
+    ".cargo/", ".github/skills/xnip-editing/", "xtask/src/",
+    "integrations/agents-md/", "integrations/aider/", "integrations/claude-code/",
+    "integrations/codex/", "integrations/copilot/", "integrations/cursor/", "integrations/generic/",
+    "integrations/dsh/", "integrations/pi/", "npm/",
 )
 VERSION_LINE = re.compile(
     r"""(?m)^[ \t]*version[ \t]*=[ \t]*(?P<quote>["'])(?P<value>[^"'\r\n]*)(?P=quote)[ \t]*(?:#[^\r\n]*)?\r?$"""
@@ -86,6 +89,8 @@ def package_version(raw: bytes) -> str:
 
 
 def release_relevant(path: str) -> bool:
+    # The public parent pack ships npm sources and the DSH/Pi entry points.
+    # Generated output lives outside npm/, so local tarballs are never inputs.
     if path.startswith("src/"):
         return not path.endswith("/contract_tests.rs")
     return path in EXACT_RELEASE_PATHS or path.startswith(RELEASE_PREFIXES)

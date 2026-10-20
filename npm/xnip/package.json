@@ -1,0 +1,61 @@
+{
+  "name": "xnip",
+  "version": "0.5.0",
+  "private": true,
+  "description": "Byte-preserving editing CLI and MCP server for coding agents",
+  "license": "MIT",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=22.14.0"
+  },
+  "bin": {
+    "xnip": "./bin/xnip.cjs"
+  },
+  "exports": {
+    "./native": "./lib/native.cjs",
+    "./dsh": "./integrations/dsh/index.mjs",
+    "./pi": "./integrations/pi/index.mjs",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "bin/",
+    "lib/",
+    "integrations/",
+    "native-manifest.json",
+    "README.md",
+    "LICENSE",
+    "THIRD_PARTY_LICENSES.md"
+  ],
+  "pi": {
+    "extensions": [
+      "./integrations/pi/index.mjs"
+    ]
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./integrations/dsh/cordis.patch.yml"
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/dsh-mcp-client": "0.2.1-rc.2"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/dsh-mcp-client": {
+      "optional": true
+    }
+  },
+  "scripts": {
+    "prepack": "node lib/validate.cjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SeaLoong/xnip.git"
+  },
+  "keywords": [
+    "xnip",
+    "mcp",
+    "editing",
+    "dsh-plugin",
+    "pi-package"
+  ]
+}

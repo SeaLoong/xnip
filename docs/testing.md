@@ -18,6 +18,16 @@ cargo run --locked -p xtask -- sync-integrations
 
 Use `RUSTDOCFLAGS=-D warnings` for documentation checks in CI. Integration generation must leave committed outputs unchanged. See [contributing](../CONTRIBUTING.md) for tool prerequisites and packaging from a dirty working tree, and [CI scopes](ci.md) for required checks. `cargo test` includes doctests; performance measurements run on demand.
 
+The private npm package has real local packaging, installation and process contracts. With Node 24.13.0, Python 3.13 and the debug CLI already built:
+
+```sh
+python tests/npm_prepare_contract.py
+python tests/npm_contract.py
+node --test tests/dsh_integration_contract.cjs
+```
+
+The preparation-input suite rejects malformed archives, wrong compiled version/target markers and invalid architecture/static-link labels, without executing foreign fixtures. The npm process suite packs private tarballs, installs the bundled host payload with lifecycle scripts disabled and the registry offline, then exercises the actual CLI/MCP process. It uses isolated installation, npm cache and executable cache directories under `target`; it never publishes packages or edits a host profile. The DSH configuration suite is independent of the native editor and does not simulate its matching or filesystem operations.
+
 Platform installers have separate offline suites:
 
 ```sh
@@ -33,6 +43,19 @@ Benchmark plumbing can be checked without installing native editor dependencies:
 ```sh
 python3 tests/native_benchmark_contract.py
 ```
+
+The pinned [DSH](dsh.md), [Pi](pi.md) and [Goose](goose.md) suites also execute real native editors and real MCP bridges without a model. Prepare their isolated dependencies explicitly before testing:
+
+```sh
+node benches/native/dsh_setup.mjs
+node benches/native/dsh_setup.mjs --check
+python benches/native/goose_adapter.py --setup
+python benches/native/goose_adapter.py --check
+node --test tests/pi_contract.mjs
+python tests/goose_native_contract.py
+```
+
+For DSH's real bridge tests, follow [the runtime/binary environment setup](dsh.md#verification) and run `python tests/dsh_adapter_contract.py` plus `node --test tests/dsh_integration_live.cjs`. Installed-package checks additionally use `XNIP_DSH_TEST_INSTALL` for the consumer prefix and `XNIP_PI_TEST_PACKAGE` for its installed `node_modules/xnip`; DSH's actual host dependency packages are required. Then run `node --test tests/dsh_packaged_live.cjs tests/pi_contract.mjs`. Optional suites report a skip when their prepared runtime, real CLI or installed package is missing; the Ubuntu CI job prepares all of them and rejects skipped Node checks. Source acquisition and dependency installation are setup costs, and no suite runs a provider or model session.
 
 Native editor runs and fixture selection are documented in [benchmarks](benchmarks/README.md). Installer and ordinary test children disable automatic updates. Enabled updater contracts use copied binaries, isolated state and loopback release fixtures; they do not install into the user's normal xnip path.
 
@@ -52,6 +75,13 @@ Native editor runs and fixture selection are documented in [benchmarks](benchmar
 | [read selection matrix](../tests/read_matrix_contract.rs) | Exhaustive small selections/context/EOF/UTF-8 cases; dense bounded reads and late IO failures |
 | [CLI presentation](../tests/cli_contract.rs) | Discovery and exit categories; quiet/trace/color; compact/JSON/NDJSON; raw legacy previews; explicit truncation; executable documentation examples |
 | [live MCP](../tests/transport_contract.rs) | Stdio discovery; default/full toolsets; strict argument and mixed-input rejection; compact file groups and whole writes; exact insertion; default structured and opt-in text receipts; schema constraints and false-default omission; optional success flags; complete parse/regex errors; metadata omission and truthful modes; preview/check/no-op; reads and recovery |
+| [MCP lifecycle compatibility](../tests/mcp_discovery_contract.rs) | Typed SDK discovery with 2026 per-request metadata; legacy 2025 initialization; tools/list, stale rejection and retry, unknown-method errors followed by successful edits, text receipts, Unicode paths and EOF shutdown |
+| [npm archive/build identity](../tests/npm_prepare_contract.py) | Foreign binary version/target markers; old-version refusal before output creation; architecture/static linking; tar/ZIP inventory, traversal and link rejection |
+| [private npm distribution](../tests/npm_contract.py) | Local tarball preparation and offline installation; compiled identity and checksum validation; host-only payloads; byte/exit-code fidelity; concurrent immutable cache publication; tamper refusal; mapped-process lifetime during uninstall; abrupt wrapper death and native input EOF |
+| [DSH integration configuration](../tests/dsh_integration_contract.cjs) | Explicit Cordis entry; native resolution; cwd, environment and receipt options; invalid options and official bridge loading failures |
+| [DSH native and bridge](../tests/dsh_adapter_contract.py) / [bundle loader](../tests/dsh_integration_live.cjs) / [installed package](../tests/dsh_packaged_live.cjs) | Official ToolRuntime and filesystem executors; observation/stale/read-window policy; literal and str editor behavior; raw values versus model projection; real package patch resolution and xnip stdio |
+| [Pi native and bridge](../tests/pi_contract.mjs) | Official argument preparation and mutation queue; original-coordinate multi-edit rejection; fuzzy/EOL/BOM behavior; writes; extension registration; real MCP discovery, projection and disposal |
+| [Goose native and bridge](../tests/goose_native_contract.py) | Source integrity; original EditTools matching and IO; edit/write schemas; ambiguity and stale refusal; isolated cwd; complete official GooseClient discovery and legacy stdio profiles |
 | [updater subprocesses](../tests/update_contract.rs) | Nonblocking CLI, singleton workers, MCP leases, deferred/forced installation, detached IO and platform replacement |
 | [POSIX installer](../tests/install_sh.py) | Local archive/checksum handling; pinned/latest selection; failed download/checksum preserves installation |
 | [PowerShell installer](../tests/install_ps1.ps1) | Local archive/checksum handling; target/version normalization; failed requests and destination cleanup |
@@ -64,7 +94,7 @@ python3 tests/release_contract.py
 python3 tests/publish_release_contract.py
 ```
 
-The planner uses temporary Git histories to verify complete push ranges, path eligibility, version derivation and isolated Cargo stamping. The publisher uses a fake GitHub adapter to verify asset/checksum validation, tag conflicts, draft resume and publication order; it never contacts GitHub. Validate workflow syntax with actionlint when changing jobs or expressions.
+The planner uses temporary Git histories to verify complete push ranges, path eligibility, version derivation and isolated Cargo stamping. Private npm preparation and the DSH/Pi/Goose entries are ineligible for native release publication because they have no corresponding GitHub asset. A contract checks integration eligibility against the actual `package.sh` archive inventory. Scope contracts independently select npm package checks and native harness checks, so a changed JavaScript/Python adapter is not mistaken for documentation. The CI reuse contract requires the expanded full-verification marker; an older marker cannot claim the new npm/harness checks. The publisher uses a fake GitHub adapter to verify asset/checksum validation, tag conflicts, draft resume and publication order; it never contacts GitHub. Validate workflow syntax with actionlint when changing jobs or expressions.
 
 Updater policy, delivery and coordinator contracts are described in [update testing](update-testing.md). Their authoritative cases are colocated under `src/update/`; inspect those tests when changing scheduling, routes or replacement rules.
 

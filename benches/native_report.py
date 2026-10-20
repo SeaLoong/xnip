@@ -12,9 +12,13 @@ import math
 from pathlib import Path
 import statistics
 
+from harness_report import host_exchange_markdown, write_host_exchanges
+from report_privacy import public_report
+
 BASELINE = "xnip-edit"
 COLORS = {"xnip": "#007f73", "codex": "#3b6fac", "gemini": "#9165b6",
-          "opencode": "#c46a24", "aider": "#6c7785"}
+          "opencode": "#c46a24", "aider": "#6c7785", "dsh": "#b33d45",
+          "pi": "#8a6a12", "goose": "#24839a"}
 
 
 def geomean(values, allow_zero=False):
@@ -56,10 +60,19 @@ def guard_cohort(report, row):
     return "snapshot" if row["family"] == "aider" and "whole" in row["backend"] else "guarded"
 
 
+def returned_text_known(report, row):
+    """Honor recorded boundaries; infer only the historical four known adapters."""
+    backend = next((item for item in report["backends"] if item["name"] == row["backend"]), {})
+    for source in (row, backend, backend.get("metadata", {})):
+        if "returned_text_boundary_known" in source:
+            return bool(source["returned_text_boundary_known"])
+    return row["family"] in {"xnip", "codex", "gemini", "opencode"}
+
+
 def _frontier_profile(report, case, row):
     unit = report["counter"]["unit"]
     backend = next((item for item in report["backends"] if item["name"] == row["backend"]), {})
-    captured = row["family"] in {"xnip", "codex", "gemini", "opencode"}
+    captured = returned_text_known(report, row)
     transport = profile_transport(report, row)
     supplied = row["input_cost"][unit]
     returned = row.get("returned_text_cost", {}).get(unit) if captured else None
@@ -78,11 +91,13 @@ def _frontier_profile(report, case, row):
         "invocation": invocation, "serialized_tool_request": request,
         "input_plus_captured_returned_text": supplied + returned if returned is not None else None,
         "input_plus_serialized_mcp_result": supplied + serialized if serialized is not None else None,
-        **{key: row.get(key, backend.get(key)) for key in ("operation", "preconditions", "selected_contract")}}
+        "frontier_eligible": row.get("frontier_eligible", backend.get("frontier_eligible", True)),
+        **{key: row.get(key, backend.get(key)) for key in
+           ("operation", "preconditions", "selected_contract", "frontier_group", "frontier_exclusion", "policy_profile")}}
 
 
 def _frontier_pool(profiles):
-    eligible = sorted((row for row in profiles if row["byte_exact"]), key=lambda row: row["backend"])
+    eligible = sorted((row for row in profiles if row["byte_exact"] and row["frontier_eligible"]), key=lambda row: row["backend"])
     def best(metric):
         known = [row for row in eligible if row[metric] is not None]
         return min(known, key=lambda row: (row[metric], row["backend"])) if known else None
@@ -135,10 +150,60 @@ def frontier_statistics(report):
         "contract_scope": "guarded pools accept guarded profiles only; snapshot-enabled pools accept guarded and snapshot profiles on both sides; winning profiles retain their actual contract; xnip MCP and CLI transports never share a minimum",
         "native_transport_scope": "native executor-input minima may span native transports; each winning profile retains its transport",
         "aggregation": "equal-task geometric means of native best / xnip best within the same candidate-permission pool and xnip transport",
-        "returned_text_scope": "known captured text only; aider final returned text is always unknown",
+        "returned_text_scope": "declared known captured text only; unknown boundaries remain unavailable, including aider and Goose kernel/client DTOs",
         "serialized_mcp_scope": "independently counted canonical serialized full JSON-RPC reply when recorded; unknown for other products and historical rows; not host/provider usage",
         "invocation_scope": "CLI invocation arguments and serialized tool-request envelopes remain separate; neither is added to executor input; schema/setup costs are excluded",
         "tasks": tasks, "cohorts": summaries, "profiles": profiles}
+
+
+def policy_frontiers(report):
+    """Keep each DSH filesystem/observation policy in its own declared lane."""
+    groups = sorted({row.get("frontier_group") for case in report["cases"] for row in case["results"]
+                     if str(row.get("frontier_group", "")).startswith("dsh-")})
+    output = []
+    for group in groups:
+        selected = []
+        for case in report["cases"]:
+            rows = [{**row, "frontier_eligible": True} for row in case["results"]
+                    if row["family"] == "xnip" or row.get("frontier_group") == group]
+            selected.append({**case, "results": rows})
+        frontier = frontier_statistics({**report, "cases": selected})
+        output.append({"policy_group": group,
+            "scope": "one declared DSH policy only; required real reads included; xnip has its own external-process policy, so this is editor exchange cost, not permission equivalence",
+            **frontier})
+    return output
+
+
+def policy_frontier_markdown(frontiers):
+    if not frontiers:
+        return []
+    lines = ["## DSH policy-specific exchange frontiers", "",
+        "These lanes retain DSH's actual filesystem and observation policy. Observed lanes include each required real read/view and its rendered return; bare lanes explicitly omit the observation policy. Each lane has independent minima and is excluded from the combined native frontier. xnip runs in its external process; equal edit-candidate permissions do not imply equal filesystem authority or freshness guarantees.", "",
+        "| DSH policy | xnip transport | Edit candidate permissions | Input native / xnip | Paired tasks | Input + known text native / xnip | Paired tasks |",
+        "|---|---|---|---:|---:|---:|---:|"]
+    for frontier in frontiers:
+        for row in frontier["cohorts"]:
+            if row["input_pairs"]:
+                lines.append(f"| {frontier['policy_group']} | {row['xnip_transport']} | {_cohort_label(row['contract_cohort'])} | {multiple(row['input_geomean'])} | {row['input_pairs']} | {multiple(row['input_plus_captured_returned_text_geomean'])} | {row['input_plus_captured_returned_text_pairs']} |")
+    return lines + ["", "Per-task winning profiles, exact-byte eligibility and policy declarations are preserved in relative-results.json under policy_frontiers.", ""]
+
+
+def provenance_markdown(report):
+    metadata = report.get("metadata", {})
+    if not metadata:
+        return []
+    lines = ["## Executor provenance and boundaries", "",
+        "| Family | Version | Source revision | Execution boundary | Fingerprinted source files |",
+        "|---|---|---|---|---:|"]
+    for family, info in sorted(metadata.items()):
+        sources = info.get("source_files", info.get("source_revisions", {}))
+        count = len(sources) if isinstance(sources, (dict, list)) else "n/a"
+        revision = info.get("commit", info.get("revision", "see raw metadata"))
+        boundary = str(info.get("execution_level", info.get("runtime", "see raw metadata"))).replace("|", "/").replace("\n", " ")
+        if len(boundary) > 160:
+            boundary = boundary[:157] + "..."
+        lines.append(f"| {family} | {info.get('version', 'see raw metadata')} | {revision} | {boundary} | {count} |")
+    return lines + ["", "Raw metadata retains exact source/dependency hashes and declared context adaptations. Adapter fingerprints recursively include maintained adapters, integration sources, locks and configuration; downloaded target caches and node_modules are excluded. Tool arguments, actual rendered content, raw MCP result DTOs and internal presentation values are separate layers. No provider usage is inferred.", ""]
 
 
 def receipt_comparisons(report):
@@ -245,7 +310,7 @@ def paired_statistics(report):
                 raise ValueError("positive native cost required in task " + case["name"])
             # The native aider kernel does not expose its final model message.
             # Captured empty text for a known boundary is zero; an absent boundary is unknown.
-            captured = row["family"] in {"xnip", "codex", "gemini", "opencode"}
+            captured = returned_text_known(report, row)
             baseline_returned = baseline["returned_text_cost"][unit]
             returned = row["returned_text_cost"][unit] if captured else None
             returned_ratio = returned / baseline_returned if returned is not None and baseline_returned else None
@@ -283,11 +348,12 @@ def paired_statistics(report):
         "ratio": "native input cost / xnip input cost on the same task; xnip = 1x",
         "aggregation": "exp(mean(log(per-task ratio))); each task has equal weight; repetitions are not independent tasks",
         "all_cases_scope": "payload ratio only, including byte-incompatible native outputs",
-        "returned_text_scope": "captured text boundary only; aider final model message unknown, never zero-filled",
+        "returned_text_scope": "declared captured text boundaries only; unknown final model messages are never zero-filled",
         "combined_scope": "sum of independently counted input and captured returned text; excludes schemas, repair requests, host framing and complete agent workflow",
         "exact_pairs_scope": "both tools byte-exact in every repetition; subsets differ between backends",
         "common_exact_scenarios": common_exact, "backends": summaries, "pairs": pairs,
-        "frontier": frontier_statistics(report), "receipt_modes": receipt_comparisons(report)}
+        "frontier": frontier_statistics(report), "policy_frontiers": policy_frontiers(report),
+        "receipt_modes": receipt_comparisons(report)}
 
 
 def multiple(value):
@@ -328,7 +394,7 @@ def ratio_chart(stats):
         x = axis(row["input_geomean_all"])
         start, end = sorted((axis(1), x))
         out += [text(28, y + 4, row["backend"]),
-                f'<rect x="{start:.2f}" y="{y - 8}" width="{max(end - start, 1):.2f}" height="16" rx="3" fill="{COLORS[row["family"]]}"/>']
+                f'<rect x="{start:.2f}" y="{y - 8}" width="{max(end - start, 1):.2f}" height="16" rx="3" fill="{COLORS.get(row["family"], "#6c7785")}"/>']
         if row["input_geomean_exact_pairs"] is not None:
             p = axis(row["input_geomean_exact_pairs"])
             out.append(f'<path d="M {p:.2f} {y - 7} l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>')
@@ -347,6 +413,9 @@ def overview_chart(stats, report):
         ("gemini-edit-context", "Gemini · context"),
         ("aider-diff-lf", "aider · diff / LF"),
         ("aider-whole-lf", "aider · whole / LF"),
+        ("dsh-fs-observed-edit", "DSH · observed edit + read"),
+        ("pi-native-edit", "Pi · original-coordinate edit"),
+        ("goose-native-edit", "Goose · edit kernel"),
     ]
     by_name = {row["backend"]: row for row in stats["backends"]}
     selected = [(by_name[name], label) for name, label in preferred if name in by_name]
@@ -594,6 +663,7 @@ def frontier_markdown(frontier):
     def cost(value):
         return "not captured" if value is None else f"{value:,}"
     lines = ["## Best observed frontier", "",
+        "Profiles declaring a separate policy lane or host bridge are excluded from these pooled minima; their raw rows remain visible. DSH policy-specific frontiers and host exchanges follow separately.", "",
         "For each task, candidate-permission pool and xnip transport, select the smallest measured input and independently the smallest input plus known captured returned text. Only profiles whose files are byte-exact in every recorded repetition qualify. This is the **best observed** among supplied profiles, not a global optimum, a model success rate or an editing policy replayed by the runner.",
         "Both sides use identical candidate permissions. The **guarded** pool accepts guarded profiles only, requiring old-content/context preconditions. The **snapshot-enabled** pool permits whole-file writes and accepts both guarded and snapshot profiles on each side. Its winner may therefore be a guarded edit. Winning records and profile cost rows retain their actual contract. Matching strictness can still differ; the probes record those differences.",
         "**xnip MCP and CLI minima stay separate.** Native executor-input candidates may span native transports; each winning profile below retains its transport. This compares executor inputs, not uniform invocation costs. CLI argument invocation and serialized tool-request envelopes are reported separately and never added to executor input. Schema/setup costs are outside these minima. CLI cold-start and warm MCP times are not ranked together.",
@@ -612,10 +682,10 @@ def frontier_markdown(frontier):
             native, xnip = task["native"][cohort], task["xnip"][transport][cohort]
             lines.append(f"| {task['scenario']} | {transport} | {_cohort_label(cohort)} | {winner(native, 'best_input', 'input')} | {winner(xnip, 'best_input', 'input')} | {multiple(comparison['input_ratio'])} | {winner(native, 'best_input_plus_captured_returned_text', 'input_plus_captured_returned_text')} | {winner(xnip, 'best_input_plus_captured_returned_text', 'input_plus_captured_returned_text')} | {multiple(comparison['input_plus_captured_returned_text_ratio'])} |")
     lines += ["", "<details><summary>Three captured cost layers and separate invocation overhead for every supplied profile</summary>", "",
-        f"| Task | Profile | Transport | Actual profile contract | Byte-exact eligible | Input {unit} | Known returned text {unit} | Full JSON-RPC reply {unit} | Input + full JSON-RPC reply {unit} | Invocation arguments {unit} | Serialized tool request {unit} |",
+        f"| Task | Profile | Transport | Actual profile contract | Byte-exact / main-pool eligible | Input {unit} | Known returned text {unit} | Full JSON-RPC reply {unit} | Input + full JSON-RPC reply {unit} | Invocation arguments {unit} | Serialized tool request {unit} |",
         "|---|---|---|---|---|---:|---:|---:|---:|---:|---:|"]
     for row in frontier["profiles"]:
-        lines.append(f"| {row['scenario']} | {row['backend']} | {row['transport']} | {row.get('selected_contract') or row['contract_cohort']} | {row['byte_exact']} | {cost(row['input'])} | {cost(row['captured_returned_text'])} | {cost(row['serialized_mcp_result'])} | {cost(row['input_plus_serialized_mcp_result'])} | {cost(row['invocation'])} | {cost(row['serialized_tool_request'])} |")
+        lines.append(f"| {row['scenario']} | {row['backend']} | {row['transport']} | {row.get('selected_contract') or row['contract_cohort']} | {row['byte_exact']} / {row['frontier_eligible']} | {cost(row['input'])} | {cost(row['captured_returned_text'])} | {cost(row['serialized_mcp_result'])} | {cost(row['input_plus_serialized_mcp_result'])} | {cost(row['invocation'])} | {cost(row['serialized_tool_request'])} |")
     return lines + ["", "</details>", "",
         "Input plus full JSON-RPC reply is counted independently from input plus captured text. Invocation arguments and serialized tool requests can contain overlapping input data and must not be blindly summed with it. Neither layer includes provider framing or establishes billed usage. These derived minima do not change or replace raw executions.", ""]
 
@@ -627,7 +697,7 @@ def receipt_markdown(receipts):
     def equality(value):
         return "unknown" if value is None else str(value)
     lines = ["## Structured versus text-only MCP receipts", "",
-        "Matched MCP strategy profiles execute the same task with default structured receipts and text-only receipts. This comparison counts the canonical serialized **full JSON-RPC reply** captured by the harness. A smaller reply reduces this captured layer only; it does not establish provider billing or complete agent savings. Catalog/schema costs are measured separately and are excluded here.",
+        "Matched MCP strategy profiles execute the same task with explicitly selected structured receipts and text-only receipts. This comparison counts the canonical serialized **full JSON-RPC reply** captured by the harness. A smaller reply reduces this captured layer only; it does not establish provider billing or complete agent savings. Catalog/schema costs are measured separately and are excluded here.",
         "Only task/profile pairs that are byte-exact in every recorded repetition, have both full-reply counts, and have identical captured inputs and returned text enter the ratios and sums. Missing calls or different content leave the receipt-mode effect unavailable. Text/default is below 1x when the text-only reply is smaller. Input and known returned-text counts remain separate; equal counts alone do not prove identical content.", ""]
     if not receipts["pairs"]:
         return lines + ["No matched text-only receipt profiles were recorded in this run.", ""]
@@ -652,8 +722,12 @@ def render(report, stats):
         f"Counter: {json.dumps(report['counter'], ensure_ascii=False, sort_keys=True)}. Repetitions per task/profile: {report['repeats']}.",
         f"Platform: {report['platform']}. xnip binary SHA-256: {report['xnip_binary_sha256']}.",
         "Raw calls, expected bytes, per-repetition hashes and source provenance: [results.json](results.json). Derived statistics: [relative-results.json](relative-results.json).",
-        "Raw execution provenance stays unchanged; derived JSON separately records the sampled and current report-renderer fingerprints.", "",
+        "Published display metadata replaces machine HOME prefixes with `<HOME>`; the JSON disclosure_redaction ledger hashes affected original strings. Costs retain the actual pre-redaction measurements, while fixture bytes, serialized payloads and tool inputs remain unchanged. Sessions use repository target/native-bench/sessions.",
+        "Sampling fingerprints stay as recorded; derived JSON separately records the sampled and current report-renderer fingerprints.", "",
         *frontier_markdown(stats.get("frontier") or frontier_statistics(report)),
+        *policy_frontier_markdown(stats.get("policy_frontiers") or policy_frontiers(report)),
+        *host_exchange_markdown(report),
+        *provenance_markdown(report),
         *receipt_markdown(stats.get("receipt_modes") or receipt_comparisons(report)),
         "## Relative input costs", "",
         f"Ratio = **native input {unit} / xnip input {unit} on the same task**. xnip is **1.00x**. A ratio of 2x means xnip emits half as much captured edit input in that task; it does not mean the complete agent uses half as many tokens.",
@@ -670,7 +744,7 @@ def render(report, stats):
         "![Per-scenario input ratios](charts/scenario-ratios.svg)", "",
         "## Captured return and combined strings", "",
         "Returned ratio = native captured returned text / xnip captured returned text. Combined ratio = (native input + native captured returned text) / (xnip input + xnip captured returned text), counted independently before summation. The same equal-task geometric mean and exact-pair cohorts apply.",
-        "These are observable strings only: schemas, initialize instructions, repair requests, host framing/structured fields and the full agent workflow are excluded. xnip MCP and Codex CLI capture text at different host boundaries; this is not a uniform provider usage measurement. Aider final model output is unknown, so every aider returned/combined ratio is unavailable, not zero.", "",
+        "These are observable strings only: schemas, initialize instructions, repair requests, host framing/structured fields and the full agent workflow are excluded. xnip MCP and Codex CLI capture text at different host boundaries; this is not a uniform provider usage measurement. Aider final model output and Goose provider-rendered output are unknown, so their returned/combined ratios are unavailable. Declared DSH/Pi rendered content is measured separately from internal DTOs.", "",
         "| Captured backend | Returned all tasks | Input + return all tasks | Returned exact pairs | Input + return exact pairs |",
         "|---|---:|---:|---:|---:|"]
     for row in stats["backends"]:
@@ -717,7 +791,7 @@ def render(report, stats):
         lines.append(f"| {backend['name']} | {backend['version']} | {summary['byte_exact_cases']}/{summary['pairs']} | {summary['lf_normalized_cases']}/{summary['pairs']} | {sum(row['stable_outcome'] for row in records)}/{len(records)} |")
     lines += ["", "Byte equality includes CRLF and final newline. LF normalization still distinguishes a missing final newline. Aider platform follows the current operating system; lf is an explicit separate configuration.",
         "Aider's canonical whole-file profile uses closed code fences. An accepted unclosed final fence that preserves missing EOF is tested separately; the canonical generator does not describe every accepted native encoding.",
-        "Native success status alone never passes the file oracle. The fixtures cover existing UTF-8 text files; lifecycle, approvals, mandatory Read, post-edit formatting and model reasoning are outside scope.", "",
+        "Native success status alone never passes the file oracle. The fixtures cover existing UTF-8 text files. DSH observed profiles include required real read/view calls; their observation and session-isolation probes are retained. Full approvals, post-edit formatting and model reasoning are outside this no-model kernel scope.", "",
         "## Per-task absolute measurements", "",
         "<details><summary>Captured inputs and returned text for every task/profile</summary>", "",
         f"| Task | Backend | Input {unit} | Returned text {unit} | Input / xnip | Return / xnip | Input + return / xnip | Byte exact |",
@@ -725,7 +799,7 @@ def render(report, stats):
     for case in report["cases"]:
         for row in case["results"]:
             ratio = lookup[(case["name"], row["backend"])]["input_ratio"]
-            output = row["returned_text_cost"][unit] if row["family"] != "aider" else "not captured"
+            output = row["returned_text_cost"][unit] if returned_text_known(report, row) else "not captured"
             pair = lookup[(case["name"], row["backend"])]
             lines.append(f"| {case['name']} | {row['backend']} | {row['input_cost'][unit]} | {output} | {multiple(ratio)} | {multiple(pair['captured_returned_text_ratio'])} | {multiple(pair['input_plus_captured_returned_text_ratio'])} | {byte_exact(row)} |")
     lines += ["", "</details>", "", "Returned-text counts cover the captured native output/error, not a uniform full agent response. Aider's final model message is unavailable at its editing-kernel boundary; it is **not zero**. Adapter-return objects include instrumentation and duplicated fields, so combined observable-string ratios above exclude those objects and do not rank full agent-token costs.",
@@ -745,8 +819,14 @@ def render(report, stats):
 
 
 def write_report(report, markdown, source_json):
+    if "disclosure_redaction" not in report:
+        report = public_report(report)
     markdown, source_json = Path(markdown), Path(source_json)
     stats = paired_statistics(report)
+    stats["disclosure_redaction"] = {"source":"results.json#/disclosure_redaction",
+        "scope":report.get("disclosure_redaction", {}).get("scope"),
+        "cost_scope":report.get("disclosure_redaction", {}).get("cost_scope"),
+        "original_values_retained":False}
     stats["source_json_sha256"] = hashlib.sha256(source_json.read_bytes()).hexdigest()
     stats["report_generator_sha256"] = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
     stats["recorded_generator_sha256"] = report.get("adapter_fingerprints", {}).get("benches/native_report.py")
@@ -762,4 +842,5 @@ def write_report(report, markdown, source_json):
         (charts / (name + ".svg")).write_text(svg, encoding="utf8")
     (markdown.parent / "relative-results.json").write_text(
         json.dumps(stats, ensure_ascii=False, indent=2) + "\n", encoding="utf8")
+    write_host_exchanges(report, markdown.parent)
     markdown.write_text(render(report, stats), encoding="utf8")

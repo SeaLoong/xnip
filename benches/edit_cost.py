@@ -21,6 +21,7 @@ import statistics
 import subprocess
 import sys
 import tempfile
+from report_privacy import fixture_session, public_report
 import threading
 import time
 from typing import Any
@@ -348,7 +349,7 @@ def measure_scenario(scenario, binary, counter, repeats):
                "xnip-compact-guarded", "xnip-compact-snapshot"]
     if patch_supported:
         formats += ["unified-diff", "apply-patch"]
-    with tempfile.TemporaryDirectory(prefix="xnip-cost-") as temp:
+    with fixture_session("xnip-cost-") as temp:
         directory = Path(temp)
         with Mcp(binary, directory) as mcp:
             for name in formats:
@@ -407,7 +408,7 @@ def rejection_and_retry(binary, counter):
          {"old": "ababa", "text": "Xba"}, "Xba\n"),
     ]
     results = []
-    with tempfile.TemporaryDirectory(prefix="xnip-retry-") as temp:
+    with fixture_session("xnip-retry-") as temp:
         directory = Path(temp)
         with Mcp(binary, directory) as mcp:
             for name, original, bad, good, expected in trials:
@@ -435,7 +436,7 @@ def rejection_and_retry(binary, counter):
 
 
 def lifecycle(binary, counter):
-    with tempfile.TemporaryDirectory(prefix="xnip-lifecycle-") as temp:
+    with fixture_session("xnip-lifecycle-") as temp:
         directory = Path(temp)
         with Mcp(binary, directory) as mcp:
             transcript = []
@@ -466,7 +467,7 @@ def lifecycle(binary, counter):
 def output_probes(binary, counter):
     """Actual bounded and explicitly unbounded output, without changing files."""
     rows = []
-    with tempfile.TemporaryDirectory(prefix="xnip-output-") as temp:
+    with fixture_session("xnip-output-") as temp:
         directory = Path(temp)
         source = "".join(f"needle-{i:04} " + "read context " * 5 + "\n" for i in range(400))
         long_line = "data=" + "x" * 20000 + ";mode=old\n"
@@ -582,7 +583,8 @@ def render(report):
                f"{len(report['failure_retries'])} injected rejection/read/retry cases and lifecycle bytes passed.",
                "", "Timing includes local scheduling and storage; CLI startup and persistent MCP have different scopes.",
                "The fixtures include cases where xnip loses on payload size. Format size does not predict model reliability.",
-               "JSON includes fixture bytes, generated payloads, actual responses, schema snapshots and retry transcripts.", ""]
+               "JSON includes fixture bytes, generated payloads, actual responses, schema snapshots and retry transcripts.",
+        "Sessions use repository target/native-bench/sessions. Public display metadata replaces machine HOME prefixes with `<HOME>` after measurement; the disclosure_redaction ledger retains original-string hashes. Fixture bytes, serialized payloads and tool inputs are unchanged, and all costs use pre-redaction strings.", ""]
     return "\n".join(output)
 
 
@@ -591,7 +593,7 @@ def source_fingerprint():
     paths = set(ROOT.glob("src/**/*.rs")) | set(ROOT.glob("xtask/src/**/*.rs"))
     paths.update(ROOT / name for name in (
         "Cargo.toml", "Cargo.lock", "build.rs", "xtask/Cargo.toml",
-        "rust-toolchain.toml", "benches/edit_cost.py", *PROMPT_PATHS,
+        "rust-toolchain.toml", "benches/edit_cost.py", "benches/report_privacy.py", *PROMPT_PATHS,
     ))
     files, aggregate = [], hashlib.sha256()
     for path in sorted(paths, key=lambda value: value.relative_to(ROOT).as_posix()):
@@ -651,6 +653,7 @@ def main():
         raise RuntimeError("xnip binary changed during the benchmark; rerun after the build finishes")
     if source_fingerprint() != source_before:
         raise RuntimeError("source inputs changed during the benchmark; rerun after edits finish")
+    report = public_report(report)
     if args.json:
         args.json.parent.mkdir(parents=True, exist_ok=True)
         args.json.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

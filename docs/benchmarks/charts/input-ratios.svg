@@ -1,20 +1,20 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1160" height="1370" viewBox="0 0 1160 1370" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" width="1160" height="1750" viewBox="0 0 1160 1750" role="img" aria-labelledby="title desc">
 <title id="title">Relative native edit input</title><desc id="desc">Per-task native input divided by xnip input. Geometric means use equal task weights. Exact subsets differ across backends.</desc>
 <style>text{font-family:Segoe UI,Arial,sans-serif;fill:#192b3a;font-size:13px}.small{font-size:11px;fill:#526575}.title{font-size:21px;font-weight:600}.tick{fill:#dfe6eb;stroke:none}</style>
-<rect width="1160" height="1370" fill="#fff"/>
+<rect width="1160" height="1750" fill="#fff"/>
 <text x="28" y="36" class="title">Relative native edit input</text>
 <text x="28.00" y="61.00" class="small" text-anchor="start">xnip = 1x | tokens | log axis | higher means more native input</text>
 <text x="28.00" y="82.00" class="small" text-anchor="start">Filled bar: all tasks, including incompatible outputs. Orange diamond: both tools byte-exact.</text>
 <text x="873.00" y="101.00" class="" text-anchor="start">All tasks</text>
 <text x="990.00" y="101.00" class="" text-anchor="start">Exact subset</text>
-<line x1="318.32" y1="98" x2="318.32" y2="1290" stroke="#e1e7ed" stroke-dasharray="1 0"/>
-<text x="318.32" y="1312.00" class="small" text-anchor="middle">0.5x</text>
-<line x1="467.53" y1="98" x2="467.53" y2="1290" stroke="#768b9a" stroke-dasharray="4 3"/>
-<text x="467.53" y="1312.00" class="small" text-anchor="middle">1x</text>
-<line x1="616.74" y1="98" x2="616.74" y2="1290" stroke="#e1e7ed" stroke-dasharray="1 0"/>
-<text x="616.74" y="1312.00" class="small" text-anchor="middle">2x</text>
-<line x1="813.99" y1="98" x2="813.99" y2="1290" stroke="#e1e7ed" stroke-dasharray="1 0"/>
-<text x="813.99" y="1312.00" class="small" text-anchor="middle">5x</text>
+<line x1="318.32" y1="98" x2="318.32" y2="1670" stroke="#e1e7ed" stroke-dasharray="1 0"/>
+<text x="318.32" y="1692.00" class="small" text-anchor="middle">0.5x</text>
+<line x1="467.53" y1="98" x2="467.53" y2="1670" stroke="#768b9a" stroke-dasharray="4 3"/>
+<text x="467.53" y="1692.00" class="small" text-anchor="middle">1x</text>
+<line x1="616.74" y1="98" x2="616.74" y2="1670" stroke="#e1e7ed" stroke-dasharray="1 0"/>
+<text x="616.74" y="1692.00" class="small" text-anchor="middle">2x</text>
+<line x1="813.99" y1="98" x2="813.99" y2="1670" stroke="#e1e7ed" stroke-dasharray="1 0"/>
+<text x="813.99" y="1692.00" class="small" text-anchor="middle">5x</text>
 <text x="28.00" y="126.00" class="" text-anchor="start">xnip-edit</text>
 <rect x="467.53" y="114" width="1.00" height="16" rx="3" fill="#007f73"/>
 <path d="M 467.53 115 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
@@ -170,5 +170,55 @@
 <path d="M 616.96 1255 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
 <text x="873.00" y="1266.00" class="" text-anchor="start">1.87x (13)</text>
 <text x="990.00" y="1266.00" class="" text-anchor="start">2.00x (12)</text>
-<text x="28.00" y="1352.00" class="small" text-anchor="start">Counts in parentheses are paired tasks. Exact subsets have different sizes; these bars are not a common-corpus quality ranking.</text>
+<text x="28.00" y="1304.00" class="" text-anchor="start">dsh-fs-observed-edit</text>
+<rect x="467.53" y="1292" width="92.07" height="16" rx="3" fill="#b33d45"/>
+<path d="M 559.60 1293 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="1304.00" class="" text-anchor="start">1.53x (13)</text>
+<text x="990.00" y="1304.00" class="" text-anchor="start">1.53x (13)</text>
+<text x="28.00" y="1342.00" class="" text-anchor="start">dsh-fs-observed-write</text>
+<rect x="467.53" y="1330" width="271.09" height="16" rx="3" fill="#b33d45"/>
+<path d="M 738.62 1331 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="1342.00" class="" text-anchor="start">3.52x (13)</text>
+<text x="990.00" y="1342.00" class="" text-anchor="start">3.52x (13)</text>
+<text x="28.00" y="1380.00" class="" text-anchor="start">dsh-fs-bare-edit</text>
+<rect x="458.42" y="1368" width="9.11" height="16" rx="3" fill="#b33d45"/>
+<path d="M 458.42 1369 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="1380.00" class="" text-anchor="start">0.96x (13)</text>
+<text x="990.00" y="1380.00" class="" text-anchor="start">0.96x (13)</text>
+<text x="28.00" y="1418.00" class="" text-anchor="start">dsh-fs-bare-write</text>
+<rect x="467.53" y="1406" width="179.87" height="16" rx="3" fill="#b33d45"/>
+<path d="M 647.39 1407 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="1418.00" class="" text-anchor="start">2.31x (13)</text>
+<text x="990.00" y="1418.00" class="" text-anchor="start">2.31x (13)</text>
+<text x="28.00" y="1456.00" class="" text-anchor="start">dsh-str-observed-edit</text>
+<rect x="467.53" y="1444" width="176.11" height="16" rx="3" fill="#b33d45"/>
+<path d="M 643.64 1445 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="1456.00" class="" text-anchor="start">2.27x (13)</text>
+<text x="990.00" y="1456.00" class="" text-anchor="start">2.27x (13)</text>
+<text x="28.00" y="1494.00" class="" text-anchor="start">dsh-str-bare-edit</text>
+<rect x="467.53" y="1482" width="78.44" height="16" rx="3" fill="#b33d45"/>
+<path d="M 545.97 1483 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="1494.00" class="" text-anchor="start">1.44x (13)</text>
+<text x="990.00" y="1494.00" class="" text-anchor="start">1.44x (13)</text>
+<text x="28.00" y="1532.00" class="" text-anchor="start">pi-native-edit</text>
+<rect x="467.53" y="1520" width="48.42" height="16" rx="3" fill="#8a6a12"/>
+<path d="M 515.95 1521 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="1532.00" class="" text-anchor="start">1.25x (13)</text>
+<text x="990.00" y="1532.00" class="" text-anchor="start">1.25x (13)</text>
+<text x="28.00" y="1570.00" class="" text-anchor="start">pi-native-write</text>
+<rect x="467.53" y="1558" width="172.06" height="16" rx="3" fill="#8a6a12"/>
+<path d="M 639.59 1559 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="1570.00" class="" text-anchor="start">2.22x (13)</text>
+<text x="990.00" y="1570.00" class="" text-anchor="start">2.22x (13)</text>
+<text x="28.00" y="1608.00" class="" text-anchor="start">goose-native-edit</text>
+<rect x="465.16" y="1596" width="2.37" height="16" rx="3" fill="#24839a"/>
+<path d="M 465.16 1597 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="1608.00" class="" text-anchor="start">0.99x (13)</text>
+<text x="990.00" y="1608.00" class="" text-anchor="start">0.99x (13)</text>
+<text x="28.00" y="1646.00" class="" text-anchor="start">goose-native-write</text>
+<rect x="467.53" y="1634" width="172.06" height="16" rx="3" fill="#24839a"/>
+<path d="M 639.59 1635 l 7 7 l -7 7 l -7 -7 Z" fill="#efb23d" stroke="#654610"/>
+<text x="873.00" y="1646.00" class="" text-anchor="start">2.22x (13)</text>
+<text x="990.00" y="1646.00" class="" text-anchor="start">2.22x (13)</text>
+<text x="28.00" y="1732.00" class="small" text-anchor="start">Counts in parentheses are paired tasks. Exact subsets have different sizes; these bars are not a common-corpus quality ranking.</text>
 </svg>

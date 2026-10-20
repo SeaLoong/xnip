@@ -3,6 +3,15 @@
 use std::process::ExitCode;
 
 fn main() -> ExitCode {
+    // Keep a readable identity in stripped cross-platform distributions. Local
+    // packaging checks foreign binaries without executing them on this host.
+    std::hint::black_box(concat!(
+        "\0XNIP_BUILD_ID_V1:",
+        env!("CARGO_PKG_VERSION"),
+        "|",
+        env!("XNIP_TARGET"),
+        "\0"
+    ));
     if std::env::args_os()
         .nth(1)
         .is_some_and(|value| value == xnip::update::WORKER_COMMAND)

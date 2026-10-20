@@ -60,6 +60,7 @@ jobs:
     # Its verification jobs explicitly keep contents: read and receive no release secret.
     permissions:
       contents: write
+      id-token: write
     uses: ./.github/workflows/ci.yml
     with:
       force_all: true
@@ -71,9 +72,12 @@ jobs:
           (needs.version.outputs.reused == 'true' || needs.checks.result == 'success') }}
     permissions:
       contents: write
+      id-token: write
     uses: ./.github/workflows/build-release.yml
     secrets:
       RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
     with:
       version: ${{ needs.version.outputs.version }}
       prerelease: ${{ needs.version.outputs.prerelease == 'true' }}

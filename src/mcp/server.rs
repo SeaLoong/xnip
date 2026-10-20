@@ -4,7 +4,7 @@ use anyhow::{Context, Result};
 use rmcp::{
     ErrorData as McpError, ServerHandler, ServiceExt,
     handler::server::router::tool::ToolRouter,
-    model::{ServerCapabilities, ServerInfo},
+    model::{ServerCapabilities, ServerConfig},
     tool_handler, tool_router,
 };
 
@@ -265,8 +265,8 @@ impl XnipServer {
 #[allow(unknown_lints, clippy::unused_async_trait_impl)]
 #[tool_handler(router = self.tool_router)]
 impl ServerHandler for XnipServer {
-    fn get_info(&self) -> ServerInfo {
-        let mut info = ServerInfo::new(ServerCapabilities::builder().enable_tools().build())
+    fn get_info(&self) -> ServerConfig {
+        let mut info = ServerConfig::new(ServerCapabilities::builder().enable_tools().build())
             .with_instructions(format!(
                 "{INSTRUCTIONS_START}{}{INSTRUCTIONS_END}",
                 match self.receipts {
@@ -377,7 +377,7 @@ mod tests {
     use super::{Receipts, Toolset, XnipServer};
     use rmcp::{
         ErrorData,
-        model::{CallToolResult, Content},
+        model::{CallToolResult, ContentBlock},
     };
 
     #[test]
@@ -407,7 +407,7 @@ mod tests {
     #[test]
     fn text_receipt_presentation_does_not_strip_error_details() {
         let server = XnipServer::with_options(Toolset::Compact, Receipts::Text);
-        let mut failure = CallToolResult::success(vec![Content::text("failed")]);
+        let mut failure = CallToolResult::success(vec![ContentBlock::text("failed")]);
         failure.is_error = Some(true);
         failure.structured_content = Some(serde_json::json!({"reason":"retained"}));
         let expected = serde_json::to_value(&failure).unwrap();

@@ -12,7 +12,7 @@
 
 ## Measured editing costs
 
-The benchmark executes real **Codex, Gemini CLI, OpenCode and aider editors**: **13 scenarios × 31 profiles × 3 repetitions**. Every eligible profile produces the expected file bytes in every repetition. Counts use `tiktoken 0.14.0 / o200k_base`.
+The benchmark executes real **Codex, Gemini CLI, OpenCode, aider, DSH, Pi and Goose editors** against the 0.5.0 source build: **13 scenarios × 41 editor profiles × 3 repetitions**, plus six separate host→xnip MCP profiles. Every eligible profile produces the expected file bytes in every repetition. Counts use `tiktoken 0.14.0 / o200k_base`.
 
 ![Best observed byte-exact editing input](docs/benchmarks/charts/readme-frontier.svg)
 
@@ -20,16 +20,18 @@ Each task compares the **best observed native input / best observed xnip input**
 
 | xnip interface / allowed operations | Native best / xnip best | xnip shorter / tied / native shorter |
 |---|---:|---:|
-| MCP · guarded | 1.37x | 13 / 0 / 0 |
+| MCP · guarded | 1.23x | 13 / 0 / 0 |
 | MCP · snapshot-enabled | 1.26x | 12 / 1 / 0 |
-| CLI stdin · guarded | 1.73x | 13 / 0 / 0 |
+| CLI stdin · guarded | 1.55x | 13 / 0 / 0 |
 | CLI stdin · snapshot-enabled | 1.80x | 13 / 0 / 0 |
 
-**Why use it:** with complete file context, a substring change in the long-line fixture takes **11 MCP input tokens**, versus **10,037** for Codex's unique-context patch. File groups also avoid repeated paths and calls. The CLI stdin strategies have smaller input in all 13 measured tasks, in both pools; its invocation arguments are an additional cost recorded separately.
+**Why use it:** with complete file context, a substring change in the long-line fixture takes **11 MCP input tokens**, versus **18** for the best observed native input (Goose), or **10,037** for Codex's unique-context patch. File groups also avoid repeated paths and calls. The CLI stdin strategies have smaller input in all 13 measured tasks, in both pools; its invocation arguments are an additional cost recorded separately.
 
 **Choose the representation before sending it:** when complete current content is already known and old-content guards are optional, native line manifests and shorter unique literal pairs can beat a whole-file listing. The multiline function takes **25** xnip MCP input tokens versus **26** for aider whole; the same-file batch takes **18** versus **20**. Required old-content checks remain intact. In the snapshot-enabled MCP pool, xnip is smaller in 12 tasks and tied in one.
 
 **Smaller replies:** `xnip mcp --receipts text` reduces full captured JSON-RPC reply tokens by about **56%** across 26 matched comparisons. Inputs, text receipts and final file bytes are identical to the default structured mode. The same five-tool discovery catalog is **23.8% smaller** (2,303 to 1,754 tokens).
+
+**New harness findings:** Goose's short argument shape wins most native guarded input comparisons; Pi batches disjoint edits against the original file. DSH's observed profiles include the real read/view required before editing. Its bare and observed policy groups have separate comparisons and stay outside the pooled frontier above; xnip's external MCP process does not inherit DSH's filesystem policy. [Host exchange evidence](docs/benchmarks/host-exchange-results.json) records actual public names, schema projections, instructions and returned content separately. Goose's provider projection remains unknown.
 
 Native relative-path, tighter-context and equivalent known-file literal-trimming profiles are included. Only byte-exact outcomes qualify for the frontier; all original profiles and incompatible results remain visible. Aider's final returned text is unknown. CLI invocation, serialized MCP request/reply, tool text and startup costs are separate measurements; this is an editor benchmark, not billed or complete agent usage.
 
@@ -37,7 +39,30 @@ Native relative-path, tighter-context and equivalent known-file literal-trimming
 
 ## Install
 
-The features below ship in **v0.4.0**; see the [changelog](CHANGELOG.md) for release details. Prebuilt stable releases need no Rust. Both installers verify the downloaded archive's SHA256:
+### npm (preferred)
+
+Node **22.14+** is required; Rust is unnecessary for installing a prepared package.
+Install a published release with:
+
+~~~sh
+npm install --global xnip
+xnip --version
+~~~
+
+Update with `npm install --global xnip@latest`; npm-managed processes disable
+native self-update. Restart MCP sessions after upgrading. DSH/Pi activation
+remains explicit.
+
+For unpublished development builds or offline verification, install a matching
+private host tarball using
+`npm install --global --offline --ignore-scripts ./xnip-0.5.0.tgz`.
+See the [npm guide](npm/README.md) for platform packages, local preparation and
+the CI publication path.
+
+### Standalone binaries and source
+
+Release **0.5.0** includes DSH/Pi/Goose integration and npm distribution.
+See the [changelog](CHANGELOG.md). Without Node, use either SHA256-verifying installer:
 
 ~~~sh
 # macOS / Linux
@@ -49,12 +74,12 @@ curl -fsSL https://github.com/SeaLoong/xnip/releases/latest/download/install.sh 
 Invoke-RestMethod https://github.com/SeaLoong/xnip/releases/latest/download/install.ps1 | Invoke-Expression
 ~~~
 
-Or download a binary from [GitHub Releases](https://github.com/SeaLoong/xnip/releases). See [installation](docs/installation.md) for supported platforms, PATH, pinned versions, checksums and removal.
-
-Source installation needs **Rust 1.89+**:
+Or download a binary from [GitHub Releases](https://github.com/SeaLoong/xnip/releases).
+See [installation](docs/installation.md) for targets, PATH, pinned versions,
+checksums and removal. Source installation needs **Rust 1.89+**:
 
 ~~~sh
-cargo install --git https://github.com/SeaLoong/xnip --tag v0.4.0 --locked xnip
+cargo install --git https://github.com/SeaLoong/xnip --tag v0.5.0 --locked xnip
 ~~~
 
 ## Edit
@@ -93,7 +118,12 @@ Use the CLI already on PATH, or configure `xnip mcp` for structured arguments. M
 | Cursor | [rule](integrations/cursor/xnip.mdc) | Project rule, `alwaysApply: false` |
 | Copilot | [instruction](integrations/copilot/xnip.md) | Project instructions |
 | Aider | [convention](integrations/aider/CONVENTIONS.md) | Project conventions |
+| DSH | [bundle and MCP plugin](docs/dsh.md) | Explicitly activate the local package bundle; official MCP bridge |
+| Pi | [extension](docs/pi.md) | Local package entry registers an MCP server per session |
+| Goose | [stdio extension](docs/goose.md) | Merge extension config or use `--with-extension`; xnip 0.5.0+ |
 | Other agents | [generic skill](integrations/generic/SKILL.md) | Load for editing; include references |
+
+The [npm distribution](npm/README.md) packages the same native executable and includes both `xnip/dsh` and `xnip/pi`; a separate `dsh-xnip` package is unnecessary for this MCP integration. CI validates six platform packages and publishes them before the parent package. Local host tarballs remain private for offline testing. Node is required only for the npm wrapper and JavaScript host integrations.
 
 The [AGENTS snippet](integrations/agents-md/AGENTS.md) is a short project-level alternative. The canonical [agent guide](docs/SKILL.md) selects operations and loads detailed rules on demand.
 

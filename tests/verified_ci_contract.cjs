@@ -33,7 +33,7 @@ function gate(overrides = {}) {
     status: "completed",
     conclusion: "success",
     html_url: "https://github.com/example/xnip/actions/runs/700/job/800",
-    steps: [{ name: "Full verification", conclusion: "success" }],
+    steps: [{ name: "Full verification (Rust, integrations, npm, harnesses)", conclusion: "success" }],
     ...overrides,
   };
 }
@@ -131,8 +131,8 @@ test("missing trusted run requests complete verification", async () => {
 
 for (const [name, steps] of [
   ["missing", []],
-  ["skipped", [{ name: "Full verification", conclusion: "skipped" }]],
-  ["failed", [{ name: "Full verification", conclusion: "failure" }]],
+  ["skipped", [{ name: "Full verification (Rust, integrations, npm, harnesses)", conclusion: "skipped" }]],
+  ["failed", [{ name: "Full verification (Rust, integrations, npm, harnesses)", conclusion: "failure" }]],
 ]) {
   test(`a ${name} full marker falls back to complete verification`, async () => {
     const fixture = harness({ jobSnapshots: [[gate({ steps })]] });
@@ -253,6 +253,11 @@ test("newest run wins even when an older run has successful full verification", 
   assert.equal(fixture.calls.find((call) => call.endpoint === "jobs").parameters.run_id, 701);
 });
 
+test("a pre-harness full marker cannot claim the expanded required checks", async () => {
+  const fixture = harness({ jobSnapshots: [[gate({ steps: [{ name: "Full verification", conclusion: "success" }] })]] });
+  assert.equal(await fixture.run(), false);
+});
+
 test("a successful gate from a previous attempt cannot be reused", async () => {
   const fixture = harness({
     jobSnapshots: [[gate({ run_attempt: 1 })]],
@@ -311,8 +316,8 @@ test("duplicate full-verification markers are rejected", async () => {
   const fixture = harness({
     jobSnapshots: [[gate({
       steps: [
-        { name: "Full verification", conclusion: "success" },
-        { name: "Full verification", conclusion: "failure" },
+        { name: "Full verification (Rust, integrations, npm, harnesses)", conclusion: "success" },
+        { name: "Full verification (Rust, integrations, npm, harnesses)", conclusion: "failure" },
       ],
     })]],
   });

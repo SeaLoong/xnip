@@ -103,7 +103,9 @@ class EligibilityContracts(unittest.TestCase):
             "docs/apply-format.md", "docs/error-codes.md", "docs/examples.md",
             "docs/patch.md", "docs/recovery.md", "docs/edit.md",
             "xtask/Cargo.toml", "xtask/src/main.rs", ".github/scripts/release.py",
-            ".github/scripts/publish_release.py",
+            ".github/scripts/publish_release.py", ".github/scripts/publish_npm.py",
+            "npm/prepare.py", "npm/xnip/package.json", "npm/xnip/bin/xnip.cjs", "npm/README.md",
+            "integrations/dsh/index.mjs", "integrations/pi/index.mjs",
             ".github/workflows/build-release.yml", ".github/workflows/release.yml",
         ]
         for path in eligible:
@@ -120,6 +122,21 @@ class EligibilityContracts(unittest.TestCase):
         ]:
             with self.subTest(path=path):
                 self.assertFalse(release.release_relevant(path))
+
+    def test_unshipped_harness_fixtures_and_tests_do_not_publish_releases(self):
+        for path in ["integrations/goose/config.yaml",
+                     "tests/npm_contract.py", "tests/npm_prepare_contract.py", "tests/pi_contract.mjs",
+                     "tests/goose_native_contract.py", "benches/native/dsh_adapter.mjs",
+                     "benches/native/pi_adapter.mjs", "benches/native/goose_adapter/Cargo.toml"]:
+            with self.subTest(path=path):
+                self.assertFalse(release.release_relevant(path))
+
+    def test_integration_eligibility_matches_the_actual_archive_packaging_entries(self):
+        for directory in (ROOT / "integrations").iterdir():
+            if directory.is_dir():
+                with self.subTest(integration=directory.name):
+                    self.assertEqual(release.release_relevant(f"integrations/{directory.name}/entry"),
+                                     (directory / "package.sh").is_file() or directory.name in {"dsh", "pi"})
 
     def test_plan_inspects_entire_push_range_and_the_head_manifest(self):
         with repository() as repo:
