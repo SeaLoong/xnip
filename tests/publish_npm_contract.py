@@ -116,7 +116,7 @@ class Registry:
         self.fixture = fixture
         self.packages = {}
         self.events = []
-    def metadata(self, name):
+    def metadata(self, name, *, timeout=30):
         self.events.append(("lookup", name))
         return copy.deepcopy(self.packages.get(name))
 
@@ -267,6 +267,58 @@ class PublicationContracts(unittest.TestCase):
         self.assertEqual(result["channel"], "latest")
         self.assertEqual([event[1] for event in self.npm.events if event[0] == "publish"], list(publisher.NAMES))
         self.assertEqual(list(result["packages"].values()), ["published"] * 7)
+    def test_successful_native_submissions_are_batched_before_delayed_visibility_and_parent(self):
+        elapsed = [0]
+        available, verified, trace = {}, set(), []
+        original_metadata, original_publish = self.registry.metadata, self.npm.publish
+        def metadata(name, *, timeout=30):
+            value = original_metadata(name, timeout=timeout)
+            if name not in available:
+                return value
+            trace.append(("poll", name))
+            if elapsed[0] < available[name]:
+                return {"name": name, "versions": {"0.0.0-stage": {}},
+                        "dist-tags": {"latest": "0.0.0-stage"}}
+            verified.add(name)
+            return value
+        def submit(path, channel):
+            name = next(name for name in publisher.NAMES if path.name == f"{name}-{VERSION}.tgz")
+            if name == "xnip":
+                self.assertTrue(set(publisher.NAMES[:-1]).issubset(verified))
+            trace.append(("submit", name))
+            original_publish(path, channel)
+            available[name] = elapsed[0] + 300
+        def wait(seconds):
+            self.waits.append(seconds)
+            elapsed[0] += seconds
+        with patch.object(self.registry, "metadata", side_effect=metadata), patch.object(self.npm, "publish", side_effect=submit):
+            result = publisher.publish(self.directory, SHA, registry=self.registry, npm=self.npm, wait=wait)
+        self.assertEqual(trace[:6], [("submit", name) for name in publisher.NAMES[:-1]])
+        self.assertEqual([event[1] for event in trace if event[0] == "submit"], list(publisher.NAMES))
+        self.assertEqual(set(result["packages"].values()), {"published"})
+        self.assertEqual(elapsed[0], 600)  # independent native and parent windows
+    def test_invisible_successful_native_batch_waits_once_and_never_resubmits_or_exposes_parent(self):
+        original = self.registry.metadata
+        def metadata(name, *, timeout=30):
+            return None if name in self.registry.packages else original(name, timeout=timeout)
+        with patch.object(self.registry, "metadata", side_effect=metadata):
+            with self.assertRaisesRegex(publisher.VersionNotVisible, "publication may still be processing"):
+                self.publish()
+        self.assertEqual([event[1] for event in self.npm.events if event[0] == "publish"], list(publisher.NAMES[:-1]))
+        self.assertEqual(sum(self.waits), 720)
+        self.assertNotIn("xnip", self.registry.packages)
+    def test_immutable_mismatch_after_submission_blocks_parent_without_visibility_retry(self):
+        original = self.registry.metadata
+        def metadata(name, *, timeout=30):
+            value = original(name, timeout=timeout)
+            if value is not None:
+                value["versions"][VERSION]["dist"]["integrity"] = "sha512-different"
+            return value
+        with patch.object(self.registry, "metadata", side_effect=metadata):
+            with self.assertRaisesRegex(publisher.PublishError, "different integrity"):
+                self.publish()
+        self.assertEqual(self.waits, [])
+        self.assertNotIn("xnip", self.registry.packages)
     def test_prerelease_explicitly_uses_next_for_every_package(self):
         with tempfile.TemporaryDirectory(prefix="xnip-next-") as folder:
             fixture = Fixture(Path(folder), "0.5.1-dev.7.gaaaaaaaaaaaa")
@@ -311,13 +363,20 @@ class PublicationContracts(unittest.TestCase):
             with self.assertRaisesRegex(publisher.PublishError, "E403") as caught:
                 self.publish()
         self.assertNotIn("not visible", str(caught.exception))
-        self.assertEqual(self.waits, [1, 2, 4, 8])
+        self.assertEqual(self.waits, list(publisher.VISIBILITY_DELAYS))
         self.assertNotIn("xnip", self.registry.packages)
-    def test_successful_publish_with_lost_response_is_verified(self):
+    def test_successful_publish_with_lost_response_and_delayed_visibility_is_verified(self):
         self.npm.lost_response = publisher.NAMES[0]
-        result = self.publish()
+        original = self.registry.metadata
+        def metadata(name, *, timeout=30):
+            if name == publisher.NAMES[0] and sum(self.waits) < 300:
+                return None
+            return original(name, timeout=timeout)
+        with patch.object(self.registry, "metadata", side_effect=metadata):
+            result = self.publish()
         self.assertEqual(result["packages"][publisher.NAMES[0]], "verified-after-error")
         self.assertEqual(result["packages"]["xnip"], "published")
+        self.assertEqual(sum(self.waits), 300)
     def test_existing_version_with_wrong_channel_requires_explicit_promotion(self):
         metadata = self.fixture.metadata("xnip")
         metadata["dist-tags"]["latest"] = "0.4.0"
@@ -356,10 +415,13 @@ class PublicationContracts(unittest.TestCase):
             with self.assertRaisesRegex(publisher.PublishError, "403"):
                 self.publish()
         self.assertEqual(self.npm.events, [("auth",)])
-    def test_remote_visibility_is_bounded(self):
+    def test_remote_visibility_is_bounded_by_one_shared_twelve_minute_window(self):
+        packs = {name: {"integrity": "sha512-fixture"} for name in publisher.NAMES[:-1]}
+        window = publisher.VisibilityWindow(self.registry, VERSION, "latest", packs, self.waits.append)
         with self.assertRaisesRegex(publisher.PublishError, "not visible"):
-            publisher.visible(self.registry, "xnip", VERSION, "sha512-fixture", self.waits.append)
-        self.assertEqual(self.waits, [1, 2, 4, 8])
+            window.verify(publisher.NAMES[:-1], {})
+        self.assertEqual(self.waits, list(publisher.VISIBILITY_DELAYS))
+        self.assertEqual(sum(self.waits), 720)
     def test_default_auth_does_not_fall_back_to_oidc(self):
         with patch.object(publisher.prepare, "npm_command", return_value=["npm"]), patch.dict(os.environ, {}, clear=True):
             with self.assertRaisesRegex(publisher.PublishError, "NODE_AUTH_TOKEN"):
@@ -393,6 +455,11 @@ class PublicationContracts(unittest.TestCase):
 
 
 class WorkflowConsumerContracts(unittest.TestCase):
+    def test_delivery_timeout_covers_native_and_parent_visibility_windows(self):
+        workflow = (ROOT / ".github/workflows/build-release.yml").read_text(encoding="utf-8")
+        publish = workflow.split("\n  publish:", 1)[1]
+        self.assertIn("timeout-minutes: 45", publish)
+        self.assertEqual(sum(publisher.VISIBILITY_DELAYS), publisher.VISIBILITY_SECONDS)
     def test_ci_local_builds_omit_symbols_without_relaxing_assertions_or_public_payload_cap(self):
         workflow = (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
         environment = workflow.split("\nenv:\n", 1)[1].split("\njobs:", 1)[0]

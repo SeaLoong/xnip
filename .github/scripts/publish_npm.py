@@ -30,6 +30,8 @@ REGISTRY = "https://registry.npmjs.org"
 NAMES = tuple(value[1] for value in prepare.PLATFORMS.values()) + ("xnip",)
 MAX_PACK = 128 * 1024 * 1024
 MAX_METADATA = 16 * 1024 * 1024
+VISIBILITY_SECONDS = 12 * 60
+VISIBILITY_DELAYS = (1, 2, 4, 8, 15, 30) + (60,) * 11
 
 
 class PublishError(Exception):
@@ -178,11 +180,11 @@ def validate_prepared(directory: Path, source_commit: str, prerelease: bool) -> 
 
 
 class Registry:
-    def metadata(self, name: str) -> dict | None:
+    def metadata(self, name: str, *, timeout: float = 30) -> dict | None:
         url = REGISTRY + "/" + urllib.parse.quote(name, safe="")
         request = urllib.request.Request(url, headers={"Accept": "application/json", "User-Agent": "xnip-release"})
         try:
-            with urllib.request.urlopen(request, timeout=30) as response:
+            with urllib.request.urlopen(request, timeout=timeout) as response:
                 raw = response.read(MAX_METADATA + 1)
         except urllib.error.HTTPError as error:
             error.close()
@@ -275,14 +277,55 @@ def verify_channel(metadata: dict | None, name: str, version: str, channel: str,
             raise PublishError(f"refusing to move {name} {channel} backwards from {current} to {version}")
 
 
-def visible(registry, name: str, version: str, integrity: str, wait=time.sleep) -> dict:
-    for attempt in range(5):
-        metadata = registry.metadata(name)
-        if verify_existing(metadata, name, version, integrity):
-            return metadata
-        if attempt < 4:
-            wait(2 ** attempt)
-    raise VersionNotVisible(f"published registry version is not visible: {name}@{version}")
+class VisibilityWindow:
+    """One shared deadline/backoff for an entire batch, including uncertain writes."""
+
+    def __init__(self, registry, version: str, channel: str, packs: dict, wait):
+        self.registry, self.version, self.channel, self.packs = registry, version, channel, packs
+        self.wait = wait
+        self.delays = iter(VISIBILITY_DELAYS)
+        self.started = None
+        self.waited = 0
+
+    def remaining(self) -> float:
+        if self.started is None:
+            self.started = time.monotonic()
+        # Counting scheduled waits also bounds tests whose injected wait is a no-op.
+        return min(VISIBILITY_SECONDS - self.waited,
+                   VISIBILITY_SECONDS - (time.monotonic() - self.started))
+
+    def verify(self, names, publication_errors: dict) -> None:
+        pending = list(names)
+        def expired():
+            for name in pending:
+                if name in publication_errors:
+                    raise publication_errors[name]
+            identities = ", ".join(f"{name}@{self.version}" for name in pending)
+            raise VersionNotVisible(f"published registry versions are not visible after the shared "
+                f"12-minute window: {identities}; publication may still be processing. "
+                "Inspect registry/staged status before retrying; no candidate was resubmitted.")
+        while pending:
+            for name in pending[:]:
+                remaining = self.remaining()
+                if remaining <= 0:
+                    expired()
+                metadata = self.registry.metadata(name, timeout=min(30, remaining))
+                if verify_existing(metadata, name, self.version, self.packs[name]["integrity"]):
+                    verify_channel(metadata, name, self.version, self.channel, final=True)
+                    pending.remove(name)
+                else:
+                    # A placeholder, missing package or old packument is not proof
+                    # that the request failed or that human approval is required.
+                    verify_channel(metadata, name, self.version, self.channel)
+            if not pending:
+                return
+            delay = next(self.delays, None)
+            remaining = self.remaining()
+            if delay is None or remaining <= 0:
+                expired()
+            delay = min(delay, remaining)
+            self.wait(delay)
+            self.waited += delay
 
 
 def publish(directory: Path, source_commit: str, prerelease: bool = False, *, auth="token",
@@ -299,23 +342,30 @@ def publish(directory: Path, source_commit: str, prerelease: bool = False, *, au
         existing[name] = verify_existing(metadata, name, version, packs[name]["integrity"])
         verify_channel(metadata, name, version, channel)
     statuses = {}
-    for name in NAMES:  # six platforms, then the parent that makes them discoverable
-        if not existing[name]:
+    def submit_and_verify(names):
+        window = VisibilityWindow(registry, version, channel, packs, wait)
+        submitted, publication_errors = [], {}
+        for name in names:
+            submitted.append(name)
+            if existing[name]:
+                statuses[name] = "skipped"
+                continue
             try:
                 npm.publish(packs[name]["path"], channel)
             except PublishError as publication_error:
-                # A request may succeed remotely and lose its response. Accept only
-                # this exact immutable version, never a generic conflict/auth error.
-                try:
-                    metadata = visible(registry, name, version, packs[name]["integrity"], wait)
-                except VersionNotVisible:
-                    raise publication_error
-                verify_channel(metadata, name, version, channel, final=True)
+                # Stop new submissions until an uncertain request is resolved.
+                # This shares the batch budget and never retries the write.
+                publication_errors[name] = publication_error
+                window.verify(submitted, publication_errors)
                 statuses[name] = "verified-after-error"
-                continue
-        metadata = visible(registry, name, version, packs[name]["integrity"], wait)
-        verify_channel(metadata, name, version, channel, final=True)
-        statuses[name] = "skipped" if existing[name] else "published"
+            else:
+                statuses[name] = "published"
+        window.verify(names, publication_errors)
+
+    # Ordinary successful submissions do not wait one platform at a time.
+    # The parent becomes discoverable only after all six exact payloads are live.
+    submit_and_verify(NAMES[:-1])
+    submit_and_verify(("xnip",))
     return {"version": version, "source_commit": source_commit, "channel": channel, "packages": statuses}
 
 

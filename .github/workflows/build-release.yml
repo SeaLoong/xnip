@@ -288,7 +288,7 @@ jobs:
       group: publish-delivery-${{ inputs.prerelease && 'development' || 'stable' }}
       cancel-in-progress: false
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 45
     env:
       XNIP_NPM_AUTH: ${{ vars.XNIP_NPM_AUTH || 'token' }}
     steps:

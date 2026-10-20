@@ -39,7 +39,7 @@ preparation; DSH has its own Node requirement. Tests use Node 24.
 ```powershell
 cargo build --release --locked
 python npm/prepare.py --host-binary target/release/xnip.exe --out target/npm-local --pack
-npm install --prefix target/npm-install --cache target/npm-cache --offline --ignore-scripts --no-audit --no-fund ./target/npm-local/tarballs/xnip-0.5.2.tgz
+npm install --prefix target/npm-install --cache target/npm-cache --offline --ignore-scripts --no-audit --no-fund ./target/npm-local/tarballs/xnip-0.5.3.tgz
 node target/npm-install/node_modules/xnip/bin/xnip.cjs --version
 ```
 
@@ -50,7 +50,7 @@ it is not a cross-platform release. Local GNU Linux binaries receive explicit
 installation with a matching host tarball:
 
 ```sh
-npm install --global --offline --ignore-scripts ./xnip-0.5.2.tgz
+npm install --global --offline --ignore-scripts ./xnip-0.5.3.tgz
 xnip --version
 ```
 
@@ -132,9 +132,13 @@ checks must pass before publication. The coordinator validates authentication
 and all existing registry versions, publishes platform packages first, then
 publishes the parent, and verifies registry integrity and the channel tag.
 
-Stable releases use `latest`; development releases use `next`. Rerun failed
-jobs with the same verified delivery artifact after a partial failure. Existing
-versions are accepted only when their bytes match; they are never overwritten.
+Stable releases use `latest`; development releases use `next`. The publisher
+submits six platform packs, waits up to 12 minutes for the whole batch's public
+versions and hashes, then submits and verifies the parent. A successful npm exit
+can precede registry visibility. Rerun failed jobs with the same verified delivery
+artifact after a partial failure; first check whether a delayed candidate has
+become visible. Existing versions are accepted only when their bytes match;
+they are never overwritten.
 Token bootstrap and subsequent Trusted Publisher/OIDC operation are explicit
 authentication modes. Credentials are supplied by the publishing environment,
 never stored in a package or a checked-in npm configuration.

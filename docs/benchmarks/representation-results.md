@@ -1,8 +1,8 @@
 # Supplementary representation cost benchmark
 
-Counter: {"encoding":"o200k_base","tokenizer":"tiktoken","unit":"tokens","version":"0.14.0"}. Revision: de14d1889b46ada7857f69dd7fdcc673b4c7a517; modified source: False.
-Working-tree binary SHA-256: 59ac9e1ef100f25874579a8772cf45199702ed5d668c71a8f67b04bbe39b891c (unchanged across run).
-Source tree SHA-256: 34aa1e4d599f652f6ed3966125922be9636fefbe28febddcfed4bb70a2c2dc59; includes tracked and untracked build/instruction inputs. Individual file hashes are in JSON.
+Counter: {"encoding":"o200k_base","tokenizer":"tiktoken","unit":"tokens","version":"0.14.0"}. Revision: 159c99cb5f178570c229e5f4c2e82195d812822e; modified source: False.
+Working-tree binary SHA-256: 3cc75dd1502ea6704f3b0b00ec01c1aeedf0482b38f95f4d24ffadee6b5f1a13 (unchanged across run).
+Source tree SHA-256: e5d6f0960803cde5ca1138e7eab3fbaadb8d21a7451bf16824cd11a4888a7604; includes tracked and untracked build/instruction inputs. Individual file hashes are in JSON.
 Comparison scope: current xnip options and harness editing representations; no historical versions.
 Background auto-update is disabled for every xnip subprocess with XNIP_AUTO_UPDATE=0.
 All xnip execution rows check final bytes. Other harness formats are serialization examples; no external agent/model was run.
