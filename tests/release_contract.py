@@ -106,7 +106,7 @@ class EligibilityContracts(unittest.TestCase):
             ".github/scripts/publish_release.py", ".github/scripts/publish_npm.py",
             "npm/prepare.py", "npm/xnip/package.json", "npm/xnip/bin/xnip.cjs", "npm/README.md",
             "integrations/dsh/index.mjs", "integrations/pi/index.mjs",
-            ".github/workflows/build-release.yml", ".github/workflows/release.yml",
+            ".github/workflows/build-release.yml", ".github/workflows/publish.yml",
         ]
         for path in eligible:
             with self.subTest(path=path):
@@ -394,6 +394,19 @@ class StampingContracts(unittest.TestCase):
                 release.stamp(repo.path, "v0.2.1")
             self.assertEqual((repo.path / "Cargo.toml").read_bytes(), MANIFEST)
             self.assertEqual((repo.path / "Cargo.lock").read_bytes(), LOCK)
+
+
+class WorkflowEntryContracts(unittest.TestCase):
+    def test_stable_entry_matches_the_registered_trusted_publisher(self):
+        workflows = ROOT / ".github/workflows"
+        self.assertEqual({path.name for path in workflows.iterdir() if path.suffix in {".yml", ".yaml"}},
+                         {"ci.yml", "publish.yml", "build-release.yml"})
+        entry = (workflows / "publish.yml").read_text(encoding="utf-8")
+        self.assertIn("tags: ['v*', '!v*-dev.*']", entry)
+        self.assertIn("uses: ./.github/workflows/build-release.yml", entry)
+        self.assertIn("publish: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}",
+                      entry)
+        self.assertTrue(release.release_relevant(".github/workflows/publish.yml"))
 
 
 class CommandContracts(unittest.TestCase):

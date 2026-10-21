@@ -50,7 +50,7 @@ The [release planner](../.github/scripts/release.py) compares every path in the 
 
 The exact allowlist lives in `release_relevant` and its constants, with [offline contracts](../tests/release_contract.py). CI still runs its checks for changes that do not publish.
 
-For example, with stable Cargo version `0.5.5`, CI generates `0.5.6-dev.<run_number>.g<commit12>`. An already-prerelease Cargo version retains its major/minor/patch core. Version, tag and binary `--version` agree: only the isolated build checkout's root manifest and matching lockfile entry are stamped. The source branch is never rewritten. Rerunning a workflow keeps the same tag; `run_attempt` is excluded.
+For example, with stable Cargo version `1.2.3`, CI generates `1.2.4-dev.<run_number>.g<commit12>`. An already-prerelease Cargo version retains its major/minor/patch core. Version, tag and binary `--version` agree: only the isolated build checkout's root manifest and matching lockfile entry are stamped. The source branch is never rewritten. Rerunning a workflow keeps the same tag; `run_attempt` is excluded.
 
 Every commit selected for publication receives full verification: formatting, linting, all platform tests, dependency policy, MSRV, package/integration checks and release contracts must pass. The successful `ci` gate records a `Full verification (Rust, integrations, npm, harnesses)` marker; scoped verification alone cannot authorize publication. Six build jobs produce Linux musl, macOS and Windows archives for x86_64 and ARM64. Native runner smoke tests check the embedded version and doctor output.
 
@@ -61,11 +61,11 @@ The publisher serializes calls for the same version. An existing tag must point 
 Install a preview by its explicit tag:
 
 ```sh
-XNIP_VERSION=v0.5.6-dev.123.gabcdef123456 sh install.sh
+XNIP_VERSION=v1.2.4-dev.123.gabcdef123456 sh install.sh
 ```
 
 ```powershell
-$env:XNIP_VERSION = 'v0.5.6-dev.123.gabcdef123456'
+$env:XNIP_VERSION = 'v1.2.4-dev.123.gabcdef123456'
 ./install.ps1
 ```
 
@@ -80,25 +80,27 @@ The default installers and [silent updater](updates.md) remain on stable release
 
 Commit and push the intended source before starting CI: GitHub Actions builds
 that pushed ref, not an uncommitted local working tree. A stable release must have
-a nonempty matching changelog section before its tag is created. Merely pushing the 0.5.5 source to the default
-branch selects a development prerelease; it does not publish stable 0.5.5.
+a nonempty matching changelog section before its tag is created. Merely pushing a
+new stable-version source to the default branch selects a development prerelease;
+it does not publish that stable version.
 
 A manual rehearsal runs source checks, complete packaging and six native npm
 installation checks without publishing:
 
 ```sh
-gh workflow run release.yml --ref master
-gh run list --workflow release.yml --limit 3
+gh workflow run publish.yml --ref master
+gh run list --workflow publish.yml --limit 3
 ```
 
 When publishing, create an annotated tag matching Cargo:
 
 ```sh
-git tag -a v0.5.5 -m "xnip v0.5.5"
-git push --atomic origin master v0.5.5
+tag="$(python .github/scripts/release.py version | python -c 'import json,sys; print(json.load(sys.stdin)["tag"])')"
+git tag -a "$tag" -m "xnip $tag"
+git push --atomic origin master "$tag"
 ```
 
-The example assumes Cargo has been set to that new unpublished version. Never move an existing published tag. Push the release commit and tag atomically: the planner sees a matching stable tag at the same commit and skips a duplicate development prerelease while retaining all branch checks. The tag workflow verifies Cargo/tag equality and reuses the successful full `ci` gate from a same-repository default-branch push for that exact commit, waiting for an in-progress gate if necessary. If no reusable full gate exists, it runs full checks once. It then builds and publishes from a complete draft. Stable release notes use the matching, nonempty changelog section. Tags containing a SemVer prerelease identifier are marked prerelease and do not become latest.
+Set Cargo to a new unpublished version before running these commands; the tag is read from that manifest, and `git tag` rejects an existing tag. Never move an existing published tag. Push the release commit and tag atomically: the planner sees a matching stable tag at the same commit and skips a duplicate development prerelease while retaining all branch checks. The tag workflow verifies Cargo/tag equality and reuses the successful full `ci` gate from a same-repository default-branch push for that exact commit, waiting for an in-progress gate if necessary. If no reusable full gate exists, it runs full checks once. It then builds and publishes from a complete draft. Stable release notes use the matching, nonempty changelog section. Tags containing a SemVer prerelease identifier are marked prerelease and do not become latest.
 
 Archives contain the executable, README, MIT license and third-party notices. Assets comprise six binary archives, six checksums, two installers and seven integration archives. Build commit metadata comes from `XNIP_BUILD_COMMIT`; `Cross.toml` forwards it into Linux containers.
 
@@ -260,7 +262,7 @@ npm verifies and can resume its draft independently.
 
 ### First publication and Trusted Publisher transition
 
-Stable releases default to OIDC through `release.yml`. Development prereleases
+Stable releases default to OIDC through `publish.yml`. Development prereleases
 retain explicit token authentication until `ci.yml` has also been configured as
 a trusted publisher on all seven packages. Repository Actions variable
 `XNIP_NPM_AUTH` overrides both defaults: use `oidc` after both callers are ready,
@@ -280,7 +282,10 @@ alternative, but it creates a public `0.0.0-stage` placeholder and is not a loca
 dry run. [Staging behavior](https://docs.npmjs.com/staged-publishing/)
 
 For OIDC, configure each package for `SeaLoong/xnip` and the actual caller filename:
-`release.yml` for stable tags, plus `ci.yml` if development publishing is enabled.
+`publish.yml` for stable tags, plus `ci.yml` if development publishing is enabled.
+Use the exact filename, rather than the Actions display name: the stable entry
+is `.github/workflows/publish.yml`, while its display name remains `release`.
+The reusable `build-release.yml` does not replace this caller identity.
 Allow direct publishing when automatic publication is intended. The workflows
 already grant `id-token: write` through caller and reusable callee; the publisher
 uses GitHub-hosted runners. Set repository Actions variable
@@ -290,6 +295,8 @@ does not inject the bootstrap credential. The npm subprocess uses an isolated
 working directory and empty user/global configuration files, with publishing
 tokens and npm configuration overrides removed from its environment. A failed
 OIDC exchange therefore cannot fall back to project, user or environment tokens.
+OIDC publication explicitly requires `--provenance`, so failed automatic visibility
+detection cannot silently omit the signed provenance statement.
 A new trust configuration needs a successful publish within two days.
 [Official OIDC configuration and reusable-workflow rules](https://docs.npmjs.com/trusted-publishers/)
 
@@ -303,7 +310,7 @@ does not prove that OIDC publication works. To verify both caller workflows:
    without a matching stable tag. The ordinary CI run publishes a new development
    version through `ci.yml`, leaving the existing stable `latest` channel intact.
 3. After that run succeeds, create the stable tag matching Cargo at the same
-   source commit. The tag run publishes through `release.yml` using the successful
+   source commit. The tag run publishes through `publish.yml` using the successful
    full source gate. No source rewrite or existing-tag move is needed.
 4. Confirm that each run published seven new packages, the receipt reports
    `authentication: oidc`, and npm provenance identifies the expected repository,

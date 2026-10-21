@@ -4,12 +4,13 @@ User-visible changes are recorded here. Versions follow Semantic Versioning; com
 
 ## [Unreleased]
 
-## [0.5.6] - 2026-10-22
+## [0.5.7] - 2026-10-22
 
 User-focused documentation and stricter, retry-safe release publication.
 
 - Refresh both READMEs with status badges, standalone installation, practical editing and MCP examples, and a concise benchmark summary. Keep npm as an alternative and remove fixed release references and development details from the user entry points.
-- Isolate npm Trusted Publishing from project, user and environment credentials so failed OIDC authentication cannot fall back to a publishing token.
+- Align the stable publishing workflow filename with the configured `publish.yml` trusted publisher.
+- Isolate npm Trusted Publishing from project, user and environment credentials so failed OIDC authentication cannot fall back to a publishing token. Require signed provenance for each OIDC publication.
 - Retry bounded reads when a newly created GitHub release draft is temporarily invisible, without creating a second draft or relaxing release identity and asset checks.
 
 ## [0.5.5] - 2026-10-22
@@ -132,8 +133,8 @@ First public release of xnip, a CLI and MCP stdio server for precise local text 
 - MCP write tools commit immediately; preview/check modes are available through the CLI. The server uses the launching user's filesystem permissions and is intended for trusted local clients.
 - Native CLI arguments are literal shell arguments; no automatic `\n` decoding or newline-style conversion is performed.
 
-[Unreleased]: https://github.com/SeaLoong/xnip/compare/v0.5.6...HEAD
-[0.5.6]: https://github.com/SeaLoong/xnip/releases/tag/v0.5.6
+[Unreleased]: https://github.com/SeaLoong/xnip/compare/v0.5.7...HEAD
+[0.5.7]: https://github.com/SeaLoong/xnip/releases/tag/v0.5.7
 [0.5.5]: https://github.com/SeaLoong/xnip/releases/tag/v0.5.5
 [0.4.0]: https://github.com/SeaLoong/xnip/releases/tag/v0.4.0
 [0.3.1]: https://github.com/SeaLoong/xnip/releases/tag/v0.3.1

@@ -61,7 +61,9 @@ class VersionNotVisible(PublishError):
 
 def classify_npm(stdout: str, stderr: str) -> tuple[str, str]:
     """Inspect captured diagnostics, but return only fixed codes/categories."""
-    text = ANSI.sub("", stderr + "\n" + stdout)
+    captured = ANSI.sub("", stderr + "\n" + stdout)
+    text = "\n".join(line for line in captured.splitlines()
+                     if re.match(r"(?i)^npm (?:ERR!|error)(?: |$)", line))
     match = re.search(r"(?im)^npm (?:ERR!|error) code ([A-Z][A-Z0-9_]{1,40})\s*$", text)
     code = match[1].upper() if match and match[1].upper() in NPM_CODES else "UNKNOWN"
     for raw in (stderr, stdout):
@@ -335,7 +337,12 @@ class Npm:
             raise PublishError("auth must be explicitly token or oidc")
 
     def publish(self, path: Path, channel: str) -> None:
-        self.run(["publish", str(path.resolve()), "--access", "public", "--tag", channel, "--ignore-scripts"])
+        arguments = ["publish", str(path.resolve()), "--access", "public",
+                     "--tag", channel, "--ignore-scripts"]
+        if self.auth == "oidc":
+            # Require signed provenance instead of npm's best-effort auto-detection.
+            arguments.append("--provenance")
+        self.run(arguments)
 
 
 def version_order(value: str) -> tuple:

@@ -291,7 +291,7 @@ jobs:
           ):
               raise SystemExit("Full verification must enable every check")
           PY
-      # release.yml only reuses successful gates carrying this marker.
+      # publish.yml only reuses successful gates carrying this marker.
       - name: Full verification (Rust, integrations, npm, harnesses)
         if: needs.scope.outputs.full == 'true'
         run: echo "All release checks passed for this commit"

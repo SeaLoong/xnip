@@ -1,4 +1,4 @@
-# Reusable build/package/publish implementation; entry points are ci.yml and release.yml.
+# Reusable build/package/publish implementation; entry points are ci.yml and publish.yml.
 # Callers verify sources; this workflow verifies packed targets before publication.
 # See docs/ci.md for the complete workflow contract.
 name: release artifacts

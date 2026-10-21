@@ -46,12 +46,26 @@ impl LiveMcp {
     }
 
     fn from_command(mut command: Command) -> Self {
-        let mut child = command
+        command
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()
-            .unwrap();
+            .stderr(Stdio::piped());
+        // A copied test executable can briefly be busy on Linux runners.
+        // Retry only that pre-exec failure; protocol and updater assertions stay strict.
+        let spawn_deadline = Instant::now() + Duration::from_millis(250);
+        let mut child = loop {
+            match command.spawn() {
+                Ok(child) => break child,
+                Err(error)
+                    if cfg!(target_os = "linux")
+                        && error.raw_os_error() == Some(26)
+                        && Instant::now() < spawn_deadline =>
+                {
+                    std::thread::sleep(Duration::from_millis(10));
+                }
+                Err(error) => panic!("cannot spawn isolated MCP fixture: {error}"),
+            }
+        };
         let stdout = child.stdout.take().unwrap();
         let (sender, output) = channel();
         let reader = std::thread::spawn(move || {

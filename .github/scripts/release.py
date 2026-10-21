@@ -29,7 +29,7 @@ EXACT_RELEASE_PATHS = {
     "docs/examples.md", "docs/patch.md", "docs/recovery.md", "docs/edit.md",
     ".github/scripts/release.py", ".github/scripts/publish_release.py", ".github/scripts/publish_npm.py",
     ".github/workflows/build-release.yml",
-    ".github/workflows/release.yml",
+    ".github/workflows/publish.yml",
 }
 RELEASE_PREFIXES = (
     ".cargo/", ".github/skills/xnip-editing/", "xtask/src/",

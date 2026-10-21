@@ -1,14 +1,14 @@
 # CI workflow contract
 
-The repository has exactly three workflows. Keep verification in `ci.yml`, release entry-point policy in `release.yml`, and artifact delivery in `build-release.yml`. Do not add a workflow for an individual command or platform.
+The repository has exactly three workflows. Keep verification in `ci.yml`, release entry-point policy in `publish.yml`, and artifact delivery in `build-release.yml`. Do not add a workflow for an individual command or platform.
 
 | Workflow | Entry points | Work and boundary |
 |---|---|---|
-| [ci.yml](../.github/workflows/ci.yml) | Pull requests targeting `master`/`main`, pushes to those branches, or a reusable call from `release.yml` | Select checks from Git history, verify them, and expose the `ci` gate. Only a qualifying default-branch push may request a development release after full verification. |
-| [release.yml](../.github/workflows/release.yml) | A `v*` tag excluding reserved `v*-dev.*` tags, or a manual dispatch | Validate the Cargo/tag version, reuse complete checks for the exact commit or request full checks, then call the artifact workflow. Tags publish; manual runs only rehearse. |
+| [ci.yml](../.github/workflows/ci.yml) | Pull requests targeting `master`/`main`, pushes to those branches, or a reusable call from `publish.yml` | Select checks from Git history, verify them, and expose the `ci` gate. Only a qualifying default-branch push may request a development release after full verification. |
+| [publish.yml](../.github/workflows/publish.yml) | A `v*` tag excluding reserved `v*-dev.*` tags, or a manual dispatch | Validate the Cargo/tag version, reuse complete checks for the exact commit or request full checks, then call the artifact workflow. Tags publish; manual runs only rehearse. |
 | [build-release.yml](../.github/workflows/build-release.yml) | `workflow_call` from the two entry points above | Build six release binaries, prepare 21 GitHub attachments and seven npm packs, verify packed installations on six native OS/CPU runners, and optionally publish npm plus a complete GitHub draft. It does not decide which commits are eligible or repeat source checks. |
 
-Ordinary PR verification never publishes and receives no release secret. Verification jobs explicitly use `contents: read`; only artifact-call jobs and the actual publisher request `contents: write`. The reusable-check caller in `release.yml` declares the upper permission bound needed by the development-publisher declaration, including OIDC identity access, but its tag/manual event cannot enable that publisher.
+Ordinary PR verification never publishes and receives no release secret. Verification jobs explicitly use `contents: read`; only artifact-call jobs and the actual publisher request `contents: write`. The reusable-check caller in `publish.yml` declares the upper permission bound needed by the development-publisher declaration, including OIDC identity access, but its tag/manual event cannot enable that publisher.
 
 ## Required check and work selection
 
@@ -52,7 +52,7 @@ Rust checks keep `--locked` and warnings denied. Installer tests use local fixtu
 
 ## Release verification and publication
 
-`release.yml` looks up `ci.yml` runs by the peeled checkout commit SHA and accepts only a `push` from the same repository's current default branch. It inspects the latest attempt's `ci` job and requires both a successful gate and a successful `Full verification (Rust, integrations, npm, harnesses)` step. A PR/fork run, a different commit, or scoped verification cannot authorize a release.
+`publish.yml` looks up `ci.yml` runs by the peeled checkout commit SHA and accepts only a `push` from the same repository's current default branch. It inspects the latest attempt's `ci` job and requires both a successful gate and a successful `Full verification (Rust, integrations, npm, harnesses)` step. A PR/fork run, a different commit, or scoped verification cannot authorize a release.
 
 If the trusted run is still checking, release waits up to 30 minutes for its gate. It can proceed while development artifact builds are still running; their success is not used as evidence of source correctness. A failed/cancelled gate blocks release. No trusted run, an old run without the gate, or a successful scoped gate causes one reusable full verification instead. Manual rehearsal follows the same policy but always sets `publish: false`; complete GitHub/npm packaging and all six native npm-install checks still run and upload the delivery artifact.
 
@@ -60,7 +60,7 @@ An atomic default-branch/code/version/tag push receives full branch verification
 
 PR updates cancel superseded runs. Default-branch commits and releases are not cancelled by later commits. Publishing the same version stays serialized; published assets remain immutable and incomplete drafts can resume. Keep all six supported target archives and the existing checksum/draft validation.
 
-Job timeouts bound stalled work: scope/contracts 5 minutes, quality/compatibility 15, platform tests 20, Ubuntu harnesses 25, gate 2, release identity/prior-check lookup 35, artifact builds 45 and publication 15. These are ceilings rather than expected durations.
+Job timeouts bound stalled work: scope/contracts 5 minutes, quality/compatibility 15, platform tests 20, Ubuntu harnesses 25, gate 2, release identity/prior-check lookup 35, artifact builds 45 and publication 45. These are ceilings rather than expected durations.
 
 ## Changing CI
 

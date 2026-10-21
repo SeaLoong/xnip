@@ -533,6 +533,13 @@ class PublicationContracts(unittest.TestCase):
                                       "private-command", "/private-user/synthetic-secret-value.tgz", 1)
         self.assertNotIn("synthetic-secret-value", str(failure))
         self.assertNotIn("private-user", str(failure))
+    def test_package_notices_and_checksums_cannot_be_mistaken_for_two_factor_errors(self):
+        output = ("npm notice shasum: abcdef2fadeadbeef\n"
+                  "npm notice integrity: sha512-synthetic/2fa+checksum\n"
+                  "npm error code ENEEDAUTH\n"
+                  "npm error need auth This command requires you to be logged in\n")
+        self.assertEqual(publisher.classify_npm("", output), ("ENEEDAUTH", "access"))
+
     def test_subprocess_timeout_is_an_unknown_outcome_without_raw_exception_output(self):
         with patch.object(publisher.prepare, "npm_command", return_value=["node", "npm-cli.js"]):
             npm = publisher.Npm("token")
@@ -599,12 +606,17 @@ class PublicationContracts(unittest.TestCase):
             npm.publish(Path("candidate.tgz"), "latest")
 
     def test_publish_command_is_explicit_public_tagged_and_scriptless(self):
-        with patch.object(publisher.prepare, "npm_command", return_value=["node", "npm-cli.js"]):
-            npm = publisher.Npm("token")
-        with patch.object(npm, "run") as run:
-            npm.publish(Path("candidate.tgz"), "next")
-        self.assertEqual(run.call_args.args[0], ["publish", str(Path("candidate.tgz").resolve()),
-                         "--access", "public", "--tag", "next", "--ignore-scripts"])
+        for mode in ("token", "oidc"):
+            with self.subTest(mode=mode), \
+                    patch.object(publisher.prepare, "npm_command", return_value=["node", "npm-cli.js"]):
+                npm = publisher.Npm(mode)
+            with patch.object(npm, "run") as run:
+                npm.publish(Path("candidate.tgz"), "next")
+            expected = ["publish", str(Path("candidate.tgz").resolve()),
+                        "--access", "public", "--tag", "next", "--ignore-scripts"]
+            if mode == "oidc":
+                expected.append("--provenance")
+            self.assertEqual(run.call_args.args[0], expected)
 
 
 class WorkflowConsumerContracts(unittest.TestCase):
