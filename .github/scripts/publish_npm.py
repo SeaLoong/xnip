@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import base64
+from contextlib import ExitStack
 import hashlib
 import importlib.util
 import json
@@ -14,6 +15,7 @@ import re
 import subprocess
 import sys
 import tarfile
+import tempfile
 import time
 import urllib.error
 import urllib.parse
@@ -294,8 +296,25 @@ class Npm:
     def run(self, arguments: list[str]) -> None:
         candidate = arguments[1] if arguments[0] == "publish" and len(arguments) > 1 else None
         try:
-            result = subprocess.run([*self.command, *arguments, "--registry", REGISTRY],
-                                    capture_output=True, text=True, errors="replace", timeout=180, check=False)
+            with ExitStack() as cleanup:
+                options = {}
+                if self.auth == "oidc":
+                    # npm may fall back to token authentication after OIDC fails.
+                    # A clean cwd and empty configs make that fallback impossible.
+                    directory = Path(cleanup.enter_context(
+                        tempfile.TemporaryDirectory(prefix="xnip-oidc-publish-")))
+                    user_config, global_config = directory / "user.npmrc", directory / "global.npmrc"
+                    for path in (user_config, global_config):
+                        path.write_text("", encoding="utf-8")
+                    environment = {key: value for key, value in os.environ.items()
+                        if not key.upper().startswith("NPM_CONFIG_")
+                        and key.upper() not in {"NODE_AUTH_TOKEN", "NPM_TOKEN", "NPM_AUTH_TOKEN"}}
+                    environment.update(NPM_CONFIG_USERCONFIG=str(user_config),
+                                       NPM_CONFIG_GLOBALCONFIG=str(global_config))
+                    options = {"env": environment, "cwd": directory}
+                result = subprocess.run([*self.command, *arguments, "--registry", REGISTRY],
+                                        capture_output=True, text=True, errors="replace", timeout=180,
+                                        check=False, **options)
         except subprocess.TimeoutExpired:
             raise NpmFailure("ETIMEDOUT", "unknown", arguments[0], candidate) from None
         if result.returncode:
@@ -464,7 +483,8 @@ def publish(directory: Path, source_commit: str, prerelease: bool = False, *, au
     # The parent becomes discoverable only after all six exact payloads are live.
     submit_and_verify(NAMES[:-1])
     submit_and_verify((prepare.PARENT_NAME,))
-    return {"version": version, "source_commit": source_commit, "channel": channel, "packages": statuses}
+    return {"version": version, "source_commit": source_commit, "channel": channel,
+            "authentication": auth, "packages": statuses}
 
 
 def main(argv=None) -> int:

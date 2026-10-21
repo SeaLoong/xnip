@@ -1,66 +1,21 @@
-中文 | [English](README.md)
-
 # xnip
 
-**用更少的重复上下文，完成精准文本编辑。** 编码 agent 传入已知的原文本块与替换内容，xnip 精确修改目标、保留未修改字节，并返回精简结果。
+[![CI](https://github.com/SeaLoong/xnip/actions/workflows/ci.yml/badge.svg)](https://github.com/SeaLoong/xnip/actions/workflows/ci.yml)
+[![最新发布](https://img.shields.io/github/release-date/SeaLoong/xnip?label=release)](https://github.com/SeaLoong/xnip/releases/latest)
+[![MIT 许可证](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![支持平台](https://img.shields.io/badge/platforms-Linux%20%7C%20macOS%20%7C%20Windows-blue)](docs/installation.md#supported-release-targets)
 
-- **复用已知上下文。** 需要时补读缺失内容；已知如何修改时直接编辑。
-- **按场景选择精简编辑。** 局部修改传精确文本块，多处修改共享文件路径，插入只传锚点与新增内容，小文件重写可直接传完整结果。
-- **保持输入输出精简。** 简短回执、有限读取与预览、默认五个 MCP 工具，减少日常上下文负担。
-- **保证定位明确。** 原文本缺失或存在歧义时不写入；显式 `all` 才做全局替换。精确编辑保留 CRLF 与末尾换行字节。
-- **跨 harness 复用。** CLI 与 stdio MCP 共享文件生命周期、批量、补丁、行与锚点编辑能力。
+中文 | [English](README.md)
 
-## 实测编辑成本
+**用更少的重复上下文，完成精准文本编辑。** 编码 agent 传入已知的原文本块与替换内容，xnip 精确修改目标、保留未修改字节，并返回简短回执。
 
-Benchmark 对当前 0.5.5 源码构建，实际运行 **Codex、Gemini CLI、OpenCode、aider、DSH、Pi、Goose 的编辑器**：**13 个场景 × 41 种编辑配置 × 3 次重复**，另测六种宿主→xnip MCP 配置。只有每次都得到预期文件字节的配置才进入有效对比。计数使用 `tiktoken 0.14.0 / o200k_base`。
-
-![字节正确配置中的最佳实测编辑输入](docs/benchmarks/charts/readme-frontier.svg)
-
-每个任务对比 **实测原生最小输入 / 实测 xnip 最小输入**，高于 **1x** 表示 xnip 输入更少；几何平均让各任务权重相同。“保留旧内容校验”只允许有原内容前置检查的编辑；“允许整文件写入”对双方都同时开放局部编辑和整文件写入。
-
-| xnip 接口 / 允许的操作 | 原生最小 / xnip 最小 | xnip 更少 / 持平 / 原生更少 |
-|---|---:|---:|
-| MCP · 保留旧内容校验 | 1.23x | 13 / 0 / 0 |
-| MCP · 允许整文件写入 | 1.26x | 12 / 1 / 0 |
-| CLI stdin · 保留旧内容校验 | 1.55x | 13 / 0 / 0 |
-| CLI stdin · 允许整文件写入 | 1.80x | 13 / 0 / 0 |
-
-**为什么使用：** 已知完整文件时，长行中的局部修改只需 **11 个 MCP 输入 token**，实测原生最佳输入（Goose）为 **18**，Codex 的唯一上下文补丁需要 **10,037**。文件分组还能省去重复路径和调用。在两组条件下，CLI stdin 策略的输入都在 13 个场景中更少；执行命令参数是另计的额外成本。
-
-**发送前先选择表达方式：** 已知完整当前内容且旧内容校验可选时，原生行清单、缩短后仍唯一的精确文本对，可能比整份文件更省。多行函数的 xnip MCP 输入为 **25 token**，aider whole 为 **26**；同文件批量为 **18 对 20**。明确要求的旧内容检查保持不变。允许整写的 MCP 组中，xnip 在 12 个任务中更少、1 个持平。
-
-**返回也更精简：** `xnip mcp --receipts text` 在 26 组配对中，让捕获的完整 JSON-RPC 返回 token 约减少 **56%**；输入、正文回执和最终文件字节与默认结构化模式一致。同样五个工具的发现目录也减少 **23.8%**（2,303 → 1,754 token）。
-
-**新增 harness 的结论：** Goose 的简短参数结构在多数原生旧内容校验输入中胜出；Pi 将同文件多处编辑按原始坐标处理。DSH 的 observed 配置计入编辑前实际必需的 read/view，其 bare 与 observed 策略分别比较，不混入上表；外部 xnip MCP 进程不继承 DSH 文件系统策略。[宿主交互证据](docs/benchmarks/host-exchange-results.json)分别记录真实公开工具名、schema 投影、指令与返回内容，Goose 的 provider 投影仍为未知。
-
-对比已加入原生相对路径、更紧凑的上下文，以及同样适用的已知文件字面裁剪配置。前沿只使用字节正确的结果，原有配置和字节不符结果均保留。aider 最终返回文本未知；CLI 命令参数、MCP 请求/返回、工具正文与启动耗时分别计量，不能当作完整 agent 会话或计费总量。
-
-[完整结果与逐场景图表](docs/benchmarks/results.md) · [原始证据](docs/benchmarks/results.json) · [方法与复现](docs/benchmarks/README.md) · [核心性能](docs/benchmarks/core-performance.md)
+- **只传需要修改的内容。** 复用已知上下文，省去重复发送未变化的文件或长行。
+- **明确定位，精准修改。** 原文本缺失或存在歧义时不写入；精确编辑保留 CRLF 与末尾换行字节。
+- **跨 agent 复用。** CLI 与 stdio MCP 共用精确编辑、批量、预览和文件生命周期操作。
 
 ## 安装
 
-### npm（首选）
-
-需要 Node **22.14+**；安装预先打包的程序无需 Rust。
-`xnip-cli` 发布后，可通过 npm 安装：
-
-~~~sh
-npm install --global xnip-cli
-xnip --version
-~~~
-
-通过 `npm install --global xnip-cli@latest` 更新，升级后重启 MCP 会话。
-npm 安装的子进程关闭原生自动更新；DSH/Pi 插件仍需显式启用。
-
-未发布的开发构建或离线验证，可通过
-`npm install --global --offline --ignore-scripts ./xnip-cli-0.5.5.tgz`
-安装匹配平台的私有 host tarball。
-平台包、本地构建和 CI 发布步骤见 [npm 指南](npm/README.md)。
-
-### 独立二进制与源码
-
-**0.5.5** 包含 DSH/Pi/Goose 接入与 npm 分发，详情见[变更记录](CHANGELOG.md)。
-不使用 Node 时，可使用以下校验 SHA256 的安装器：
+使用对应平台的独立安装器：
 
 ~~~sh
 # macOS / Linux
@@ -72,88 +27,100 @@ curl -fsSL https://github.com/SeaLoong/xnip/releases/latest/download/install.sh 
 Invoke-RestMethod https://github.com/SeaLoong/xnip/releases/latest/download/install.ps1 | Invoke-Expression
 ~~~
 
-也可从 [GitHub Releases](https://github.com/SeaLoong/xnip/releases) 下载。
-平台、PATH、固定版本、校验与卸载见[安装说明](docs/installation.md)。
-源码安装需要 **Rust 1.89+**：
+也可[下载发布文件](https://github.com/SeaLoong/xnip/releases)，或使用 [npm 包 `xnip-cli`](docs/installation.md#npm)。PATH、校验和及其他选项见[安装说明](docs/installation.md)。
+
+独立二进制支持静默更新；设置 `XNIP_AUTO_UPDATE=0` 可关闭。npm 安装通过 npm 更新。详见[更新行为](docs/updates.md)。
+
+## 完成一次编辑
+
+先预览，再应用：
 
 ~~~sh
-cargo install --git https://github.com/SeaLoong/xnip --tag v0.5.5 --locked xnip
+xnip edit config.env --old 'PORT=8080' --text 'PORT=3000' --dry-run
+xnip edit config.env --old 'PORT=8080' --text 'PORT=3000'
 ~~~
 
-## 编辑
+原文本块必须非空且唯一。有歧义时扩展上下文；有意全局替换时使用 `--all`。`--check` 只校验，不写入。
 
-~~~sh
-xnip edit config.txt --old 'PORT=8080' --text 'PORT=3000'
-xnip edit generated.txt --write --text-file content.txt
-xnip edit imports.py --old 'import os' --text-file new-import.txt --position after
-xnip edit src/new.txt --create --text-file content.txt
-xnip edit old-name.txt --rename-to new-name.txt
-xnip edit obsolete.txt --delete
-xnip apply edits.json --dry-run
-xnip apply edits.json
-~~~
+显式重写完整文件可用 `xnip edit generated.txt --write --text-file content.txt`。多行内容使用文件或 stdin 传入，可避免 shell 转义错误。
 
-字面替换要求 old 非空且唯一；有歧义时扩展原文本上下文，有意全局替换时使用 `--all`。`--dry-run` 预览，`--check` 校验，两者均不写入。需要跨 shell 可靠传入多行字节时使用文件或 stdin。
-
-`--write` 显式创建或覆盖完整文件，可用 `--old` 校验整个已有文件。`--position before|after` 在唯一锚点旁插入所给字节，不额外补换行。独立修改可在紧凑 JSON 清单中共享路径：
+将多处修改保存为 `edits.json`：
 
 ~~~json
-{"a.txt":[["old","new"],["next","final"]],"b.txt":{"old":"was","text":"now"}}
+{
+  "config.env": [["PORT=8080", "PORT=3000"]],
+  "src/settings.py": [["DEBUG = True", "DEBUG = False"]]
+}
 ~~~
-
-已知行范围、锚点、移动与缩进可用专门命令。`peek` 与 `find` 用于补足上下文；仓库发现与语义分析继续使用 harness 的搜索/语言工具。参见 [CLI 教程](docs/cli.md)、[edit 手册](docs/edit.md)和[示例](docs/examples.md)。
-
-读取默认限制为 200 行、100 个搜索命中、12,000 个 payload 字节；预览默认限制 12,000 字节。截断会明确提示，对应限制设为零可取消。`edit/apply/recover` 默认返回精简回执，`--output json` 返回完整机器结果，`--output human` 展开状态与预览。
-
-## Agent 集成
-
-复用 PATH 上的 CLI，或配置 `xnip mcp` 使用结构化参数。MCP 默认提供 `edit/apply/peek/find/recover`；`--toolset full` 增加行级工具与诊断。`xnip mcp --receipts text` 省去结构化修改元数据及其输出 schema，精简 agent 返回；默认模式保留机器可读结果。多个已知文本块可一次调用 `xnip_apply({files:{"a.txt":[["old","new"],["next","final"]]}})`；需要显式全局替换时可用 `edits` 数组。配置与返回字段见 [MCP 手册](docs/mcp.md)。
-
-| 客户端 | 指南 | 放置位置 |
-|---|---|---|
-| Codex | [普通指令与指南](docs/codex.md) | 合并 AGENTS 片段；指南放在 `~/.codex/guides/xnip-editing/` |
-| Claude Code | [skill](integrations/claude-code/SKILL.md) | `.claude/skills/xnip/`，保留 references |
-| Cursor | [规则](integrations/cursor/xnip.mdc) | 项目规则，`alwaysApply: false` |
-| Copilot | [简短指令](integrations/copilot/xnip.md) | 项目指令 |
-| Aider | [约定](integrations/aider/CONVENTIONS.md) | 项目约定 |
-| DSH | [bundle 与 MCP 插件](docs/dsh.md) | 显式启用本地包 bundle，经官方 MCP bridge 接入 |
-| Pi | [extension](docs/pi.md) | 从本地包加载，按会话注册 MCP server |
-| Goose | [stdio extension](docs/goose.md) | 合并配置或使用 `--with-extension`；需 xnip 0.5.5+ |
-| 其他 agent | [通用 skill](integrations/generic/SKILL.md) | 编辑任务按需加载，保留 references |
-
-[npm 分发](npm/README.md)打包同一个原生程序，包内同时提供 `xnip-cli/dsh` 与 `xnip-cli/pi`；当前 MCP 接入无需另建 `dsh-xnip` 包。CI 验证六个平台包后先发平台包，再发主包；本地 host tarball 保持 private，用于离线验证。仅 npm wrapper 和 JavaScript host 集成需要 Node。
-
-[AGENTS 片段](integrations/agents-md/AGENTS.md)提供项目级精简入口。[Agent 指南](docs/SKILL.md)负责选择操作，详细规则按需加载。Codex 使用普通指令与指南，不增加 `$xnip-editing` 菜单项。
-
-## 静默更新
-
-单例独立进程后台检查版本、下载并校验，不阻塞编辑，也不显示更新消息。通常等此前使用空闲后，由下一次调用打开安装窗口：CLI 空闲窗口为 30 分钟，MCP 按连接存活判断。已准备版本最长延期 24 小时，已有会话继续运行已加载的程序。
-
-调度与内部状态见[更新说明](docs/updates.md)。固定版本或离线环境设置 `XNIP_AUTO_UPDATE=0`。
-
-## 限制
-
-- 批量计划先验证全部操作，再逐文件提交；提交失败尝试回滚。遇到退出码 4，重试前检查[恢复记录](docs/recovery.md)。
-- 原内容校验不能锁住外部写入者。重写保留普通权限，[其他文件系统元数据有明确限制](docs/architecture.md#persistence-and-limits)。
-- 备份在完整文件名后追加 `.bak`，会覆盖已有 sidecar。精确恢复使用 Git/备份；`--revert` 只支持[受限逆操作](docs/apply-format.md#--revert-semantics)。
-- 行操作以 LF 分隔，需要 CRLF 时由调用方提供相应 payload。CLI 字符串遵循 shell 转义。
-- MCP 使用启动用户的权限和工作目录，面向可信本地客户端。
-
-## 文档与开发
-
-| 需求 | 文档 |
-|---|---|
-| 安装与接入 | [安装](docs/installation.md)、[Codex](docs/codex.md)、[MCP](docs/mcp.md) |
-| 编辑与自动化 | [CLI](docs/cli.md)、[edit](docs/edit.md)、[清单](docs/apply-format.md)、[补丁](docs/patch.md)、[退出码](docs/error-codes.md) |
-| 失败恢复 | [recovery](docs/recovery.md) |
-| 设计与验证 | [架构](docs/architecture.md)、[术语](GLOSSARY.md)、[测试](docs/testing.md)、[更新测试](docs/update-testing.md)、[benchmark](docs/benchmarks/README.md) |
-| 贡献与发布 | [贡献指南](CONTRIBUTING.md)、[发布流程](docs/releasing.md)、[变更记录](CHANGELOG.md) |
 
 ~~~sh
-cargo test --workspace --locked
-cargo fmt --all --check
-cargo clippy --workspace --all-targets --locked -- -D warnings
-cargo run --locked -p xtask -- sync-integrations
+xnip apply edits.json --format compact --dry-run
+xnip apply edits.json --format compact
 ~~~
 
-平台、依赖、最低 Rust 和打包检查见[贡献指南](CONTRIBUTING.md)。MIT；参见 [LICENSE](LICENSE) 与[第三方声明](THIRD_PARTY_LICENSES.md)。
+同一文件内的文本对依次执行。上下文缺失时用 `peek` 和 `find` 补足。插入、行编辑、补丁、创建、重命名与删除见 [CLI 用法](docs/cli.md)、[编辑示例](docs/examples.md)和[批量格式](docs/apply-format.md)。
+
+## 接入 agent
+
+可直接使用 agent shell 中的 CLI，也可添加 stdio MCP 服务。使用 `mcpServers` 配置的客户端可参考：
+
+~~~json
+{
+  "mcpServers": {
+    "xnip": {
+      "command": "xnip",
+      "args": ["mcp", "--receipts", "text"]
+    }
+  }
+}
+~~~
+
+默认五个工具覆盖编辑、批量、读取、搜索和恢复。`--toolset full` 增加专用工具；客户端需要结构化修改元数据时，可省略 `--receipts text`。相对路径基于服务进程的工作目录。各客户端差异见 [MCP 配置](docs/mcp.md)。
+
+| Agent / 客户端 | 接入指南 |
+|---|---|
+| Codex | [普通指令与编辑指南](docs/codex.md) |
+| Claude Code | [Skill](integrations/claude-code/SKILL.md) |
+| Cursor | [项目规则](integrations/cursor/xnip.mdc) |
+| GitHub Copilot | [项目指令](integrations/copilot/xnip.md) |
+| aider | [约定](integrations/aider/CONVENTIONS.md) |
+| DeepSeek Harness | [DSH bundle 与 MCP 插件](docs/dsh.md) |
+| Pi | [Extension](docs/pi.md) |
+| Goose | [MCP extension](docs/goose.md) |
+| 其他 agent | [通用 skill](integrations/generic/SKILL.md) |
+
+希望只添加简短项目指令时，可用 [AGENTS 片段](integrations/agents-md/AGENTS.md)。[操作指南](docs/SKILL.md)帮助 agent 选择编辑方式，并按需读取细节。
+
+## 为什么能节省编辑上下文
+
+Benchmark 比较真实编辑器在 **13 个任务**中的表现。只有每次都得到预期文件字节的结果才进入下表。
+
+![字节正确配置中的最佳实测编辑输入](docs/benchmarks/charts/readme-frontier.svg)
+
+比值为逐任务 **实测原生最小输入 / 实测 xnip 最小输入** 的几何平均，各任务权重相同；高于 **1x** 表示 xnip 输入更少。“保留旧内容校验”要求原内容检查；“允许整文件写入”对双方同时开放有校验的局部编辑与整文件写入。
+
+| xnip 接口 / 允许的操作 | 原生最小 / xnip 最小 | xnip 更少 / 持平 / 原生更少 |
+|---|---:|---:|
+| MCP · 保留旧内容校验 | 1.23x | 13 / 0 / 0 |
+| MCP · 允许整文件写入 | 1.26x | 12 / 1 / 0 |
+| CLI stdin · 保留旧内容校验 | 1.55x | 13 / 0 / 0 |
+| CLI stdin · 允许整文件写入 | 1.80x | 13 / 0 / 0 |
+
+已知完整文件时，长行中的局部修改只需 **11 个 MCP 输入 token**，实测原生最佳输入（Goose）为 **18**，Codex 的唯一上下文补丁为 **10,037**。
+
+相比结构化回执，精简文本回执让捕获的完整 JSON-RPC 返回 token 约减少 **56%**，五工具发现目录减少 **23.8%**；编辑输入和最终文件结果保持一致。
+
+这些数值是捕获的编辑 payload 成本，不代表完整 agent 用量或计费。CLI 执行命令参数另计。DSH 各策略的结果计入必需的读取，单独列出，不混入上表。
+
+[完整结果与图表](docs/benchmarks/results.md) · [方法与复现](docs/benchmarks/README.md)
+
+## 使用边界
+
+- 原内容检查不锁住外部写入者。需要精确恢复时保留 Git 或备份。
+- 批量操作先验证，再逐文件提交。提交或回滚失败后，重试前检查[恢复记录](docs/recovery.md)。
+- 读取和预览有明确的输出上限。截断后缩小请求范围，或调整对应限制。
+- MCP 使用启动用户的权限和工作目录，面向可信本地客户端。
+
+[安装](docs/installation.md) · [CLI](docs/cli.md) · [Edit 手册](docs/edit.md) · [MCP](docs/mcp.md) · [退出码](docs/error-codes.md) · [变更记录](CHANGELOG.md) · [贡献指南](CONTRIBUTING.md)
+
+采用 MIT 许可证。参见 [LICENSE](LICENSE) 和[第三方声明](THIRD_PARTY_LICENSES.md)。

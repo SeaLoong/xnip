@@ -13,6 +13,7 @@ import re
 import subprocess
 import sys
 import tempfile
+import time
 from urllib.parse import quote
 
 
@@ -42,6 +43,7 @@ SHA = re.compile(r"(?:[0-9a-fA-F]{40}|[0-9a-fA-F]{64})")
 CHECKSUM = re.compile(r"([0-9a-fA-F]{64})[ \t]+\*?([^ \t\r\n]+)(?:\r?\n)?")
 MAX_ASSET_BYTES = 128 * 1024 * 1024
 MAX_CHECKSUM_BYTES = 4096
+DRAFT_LOOKUP_DELAYS = (0, 1, 2, 4, 8, 15, 30)
 
 
 class PublishError(Exception):
@@ -386,7 +388,20 @@ def verify_published_assets(gh, remote: list[dict], tag: str) -> None:
             raise PublishError(f"published archive checksum mismatch: {archive}")
 
 
-def publish(tag: str, sha: str, dist: Path, prerelease: bool = False, gh=None) -> dict[str, object]:
+def wait_for_created_draft(gh, tag: str, wait) -> dict:
+    # A successful create can precede visibility in both the tag endpoint and
+    # authenticated draft listing. Retry only explicit absence, never creation.
+    for delay in DRAFT_LOOKUP_DELAYS:
+        if delay:
+            wait(delay)
+        release = gh.find_release(tag)
+        if release is not None:
+            return release
+    raise PublishError("created release draft did not become visible within the bounded lookup window; "
+                       "the retained draft can be resumed on a later run")
+
+
+def publish(tag: str, sha: str, dist: Path, prerelease: bool = False, gh=None, *, wait=time.sleep) -> dict[str, object]:
     sha = validate_identity(tag, sha, prerelease)
     local = validate_dist(tag, dist)
     gh = gh or GitHub()
@@ -394,9 +409,7 @@ def publish(tag: str, sha: str, dist: Path, prerelease: bool = False, gh=None) -
     release = gh.find_release(tag)
     if release is None:
         gh.create_draft(tag, sha, prerelease)
-        release = gh.find_release(tag)
-        if release is None:
-            raise PublishError("created release draft cannot be found")
+        release = wait_for_created_draft(gh, tag, wait)
         if release.get("draft") is not True:
             raise PublishError("new release was unexpectedly published before asset verification")
     release_id = verify_release(release, tag, sha, prerelease)

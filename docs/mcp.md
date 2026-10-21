@@ -25,7 +25,7 @@ xnip mcp --receipts text  # concise agent receipts
 
 For the primary editing workflow use [xnip_edit](edit.md#mcp); it accepts literal old/new blocks and supports preview/check without writes. Reuse context already available rather than issuing a mandatory peek before every edit.
 
-Use `xnip mcp --toolset full` when a client needs specialized replace/insert/move/indent or doctor tools. xnip 0.5.0+ supports modern `server/discover` negotiation and legacy `initialize`, followed by `tools/list` / `tools/call` over stdio. This resolves the pinned Goose client's default negotiation; 0.4 releases use the older SDK. See [DSH](dsh.md), [Pi](pi.md), [Goose](goose.md) and [local npm packaging](../npm/README.md) for host-specific setup. Restart an existing server to discover a changed toolset.
+Use `xnip mcp --toolset full` when a client needs specialized replace/insert/move/indent or doctor tools. xnip 0.5.0+ supports modern `server/discover` negotiation and legacy `initialize`, followed by `tools/list` / `tools/call` over stdio. This resolves the pinned Goose client's default negotiation; 0.4 releases use the older SDK. See [DSH](dsh.md), [Pi](pi.md), [Goose](goose.md) and [npm installation](../npm/README.md) for host-specific setup. Restart an existing server to discover a changed toolset.
 
 ## Tool list
 

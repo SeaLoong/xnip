@@ -14,7 +14,7 @@ dsh plugin --profile my-profile add xnip-cli
 ```
 
 For offline validation or unpublished development builds, prepare the private
-host-only tarball using the repository's [npm packaging workflow](../npm/README.md).
+host-only tarball using the repository's [local npm validation guide](releasing.md#local-npm-validation).
 It bundles one matching host executable; pass its absolute path to the same
 `dsh plugin ... add` command instead of the registry package name.
 

@@ -101,6 +101,29 @@ class FakeGitHub:
         return copy.deepcopy(self.current)
 
 
+class RecentlyCreatedGitHub(FakeGitHub):
+    def __init__(self, local, *, hidden_reads=0, lookup_error=None, created_update=None):
+        super().__init__(local)
+        self.created = False
+        self.hidden_reads = hidden_reads
+        self.lookup_error = lookup_error
+        self.created_update = created_update or {}
+
+    def create_draft(self, tag, sha, prerelease):
+        super().create_draft(tag, sha, prerelease)
+        self.created = True
+        self.current.update(self.created_update)
+
+    def find_release(self, tag):
+        if self.created and (self.lookup_error or self.hidden_reads):
+            self.events.append(("find", tag))
+            if self.lookup_error:
+                raise publisher.PublishError(self.lookup_error)
+            self.hidden_reads -= 1
+            return None
+        return super().find_release(tag)
+
+
 class Fixture(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix="xnip-publish-contract-")
@@ -202,6 +225,62 @@ class Distribution(Fixture):
 
 
 class Publication(Fixture):
+    def test_created_draft_can_become_visible_after_reads_without_duplicate_creation(self):
+        fake = RecentlyCreatedGitHub(self.prepare(PRE), hidden_reads=2)
+        waits = []
+        result = publisher.publish(PRE, SHA, self.dist, True, fake, wait=waits.append)
+        self.assertEqual(result["status"], "published")
+        self.assertEqual(waits, [1, 2])
+        self.assertEqual(sum(event[0] == "create-draft" for event in fake.events), 1)
+        self.assertEqual(sum(event[0] == "upload" for event in fake.events), 1)
+
+    def test_created_draft_absence_is_bounded_and_preserves_the_unuploaded_draft(self):
+        fake = RecentlyCreatedGitHub(self.prepare(), hidden_reads=100)
+        waits = []
+        with self.assertRaisesRegex(publisher.PublishError, "bounded lookup"):
+            publisher.publish(STABLE, SHA, self.dist, gh=fake, wait=waits.append)
+        self.assertEqual(waits, list(publisher.DRAFT_LOOKUP_DELAYS[1:]))
+        self.assertEqual(sum(waits), 60)
+        self.assertEqual(sum(event[0] == "find" for event in fake.events),
+                         1 + len(publisher.DRAFT_LOOKUP_DELAYS))
+        self.assertEqual(sum(event[0] == "create-draft" for event in fake.events), 1)
+        self.assertFalse(any(event[0] in {"upload", "publish"} for event in fake.events))
+        self.assertTrue(fake.current["draft"])
+
+    def test_created_draft_read_errors_are_immediate_and_never_reclassified_as_absence(self):
+        for error in ("HTTP 401", "HTTP 403", "TLS timeout", "no HTTP status", "invalid JSON"):
+            with self.subTest(error=error):
+                fake = RecentlyCreatedGitHub(self.prepare(), lookup_error=error)
+                waits = []
+                with self.assertRaises(publisher.PublishError) as caught:
+                    publisher.publish(STABLE, SHA, self.dist, gh=fake, wait=waits.append)
+                self.assertEqual(str(caught.exception), error)
+                self.assertEqual(waits, [])
+                self.assertEqual(sum(event[0] == "find" for event in fake.events), 2)
+                self.assertEqual(sum(event[0] == "create-draft" for event in fake.events), 1)
+                self.assertFalse(any(event[0] in {"upload", "publish"} for event in fake.events))
+
+    def test_delayed_draft_visibility_does_not_relax_identity_or_draft_state(self):
+        for update in ({"target_commitish": OTHER_SHA}, {"tag_name": PRE},
+                       {"prerelease": True}, {"draft": False}):
+            with self.subTest(update=update):
+                fake = RecentlyCreatedGitHub(self.prepare(), hidden_reads=1, created_update=update)
+                waits = []
+                with self.assertRaises(publisher.PublishError):
+                    publisher.publish(STABLE, SHA, self.dist, gh=fake, wait=waits.append)
+                self.assertEqual(waits, [1])
+                self.assertFalse(any(event[0] in {"upload", "publish"} for event in fake.events))
+
+    def test_existing_draft_and_published_release_do_not_enter_visibility_waits(self):
+        for draft in (True, False):
+            with self.subTest(draft=draft):
+                fake = FakeGitHub(self.prepare(), release=record(draft=draft), commit=SHA)
+                waits = []
+                result = publisher.publish(STABLE, SHA, self.dist, gh=fake, wait=waits.append)
+                self.assertEqual(result["status"], "published" if draft else "skipped")
+                self.assertEqual(waits, [])
+                self.assertFalse(any(event[0] == "create-draft" for event in fake.events))
+
     def test_new_prerelease_stays_draft_until_every_uploaded_byte_is_verified(self):
         fake = FakeGitHub(self.prepare(PRE))
         result = publisher.publish(PRE, SHA.upper(), self.dist, True, fake)
@@ -494,6 +573,25 @@ class Adapter(unittest.TestCase):
         replies = iter([response(status=404, code=1), response([record()]), response(record())])
         github = publisher.GitHub("owner/repo", runner=lambda *args, **kwargs: next(replies))
         self.assertTrue(github.find_release(STABLE)["draft"])
+
+    def test_draft_listing_fallback_preserves_pagination_and_fresh_id_lookup(self):
+        calls = []
+        first_page = [{**record(tag=f"other-{index}"), "id": index + 100} for index in range(100)]
+        replies = iter([response(status=404, code=1), response(first_page),
+                        response([record()]), response(record())])
+        def runner(args, **kwargs):
+            calls.append(args)
+            return next(replies)
+        github = publisher.GitHub("owner/repo", runner=runner)
+        self.assertEqual(github.find_release(STABLE)["id"], 17)
+        self.assertIn("page=2", calls[2][-1])
+        self.assertEqual(calls[3][-1], "repos/owner/repo/releases/17")
+
+    def test_duplicate_draft_records_are_not_absence_or_a_retryable_read(self):
+        replies = iter([response(status=404, code=1), response([record(), record()])])
+        github = publisher.GitHub("owner/repo", runner=lambda *args, **kwargs: next(replies))
+        with self.assertRaisesRegex(publisher.PublishError, "multiple release records"):
+            github.find_release(STABLE)
 
     def test_prerelease_creation_is_draft_never_latest_and_uses_real_notes_file(self):
         captured = []

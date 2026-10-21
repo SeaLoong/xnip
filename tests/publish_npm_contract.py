@@ -278,6 +278,7 @@ class PublicationContracts(unittest.TestCase):
     def test_platforms_publish_before_parent_and_all_seven_are_verified(self):
         result = self.publish()
         self.assertEqual(result["channel"], "latest")
+        self.assertEqual(result["authentication"], "token")
         self.assertEqual([event[1] for event in self.npm.events if event[0] == "publish"], list(publisher.NAMES))
         self.assertEqual(list(result["packages"].values()), ["published"] * 7)
     def test_successful_native_submissions_are_batched_before_delayed_visibility_and_parent(self):
@@ -543,6 +544,60 @@ class PublicationContracts(unittest.TestCase):
         self.assertEqual(caught.exception.code, "ETIMEDOUT")
         self.assertFalse(caught.exception.definite)
         self.assertNotIn("synthetic-secret", str(caught.exception))
+    def test_oidc_publication_cannot_fall_back_to_environment_or_configured_tokens(self):
+        isolated = []
+        environment = {
+            "ACTIONS_ID_TOKEN_REQUEST_URL": "https://example.invalid/oidc",
+            "ACTIONS_ID_TOKEN_REQUEST_TOKEN": "synthetic-oidc-only",
+            "GITHUB_ACTIONS": "true", "GITHUB_SHA": SHA,
+            "NPM_TOKEN": "synthetic-legacy-only",
+            "NPM_AUTH_TOKEN": "synthetic-legacy-only",
+            "NPM_CONFIG_USERCONFIG": "synthetic-user-config",
+            "npm_config_globalconfig": "synthetic-global-config",
+            "npm_config_//registry.npmjs.org/:_authToken": "synthetic-legacy-only",
+        }
+        def run(arguments, **options):
+            actual = options["env"]
+            self.assertEqual(actual["ACTIONS_ID_TOKEN_REQUEST_URL"], environment["ACTIONS_ID_TOKEN_REQUEST_URL"])
+            self.assertEqual(actual["ACTIONS_ID_TOKEN_REQUEST_TOKEN"], environment["ACTIONS_ID_TOKEN_REQUEST_TOKEN"])
+            self.assertEqual(actual["GITHUB_SHA"], SHA)
+            self.assertTrue({"NODE_AUTH_TOKEN", "NPM_TOKEN", "NPM_AUTH_TOKEN"}.isdisjoint(actual))
+            self.assertEqual({key.upper() for key in actual if key.upper().startswith("NPM_CONFIG_")},
+                             {"NPM_CONFIG_USERCONFIG", "NPM_CONFIG_GLOBALCONFIG"})
+            directory = Path(options["cwd"])
+            isolated.append(directory)
+            self.assertNotEqual(directory.resolve(), Path.cwd().resolve())
+            self.assertFalse((directory / ".npmrc").exists())
+            for name in ("NPM_CONFIG_USERCONFIG", "NPM_CONFIG_GLOBALCONFIG"):
+                config = Path(actual[name])
+                self.assertEqual(config.parent, directory)
+                self.assertEqual(config.read_bytes(), b"")
+            self.assertEqual(arguments[-2:], ["--registry", publisher.REGISTRY])
+            return publisher.subprocess.CompletedProcess(arguments, 0, "", "")
+        with patch.object(publisher.prepare, "npm_command", return_value=["node", "npm-cli.js"]), \
+                patch.dict(os.environ, environment, clear=True), \
+                patch.object(publisher.subprocess, "run", side_effect=run):
+            npm = publisher.Npm("oidc")
+            npm.preflight()
+            npm.publish(Path("candidate.tgz"), "next")
+        self.assertEqual(len(isolated), 1)
+        self.assertFalse(isolated[0].exists())
+
+    def test_token_publication_keeps_its_explicit_setup_node_authentication(self):
+        def run(arguments, **options):
+            self.assertNotIn("env", options)
+            self.assertNotIn("cwd", options)
+            self.assertEqual(os.environ["NODE_AUTH_TOKEN"], "synthetic-legacy-only")
+            self.assertEqual(os.environ["NPM_CONFIG_USERCONFIG"], "synthetic-user-config")
+            return publisher.subprocess.CompletedProcess(arguments, 0, "", "")
+        with patch.object(publisher.prepare, "npm_command", return_value=["node", "npm-cli.js"]), \
+                patch.dict(os.environ, {"NODE_AUTH_TOKEN": "synthetic-legacy-only",
+                                        "NPM_CONFIG_USERCONFIG": "synthetic-user-config"}, clear=True), \
+                patch.object(publisher.subprocess, "run", side_effect=run):
+            npm = publisher.Npm("token")
+            npm.preflight()
+            npm.publish(Path("candidate.tgz"), "latest")
+
     def test_publish_command_is_explicit_public_tagged_and_scriptless(self):
         with patch.object(publisher.prepare, "npm_command", return_value=["node", "npm-cli.js"]):
             npm = publisher.Npm("token")
@@ -553,6 +608,16 @@ class PublicationContracts(unittest.TestCase):
 
 
 class WorkflowConsumerContracts(unittest.TestCase):
+    def test_oidc_workflow_never_injects_the_bootstrap_publishing_credential(self):
+        workflow = (ROOT / ".github/workflows/build-release.yml").read_text(encoding="utf-8")
+        publish = workflow.split("\n  publish:", 1)[1]
+        self.assertIn("XNIP_NPM_AUTH: ${{ vars.XNIP_NPM_AUTH || "
+                      "(inputs.prerelease && 'token' || 'oidc') }}", publish)
+        self.assertIn("NODE_AUTH_TOKEN: ${{ env.XNIP_NPM_AUTH == 'token' && "
+                      "(secrets.NPM_TOKEN || secrets.NODE_AUTH_TOKEN) || '' }}", publish)
+        self.assertIn('if [ "$XNIP_NPM_AUTH" = oidc ]; then unset NODE_AUTH_TOKEN; fi', publish)
+        self.assertIn("id-token: write", publish)
+
     def test_delivery_timeout_covers_native_and_parent_visibility_windows(self):
         workflow = (ROOT / ".github/workflows/build-release.yml").read_text(encoding="utf-8")
         publish = workflow.split("\n  publish:", 1)[1]

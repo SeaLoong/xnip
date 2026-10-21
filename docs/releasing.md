@@ -134,6 +134,71 @@ platform executable. npm installs the matching optional dependency. A separate
 `dsh-xnip` package is unnecessary. Private host-only tarballs bundle one local
 payload for offline development and cannot enter public publication.
 
+### Local npm validation
+
+Local package preparation is a contributor workflow; the
+[npm package homepage](../npm/README.md) documents installation and use.
+Preparation needs Node 22.14+, Python 3.11+ and a binary built from the current
+Cargo version. DSH/Pi host dependencies have their own requirements; the harness
+checks use Node 24.
+
+Build and prepare a private package for the current host:
+
+```powershell
+cargo build --release --locked
+python npm/prepare.py --host-binary target/release/xnip.exe --out target/npm-local --pack
+npm install --prefix target/npm-install --cache target/npm-cache --offline --ignore-scripts --no-audit --no-fund './target/npm-local/tarballs/xnip-cli-<version>.tgz'
+node target/npm-install/node_modules/xnip-cli/bin/xnip.cjs --version
+```
+
+Replace `<version>` with the root Cargo package version. On Unix, use
+`target/release/xnip`. Use a new `--out` directory each time: preparation never
+overwrites existing artifacts.
+
+The private host-only parent bundles its one native payload for offline testing.
+It is not a cross-platform release. A local GNU Linux executable receives an
+explicit `*-gnu-local` package name and cannot enter public preparation. You can
+also test the matching tarball with
+`npm install --global --offline --ignore-scripts './xnip-cli-<version>.tgz'`.
+
+DSH/Pi can load a matching tarball or prepared package directory through their own
+package managers; see [DSH](dsh.md) and [Pi](pi.md). Prepare their official host
+dependencies separately. Offline installation of xnip alone does not imply that
+a complete harness can be installed offline.
+
+Run the [preparation contracts](../tests/npm_prepare_contract.py) without
+executing foreign payloads:
+
+```sh
+python tests/npm_prepare_contract.py
+```
+
+The [process contracts](../tests/npm_contract.py) build no Rust code; they require
+an existing host binary. They default to `target/debug/xnip` (or `xnip.exe`).
+Set `XNIP_TEST_BINARY` to select another matching build, then run:
+
+```sh
+python tests/npm_contract.py
+```
+
+These checks cover offline installation without lifecycle scripts, binary
+identity and tampering, concurrent first starts, stdin/EOF forwarding, exit
+behavior and an active MCP session surviving package removal. They never publish.
+
+The launcher copies a verified executable into an immutable
+version/platform/SHA256 directory rather than mapping the package-manager
+payload. Concurrent first launches publish a complete cache directory atomically.
+Existing cache entries with an invalid hash are refused instead of repaired in
+place. Child processes force `XNIP_AUTO_UPDATE=0`, so the native updater cannot
+write into `node_modules` or a shared package store. The wrapper owns its child's
+input pipe so wrapper termination closes native MCP input. Native stdout/stderr
+and termination pass through without launcher text on MCP stdout.
+
+Cache entries are deliberately not collected automatically because mapped
+process lifetimes are unknown. Stop the associated processes before removing old
+entries. `XNIP_NPM_CACHE_DIR` selects the execution-cache directory; it does not
+change the pinned package version.
+
 ### Build, verify and publish
 
 ```text
@@ -163,14 +228,15 @@ version; the parent has exact optional dependencies. Prepack validates the
 actual payload too. Build records prevent accidental input mixups; they are not
 independent digital signatures.
 
-The two commands above do not publish. The release job uses:
+The two commands above do not publish. The release job selects its authentication mode explicitly. Within a configured
+GitHub Actions OIDC job, the publisher command is:
 
 ```sh
-python .github/scripts/publish_npm.py --prepared candidate/dist-npm --source-commit COMMIT_SHA --auth token
+python .github/scripts/publish_npm.py --prepared candidate/dist-npm --source-commit COMMIT_SHA --auth oidc
 ```
 
-Add `--prerelease` for a development version; authentication may explicitly be
-`oidc` instead. Stable uses `latest`, development uses `next`. All existing
+Add `--prerelease` for a development version; first-publication bootstrap may
+explicitly use `--auth token` instead. Stable uses `latest`, development uses `next`. All existing
 versions and channel tags are checked before any write. Platform packages are
 published and verified before the parent; only matching immutable integrities
 can be skipped on retry. An inconsistent existing version, tag mismatch or
@@ -194,12 +260,17 @@ npm verifies and can resume its draft independently.
 
 ### First publication and Trusted Publisher transition
 
-The default authentication mode follows the existing repository convention:
-an Actions secret `NPM_TOKEN` is passed to npm as `NODE_AUTH_TOKEN`.
+Stable releases default to OIDC through `release.yml`. Development prereleases
+retain explicit token authentication until `ci.yml` has also been configured as
+a trusted publisher on all seven packages. Repository Actions variable
+`XNIP_NPM_AUTH` overrides both defaults: use `oidc` after both callers are ready,
+or explicitly use `token` for first-publication bootstrap.
+
+Token mode passes the Actions secret `NPM_TOKEN` as `NODE_AUTH_TOKEN`;
 `NODE_AUTH_TOKEN` is also accepted as the secret name when `NPM_TOKEN` is absent.
-Configure a valid publishing credential in repository Actions secrets; never put
-its value in a workflow, a package or a committed npm configuration. The publisher
-captures npm diagnostics and exposes only operation status and safe error codes.
+Never put a credential value in a workflow, package or committed npm
+configuration. The publisher captures npm diagnostics and exposes only operation
+status and safe error codes.
 
 For each package name not yet published, first complete an authorized initial
 publication using a credential allowed to create that package. Then configure
@@ -213,15 +284,39 @@ For OIDC, configure each package for `SeaLoong/xnip` and the actual caller filen
 Allow direct publishing when automatic publication is intended. The workflows
 already grant `id-token: write` through caller and reusable callee; the publisher
 uses GitHub-hosted runners. Set repository Actions variable
-`XNIP_NPM_AUTH=oidc` after the trusted publisher configuration is ready. This mode
-does not pass the npm credential and does not silently fall back to token mode.
+`XNIP_NPM_AUTH=oidc` after both callers are configured, to enable OIDC for development
+publication as well. OIDC mode
+does not inject the bootstrap credential. The npm subprocess uses an isolated
+working directory and empty user/global configuration files, with publishing
+tokens and npm configuration overrides removed from its environment. A failed
+OIDC exchange therefore cannot fall back to project, user or environment tokens.
 A new trust configuration needs a successful publish within two days.
 [Official OIDC configuration and reusable-workflow rules](https://docs.npmjs.com/trusted-publishers/)
 
 Verify the next actual version through OIDC before retiring the bootstrap
 credential. Rerunning an already-complete version only checks its integrity and
-does not prove that OIDC publication works. Ordinary direct OIDC publication
-requires npm 11.5.1+ and Node 22.14+; the hosted publishing job uses Node 24.
+does not prove that OIDC publication works. To verify both caller workflows:
+
+1. Configure both trusted publishers on all seven packages, allowing direct
+   publishing, and set the repository Actions variable `XNIP_NPM_AUTH` to `oidc`.
+2. Prepare the next source release and push its commit to the default branch
+   without a matching stable tag. The ordinary CI run publishes a new development
+   version through `ci.yml`, leaving the existing stable `latest` channel intact.
+3. After that run succeeds, create the stable tag matching Cargo at the same
+   source commit. The tag run publishes through `release.yml` using the successful
+   full source gate. No source rewrite or existing-tag move is needed.
+4. Confirm that each run published seven new packages, the receipt reports
+   `authentication: oidc`, and npm provenance identifies the expected repository,
+   source commit and caller workflow. A receipt alone records the requested mode;
+   actual new publication and provenance provide the external evidence.
+
+This transition sequence differs from ordinary atomic stable commit/tag pushes
+because it intentionally exercises both configured callers. It requires existing
+stable packages; first-time package bootstrapping follows the token procedure
+above. Complete both new trust relationships within npm's activation window.
+
+Ordinary direct OIDC publication requires npm 11.5.1+ and Node 22.14+; the hosted
+publishing job uses Node 24.
 The `npm trust` setup CLI and staging require npm 11.15+.
 [CLI prerequisites](https://docs.npmjs.com/cli/v11/commands/npm-trust/#prerequisites)
 
