@@ -5,8 +5,8 @@ This integration is verified against official Pi commit
 whose coding-agent package version is **1.3.0**. Local verification uses Node 24.13.0
 and real filesystem IO, with no model/provider request.
 
-The integration ships in the **xnip 0.5.0+** npm package. Install it using Pi's
-package manager, or load a matching local development package.
+The integration ships in the **xnip-cli** npm package. After publication, install
+it using Pi's package manager, or load a matching local development package.
 
 ## Extension
 
@@ -21,19 +21,19 @@ The npm packer copies that directory verbatim and advertises:
 }
 ~~~
 
-Install the published package explicitly:
+After publication, install the package explicitly:
 
 ~~~sh
-pi install npm:xnip
+pi install npm:xnip-cli
 # Or load it for one invocation without adding it to settings:
-pi -e npm:xnip
+pi -e npm:xnip-cli
 ~~~
 
 For a complete local development package with its matching native payload,
 Pi can also load its directory using the same package mechanism:
 
 ~~~sh
-pi -e /absolute/path/to/prepared/xnip-package
+pi -e /absolute/path/to/prepared/xnip-cli-package
 ~~~
 
 The directory form is a local package path. Both forms use Pi's package loader
@@ -43,7 +43,7 @@ used by `-e`, verifies the manifest-resolved `.mjs` entry, then loads its defaul
 factory and executes the real MCP lifecycle. It does not start a full Pi session.
 
 On `session_start` the extension calls Pi's real `registerMcpServer` API. It uses
-`require("xnip/native").resolveNativeExecutable()` from the containing npm package
+`require("xnip-cli/native").resolveNativeExecutable()` from the containing npm package
 to obtain an absolute immutable-cache executable, then registers `xnip` with
 `args:["mcp"]`, the session's `ctx.cwd`, `exposure:"direct"`, and
 `XNIP_AUTO_UPDATE:"0"`. Pi owns transport creation, discovery, tool execution
@@ -151,9 +151,9 @@ state. Both EOF and explicit reset await transport closure. This worker does not
 make paid model calls, run a UI or alter user Pi settings.
 
 For local installed-package verification, replace `xnipExecutable` with
-`extensionPath:"/absolute/consumer/node_modules/xnip/integrations/pi/index.mjs"`.
+`extensionPath:"/absolute/consumer/node_modules/xnip-cli/integrations/pi/index.mjs"`.
 The same official loader then imports that installed default factory; its
-`xnip/native` self-reference resolves the packaged immutable executable normally.
+`xnip-cli/native` self-reference resolves the packaged immutable executable normally.
 This opt-in path is a package acceptance check, separate from the benchmark's
 explicit recorded executable.
 
@@ -170,10 +170,10 @@ node --test tests/pi_contract.mjs
 
 For a different locally built native binary set `XNIP_PI_TEST_EXECUTABLE` to its
 absolute path. Source tests inject that resolver into `createXnipExtension`;
-the packaged default uses `xnip/native`. Set `XNIP_PI_TEST_PACKAGE` to the
-absolute installed `node_modules/xnip` directory to also test that default entry
+the packaged default uses `xnip-cli/native`. Set `XNIP_PI_TEST_PACKAGE` to the
+absolute installed `node_modules/xnip-cli` directory to also test that default entry
 through real Pi registration, stdio, editing and teardown. The local private
-0.5.0 tarball passed all 11 tests with this check enabled and no skipped tests.
+0.5.4 tarball passed all 11 tests with this check enabled and no skipped tests.
 The native executable's version/hash must be recorded by the enclosing benchmark run.
 
 The contracts cover schemas/pins/hashes; original-coordinate multi-edit;

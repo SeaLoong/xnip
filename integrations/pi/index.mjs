@@ -8,7 +8,7 @@ import path from "node:path";
 const require = createRequire(import.meta.url);
 
 function nativeExecutable() {
-  const { resolveNativeExecutable } = require("xnip/native");
+  const { resolveNativeExecutable } = require("xnip-cli/native");
   return resolveNativeExecutable();
 }
 

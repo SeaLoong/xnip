@@ -1,6 +1,6 @@
 # Install xnip with npm
 
-`xnip` distributes the same Rust CLI/MCP executable through one public entry.
+The npm entry for xnip is `xnip-cli`, distributing the same Rust CLI/MCP executable.
 The main package contains the Node wrapper, native resolver, DSH bundle and Pi
 extension. Six optional platform packages hold the native executables; npm
 installs the one matching the current OS and CPU.
@@ -11,24 +11,25 @@ requires an explicit complete six-platform release.
 
 ## npm installation (preferred)
 
-Requires Node **22.14+**. Install or update a published version:
+Requires Node **22.14+**. After the intended `xnip-cli` version has been published, install or update it with:
 
 ```sh
-npm install --global xnip
+npm install --global xnip-cli
 xnip --version
-npm install --global xnip@latest
+npm install --global xnip-cli@latest
 ```
 
-Keep optional dependencies enabled. Ordinary users install only `xnip`; they
+Keep optional dependencies enabled. Ordinary users install only `xnip-cli`; they
 do not need to select a platform package. The six supported targets are Linux
 musl, macOS and Windows, each x64/ARM64. A separate `dsh-xnip` package is
-unnecessary. For project-local use, install with `npm install xnip` and invoke
-the project's command through `npx xnip`.
+unnecessary. For project-local use, install with `npm install xnip-cli` and invoke
+the installed command through `npx --no-install xnip`. To select the package
+explicitly for one invocation, use `npx --package xnip-cli xnip`.
 
 npm manages updates; native self-update is disabled. Restart MCP sessions after
 upgrading. If an older native installation shadows the npm command, inspect
 `type -a xnip` or `Get-Command xnip -All`. Uninstall with
-`npm uninstall --global xnip`. Installation alone does not activate a host
+`npm uninstall --global xnip-cli`. Installation alone does not activate a host
 plugin, edit its profile or rewrite project instructions.
 
 ## Prepare and validate a private local package
@@ -39,8 +40,8 @@ preparation; DSH has its own Node requirement. Tests use Node 24.
 ```powershell
 cargo build --release --locked
 python npm/prepare.py --host-binary target/release/xnip.exe --out target/npm-local --pack
-npm install --prefix target/npm-install --cache target/npm-cache --offline --ignore-scripts --no-audit --no-fund ./target/npm-local/tarballs/xnip-0.5.3.tgz
-node target/npm-install/node_modules/xnip/bin/xnip.cjs --version
+npm install --prefix target/npm-install --cache target/npm-cache --offline --ignore-scripts --no-audit --no-fund ./target/npm-local/tarballs/xnip-cli-0.5.4.tgz
+node target/npm-install/node_modules/xnip-cli/bin/xnip.cjs --version
 ```
 
 On Unix use `target/release/xnip`. Use a new `--out` directory each time.
@@ -50,7 +51,7 @@ it is not a cross-platform release. Local GNU Linux binaries receive explicit
 installation with a matching host tarball:
 
 ```sh
-npm install --global --offline --ignore-scripts ./xnip-0.5.3.tgz
+npm install --global --offline --ignore-scripts ./xnip-cli-0.5.4.tgz
 xnip --version
 ```
 
@@ -78,7 +79,7 @@ The packer and prepack validation check inventory, binary version/target, hashes
 and static Linux linking. The embedded identity and build records prevent
 accidental relabelling; they are not independent signatures.
 
-Public releases contain `xnip` plus `xnip-linux-x64-musl`,
+Public releases contain `xnip-cli` plus `xnip-linux-x64-musl`,
 `xnip-linux-arm64-musl`, `xnip-darwin-x64`, `xnip-darwin-arm64`,
 `xnip-win32-x64` and `xnip-win32-arm64`, at one exact version. The parent
 references all six through exact-version optional dependencies. Missing optional
@@ -88,10 +89,10 @@ payloads fail explicitly instead of causing an unverified runtime download.
 
 - `xnip`: native CLI arguments pass through the wrapper.
 - `xnip mcp --receipts text`: stdio MCP with concise receipts.
-- `xnip/native`: `resolveNativeExecutable()` returns an absolute verified
+- `xnip-cli/native`: `resolveNativeExecutable()` returns an absolute verified
   executable path; `childEnvironment()` disables native self-update.
-- `xnip/dsh`: optional DSH plugin entry; bundle activation is explicit.
-- `xnip/pi`: Pi extension entry using the host MCP lifecycle.
+- `xnip-cli/dsh`: optional DSH plugin entry; bundle activation is explicit.
+- `xnip-cli/pi`: Pi extension entry using the host MCP lifecycle.
 - [Goose](https://github.com/SeaLoong/xnip/blob/master/docs/goose.md) uses stdio MCP.
 
 For Windows MCP hosts that directly spawn processes, use the absolute Node

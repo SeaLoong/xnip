@@ -25,6 +25,7 @@ publisher = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(publisher)
 SHA = "a" * 40
 VERSION = "0.5.0"
+PARENT = publisher.prepare.PARENT_NAME
 
 
 def executable(platform, version, target):
@@ -72,7 +73,7 @@ class Fixture:
             metadata = {"name": name, "version": version, "private": False,
                 "repository": publisher.prepare.REPOSITORY, "publishConfig": {"access": "public"}}
             contents = {}
-            if name == "xnip":
+            if name == PARENT:
                 metadata["optionalDependencies"] = {value[1]: version for value in publisher.prepare.PLATFORMS.values()}
                 contents["package/native-manifest.json"] = json.dumps(self.manifest).encode()
             else:
@@ -216,8 +217,20 @@ class PackContracts(unittest.TestCase):
         (self.directory / "tarballs" / "unexpected.tgz").write_bytes(b"untrusted")
         with self.assertRaisesRegex(publisher.PublishError, "exactly"):
             self.validate()
+    def test_parent_identity_is_cli_while_six_payload_names_and_executables_stay_xnip(self):
+        self.assertEqual(PARENT, "xnip-cli")
+        self.assertEqual(publisher.NAMES[:-1], (
+            "xnip-linux-x64-musl", "xnip-linux-arm64-musl", "xnip-darwin-x64",
+            "xnip-darwin-arm64", "xnip-win32-x64", "xnip-win32-arm64",
+        ))
+        metadata = json.loads(self.fixture.contents[PARENT]["package/package.json"])
+        metadata["name"] = "xnip"
+        self.fixture.contents[PARENT]["package/package.json"] = json.dumps(metadata).encode()
+        self.fixture.repack(PARENT)
+        with self.assertRaisesRegex(publisher.PublishError, "identity"):
+            self.validate()
     def test_packed_private_or_wrong_optional_versions_fail_even_with_new_integrity(self):
-        name = "xnip"
+        name = PARENT
         original = copy.deepcopy(self.fixture.contents[name])
         for field, value in [("private", True), ("version", "0.4.0"), ("repository", {}),
                              ("optionalDependencies", {}), ("bundledDependencies", ["xnip-linux-x64-musl"])]:
@@ -283,7 +296,7 @@ class PublicationContracts(unittest.TestCase):
             return value
         def submit(path, channel):
             name = next(name for name in publisher.NAMES if path.name == f"{name}-{VERSION}.tgz")
-            if name == "xnip":
+            if name == PARENT:
                 self.assertTrue(set(publisher.NAMES[:-1]).issubset(verified))
             trace.append(("submit", name))
             original_publish(path, channel)
@@ -306,7 +319,7 @@ class PublicationContracts(unittest.TestCase):
                 self.publish()
         self.assertEqual([event[1] for event in self.npm.events if event[0] == "publish"], list(publisher.NAMES[:-1]))
         self.assertEqual(sum(self.waits), 720)
-        self.assertNotIn("xnip", self.registry.packages)
+        self.assertNotIn(PARENT, self.registry.packages)
     def test_immutable_mismatch_after_submission_blocks_parent_without_visibility_retry(self):
         original = self.registry.metadata
         def metadata(name, *, timeout=30):
@@ -318,7 +331,7 @@ class PublicationContracts(unittest.TestCase):
             with self.assertRaisesRegex(publisher.PublishError, "different integrity"):
                 self.publish()
         self.assertEqual(self.waits, [])
-        self.assertNotIn("xnip", self.registry.packages)
+        self.assertNotIn(PARENT, self.registry.packages)
     def test_prerelease_explicitly_uses_next_for_every_package(self):
         with tempfile.TemporaryDirectory(prefix="xnip-next-") as folder:
             fixture = Fixture(Path(folder), "0.5.1-dev.7.gaaaaaaaaaaaa")
@@ -334,9 +347,9 @@ class PublicationContracts(unittest.TestCase):
         self.assertEqual(self.npm.events, [("auth",)])
         self.assertEqual(set(result["packages"].values()), {"skipped"})
     def test_conflicting_parent_integrity_blocks_all_platform_writes(self):
-        value = self.fixture.metadata("xnip")
+        value = self.fixture.metadata(PARENT)
         value["versions"][VERSION]["dist"]["integrity"] = "sha512-different"
-        self.registry.packages["xnip"] = value
+        self.registry.packages[PARENT] = value
         with self.assertRaisesRegex(publisher.PublishError, "different integrity"):
             self.publish()
         self.assertEqual(self.npm.events, [("auth",)])
@@ -350,7 +363,7 @@ class PublicationContracts(unittest.TestCase):
         self.npm.fail = publisher.NAMES[2]
         with self.assertRaisesRegex(publisher.PublishError, "server rejected request"):
             self.publish()
-        self.assertNotIn("xnip", self.registry.packages)
+        self.assertNotIn(PARENT, self.registry.packages)
         self.assertEqual(set(self.registry.packages), set(publisher.NAMES[:2]))
         self.npm.fail = None
         self.npm.events = []
@@ -364,36 +377,76 @@ class PublicationContracts(unittest.TestCase):
                 self.publish()
         self.assertNotIn("not visible", str(caught.exception))
         self.assertEqual(self.waits, list(publisher.VISIBILITY_DELAYS))
-        self.assertNotIn("xnip", self.registry.packages)
+        self.assertNotIn(PARENT, self.registry.packages)
+    def test_definite_rejections_read_remote_once_and_fail_without_visibility_wait(self):
+        for code, reason in (("E403", "name-too-similar"), ("E401", "access"),
+                             ("EOTP", "2fa"), ("E_STAGE_REQUIRED", "stage-required")):
+            self.registry.events.clear()
+            failure = publisher.NpmFailure(code, reason, "publish",
+                str(self.directory / f"{publisher.NAMES[0]}-{VERSION}.tgz"), 1)
+            with self.subTest(code=code), patch.object(self.npm, "publish", side_effect=failure) as submit:
+                with self.assertRaisesRegex(publisher.NpmFailure, code):
+                    self.publish()
+                self.assertEqual(submit.call_count, 1)
+            self.assertEqual(len(self.registry.events), len(publisher.NAMES) + 1)
+            self.assertEqual(self.registry.events[-1], ("lookup", publisher.NAMES[0]))
+            self.assertEqual(self.waits, [])
+            self.assertNotIn(PARENT, self.registry.packages)
+    def test_definite_rejection_can_verify_an_exact_successful_earlier_attempt(self):
+        original = self.npm.publish
+        def submit(path, channel):
+            original(path, channel)
+            if path.name == f"{publisher.NAMES[0]}-{VERSION}.tgz":
+                raise publisher.NpmFailure("E403", "access", "publish", str(path), 1)
+        with patch.object(self.npm, "publish", side_effect=submit):
+            result = self.publish()
+        self.assertEqual(result["packages"][publisher.NAMES[0]], "verified-after-error")
+        self.assertEqual(result["packages"][PARENT], "published")
+        self.assertEqual(self.waits, [])
+    def test_definite_error_never_hides_a_remote_immutable_integrity_conflict(self):
+        original = self.npm.publish
+        def submit(path, channel):
+            original(path, channel)
+            self.registry.packages[publisher.NAMES[0]]["versions"][VERSION]["dist"]["integrity"] = "sha512-different"
+            raise publisher.NpmFailure("E403", "access", "publish", str(path), 1)
+        with patch.object(self.npm, "publish", side_effect=submit):
+            with self.assertRaisesRegex(publisher.PublishError, "different integrity"):
+                self.publish()
+        self.assertEqual(self.waits, [])
+        self.assertNotIn(PARENT, self.registry.packages)
     def test_successful_publish_with_lost_response_and_delayed_visibility_is_verified(self):
-        self.npm.lost_response = publisher.NAMES[0]
+        original_publish = self.npm.publish
+        def submit(path, channel):
+            original_publish(path, channel)
+            if path.name == f"{publisher.NAMES[0]}-{VERSION}.tgz":
+                raise publisher.NpmFailure("ECONNRESET", "unknown", "publish", str(path), 1)
         original = self.registry.metadata
         def metadata(name, *, timeout=30):
             if name == publisher.NAMES[0] and sum(self.waits) < 300:
                 return None
             return original(name, timeout=timeout)
-        with patch.object(self.registry, "metadata", side_effect=metadata):
+        with patch.object(self.registry, "metadata", side_effect=metadata), patch.object(self.npm, "publish", side_effect=submit):
             result = self.publish()
         self.assertEqual(result["packages"][publisher.NAMES[0]], "verified-after-error")
-        self.assertEqual(result["packages"]["xnip"], "published")
+        self.assertEqual(result["packages"][PARENT], "published")
         self.assertEqual(sum(self.waits), 300)
     def test_existing_version_with_wrong_channel_requires_explicit_promotion(self):
-        metadata = self.fixture.metadata("xnip")
+        metadata = self.fixture.metadata(PARENT)
         metadata["dist-tags"]["latest"] = "0.4.0"
-        self.registry.packages["xnip"] = metadata
+        self.registry.packages[PARENT] = metadata
         with self.assertRaisesRegex(publisher.PublishError, "explicit promotion"):
             self.publish()
         self.assertEqual(self.npm.events, [("auth",)])
     def test_older_job_cannot_move_latest_backwards(self):
-        self.registry.packages["xnip"] = {"name": "xnip", "versions": {}, "dist-tags": {"latest": "0.6.0"}}
+        self.registry.packages[PARENT] = {"name": PARENT, "versions": {}, "dist-tags": {"latest": "0.6.0"}}
         with self.assertRaisesRegex(publisher.PublishError, "backwards"):
             self.publish()
         self.assertEqual(self.npm.events, [("auth",)])
     def test_malformed_registry_shapes_fail_before_any_platform_write(self):
         for field, value in [("dist-tags", []), ("dist-tags", {"latest": 123}), ("versions", [])]:
-            metadata = self.fixture.metadata("xnip")
+            metadata = self.fixture.metadata(PARENT)
             metadata[field] = value
-            self.registry.packages["xnip"] = metadata
+            self.registry.packages[PARENT] = metadata
             with self.subTest(field=field), self.assertRaises(publisher.PublishError):
                 self.publish()
         self.assertEqual(self.npm.events, [("auth",)] * 3)
@@ -403,13 +456,13 @@ class PublicationContracts(unittest.TestCase):
             error = publisher.urllib.error.HTTPError("https://example.invalid", code, "fixture", {}, None)
             with patch.object(publisher.urllib.request, "urlopen", side_effect=error):
                 with self.subTest(code=code), self.assertRaisesRegex(publisher.PublishError, str(code)):
-                    registry.metadata("xnip")
+                    registry.metadata(PARENT)
         missing = publisher.urllib.error.HTTPError("https://example.invalid", 404, "fixture", {}, None)
         with patch.object(publisher.urllib.request, "urlopen", side_effect=missing):
-            self.assertIsNone(registry.metadata("xnip"))
+            self.assertIsNone(registry.metadata(PARENT))
         with patch.object(publisher.urllib.request, "urlopen", side_effect=publisher.urllib.error.URLError("offline")):
             with self.assertRaisesRegex(publisher.PublishError, "unavailable"):
-                registry.metadata("xnip")
+                registry.metadata(PARENT)
     def test_registry_failure_is_not_treated_as_an_available_name(self):
         with patch.object(self.registry, "metadata", side_effect=publisher.PublishError("HTTP 403")):
             with self.assertRaisesRegex(publisher.PublishError, "403"):
@@ -445,6 +498,51 @@ class PublicationContracts(unittest.TestCase):
                 npm.publish(Path("candidate.tgz"), "latest")
         self.assertIn("E403", str(caught.exception))
         self.assertNotIn("synthetic-private", str(caught.exception))
+    def test_ansi_and_json_npm_causes_are_fixed_categories_with_no_captured_output(self):
+        cases = [
+            ("E403", "Package name too similar to existing package", "name-too-similar"),
+            ("E403", "Package name is reserved", "name-restricted"),
+            ("E403", "Cannot republish after unpublish for 24 hours", "name-cooldown"),
+            ("EOTP", "One-time password required", "2fa"),
+            ("E_STAGE_REQUIRED", "Stage-only token", "stage-required"),
+            ("E401", "Unauthorized", "access"),
+            ("EPUBLISHCONFLICT", "Cannot publish over existing version", "immutable"),
+            ("E500", "npm internal error", "internal"),
+            ("ECONNRESET", "Connection lost", "unknown"),
+        ]
+        for code, summary, reason in cases:
+            for use_json in (False, True):
+                output = (json.dumps({"error": {"code": code, "summary": summary,
+                    "detail": "Authorization: Bearer synthetic-secret-value"}}) if use_json else
+                    f"\\x1b[31mnpm error code {code}\\x1b[0m\nnpm error {summary}\n_authToken=synthetic-secret-value".replace("\\x1b", "\x1b"))
+                stdout, stderr = (output, "") if use_json else ("", output)
+                with self.subTest(code=code, json=use_json):
+                    actual = publisher.classify_npm(stdout, stderr)
+                    self.assertEqual(actual, (code, reason))
+                    failure = publisher.NpmFailure(*actual, "publish",
+                        f"/private-user/credentials/{PARENT}-{VERSION}.tgz", 1)
+                    self.assertNotIn("synthetic-secret", str(failure))
+                    self.assertNotIn("private-user", str(failure))
+                    self.assertNotIn(summary, str(failure))
+                    self.assertIn(f"parent={PARENT}", str(failure))
+                    self.assertIn(f"candidate={PARENT}-{VERSION}.tgz", str(failure))
+        unknown = publisher.classify_npm('{"error":{"code":"synthetic-secret-value","message":"private"}}', "")
+        self.assertEqual(unknown, ("UNKNOWN", "unknown"))
+        failure = publisher.NpmFailure("synthetic-secret-value", "synthetic-secret-value",
+                                      "private-command", "/private-user/synthetic-secret-value.tgz", 1)
+        self.assertNotIn("synthetic-secret-value", str(failure))
+        self.assertNotIn("private-user", str(failure))
+    def test_subprocess_timeout_is_an_unknown_outcome_without_raw_exception_output(self):
+        with patch.object(publisher.prepare, "npm_command", return_value=["node", "npm-cli.js"]):
+            npm = publisher.Npm("token")
+        timeout = publisher.subprocess.TimeoutExpired(
+            ["synthetic-secret-command"], 180, output="synthetic-secret-value")
+        with patch.object(publisher.subprocess, "run", side_effect=timeout):
+            with self.assertRaises(publisher.NpmFailure) as caught:
+                npm.publish(Path(f"{PARENT}-{VERSION}.tgz"), "latest")
+        self.assertEqual(caught.exception.code, "ETIMEDOUT")
+        self.assertFalse(caught.exception.definite)
+        self.assertNotIn("synthetic-secret", str(caught.exception))
     def test_publish_command_is_explicit_public_tagged_and_scriptless(self):
         with patch.object(publisher.prepare, "npm_command", return_value=["node", "npm-cli.js"]):
             npm = publisher.Npm("token")
@@ -487,11 +585,11 @@ class WorkflowConsumerContracts(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="xnip-workflow-consumer-") as temporary:
             directory = Path(temporary)
             def prepared(dist, output, pack, binary):
-                archive = output / "tarballs" / f"xnip-{VERSION}.tgz"
+                archive = output / "tarballs" / f"{PARENT}-{VERSION}.tgz"
                 archive.parent.mkdir(parents=True)
                 archive.write_bytes(b"offline workflow artifact fixture")
                 return {"output_directory": str(output),
-                        "tarballs": [{"name": "xnip", "filename": "tarballs/" + archive.name}]}
+                        "tarballs": [{"name": PARENT, "filename": "tarballs/" + archive.name}]}
             def run(arguments, **kwargs):
                 calls.append(arguments)
                 if "--offline" in arguments:
@@ -508,7 +606,13 @@ class WorkflowConsumerContracts(unittest.TestCase):
             self.assertEqual(len(calls), 2)
             self.assertIn("--offline", calls[0])
             self.assertIn("@deepseek-ai/dsh-mcp-client@0.2.1-rc.2", calls[1])
-            self.assertIn("XNIP_DSH_TEST_INSTALL=", (directory / "github-env").read_text(encoding="utf-8"))
+            environment = (directory / "github-env").read_text(encoding="utf-8")
+            self.assertIn("XNIP_DSH_TEST_INSTALL=", environment)
+            pi_package = next(line.split("=", 1)[1] for line in environment.splitlines()
+                              if line.startswith("XNIP_PI_TEST_PACKAGE="))
+            self.assertEqual(Path(pi_package).name, PARENT)
+            self.assertEqual(Path(pi_package).parent.name, "node_modules")
+            self.assertEqual(Path(calls[0][-1]).name, f"{PARENT}-{VERSION}.tgz")
 
 
 if __name__ == "__main__":

@@ -154,6 +154,8 @@ class NpmPreparationContract(unittest.TestCase):
             self.assertEqual(pkg["scripts"]["prepack"],"node lib/validate.cjs")
             self.assertTrue((directory/"lib/validate.cjs").is_file())
         parent=json.loads((self.base/"public/packages/xnip/package.json").read_text(encoding="utf8"))
+        self.assertEqual(parent["name"],prepare.PARENT_NAME)
+        self.assertEqual(parent["bin"],{"xnip":"./bin/xnip.cjs"})
         self.assertEqual(parent["optionalDependencies"],{name:version for _,name in prepare.PLATFORMS.values()})
 
     def test_full_dist_is_private_unless_public_is_explicit(self):
@@ -206,6 +208,25 @@ class NpmPreparationContract(unittest.TestCase):
             self.assertEqual(result.returncode,0,result.stderr)
 
     @unittest.skipUnless(shutil.which("node"),"Node required for prepack validation")
+    def test_prepack_rejects_legacy_or_unexpected_parent_names(self):
+        self.fixture_dist()
+        prepare.prepare(self.base,self.base/"public",public=True)
+        directory=self.base/"public/packages/xnip"
+        file=directory/"package.json"
+        pkg=json.loads(file.read_text(encoding="utf8"))
+        self.assertEqual(pkg["name"],"xnip-cli")
+        self.assertEqual(set(pkg["optionalDependencies"]),{
+            "xnip-linux-x64-musl","xnip-linux-arm64-musl","xnip-darwin-x64",
+            "xnip-darwin-arm64","xnip-win32-x64","xnip-win32-arm64"})
+        for name in ["xnip","xnip-cli-extra"]:
+            pkg["name"]=name
+            file.write_text(json.dumps(pkg),encoding="utf8")
+            result=subprocess.run([shutil.which("node"),str(directory/"lib/validate.cjs")],
+                capture_output=True,timeout=15)
+            self.assertNotEqual(result.returncode,0,name)
+            self.assertIn(b"parent package identity",result.stderr)
+
+    @unittest.skipUnless(shutil.which("node"),"Node required for prepack validation")
     def test_changing_only_private_cannot_publish_a_local_parent_or_native_package(self):
         self.fixture_dist()
         prepare.prepare(self.base,self.base/"private")
@@ -242,7 +263,7 @@ class NpmPreparationContract(unittest.TestCase):
         version,commit=self.fixture_dist()
         report=prepare.prepare(self.base,self.base/"packed",True,public=True,source_commit=commit)
         self.assertEqual(len(report["tarballs"]),7)
-        self.assertEqual(report["tarballs"][-1]["name"],"xnip")
+        self.assertEqual(report["tarballs"][-1]["name"],prepare.PARENT_NAME)
         for entry in report["tarballs"]:
             self.assertFalse(Path(entry["filename"]).is_absolute())
             self.assertEqual(entry["version"],version)

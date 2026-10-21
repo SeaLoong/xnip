@@ -183,7 +183,7 @@ jobs:
           prefix = temporary / "installed"
           cache = temporary / "npm-cache"
           report = prepare.prepare(None, temporary / "prepared", True, root / "target/debug/xnip")
-          tarball = str(Path(report["output_directory"]) / next(item["filename"] for item in report["tarballs"] if item["name"] == "xnip"))
+          tarball = str(Path(report["output_directory"]) / next(item["filename"] for item in report["tarballs"] if item["name"] == prepare.PARENT_NAME))
           npm = prepare.npm_command()
           common = ["--prefix", str(prefix), "--cache", str(cache), "--ignore-scripts", "--no-audit", "--no-fund"]
           subprocess.run([*npm, "install", *common, "--offline", tarball], check=True)
@@ -192,7 +192,7 @@ jobs:
               "@deepseek-ai/dsh-system-prompt@0.2.1-rc.2", "@deepseek-ai/cordis@4.0.5"], check=True)
           with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as output:
               print(f"XNIP_DSH_TEST_INSTALL={prefix}", file=output)
-              print(f"XNIP_PI_TEST_PACKAGE={prefix / 'node_modules/xnip'}", file=output)
+              print(f"XNIP_PI_TEST_PACKAGE={prefix / 'node_modules' / prepare.PARENT_NAME}", file=output)
               print(f"XNIP_NPM_CACHE_DIR={temporary / 'native-exec'}", file=output)
           PY
       - name: Real native editors and MCP bridges without model calls

@@ -139,7 +139,7 @@ if (native) {
   if (format !== metadata.format) fail("executable format metadata mismatch");
 } else {
   if (JSON.stringify(pkg.files) !== JSON.stringify(["bin/","lib/","integrations/","native-manifest.json","README.md","LICENSE","THIRD_PARTY_LICENSES.md"])) fail("parent package file allowlist mismatch");
-  if (pkg.name !== "xnip" || metadata.repository?.url !== repository || metadata.repository?.type !== "git") fail("invalid parent package identity");
+  if (pkg.name !== "xnip-cli" || metadata.repository?.url !== repository || metadata.repository?.type !== "git") fail("invalid parent package identity");
   const present = Object.keys(metadata.platforms || {});
   if (present.length !== (metadata.localOnly ? 1 : 6)
       || present.some(key => !platforms[key])) fail("invalid prepared platform set");

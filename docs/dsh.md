@@ -1,16 +1,16 @@
 # DeepSeek Harness integration
 
-The `xnip/dsh` entry is an explicit [Cordis plugin](https://github.com/deepseek-ai/deepseek-harness) for DeepSeek Harness (DSH). It registers the native xnip executable through the official `@deepseek-ai/dsh-mcp-client` stdio bridge.
+The `xnip-cli/dsh` entry is an explicit [Cordis plugin](https://github.com/deepseek-ai/deepseek-harness) for DeepSeek Harness (DSH). It registers the native xnip executable through the official `@deepseek-ai/dsh-mcp-client` stdio bridge.
 
-This integration is included in **xnip 0.5.0+**. The parent npm package selects the matching native platform payload; see the [installation guide](installation.md). The standard DSH 0.2.1-rc.2 host already carries the compatible `@deepseek-ai/dsh-mcp-client` package. Its official profile resolver makes that host dependency available inside profile plugins, including this entry's dynamic import. Loading this integration does not install or launch the complete DSH application.
+This integration is included in the **xnip-cli** npm package. The parent selects the matching xnip native platform payload; see the [installation guide](installation.md). The standard DSH 0.2.1-rc.2 host already carries the compatible `@deepseek-ai/dsh-mcp-client` package. Its official profile resolver makes that host dependency available inside profile plugins, including this entry's dynamic import. Loading this integration does not install or launch the complete DSH application.
 
 ## Register the plugin
 
-For a DSH-managed profile, explicitly install the published package through DSH's
-plugin manager. Replace `my-profile` with the intended profile:
+After `xnip-cli` has been published, explicitly install it into a DSH-managed
+profile through DSH's plugin manager. Replace `my-profile` with the intended profile:
 
 ```sh
-dsh plugin --profile my-profile add xnip
+dsh plugin --profile my-profile add xnip-cli
 ```
 
 For offline validation or unpublished development builds, prepare the private
@@ -31,14 +31,14 @@ The bundle uses the startup process directory. To choose a fixed project, put th
 In an existing programmatic DSH/Cordis deployment with `ctx.tools` mounted, register the same plugin explicitly:
 
 ```js
-import * as Xnip from 'xnip/dsh';
+import * as Xnip from 'xnip-cli/dsh';
 
 await ctx.plugin(Xnip, {
   cwd: '/absolute/path/to/project',
 });
 ```
 
-The plugin resolves the native binary through `xnip/native`'s synchronous `resolveNativeExecutable()`. It starts that binary directly with `mcp --receipts text`, sets an absolute subprocess working directory, and sets `XNIP_AUTO_UPDATE=0` for the child. It does not write a user profile or configuration file.
+The plugin resolves the native binary through `xnip-cli/native`'s synchronous `resolveNativeExecutable()`. It starts that binary directly with `mcp --receipts text`, sets an absolute subprocess working directory, and sets `XNIP_AUTO_UPDATE=0` for the child. It does not write a user profile or configuration file.
 
 The official bridge exposes the five default tools as:
 
@@ -78,7 +78,7 @@ A custom Cordis deployment without that DSH resolver needs the official peer in 
 
 ```js
 import * as McpClient from '@deepseek-ai/dsh-mcp-client';
-import { createXnipPlugin } from 'xnip/dsh';
+import { createXnipPlugin } from 'xnip-cli/dsh';
 
 const Xnip = createXnipPlugin({
   loadMcpClient: async () => McpClient,
@@ -128,4 +128,4 @@ The independent native-tool worker contracts use the same prepared runtime:
 python tests/dsh_adapter_contract.py
 ```
 
-Set `XNIP_DSH_TEST_BINARY` to the real 0.5.0 executable when running the source bridge checks, including the `.exe` suffix on Windows. The packaged test uses the installed tarball's verified executable instead. The worker contracts cover all 13 benchmark fixtures through both filesystem and string-editor tools, with real reads/views in observed modes; bare modes explicitly omit those observation guards. These commands exercise local tools and captured protocol behavior without model calls or a DSH UI session.
+Set `XNIP_DSH_TEST_BINARY` to the locally built 0.5.4 executable when running the source bridge checks, including the `.exe` suffix on Windows. The packaged test uses the installed tarball's verified executable instead. The worker contracts cover all 13 benchmark fixtures through both filesystem and string-editor tools, with real reads/views in observed modes; bare modes explicitly omit those observation guards. These commands exercise local tools and captured protocol behavior without model calls or a DSH UI session.

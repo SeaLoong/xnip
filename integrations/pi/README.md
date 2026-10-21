@@ -1,8 +1,8 @@
 # Pi
 
-The npm package copies this directory verbatim and points `pi.extensions` at
+The `xnip-cli` npm package copies this directory verbatim and points `pi.extensions` at
 `./integrations/pi/index.mjs`. It registers xnip using Pi's own MCP API and the
-package's `xnip/native` resolver, with direct exposure and native auto-update
+package's `xnip-cli/native` resolver, with direct exposure and native auto-update
 disabled. Native Pi edit/write remain unchanged.
 
 See [integration and benchmark documentation](https://github.com/SeaLoong/xnip/blob/master/docs/pi.md) for the pinned

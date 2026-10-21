@@ -56,7 +56,7 @@ def smoke(prepared, source_commit, expected_platform=None):
         "host platform does not match release target")
     records = report.get("tarballs", [])
     require(len(records) == 7 and {entry["name"] for entry in records}
-        == {"xnip", *(value[1] for value in prepare.PLATFORMS.values())},
+        == {prepare.PARENT_NAME, *(value[1] for value in prepare.PLATFORMS.values())},
         "release must contain exactly seven distinct npm tarballs")
     selected = {}
     for entry in records:
@@ -73,16 +73,16 @@ def smoke(prepared, source_commit, expected_platform=None):
         require(integrity.startswith("sha512-") and
             base64.b64decode(integrity[7:], validate=True) == hashlib.sha512(data).digest(),
             "tarball integrity mismatch: "+entry["name"])
-        if entry["name"] in {"xnip", name}:
+        if entry["name"] in {prepare.PARENT_NAME, name}:
             selected[entry["name"]] = file
     with tempfile.TemporaryDirectory(prefix="xnip-public-release-smoke-") as temporary:
         root = Path(temporary)
         consumer = root/"consumer"
         result = subprocess.run([*prepare.npm_command(),"install","--prefix",str(consumer),
             "--cache",str(root/"npm-cache"),"--offline","--ignore-scripts","--no-audit","--no-fund",
-            str(selected["xnip"]),str(selected[name])],capture_output=True,text=True,timeout=120)
+            str(selected[prepare.PARENT_NAME]),str(selected[name])],capture_output=True,text=True,timeout=120)
         require(result.returncode == 0, "offline npm install failed: "+result.stderr[-4000:])
-        package = consumer/"node_modules/xnip"
+        package = consumer/"node_modules"/prepare.PARENT_NAME
         native = consumer/"node_modules"/name
         for directory in [package,native]:
             pkg = json.loads((directory/"package.json").read_text(encoding="utf8"))

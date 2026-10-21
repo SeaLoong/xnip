@@ -50,7 +50,7 @@ The [release planner](../.github/scripts/release.py) compares every path in the 
 
 The exact allowlist lives in `release_relevant` and its constants, with [offline contracts](../tests/release_contract.py). CI still runs its checks for changes that do not publish.
 
-For example, with stable Cargo version `0.5.3`, CI generates `0.5.4-dev.<run_number>.g<commit12>`. An already-prerelease Cargo version retains its major/minor/patch core. Version, tag and binary `--version` agree: only the isolated build checkout's root manifest and matching lockfile entry are stamped. The source branch is never rewritten. Rerunning a workflow keeps the same tag; `run_attempt` is excluded.
+For example, with stable Cargo version `0.5.4`, CI generates `0.5.5-dev.<run_number>.g<commit12>`. An already-prerelease Cargo version retains its major/minor/patch core. Version, tag and binary `--version` agree: only the isolated build checkout's root manifest and matching lockfile entry are stamped. The source branch is never rewritten. Rerunning a workflow keeps the same tag; `run_attempt` is excluded.
 
 Every commit selected for publication receives full verification: formatting, linting, all platform tests, dependency policy, MSRV, package/integration checks and release contracts must pass. The successful `ci` gate records a `Full verification (Rust, integrations, npm, harnesses)` marker; scoped verification alone cannot authorize publication. Six build jobs produce Linux musl, macOS and Windows archives for x86_64 and ARM64. Native runner smoke tests check the embedded version and doctor output.
 
@@ -61,11 +61,11 @@ The publisher serializes calls for the same version. An existing tag must point 
 Install a preview by its explicit tag:
 
 ```sh
-XNIP_VERSION=v0.5.4-dev.123.gabcdef123456 sh install.sh
+XNIP_VERSION=v0.5.5-dev.123.gabcdef123456 sh install.sh
 ```
 
 ```powershell
-$env:XNIP_VERSION = 'v0.5.4-dev.123.gabcdef123456'
+$env:XNIP_VERSION = 'v0.5.5-dev.123.gabcdef123456'
 ./install.ps1
 ```
 
@@ -80,8 +80,8 @@ The default installers and [silent updater](updates.md) remain on stable release
 
 Commit and push the intended source before starting CI: GitHub Actions builds
 that pushed ref, not an uncommitted local working tree. A stable release must have
-a nonempty matching changelog section before its tag is created. Merely pushing the 0.5.3 source to the default
-branch selects a development prerelease; it does not publish stable 0.5.3.
+a nonempty matching changelog section before its tag is created. Merely pushing the 0.5.4 source to the default
+branch selects a development prerelease; it does not publish stable 0.5.4.
 
 A manual rehearsal runs source checks, complete packaging and six native npm
 installation checks without publishing:
@@ -94,8 +94,8 @@ gh run list --workflow release.yml --limit 3
 When publishing, create an annotated tag matching Cargo:
 
 ```sh
-git tag -a v0.5.3 -m "xnip v0.5.3"
-git push --atomic origin master v0.5.3
+git tag -a v0.5.4 -m "xnip v0.5.4"
+git push --atomic origin master v0.5.4
 ```
 
 The example assumes Cargo has been set to that new unpublished version. Never move an existing published tag. Push the release commit and tag atomically: the planner sees a matching stable tag at the same commit and skips a duplicate development prerelease while retaining all branch checks. The tag workflow verifies Cargo/tag equality and reuses the successful full `ci` gate from a same-repository default-branch push for that exact commit, waiting for an in-progress gate if necessary. If no reusable full gate exists, it runs full checks once. It then builds and publishes from a complete draft. Stable release notes use the matching, nonempty changelog section. Tags containing a SemVer prerelease identifier are marked prerelease and do not become latest.
@@ -116,7 +116,8 @@ Creating a tag with `GITHUB_TOKEN` does not start another release workflow, so C
 
 ## npm publication
 
-The public entry is `xnip`; ordinary users run `npm install --global xnip`.
+The npm entry is `xnip-cli`; after publication, ordinary users run `npm install --global xnip-cli`.
+The executable command and MCP server remain named `xnip`.
 Six exact-version optional packages provide the Rust executable:
 
 | Package | Platform |
@@ -200,9 +201,9 @@ Configure a valid publishing credential in repository Actions secrets; never put
 its value in a workflow, a package or a committed npm configuration. The publisher
 captures npm diagnostics and exposes only operation status and safe error codes.
 
-For seven new names, first complete an authorized initial publication using a
-credential allowed to create those packages. Then configure each package's
-Trusted Publisher. The official [trust prerequisites](https://docs.npmjs.com/cli/v11/commands/npm-trust/#prerequisites)
+For each package name not yet published, first complete an authorized initial
+publication using a credential allowed to create that package. Then configure
+that package's Trusted Publisher. The official [trust prerequisites](https://docs.npmjs.com/cli/v11/commands/npm-trust/#prerequisites)
 require an existing package, write access and account 2FA. Staged creation is an
 alternative, but it creates a public `0.0.0-stage` placeholder and is not a local
 dry run. [Staging behavior](https://docs.npmjs.com/staged-publishing/)

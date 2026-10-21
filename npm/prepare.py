@@ -16,6 +16,7 @@ import tomllib
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
+PARENT_NAME = "xnip-cli"
 PLATFORMS = {
     "linux-x64": ("x86_64-unknown-linux-musl", "xnip-linux-x64-musl"),
     "linux-arm64": ("aarch64-unknown-linux-musl", "xnip-linux-arm64-musl"),
@@ -139,8 +140,8 @@ def release_provenance(dist, archive_name, raw, version, target):
 def prepare(dist, output, pack=False, host_binary=None, public=False, source_commit=None):
     version = tomllib.loads((ROOT/"Cargo.toml").read_text(encoding="utf-8"))["package"]["version"]
     template = json.loads((ROOT/"npm/xnip/package.json").read_text(encoding="utf-8"))
-    if template.get("private") is not True or template.get("name") != "xnip":
-        raise ValueError("source template requires name:xnip and private:true")
+    if template.get("private") is not True or template.get("name") != PARENT_NAME:
+        raise ValueError(f"source template requires name:{PARENT_NAME} and private:true")
     if template.get("scripts") != {"prepack":"node lib/validate.cjs"} or template.get("files") != PARENT_FILES:
         raise ValueError("source template must retain the file allowlist and validation-only prepack script")
     if public and (dist is None or host_binary is not None):

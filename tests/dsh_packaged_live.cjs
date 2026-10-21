@@ -1,4 +1,4 @@
-/** Installed private tarball -> default xnip/native resolution -> official DSH peer. */
+/** Installed private tarball -> default xnip-cli/native resolution -> official DSH peer. */
 const assert = require('node:assert/strict');
 const crypto = require('node:crypto');
 const fs = require('node:fs/promises');
@@ -19,9 +19,10 @@ test('installed private package loads its default native resolver and official b
 }, async () => {
   assert.ok(path.isAbsolute(install) && path.isAbsolute(runtimePath));
   const requireInstalled = createRequire(path.join(install, 'package.json'));
-  const packageFile = requireInstalled.resolve('xnip/package.json');
+  const packageFile = requireInstalled.resolve('xnip-cli/package.json');
   const packageDir = path.dirname(packageFile);
   const manifest = JSON.parse(await fs.readFile(packageFile, 'utf8'));
+  assert.equal(manifest.name, 'xnip-cli');
   const nativeManifest = JSON.parse(await fs.readFile(path.join(packageDir, 'native-manifest.json'), 'utf8'));
   assert.equal(manifest.private, true, 'this test accepts the prepared private package only');
   assert.equal(nativeManifest.localOnly, true, 'a real host-only native payload is required');
@@ -32,7 +33,7 @@ test('installed private package loads its default native resolver and official b
   const patches = runtime.loadOptionalPatches('xnip-installed-test', path.join(packageDir, manifest.dsh.bundle.patch));
   const inserted = patches.flatMap(patch => patch.insert ?? []);
   assert.equal(inserted.length, 1);
-  assert.equal(inserted[0].name, pathToFileURL(requireInstalled.resolve('xnip/dsh')).href);
+  assert.equal(inserted[0].name, pathToFileURL(requireInstalled.resolve('xnip-cli/dsh')).href);
   const plugin = await import(inserted[0].name);
   const { Context } = await import(pathToFileURL(requireInstalled.resolve('@deepseek-ai/cordis')).href);
   const { default: ToolRuntime } = await import(pathToFileURL(requireInstalled.resolve('@deepseek-ai/dsh-tools')).href);
@@ -45,7 +46,7 @@ test('installed private package loads its default native resolver and official b
   process.env.XNIP_UPDATE_STATE_DIR = path.join(root, 'update-state');
   const ctx = new Context();
   try {
-    const native = requireInstalled('xnip/native');
+    const native = requireInstalled('xnip-cli/native');
     const executable = native.resolveNativeExecutable();
     assert.ok(path.relative(cache, executable) && !path.relative(cache, executable).startsWith('..'));
     assert.ok(!executable.startsWith(packageDir + path.sep), 'the package-manager payload is never mapped');
@@ -91,20 +92,22 @@ test('official profile resolver supplies the host peer to a separate profile pac
   timeout: 45000,
 }, async () => {
   const requireHost = createRequire(path.join(install, 'package.json'));
-  const installedPackage = path.dirname(requireHost.resolve('xnip/package.json'));
+  const installedPackage = path.dirname(requireHost.resolve('xnip-cli/package.json'));
+  const installedManifest = JSON.parse(await fs.readFile(path.join(installedPackage, 'package.json'), 'utf8'));
+  assert.equal(installedManifest.name, 'xnip-cli');
   const runtime = await import(pathToFileURL(runtimePath).href);
   assert.equal(typeof runtime.createRuntimeResolution, 'function');
   assert.equal(typeof runtime.installRuntimeInterception, 'function');
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'xnip dsh profile-'));
   const home = path.join(root, 'home');
   const profileDir = path.join(home, 'profiles', 'local');
-  const packageDir = path.join(profileDir, 'node_modules', 'xnip');
+  const packageDir = path.join(profileDir, 'node_modules', 'xnip-cli');
   const cwd = path.join(root, 'project');
   await fs.mkdir(cwd, { recursive: true });
   await fs.mkdir(path.dirname(packageDir), { recursive: true });
   await fs.cp(installedPackage, packageDir, { recursive: true });
   await fs.writeFile(path.join(profileDir, 'package.json'), JSON.stringify({
-    name: 'xnip-dsh-local-profile-test', private: true, dependencies: { xnip: '0.5.0' },
+    name: 'xnip-dsh-local-profile-test', private: true, dependencies: { [installedManifest.name]: installedManifest.version },
   }));
   const profile = { name: 'local', dir: profileDir, layers: [], patches: [], skippedBundles: [],
     patchPath: path.join(profileDir, 'cordis.patch.yml') };

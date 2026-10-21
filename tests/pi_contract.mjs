@@ -136,9 +136,11 @@ test("extension refuses an unsupported Pi API instead of replacing native edit",
 });
 
 
-test("installed npm extension default resolves xnip/native and uses real Pi lifecycle",
+test("installed npm extension default resolves xnip-cli/native and uses real Pi lifecycle",
   { skip: !process.env.XNIP_PI_TEST_PACKAGE }, async () => {
   const packageRoot = path.resolve(process.env.XNIP_PI_TEST_PACKAGE);
+  const manifest = JSON.parse(await fs.readFile(path.join(packageRoot, "package.json"), "utf8"));
+  assert.equal(manifest.name, "xnip-cli");
   const root = await fixture("old\n");
   const resolved = await handle({ action: "resolve-package", root, packageRoot });
   assert.equal(resolved.ok, true, resolved.error);

@@ -27,11 +27,26 @@ SPEC = importlib.util.spec_from_file_location("xnip_release_identity", ROOT / ".
 release = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(release)
 REGISTRY = "https://registry.npmjs.org"
-NAMES = tuple(value[1] for value in prepare.PLATFORMS.values()) + ("xnip",)
+NAMES = tuple(value[1] for value in prepare.PLATFORMS.values()) + (prepare.PARENT_NAME,)
 MAX_PACK = 128 * 1024 * 1024
 MAX_METADATA = 16 * 1024 * 1024
 VISIBILITY_SECONDS = 12 * 60
 VISIBILITY_DELAYS = (1, 2, 4, 8, 15, 30) + (60,) * 11
+ANSI = re.compile(r"\x1b(?:\[[0-?]*[ -/]*[@-~]|\][^\x07\x1b]*(?:\x07|\x1b\\))")
+DEFINITE_CODES = frozenset({
+    "E400", "E401", "E402", "E403", "E404", "E409", "EOTP", "ENEEDAUTH",
+    "EAUTH", "EACCES", "EPERM", "E_STAGE_REQUIRED", "EPUBLISHCONFLICT",
+    "EINTEGRITY", "EPRIVATE", "EBADSEMVER", "EUNSCOPED", "EUSAGE", "ETARGET",
+})
+NPM_REASONS = frozenset({
+    "name-too-similar", "name-restricted", "name-cooldown", "2fa", "stage-required",
+    "access", "immutable", "internal", "unknown",
+})
+NPM_CODES = DEFINITE_CODES | {
+    "E429", "E500", "E502", "E503", "E504", "EINTERNAL", "ECONNRESET",
+    "ETIMEDOUT", "ENOTFOUND", "ECONNREFUSED", "EAI_AGAIN", "ENETUNREACH",
+    "EHOSTUNREACH", "ESOCKETTIMEDOUT",
+}
 
 
 class PublishError(Exception):
@@ -40,6 +55,76 @@ class PublishError(Exception):
 
 class VersionNotVisible(PublishError):
     """No registry version appeared within the bounded verification window."""
+
+
+def classify_npm(stdout: str, stderr: str) -> tuple[str, str]:
+    """Inspect captured diagnostics, but return only fixed codes/categories."""
+    text = ANSI.sub("", stderr + "\n" + stdout)
+    match = re.search(r"(?im)^npm (?:ERR!|error) code ([A-Z][A-Z0-9_]{1,40})\s*$", text)
+    code = match[1].upper() if match and match[1].upper() in NPM_CODES else "UNKNOWN"
+    for raw in (stderr, stdout):
+        try:
+            value = json.loads(ANSI.sub("", raw))
+        except (ValueError, TypeError):
+            continue
+        if not isinstance(value, dict):
+            continue
+        error = value.get("error", value)
+        if not isinstance(error, dict):
+            continue
+        candidate = error.get("code")
+        if isinstance(candidate, str) and candidate.upper() in NPM_CODES:
+            code = candidate.upper()
+        text += "\n" + "\n".join(error[key] for key in ("summary", "detail", "message")
+                                 if isinstance(error.get(key), str))
+    lower = text.lower()
+    if re.search(r"(?:too similar|similar to (?:an? )?existing package)", lower):
+        reason = "name-too-similar"
+    elif re.search(r"(?:name.{0,100}(?:restricted|reserved|not allowed|forbidden|blacklisted|spam)|package is blacklisted)", lower):
+        reason = "name-restricted"
+    elif "unpublish" in lower and re.search(r"(?:24\s*(?:hours?|hrs?)|too soon)", lower):
+        reason = "name-cooldown"
+    elif code == "E_STAGE_REQUIRED" or "e_stage_required" in lower or "stage-only" in lower:
+        reason = "stage-required"
+    elif code == "EOTP" or re.search(r"(?:two[- ]factor|2fa|one[- ]time (?:pass|code)|one-time password)", lower):
+        reason = "2fa"
+    elif code in {"EPUBLISHCONFLICT", "E409"} or re.search(r"(?:cannot publish over|previously published version|cannot modify pre-existing version)", lower):
+        reason = "immutable"
+    elif code in {"EINTERNAL", "E500", "E502", "E503", "E504"} or "npm internal error" in lower:
+        reason = "internal"
+    elif code in {"E400", "E401", "E402", "E403", "E404", "ENEEDAUTH", "EAUTH", "EACCES", "EPERM"}:
+        reason = "access"
+    else:
+        reason = "unknown"
+    return code, reason
+
+
+def safe_candidate(path: str | None) -> str:
+    if path:
+        basename = str(path).replace("\\", "/").rsplit("/", 1)[-1]
+        for name in NAMES:
+            if basename.startswith(name + "-") and basename.endswith(".tgz"):
+                version = basename[len(name) + 1:-4]
+                try:
+                    release.semver(version)
+                except release.ReleaseError:
+                    continue
+                return basename
+    return "<unavailable>"
+
+
+class NpmFailure(PublishError):
+    """No raw captured text, configuration, credentials or paths leave this type."""
+
+    def __init__(self, code: str, reason: str, operation: str, candidate: str | None, exit_code=None):
+        code = code if code in NPM_CODES else "UNKNOWN"
+        reason = reason if reason in NPM_REASONS else "unknown"
+        self.code, self.reason = code, reason
+        self.definite = code in DEFINITE_CODES
+        operation = operation if operation in {"publish", "whoami"} else "command"
+        status = f"; exit {exit_code}" if type(exit_code) is int else ""
+        super().__init__(f"npm {operation} failed ({code}; reason={reason}{status}; "
+                         f"parent={prepare.PARENT_NAME}; candidate={safe_candidate(candidate)})")
 
 
 def read_json(raw: bytes, description: str) -> dict:
@@ -141,7 +226,7 @@ def validate_prepared(directory: Path, source_commit: str, prerelease: bool) -> 
                 or metadata.get("private") is not False or metadata.get("repository") != prepare.REPOSITORY
                 or metadata.get("publishConfig") != {"access": "public"}):
             raise PublishError(f"public package identity mismatch: {name}")
-        if name == "xnip":
+        if name == prepare.PARENT_NAME:
             native = read_json(contents.get("package/native-manifest.json", b""), "packed native manifest")
             dependencies = {value[1]: version for value in prepare.PLATFORMS.values()}
             if (native != manifest or metadata.get("optionalDependencies") != dependencies
@@ -207,14 +292,15 @@ class Npm:
         self.command = prepare.npm_command()
 
     def run(self, arguments: list[str]) -> None:
-        result = subprocess.run([*self.command, *arguments, "--registry", REGISTRY],
-                                capture_output=True, text=True, timeout=180, check=False)
+        candidate = arguments[1] if arguments[0] == "publish" and len(arguments) > 1 else None
+        try:
+            result = subprocess.run([*self.command, *arguments, "--registry", REGISTRY],
+                                    capture_output=True, text=True, errors="replace", timeout=180, check=False)
+        except subprocess.TimeoutExpired:
+            raise NpmFailure("ETIMEDOUT", "unknown", arguments[0], candidate) from None
         if result.returncode:
-            # npm diagnostics may include auth configuration. Do not echo captured
-            # output or any credential; the operation and exit status suffice.
-            code = re.search(r"(?m)^npm (?:ERR!|error) code ([A-Z][A-Z0-9_]+)\s*$", result.stderr)
-            detail = f"{code[1]}; " if code else ""
-            raise PublishError(f"npm {arguments[0]} failed ({detail}exit {result.returncode}); verify publishing permissions")
+            code, reason = classify_npm(result.stdout, result.stderr)
+            raise NpmFailure(code, reason, arguments[0], candidate, result.returncode)
 
     def preflight(self) -> None:
         if self.auth == "token":
@@ -353,6 +439,18 @@ def publish(directory: Path, source_commit: str, prerelease: bool = False, *, au
             try:
                 npm.publish(packs[name]["path"], channel)
             except PublishError as publication_error:
+                if isinstance(publication_error, NpmFailure) and publication_error.definite:
+                    # A definite rejection does not need the visibility window.
+                    # One read still covers a successful earlier HTTP attempt.
+                    try:
+                        metadata = registry.metadata(name)
+                    except PublishError:
+                        raise publication_error from None
+                    if not verify_existing(metadata, name, version, packs[name]["integrity"]):
+                        raise publication_error
+                    verify_channel(metadata, name, version, channel, final=True)
+                    statuses[name] = "verified-after-error"
+                    continue
                 # Stop new submissions until an uncertain request is resolved.
                 # This shares the batch budget and never retries the write.
                 publication_errors[name] = publication_error
@@ -365,7 +463,7 @@ def publish(directory: Path, source_commit: str, prerelease: bool = False, *, au
     # Ordinary successful submissions do not wait one platform at a time.
     # The parent becomes discoverable only after all six exact payloads are live.
     submit_and_verify(NAMES[:-1])
-    submit_and_verify(("xnip",))
+    submit_and_verify((prepare.PARENT_NAME,))
     return {"version": version, "source_commit": source_commit, "channel": channel, "packages": statuses}
 
 

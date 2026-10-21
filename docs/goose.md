@@ -1,6 +1,6 @@
 # Goose integration and native benchmark
 
-xnip connects through Goose's official stdio MCP extension interface. Use **xnip 0.5.0+**, installed through npm or a standalone release; 0.4 binaries use an older MCP SDK that closes the connection during pinned Goose's default discovery lifecycle. For source development, `cargo build --release` also produces a compatible executable. Start Goose in the project directory with:
+xnip connects through Goose's official stdio MCP extension interface. Use **xnip 0.5.0+**, installed through the `xnip-cli` npm package after publication, or a standalone release; 0.4 binaries use an older MCP SDK that closes the connection during pinned Goose's default discovery lifecycle. For source development, `cargo build --release` also produces a compatible executable. Start Goose in the project directory with:
 
 ```sh
 goose session --with-extension "xnip mcp --receipts text"

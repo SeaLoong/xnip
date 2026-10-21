@@ -66,11 +66,11 @@ class NpmContract(unittest.TestCase):
         cls.base=Path(cls.temporary.name).resolve()
         assert cls.base.is_relative_to((ROOT/"target").resolve())
         cls.report=prepare.prepare(None,cls.base/"artifacts",True,BINARY.resolve())
-        parent=str(Path(cls.report["output_directory"])/next(r["filename"] for r in cls.report["tarballs"] if r["name"]=="xnip"))
+        parent=str(Path(cls.report["output_directory"])/next(r["filename"] for r in cls.report["tarballs"] if r["name"]==prepare.PARENT_NAME))
         cls.install=cls.base/"installed"
         subprocess.run([*prepare.npm_command(),"install","--prefix",str(cls.install),"--cache",str(cls.base/"npm-cache"),
             "--offline","--ignore-scripts","--no-audit","--no-fund",parent],check=True,capture_output=True,timeout=90)
-        cls.package=cls.install/"node_modules/xnip"
+        cls.package=cls.install/"node_modules"/prepare.PARENT_NAME
     @classmethod
     def tearDownClass(cls):
         if hasattr(cls,"temporary"):
@@ -87,7 +87,7 @@ class NpmContract(unittest.TestCase):
     def clone(self):
         prefix=self.work/"installed copy"
         shutil.copytree(self.install,prefix)
-        return prefix,prefix/"node_modules/xnip"
+        return prefix,prefix/"node_modules"/prepare.PARENT_NAME
     def host_entry(self,package=None):
         package=package or self.package
         manifest=json.loads((package/"native-manifest.json").read_text(encoding="utf-8"))
@@ -97,6 +97,8 @@ class NpmContract(unittest.TestCase):
     def test_private_host_tarball_installs_offline_without_scripts(self):
         p=json.loads((self.package/"package.json").read_text(encoding="utf-8"))
         self.assertTrue(p["private"]);self.assertEqual(p["version"],self.report["version"])
+        self.assertEqual(p["name"],prepare.PARENT_NAME)
+        self.assertEqual(p["bin"],{"xnip":"./bin/xnip.cjs"})
         manifest=json.loads((self.package/"native-manifest.json").read_text(encoding="utf-8"))
         self.assertTrue(manifest["localOnly"]);self.assertEqual(len(manifest["platforms"]),1)
         result=self.run_cli("--version")
@@ -194,7 +196,7 @@ class NpmContract(unittest.TestCase):
     def test_package_uninstall_does_not_interrupt_mapped_mcp(self):
         prefix,package=self.clone();rpc=Rpc(package/"bin/xnip.cjs",self.work,self.env)
         try:
-            subprocess.run([*prepare.npm_command(),"uninstall","xnip","--prefix",str(prefix),
+            subprocess.run([*prepare.npm_command(),"uninstall",prepare.PARENT_NAME,"--prefix",str(prefix),
                 "--offline","--ignore-scripts","--no-audit","--no-fund"],check=True,capture_output=True,timeout=30)
             self.assertFalse(package.exists())
             r=rpc.request("tools/call",{"name":"xnip_edit","arguments":{"file":"still-live","operation":"write","text":"ok"}})

@@ -6,9 +6,9 @@ const require = createRequire(import.meta.url);
 const CONFIG_FIELDS = new Set(['cwd', 'env', 'serverName', 'receipts', 'toolset']);
 
 function resolvePackagedExecutable() {
-  const native = require('xnip/native');
+  const native = require('xnip-cli/native');
   if (typeof native.resolveNativeExecutable !== 'function') {
-    throw new TypeError('xnip/native must export resolveNativeExecutable()');
+    throw new TypeError('xnip-cli/native must export resolveNativeExecutable()');
   }
   return native.resolveNativeExecutable();
 }
