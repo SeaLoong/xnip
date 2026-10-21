@@ -128,4 +128,4 @@ The independent native-tool worker contracts use the same prepared runtime:
 python tests/dsh_adapter_contract.py
 ```
 
-Set `XNIP_DSH_TEST_BINARY` to the locally built 0.5.4 executable when running the source bridge checks, including the `.exe` suffix on Windows. The packaged test uses the installed tarball's verified executable instead. The worker contracts cover all 13 benchmark fixtures through both filesystem and string-editor tools, with real reads/views in observed modes; bare modes explicitly omit those observation guards. These commands exercise local tools and captured protocol behavior without model calls or a DSH UI session.
+Set `XNIP_DSH_TEST_BINARY` to the locally built 0.5.5 executable when running the source bridge checks, including the `.exe` suffix on Windows. The packaged test uses the installed tarball's verified executable instead. The worker contracts cover all 13 benchmark fixtures through both filesystem and string-editor tools, with real reads/views in observed modes; bare modes explicitly omit those observation guards. These commands exercise local tools and captured protocol behavior without model calls or a DSH UI session.

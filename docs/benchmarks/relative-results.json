@@ -58894,7 +58894,7 @@
     "cost_scope": "All cost numbers use the original pre-redaction captured strings, including instruction/DTO layers. Redacted display strings must not be recounted as the originals.",
     "original_values_retained": false
   },
-  "source_json_sha256": "392ca63800864686f350da0325be452d81c71b85f976887bdbc90cc1cd617cea",
+  "source_json_sha256": "d80558f5572f21d284705010044885139cea86409f972ab979302e384db5f7d5",
   "report_generator_sha256": "2cb16bf53cba8625576fe58b7d5c023c973bd617f93d0779f7f9051939f34c59",
   "recorded_generator_sha256": "2cb16bf53cba8625576fe58b7d5c023c973bd617f93d0779f7f9051939f34c59"
 }

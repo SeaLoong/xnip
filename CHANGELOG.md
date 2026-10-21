@@ -4,7 +4,7 @@ User-visible changes are recorded here. Versions follow Semantic Versioning; com
 
 ## [Unreleased]
 
-## [0.5.4] - 2026-10-22
+## [0.5.5] - 2026-10-22
 
 DSH, Pi and Goose integrations, expanded native-editor benchmarks, and npm distribution of the same Rust CLI/MCP executable.
 
@@ -15,6 +15,7 @@ DSH, Pi and Goose integrations, expanded native-editor benchmarks, and npm distr
 - Cover real harness registration/disposal, editing semantics, package integrity, concurrent first launch, active-session package removal and abrupt wrapper shutdown. Add scoped CI checks and refresh integration, benchmark and packaging documentation.
 - Handle delayed npm registry visibility by submitting native packages as a batch and verifying every platform before publishing the parent. Report definite npm rejections with credential-free error categories after one exact-version check; retain bounded verification for uncertain network results.
 - Build and validate npm tarballs from the same six-platform release artifacts in CI, publish platform packages before the parent with explicit stable/development channels, verify registry integrity, and preserve resumable release behavior.
+- Update `rustls-webpki` to 0.103.16 and `webpki-roots` to 1.0.10 to address RUSTSEC-2026-0382 and RUSTSEC-2026-0381; retain the bundled certificate data license notice.
 - Disable dev-profile debug symbols in CI while retaining assertions and payload-size checks; locate the bundled npm CLI through both Windows and POSIX installation layouts.
 
 ## [0.4.0] - 2026-10-19
@@ -123,8 +124,8 @@ First public release of xnip, a CLI and MCP stdio server for precise local text 
 - MCP write tools commit immediately; preview/check modes are available through the CLI. The server uses the launching user's filesystem permissions and is intended for trusted local clients.
 - Native CLI arguments are literal shell arguments; no automatic `\n` decoding or newline-style conversion is performed.
 
-[Unreleased]: https://github.com/SeaLoong/xnip/compare/v0.5.4...HEAD
-[0.5.4]: https://github.com/SeaLoong/xnip/releases/tag/v0.5.4
+[Unreleased]: https://github.com/SeaLoong/xnip/compare/v0.5.5...HEAD
+[0.5.5]: https://github.com/SeaLoong/xnip/releases/tag/v0.5.5
 [0.4.0]: https://github.com/SeaLoong/xnip/releases/tag/v0.4.0
 [0.3.1]: https://github.com/SeaLoong/xnip/releases/tag/v0.3.1
 [0.2.0]: https://github.com/SeaLoong/xnip/releases/tag/v0.2.0

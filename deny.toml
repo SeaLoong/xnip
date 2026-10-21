@@ -25,7 +25,7 @@ allow = [
 confidence-threshold = 0.8
 # TLS root certificate data; the required notice is shipped in release archives.
 exceptions = [
-    { name = "webpki-roots", version = "=1.0.9", allow = ["CDLA-Permissive-2.0"] },
+    { name = "webpki-roots", version = "=1.0.10", allow = ["CDLA-Permissive-2.0"] },
 ]
 
 [bans]

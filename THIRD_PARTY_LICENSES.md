@@ -1,6 +1,6 @@
 # Third-party data notices
 
-The TLS root certificate data bundled through webpki-roots 1.0.9 is provided under
+The TLS root certificate data bundled through webpki-roots 1.0.10 is provided under
 CDLA-Permissive-2.0. Its license text is reproduced below.
 
 # Community Data License Agreement - Permissive - Version 2.0

@@ -3,7 +3,7 @@
 The real native editors and xnip edited fresh copies of the same 13 fixtures. No model calls were performed. These results measure captured tool payloads and file behavior, not complete agent sessions or billed tokens.
 
 Counter: {"encoding": "o200k_base", "tokenizer": "tiktoken", "unit": "tokens", "version": "0.14.0"}. Repetitions per task/profile: 3.
-Platform: win32. xnip binary SHA-256: 7952ceda7bbaad4364dab168bd92e293039e687610a0e0855846def0ba6b4efa.
+Platform: win32. xnip binary SHA-256: b8b71e927c5a4076f49d3d3076c54cc785900b4d9e0536d65d11889dce61ff3c.
 Raw calls, expected bytes, per-repetition hashes and source provenance: [results.json](results.json). Derived statistics: [relative-results.json](relative-results.json).
 Published display metadata replaces machine HOME prefixes with `<HOME>`; the JSON disclosure_redaction ledger hashes affected original strings. Costs retain the actual pre-redaction measurements, while fixture bytes, serialized payloads and tool inputs remain unchanged. Sessions use repository target/native-bench/sessions only when outside HOME/USERPROFILE; otherwise they use an external temporary directory.
 Sampling fingerprints stay as recorded; derived JSON separately records the sampled and current report-renderer fingerprints.
@@ -1053,16 +1053,16 @@ The useful optimization target is less redundant context and fewer calls when th
 
 | Backend / profile | Version | Byte-exact cases | LF-normalized cases | Stable outcomes |
 |---|---|---:|---:|---:|
-| xnip-edit | 0.5.4 | 13/13 | 13/13 | 13/13 |
-| xnip-relative | 0.5.4 | 13/13 | 13/13 | 13/13 |
-| xnip-adaptive-guarded | 0.5.4 | 13/13 | 13/13 | 13/13 |
-| xnip-adaptive-snapshot | 0.5.4 | 13/13 | 13/13 | 13/13 |
-| xnip-cli-native-guarded | 0.5.4 | 13/13 | 13/13 | 13/13 |
-| xnip-cli-native-snapshot | 0.5.4 | 13/13 | 13/13 | 13/13 |
-| xnip-cli-compact-guarded | 0.5.4 | 13/13 | 13/13 | 13/13 |
-| xnip-cli-compact-snapshot | 0.5.4 | 13/13 | 13/13 | 13/13 |
-| xnip-adaptive-guarded-text | 0.5.4 | 13/13 | 13/13 | 13/13 |
-| xnip-adaptive-snapshot-text | 0.5.4 | 13/13 | 13/13 | 13/13 |
+| xnip-edit | 0.5.5 | 13/13 | 13/13 | 13/13 |
+| xnip-relative | 0.5.5 | 13/13 | 13/13 | 13/13 |
+| xnip-adaptive-guarded | 0.5.5 | 13/13 | 13/13 | 13/13 |
+| xnip-adaptive-snapshot | 0.5.5 | 13/13 | 13/13 | 13/13 |
+| xnip-cli-native-guarded | 0.5.5 | 13/13 | 13/13 | 13/13 |
+| xnip-cli-native-snapshot | 0.5.5 | 13/13 | 13/13 | 13/13 |
+| xnip-cli-compact-guarded | 0.5.5 | 13/13 | 13/13 | 13/13 |
+| xnip-cli-compact-snapshot | 0.5.5 | 13/13 | 13/13 | 13/13 |
+| xnip-adaptive-guarded-text | 0.5.5 | 13/13 | 13/13 | 13/13 |
+| xnip-adaptive-snapshot-text | 0.5.5 | 13/13 | 13/13 | 13/13 |
 | codex-apply-patch | codex-cli 0.163.0-alpha.10.2 | 12/13 | 12/13 | 13/13 |
 | codex-apply-patch-unique | codex-cli 0.163.0-alpha.10.2 | 12/13 | 12/13 | 13/13 |
 | gemini-edit-context | 0.27.2 | 13/13 | 13/13 | 13/13 |

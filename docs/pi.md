@@ -172,8 +172,8 @@ For a different locally built native binary set `XNIP_PI_TEST_EXECUTABLE` to its
 absolute path. Source tests inject that resolver into `createXnipExtension`;
 the packaged default uses `xnip-cli/native`. Set `XNIP_PI_TEST_PACKAGE` to the
 absolute installed `node_modules/xnip-cli` directory to also test that default entry
-through real Pi registration, stdio, editing and teardown. The local private
-0.5.4 tarball passed all 11 tests with this check enabled and no skipped tests.
+through real Pi registration, stdio, editing and teardown. Release acceptance
+must run all 11 tests with this installed-package check enabled and no skipped tests.
 The native executable's version/hash must be recorded by the enclosing benchmark run.
 
 The contracts cover schemas/pins/hashes; original-coordinate multi-edit;

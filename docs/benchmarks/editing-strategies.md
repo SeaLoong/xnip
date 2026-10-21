@@ -6,7 +6,7 @@ The relevant target is less complete observable edit exchange under a stated con
 
 ## What the current measurements show
 
-The current 0.5.4 run executes 41 editor profiles on the same 13 scenarios, three times each, plus six separate host→xnip bridge profiles on those tasks. All original 31 profiles remain. DSH observation/filesystem policies receive separate frontiers; they and the host bridge lanes are excluded from the pooled native minimum. Only outputs that match expected file bytes in every repetition qualify for the best-observed frontier. Native and xnip use symmetric candidate permissions; snapshot-enabled includes guarded candidates on both sides.
+The current 0.5.5 run executes 41 editor profiles on the same 13 scenarios, three times each, plus six separate host→xnip bridge profiles on those tasks. All original 31 profiles remain. DSH observation/filesystem policies receive separate frontiers; they and the host bridge lanes are excluded from the pooled native minimum. Only outputs that match expected file bytes in every repetition qualify for the best-observed frontier. Native and xnip use symmetric candidate permissions; snapshot-enabled includes guarded candidates on both sides.
 
 | xnip transport / permitted operations | Geometric mean native best / xnip best input | xnip shorter / tied / native shorter |
 |---|---:|---:|
