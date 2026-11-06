@@ -53,7 +53,7 @@ Recorded DSH host-lifecycle evidence is on Linux. macOS and Windows DSH
 host journeys await dedicated validation. The CLI and MCP retain their
 separate Linux, macOS and Windows executable support.
 
-`xnip-cli` 0.6.2 bundles the DSH native adapter. Use Node 24 with npm, an existing
+`xnip-cli` 0.6.3 bundles the DSH native adapter. Use Node 24 with npm, an existing
 DSH profile directory and the installed DSH executable:
 
 ```sh

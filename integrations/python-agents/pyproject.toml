@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "xnip-python-agents"
-version = "0.6.2"
+version = "0.6.3"
 description = "xnip file tools for DeepAgents, LangGraph and PydanticAI"
 requires-python = ">=3.11"
-dependencies = ["xnip-native-client==0.6.2"]
+dependencies = ["xnip-native-client==0.6.3"]
 
 [project.optional-dependencies]
 deepagents = ["deepagents==0.7.34"]

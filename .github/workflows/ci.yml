@@ -132,8 +132,25 @@ jobs:
         with:
           node-version: "24.13.0"
       # cargo test includes doctests and builds the CLI reused by npm/installer tests.
-      - run: cargo test --workspace --locked
+      - name: Rust workspace tests
+        id: rust-tests
         if: needs.scope.outputs.rust == 'true'
+        shell: bash
+        run: |
+          cargo test --workspace --locked 2>&1 | tee "$RUNNER_TEMP/xnip-rust-tests.log"
+      - name: Report Rust test failure details
+        if: failure() && steps.rust-tests.outcome == 'failure'
+        shell: python
+        run: |
+          import os
+          from pathlib import Path
+          import re
+          log = Path(os.environ["RUNNER_TEMP"]) / "xnip-rust-tests.log"
+          text = re.sub(r"\x1b\[[0-9;]*m", "", log.read_text(encoding="utf-8", errors="replace"))
+          start = text.find("\nfailures:\n")
+          detail = text[start:].strip()[:6000] if start >= 0 else "\n".join(text.splitlines()[-40:])
+          detail = detail.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+          print("::error title=Rust test failure::" + detail)
       - name: Build the CLI for packaging-only changes
         if: needs.scope.outputs.rust != 'true'
         run: cargo build --locked

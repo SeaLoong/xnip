@@ -4,12 +4,17 @@ User-visible changes are recorded here. Versions follow Semantic Versioning; com
 
 ## [Unreleased]
 
-## [0.6.2] - 2026-11-06
+## [0.6.3] - 2026-11-06
 
 - Include the complete DSH native provider in `xnip-cli`; the npm launcher selects its bundled adapter for `native install`, with `--plugin` available as an explicit override.
 - Install DSH native providers as profile-local directory bundles, keeping shared `node_modules` trees untouched and supporting linked profile dependencies. Retain restoration support for earlier package-manager installations.
 - Report empty native state and missing installation manifests with actionable diagnostics. Make cleanup repeatable and report the retained coordination lock while preserving concurrent-operation protection.
 - Verify the installed npm artifact through the complete DSH install, tool verification, uninstall, byte-exact restoration and cleanup journey, including profiles with shared linked dependencies.
+- Stabilize isolated Linux updater test starts when copied executables briefly remain busy, preserving all protocol and state assertions. Surface Rust test failure details in CI annotations.
+
+## [0.6.2] - 2026-11-06 — unpublished
+
+- Publication stopped at the CI gate. The packaged DSH lifecycle corrections are included in 0.6.3.
 
 ## [0.6.1] - 2026-11-06
 

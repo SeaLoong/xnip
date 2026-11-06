@@ -32,6 +32,25 @@ fn peek(root: &Path, enabled: bool) -> Output {
         .unwrap()
 }
 
+fn spawn_fixture(command: &mut Command) -> Child {
+    // A copied test executable can briefly be busy on Linux runners.
+    // Retry only that pre-exec failure; protocol and updater assertions stay strict.
+    let spawn_deadline = Instant::now() + Duration::from_millis(250);
+    loop {
+        match command.spawn() {
+            Ok(child) => return child,
+            Err(error)
+                if cfg!(target_os = "linux")
+                    && error.raw_os_error() == Some(26)
+                    && Instant::now() < spawn_deadline =>
+            {
+                std::thread::sleep(Duration::from_millis(10));
+            }
+            Err(error) => panic!("cannot spawn isolated executable fixture: {error}"),
+        }
+    }
+}
+
 struct LiveMcp {
     child: Child,
     output: Receiver<Value>,
@@ -50,22 +69,7 @@ impl LiveMcp {
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped());
-        // A copied test executable can briefly be busy on Linux runners.
-        // Retry only that pre-exec failure; protocol and updater assertions stay strict.
-        let spawn_deadline = Instant::now() + Duration::from_millis(250);
-        let mut child = loop {
-            match command.spawn() {
-                Ok(child) => break child,
-                Err(error)
-                    if cfg!(target_os = "linux")
-                        && error.raw_os_error() == Some(26)
-                        && Instant::now() < spawn_deadline =>
-                {
-                    std::thread::sleep(Duration::from_millis(10));
-                }
-                Err(error) => panic!("cannot spawn isolated MCP fixture: {error}"),
-            }
-        };
+        let mut child = spawn_fixture(&mut command);
         let stdout = child.stdout.take().unwrap();
         let (sender, output) = channel();
         let reader = std::thread::spawn(move || {
@@ -250,11 +254,16 @@ impl Installation {
     #[cfg(windows)]
     fn assert_installed_runs(&self, expected: &[u8]) {
         assert_eq!(std::fs::read(&self.binary).unwrap(), expected);
-        let output = Command::new(&self.binary)
-            .env("XNIP_AUTO_UPDATE", "0")
-            .arg("--version")
-            .output()
-            .unwrap();
+        let output = spawn_fixture(
+            Command::new(&self.binary)
+                .env("XNIP_AUTO_UPDATE", "0")
+                .arg("--version")
+                .stdin(Stdio::null())
+                .stdout(Stdio::piped())
+                .stderr(Stdio::piped()),
+        )
+        .wait_with_output()
+        .unwrap();
         assert!(output.status.success());
         assert_eq!(
             std::str::from_utf8(&output.stdout).unwrap().trim(),
@@ -348,7 +357,8 @@ fn a_blocked_background_check_is_singleton_and_survives_all_foreground_exits() {
         let mut command = installation.read(&endpoint);
         let completed = completed.clone();
         callers.push(std::thread::spawn(move || {
-            completed.send(command.output().unwrap()).unwrap();
+            let child = spawn_fixture(command.stdout(Stdio::piped()).stderr(Stdio::piped()));
+            completed.send(child.wait_with_output().unwrap()).unwrap();
         }));
     }
     drop(completed);
@@ -406,14 +416,14 @@ fn live_mcp_remains_usable_during_a_blocked_check_and_after_its_failure() {
 fn a_second_worker_exits_silently_and_process_termination_releases_the_os_lock() {
     let installation = Installation::new();
     let (listener, endpoint) = fixture();
-    let leader = installation
-        .command(&endpoint)
-        .arg("__update-worker")
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .unwrap();
+    let leader = spawn_fixture(
+        installation
+            .command(&endpoint)
+            .arg("__update-worker")
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped()),
+    );
     // Reuse the process guard so a failed assertion still terminates the worker.
     let (_sender, output) = channel();
     let mut leader = LiveMcp {
@@ -432,11 +442,15 @@ fn a_second_worker_exits_silently_and_process_termination_releases_the_os_lock()
         lock.try_lock(),
         Err(std::fs::TryLockError::WouldBlock)
     ));
-    let follower = installation
-        .command(&endpoint)
-        .arg("__update-worker")
-        .output()
-        .unwrap();
+    let follower = spawn_fixture(
+        installation
+            .command(&endpoint)
+            .arg("__update-worker")
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped()),
+    )
+    .wait_with_output()
+    .unwrap();
     assert!(follower.status.success());
     assert_eq!(follower.stdout, b"");
     assert_eq!(follower.stderr, b"");
@@ -492,7 +506,14 @@ fn pending_update_waits_for_mcp_to_close_and_installs_only_on_the_next_usage() {
         assert!(Instant::now() < deadline, "spawn cooldown did not expire");
         std::thread::sleep(Duration::from_millis(10));
     }
-    let output = installation.read(&endpoint).output().unwrap();
+    let output = spawn_fixture(
+        installation
+            .read(&endpoint)
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped()),
+    )
+    .wait_with_output()
+    .unwrap();
     assert!(output.status.success());
     assert_eq!(output.stdout, b"     1: unchanged\n");
     assert_eq!(output.stderr, b"");
@@ -559,7 +580,15 @@ fn discovery_commands_do_not_launch_workers_or_create_state() {
     let installation = Installation::new();
     let (listener, endpoint) = fixture();
     for args in [vec!["--version"], vec!["--help"], vec!["doctor"]] {
-        let output = installation.command(&endpoint).args(args).output().unwrap();
+        let output = spawn_fixture(
+            installation
+                .command(&endpoint)
+                .args(args)
+                .stdout(Stdio::piped())
+                .stderr(Stdio::piped()),
+        )
+        .wait_with_output()
+        .unwrap();
         assert!(output.status.success());
         assert_eq!(output.stderr, b"");
     }

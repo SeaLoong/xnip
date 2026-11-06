@@ -156,7 +156,7 @@ Select native entries explicitly when loading a Pi extension or constructing
 an SDK session. The JavaScript adapters resolve the installed xnip executable;
 the native setup and test matrix use Node 24.
 
-`xnip-cli` 0.6.2 bundles the DSH native adapter. The
+`xnip-cli` 0.6.3 bundles the DSH native adapter. The
 [DSH lifecycle guide](https://github.com/SeaLoong/xnip/blob/master/docs/native.md#dsh-profile-setup)
 covers installation, verification, restoration and cleanup through the installed
 command.

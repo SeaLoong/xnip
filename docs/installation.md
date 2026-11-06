@@ -125,7 +125,7 @@ your OS and CPU. The package also contains JavaScript host adapters, the
 integration catalog and client-profile generator; activate the selected route
 explicitly. See the [support matrix](support.md) and
 [npm usage guide](../npm/README.md) for project-local use and MCP configuration.
-`xnip-cli` 0.6.2 includes the adapter for the
+`xnip-cli` 0.6.3 includes the adapter for the
 [DSH native lifecycle](native.md#dsh-profile-setup).
 Its recorded DSH host journey runs on Linux; the six executable targets above
 describe the CLI/MCP distribution.
