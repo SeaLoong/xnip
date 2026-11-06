@@ -5,7 +5,7 @@ the `read`, `write` and `edit` tools, permission checks, observations, diff
 presentation and rewind events. The provider calls xnip's existing core through
 the local `xnip native serve` JSON-lines process.
 
-`xnip-cli` 0.6.3 bundles this adapter. Install it and use its `xnip` launcher with
+`xnip-cli` 0.6.4 bundles this adapter. Install it and use its `xnip` launcher with
 an initialized DSH profile and the intended DSH executable:
 
 ```sh

@@ -90,7 +90,7 @@ The [native DSH provider](docs/native.md) keeps the host's `read`, `write` and
 `edit` tools, approval, sandbox and optional rewind while calling the same core
 transactions as CLI and MCP. Its profile installer verifies a real edit and
 retains snapshots for restoration.
-`xnip-cli` 0.6.3 bundles its DSH adapter for the
+`xnip-cli` 0.6.4 bundles its DSH adapter for the
 [installed-command lifecycle](docs/native.md#dsh-profile-setup).
 DSH host-lifecycle evidence is on Linux;
 the CLI and MCP have their own cross-platform verification.
