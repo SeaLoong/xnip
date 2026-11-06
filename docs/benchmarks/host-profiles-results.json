@@ -9,14 +9,14 @@
   },
   "provenance": {
     "binary": {
-      "sha256": "144f76db0a340d7eede61b7fc2545c8c7c1d7d937300f378fd6c77c8da3e0688",
-      "bytes": 8506216
+      "sha256": "b01cc02a39864cb7f460cdd29fc84c8059855229acc6aec97c43d1070505d012",
+      "bytes": 8512432
     },
     "source": {
-      "sha256": "41019f387dcee5d797baa93cbc127575dda339d9f4cf5b683c75ebb1c25ee06a",
+      "sha256": "6589f1698c59e9710c5f5d64114feb56901564cc52c6c036a067e8a9e313717a",
       "files_sha256": {
-        "Cargo.lock": "621fa3b8453008e4f4374819f0135e8a64cafe8356ec4077657c3cc7c1920c2d",
-        "Cargo.toml": "034b4a57e1a563c5e04f638912c0098455d87f4109dbd306cdf65bfdf11f85e9",
+        "Cargo.lock": "6ef866aec3818c8bc920e4a91844407dd6c97b9c71d9e78fdc481947e07d9747",
+        "Cargo.toml": "32e71282f175884e65697961d28166300233a8cacdecdf573ad7c2d2657bf89b",
         "benches/edit_cost.py": "f97eee6b6feab701ae61a12a9d5ef0bc1f6c74118aaed73919d0e7393ac4974e",
         "benches/host_profiles.py": "d4e436169d0f6d24f11fa7b9c07962eb87b1be46e66f9e1b9afa84380e516747",
         "benches/native/goose_adapter.py": "3a84b8330bbce3d6c496fc4281ba500f7c10b31c0fc3b767984ae0eb517c5e83",
@@ -582,8 +582,8 @@
       "scenario": "tiny-config",
       "samples": [
         {
-          "workflow_ms": 6.595566010219045,
-          "tool_ms": 1.355294996756129,
+          "workflow_ms": 6.586649004020728,
+          "tool_ms": 1.2802230048691854,
           "argument_bytes": 154,
           "result_json_bytes": 150,
           "error_json_bytes": 0,
@@ -624,7 +624,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.21600098989438266,
+              "tool_ms": 0.23129400506149977,
               "request_bytes": 161,
               "response_bytes": 139,
               "argument_bytes": 71,
@@ -648,7 +648,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 1.1392940068617463,
+              "tool_ms": 1.0489289998076856,
               "request_bytes": 173,
               "response_bytes": 81,
               "argument_bytes": 83,
@@ -676,8 +676,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 6.358903992804699,
-          "tool_ms": 1.0947979899356142,
+          "workflow_ms": 6.613457997445948,
+          "tool_ms": 1.2550550018204376,
           "argument_bytes": 154,
           "result_json_bytes": 150,
           "error_json_bytes": 0,
@@ -718,7 +718,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.17453999316785485,
+              "tool_ms": 0.23416800831910223,
               "request_bytes": 161,
               "response_bytes": 139,
               "argument_bytes": 71,
@@ -742,7 +742,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.9202579967677593,
+              "tool_ms": 1.0208869935013354,
               "request_bytes": 173,
               "response_bytes": 81,
               "argument_bytes": 83,
@@ -770,8 +770,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 6.375798999215476,
-          "tool_ms": 1.1280470062047243,
+          "workflow_ms": 6.601540997507982,
+          "tool_ms": 1.309867002419196,
           "argument_bytes": 154,
           "result_json_bytes": 150,
           "error_json_bytes": 0,
@@ -812,7 +812,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.20352299907244742,
+              "tool_ms": 0.19572100427467376,
               "request_bytes": 161,
               "response_bytes": 139,
               "argument_bytes": 71,
@@ -836,7 +836,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.9245240071322769,
+              "tool_ms": 1.1141459981445223,
               "request_bytes": 173,
               "response_bytes": 81,
               "argument_bytes": 83,
@@ -866,8 +866,8 @@
       ],
       "warmups": [
         {
-          "workflow_ms": 6.415758005459793,
-          "tool_ms": 1.3391809916356578,
+          "workflow_ms": 6.871893012430519,
+          "tool_ms": 1.5721970121376216,
           "argument_bytes": 154,
           "result_json_bytes": 150,
           "error_json_bytes": 0,
@@ -908,7 +908,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.1792760012904182,
+              "tool_ms": 0.25082300999201834,
               "request_bytes": 161,
               "response_bytes": 139,
               "argument_bytes": 71,
@@ -932,7 +932,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 1.1599049903452396,
+              "tool_ms": 1.3213740021456033,
               "request_bytes": 173,
               "response_bytes": 81,
               "argument_bytes": 83,
@@ -963,10 +963,10 @@
       "correct_runs": 3,
       "workflow_ms": {
         "runs": 3,
-        "median": 6.375798999215476,
-        "p95": 6.595566010219045,
-        "min": 6.358903992804699,
-        "max": 6.595566010219045
+        "median": 6.601540997507982,
+        "p95": 6.613457997445948,
+        "min": 6.586649004020728,
+        "max": 6.613457997445948
       },
       "tool_json_bytes": {
         "runs": 3,
@@ -977,10 +977,10 @@
       },
       "tool_ms": {
         "runs": 3,
-        "median": 1.1280470062047243,
-        "p95": 1.355294996756129,
-        "min": 1.0947979899356142,
-        "max": 1.355294996756129
+        "median": 1.2802230048691854,
+        "p95": 1.309867002419196,
+        "min": 1.2550550018204376,
+        "max": 1.309867002419196
       }
     },
     {
@@ -988,8 +988,8 @@
       "scenario": "large-local-change",
       "samples": [
         {
-          "workflow_ms": 7.870871995692141,
-          "tool_ms": 2.740744996117428,
+          "workflow_ms": 8.346533999429084,
+          "tool_ms": 3.074988999287598,
           "argument_bytes": 194,
           "result_json_bytes": 6455,
           "error_json_bytes": 0,
@@ -1030,7 +1030,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 1.657283995882608,
+              "tool_ms": 1.785193002433516,
               "request_bytes": 168,
               "response_bytes": 6444,
               "argument_bytes": 78,
@@ -1054,7 +1054,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 1.08346100023482,
+              "tool_ms": 1.2897959968540817,
               "request_bytes": 206,
               "response_bytes": 81,
               "argument_bytes": 116,
@@ -1082,8 +1082,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 8.153090995620005,
-          "tool_ms": 3.0230439879233018,
+          "workflow_ms": 8.240456998464651,
+          "tool_ms": 3.0762019887333736,
           "argument_bytes": 194,
           "result_json_bytes": 6455,
           "error_json_bytes": 0,
@@ -1124,7 +1124,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 1.9003249908564612,
+              "tool_ms": 1.8675059982342646,
               "request_bytes": 168,
               "response_bytes": 6444,
               "argument_bytes": 78,
@@ -1148,7 +1148,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 1.1227189970668405,
+              "tool_ms": 1.208695990499109,
               "request_bytes": 206,
               "response_bytes": 81,
               "argument_bytes": 116,
@@ -1176,8 +1176,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 7.986033000634052,
-          "tool_ms": 2.8758309927070513,
+          "workflow_ms": 8.702513005118817,
+          "tool_ms": 3.1034720013849437,
           "argument_bytes": 194,
           "result_json_bytes": 6455,
           "error_json_bytes": 0,
@@ -1218,7 +1218,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 1.7761810013325885,
+              "tool_ms": 1.7951379995793104,
               "request_bytes": 168,
               "response_bytes": 6444,
               "argument_bytes": 78,
@@ -1242,7 +1242,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 1.0996499913744628,
+              "tool_ms": 1.3083340018056333,
               "request_bytes": 206,
               "response_bytes": 81,
               "argument_bytes": 116,
@@ -1272,8 +1272,8 @@
       ],
       "warmups": [
         {
-          "workflow_ms": 7.889729997259565,
-          "tool_ms": 2.785342003335245,
+          "workflow_ms": 8.238753987825476,
+          "tool_ms": 3.0538790015270934,
           "argument_bytes": 194,
           "result_json_bytes": 6455,
           "error_json_bytes": 0,
@@ -1314,7 +1314,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 1.778595003997907,
+              "tool_ms": 1.7589839990250766,
               "request_bytes": 168,
               "response_bytes": 6444,
               "argument_bytes": 78,
@@ -1338,7 +1338,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 1.006746999337338,
+              "tool_ms": 1.2948950025020167,
               "request_bytes": 206,
               "response_bytes": 81,
               "argument_bytes": 116,
@@ -1369,10 +1369,10 @@
       "correct_runs": 3,
       "workflow_ms": {
         "runs": 3,
-        "median": 7.986033000634052,
-        "p95": 8.153090995620005,
-        "min": 7.870871995692141,
-        "max": 8.153090995620005
+        "median": 8.346533999429084,
+        "p95": 8.702513005118817,
+        "min": 8.240456998464651,
+        "max": 8.702513005118817
       },
       "tool_json_bytes": {
         "runs": 3,
@@ -1383,10 +1383,10 @@
       },
       "tool_ms": {
         "runs": 3,
-        "median": 2.8758309927070513,
-        "p95": 3.0230439879233018,
-        "min": 2.740744996117428,
-        "max": 3.0230439879233018
+        "median": 3.0762019887333736,
+        "p95": 3.1034720013849437,
+        "min": 3.074988999287598,
+        "max": 3.1034720013849437
       }
     },
     {
@@ -1394,8 +1394,8 @@
       "scenario": "multiline-function",
       "samples": [
         {
-          "workflow_ms": 6.1533690022770315,
-          "tool_ms": 1.0822589974850416,
+          "workflow_ms": 6.900464999489486,
+          "tool_ms": 1.3354760012589395,
           "argument_bytes": 281,
           "result_json_bytes": 269,
           "error_json_bytes": 0,
@@ -1436,7 +1436,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.1949599973158911,
+              "tool_ms": 0.291003001620993,
               "request_bytes": 168,
               "response_bytes": 258,
               "argument_bytes": 78,
@@ -1460,7 +1460,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.8872990001691505,
+              "tool_ms": 1.0444729996379465,
               "request_bytes": 293,
               "response_bytes": 81,
               "argument_bytes": 203,
@@ -1488,8 +1488,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 6.135150993941352,
-          "tool_ms": 1.0972610034514219,
+          "workflow_ms": 6.721028010360897,
+          "tool_ms": 1.3266510068206117,
           "argument_bytes": 281,
           "result_json_bytes": 269,
           "error_json_bytes": 0,
@@ -1530,7 +1530,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.22322199947666377,
+              "tool_ms": 0.25023199850693345,
               "request_bytes": 168,
               "response_bytes": 258,
               "argument_bytes": 78,
@@ -1554,7 +1554,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.8740390039747581,
+              "tool_ms": 1.0764190083136782,
               "request_bytes": 293,
               "response_bytes": 81,
               "argument_bytes": 203,
@@ -1582,8 +1582,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 6.274528990616091,
-          "tool_ms": 1.2703880056506023,
+          "workflow_ms": 6.859974993858486,
+          "tool_ms": 1.3896850141463801,
           "argument_bytes": 281,
           "result_json_bytes": 269,
           "error_json_bytes": 0,
@@ -1624,7 +1624,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.27806300204247236,
+              "tool_ms": 0.28776800900232047,
               "request_bytes": 168,
               "response_bytes": 258,
               "argument_bytes": 78,
@@ -1648,7 +1648,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.9923250036081299,
+              "tool_ms": 1.1019170051440597,
               "request_bytes": 293,
               "response_bytes": 81,
               "argument_bytes": 203,
@@ -1678,8 +1678,8 @@
       ],
       "warmups": [
         {
-          "workflow_ms": 6.59255099890288,
-          "tool_ms": 1.2298479996388778,
+          "workflow_ms": 6.9146059977356344,
+          "tool_ms": 1.4140209823381156,
           "argument_bytes": 281,
           "result_json_bytes": 269,
           "error_json_bytes": 0,
@@ -1720,7 +1720,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.23086299188435078,
+              "tool_ms": 0.2497709938324988,
               "request_bytes": 168,
               "response_bytes": 258,
               "argument_bytes": 78,
@@ -1744,7 +1744,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.998985007754527,
+              "tool_ms": 1.1642499885056168,
               "request_bytes": 293,
               "response_bytes": 81,
               "argument_bytes": 203,
@@ -1775,10 +1775,10 @@
       "correct_runs": 3,
       "workflow_ms": {
         "runs": 3,
-        "median": 6.1533690022770315,
-        "p95": 6.274528990616091,
-        "min": 6.135150993941352,
-        "max": 6.274528990616091
+        "median": 6.859974993858486,
+        "p95": 6.900464999489486,
+        "min": 6.721028010360897,
+        "max": 6.900464999489486
       },
       "tool_json_bytes": {
         "runs": 3,
@@ -1789,10 +1789,10 @@
       },
       "tool_ms": {
         "runs": 3,
-        "median": 1.0972610034514219,
-        "p95": 1.2703880056506023,
-        "min": 1.0822589974850416,
-        "max": 1.2703880056506023
+        "median": 1.3354760012589395,
+        "p95": 1.3896850141463801,
+        "min": 1.3266510068206117,
+        "max": 1.3896850141463801
       }
     },
     {
@@ -1800,8 +1800,8 @@
       "scenario": "unicode",
       "samples": [
         {
-          "workflow_ms": 6.132606999017298,
-          "tool_ms": 1.077340988558717,
+          "workflow_ms": 6.296456995187327,
+          "tool_ms": 1.192402996821329,
           "argument_bytes": 165,
           "result_json_bytes": 157,
           "error_json_bytes": 0,
@@ -1842,7 +1842,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.19041298946831375,
+              "tool_ms": 0.23482899996452034,
               "request_bytes": 157,
               "response_bytes": 146,
               "argument_bytes": 67,
@@ -1866,7 +1866,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.8869279990904033,
+              "tool_ms": 0.9575739968568087,
               "request_bytes": 188,
               "response_bytes": 81,
               "argument_bytes": 98,
@@ -1894,8 +1894,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 6.140879995655268,
-          "tool_ms": 1.1196650011697784,
+          "workflow_ms": 6.547732002218254,
+          "tool_ms": 1.2834270019084215,
           "argument_bytes": 165,
           "result_json_bytes": 157,
           "error_json_bytes": 0,
@@ -1936,7 +1936,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.2002480032388121,
+              "tool_ms": 0.23859400243964046,
               "request_bytes": 157,
               "response_bytes": 146,
               "argument_bytes": 67,
@@ -1960,7 +1960,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.9194169979309663,
+              "tool_ms": 1.044832999468781,
               "request_bytes": 188,
               "response_bytes": 81,
               "argument_bytes": 98,
@@ -1988,8 +1988,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 6.18310300342273,
-          "tool_ms": 1.0503220109967515,
+          "workflow_ms": 6.733918999088928,
+          "tool_ms": 1.4060800021979958,
           "argument_bytes": 165,
           "result_json_bytes": 157,
           "error_json_bytes": 0,
@@ -2030,7 +2030,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.22188000730238855,
+              "tool_ms": 0.28414299595169723,
               "request_bytes": 157,
               "response_bytes": 146,
               "argument_bytes": 67,
@@ -2054,7 +2054,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.8284420036943629,
+              "tool_ms": 1.1219370062462986,
               "request_bytes": 188,
               "response_bytes": 81,
               "argument_bytes": 98,
@@ -2084,8 +2084,8 @@
       ],
       "warmups": [
         {
-          "workflow_ms": 6.390220994944684,
-          "tool_ms": 1.2058529973728582,
+          "workflow_ms": 6.721138997818343,
+          "tool_ms": 1.4370050048455596,
           "argument_bytes": 165,
           "result_json_bytes": 157,
           "error_json_bytes": 0,
@@ -2126,7 +2126,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.18399400869384408,
+              "tool_ms": 0.24384200514759868,
               "request_bytes": 157,
               "response_bytes": 146,
               "argument_bytes": 67,
@@ -2150,7 +2150,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 1.0218589886790141,
+              "tool_ms": 1.193162999697961,
               "request_bytes": 188,
               "response_bytes": 81,
               "argument_bytes": 98,
@@ -2181,10 +2181,10 @@
       "correct_runs": 3,
       "workflow_ms": {
         "runs": 3,
-        "median": 6.140879995655268,
-        "p95": 6.18310300342273,
-        "min": 6.132606999017298,
-        "max": 6.18310300342273
+        "median": 6.547732002218254,
+        "p95": 6.733918999088928,
+        "min": 6.296456995187327,
+        "max": 6.733918999088928
       },
       "tool_json_bytes": {
         "runs": 3,
@@ -2195,10 +2195,10 @@
       },
       "tool_ms": {
         "runs": 3,
-        "median": 1.077340988558717,
-        "p95": 1.1196650011697784,
-        "min": 1.0503220109967515,
-        "max": 1.1196650011697784
+        "median": 1.2834270019084215,
+        "p95": 1.4060800021979958,
+        "min": 1.192402996821329,
+        "max": 1.4060800021979958
       }
     },
     {
@@ -2206,8 +2206,8 @@
       "scenario": "crlf",
       "samples": [
         {
-          "workflow_ms": 6.137574004242197,
-          "tool_ms": 1.1175419931532815,
+          "workflow_ms": 6.5143120009452105,
+          "tool_ms": 1.2927510106237605,
           "argument_bytes": 140,
           "result_json_bytes": 156,
           "error_json_bytes": 0,
@@ -2248,7 +2248,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.19733399676624686,
+              "tool_ms": 0.22795800759922713,
               "request_bytes": 154,
               "response_bytes": 145,
               "argument_bytes": 64,
@@ -2272,7 +2272,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.9202079963870347,
+              "tool_ms": 1.0647930030245334,
               "request_bytes": 166,
               "response_bytes": 81,
               "argument_bytes": 76,
@@ -2300,8 +2300,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 6.098666999605484,
-          "tool_ms": 1.0737369884736836,
+          "workflow_ms": 6.462135002948344,
+          "tool_ms": 1.2433270021574572,
           "argument_bytes": 140,
           "result_json_bytes": 156,
           "error_json_bytes": 0,
@@ -2342,7 +2342,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.15485999756492674,
+              "tool_ms": 0.23517900262959301,
               "request_bytes": 154,
               "response_bytes": 145,
               "argument_bytes": 64,
@@ -2366,7 +2366,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.9188769909087569,
+              "tool_ms": 1.0081479995278642,
               "request_bytes": 166,
               "response_bytes": 81,
               "argument_bytes": 76,
@@ -2394,8 +2394,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 6.144193990621716,
-          "tool_ms": 1.0508130071684718,
+          "workflow_ms": 6.481742995674722,
+          "tool_ms": 1.3049200060777366,
           "argument_bytes": 140,
           "result_json_bytes": 156,
           "error_json_bytes": 0,
@@ -2436,7 +2436,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.1699029962765053,
+              "tool_ms": 0.25064300280064344,
               "request_bytes": 154,
               "response_bytes": 145,
               "argument_bytes": 64,
@@ -2460,7 +2460,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.8809100108919665,
+              "tool_ms": 1.0542770032770932,
               "request_bytes": 166,
               "response_bytes": 81,
               "argument_bytes": 76,
@@ -2490,8 +2490,8 @@
       ],
       "warmups": [
         {
-          "workflow_ms": 6.500814997707494,
-          "tool_ms": 1.2185010127723217,
+          "workflow_ms": 6.373061012709513,
+          "tool_ms": 1.2890150101156905,
           "argument_bytes": 140,
           "result_json_bytes": 156,
           "error_json_bytes": 0,
@@ -2532,7 +2532,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.17476000357419252,
+              "tool_ms": 0.21058300626464188,
               "request_bytes": 154,
               "response_bytes": 145,
               "argument_bytes": 64,
@@ -2556,7 +2556,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 1.0437410091981292,
+              "tool_ms": 1.0784320038510486,
               "request_bytes": 166,
               "response_bytes": 81,
               "argument_bytes": 76,
@@ -2587,10 +2587,10 @@
       "correct_runs": 3,
       "workflow_ms": {
         "runs": 3,
-        "median": 6.137574004242197,
-        "p95": 6.144193990621716,
-        "min": 6.098666999605484,
-        "max": 6.144193990621716
+        "median": 6.481742995674722,
+        "p95": 6.5143120009452105,
+        "min": 6.462135002948344,
+        "max": 6.5143120009452105
       },
       "tool_json_bytes": {
         "runs": 3,
@@ -2601,10 +2601,10 @@
       },
       "tool_ms": {
         "runs": 3,
-        "median": 1.0737369884736836,
-        "p95": 1.1175419931532815,
-        "min": 1.0508130071684718,
-        "max": 1.1175419931532815
+        "median": 1.2927510106237605,
+        "p95": 1.3049200060777366,
+        "min": 1.2433270021574572,
+        "max": 1.3049200060777366
       }
     },
     {
@@ -2612,8 +2612,8 @@
       "scenario": "no-final-newline",
       "samples": [
         {
-          "workflow_ms": 6.4736240019556135,
-          "tool_ms": 1.2944549816893414,
+          "workflow_ms": 6.654199998592958,
+          "tool_ms": 1.2123719934606925,
           "argument_bytes": 164,
           "result_json_bytes": 128,
           "error_json_bytes": 0,
@@ -2654,7 +2654,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.26424298994243145,
+              "tool_ms": 0.23654100368730724,
               "request_bytes": 166,
               "response_bytes": 117,
               "argument_bytes": 76,
@@ -2678,7 +2678,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 1.03021199174691,
+              "tool_ms": 0.9758309897733852,
               "request_bytes": 178,
               "response_bytes": 81,
               "argument_bytes": 88,
@@ -2706,8 +2706,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 6.220587994903326,
-          "tool_ms": 1.2454509997041896,
+          "workflow_ms": 6.572426995262504,
+          "tool_ms": 1.3177380023989826,
           "argument_bytes": 164,
           "result_json_bytes": 128,
           "error_json_bytes": 0,
@@ -2748,7 +2748,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.1892910077003762,
+              "tool_ms": 0.24167900846805423,
               "request_bytes": 166,
               "response_bytes": 117,
               "argument_bytes": 76,
@@ -2772,7 +2772,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 1.0561599920038134,
+              "tool_ms": 1.0760589939309284,
               "request_bytes": 178,
               "response_bytes": 81,
               "argument_bytes": 88,
@@ -2800,8 +2800,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 5.9998099895892665,
-          "tool_ms": 1.012625012663193,
+          "workflow_ms": 6.49822800187394,
+          "tool_ms": 1.2730220041703433,
           "argument_bytes": 164,
           "result_json_bytes": 128,
           "error_json_bytes": 0,
@@ -2842,7 +2842,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.16044800577219576,
+              "tool_ms": 0.2137080009561032,
               "request_bytes": 166,
               "response_bytes": 117,
               "argument_bytes": 76,
@@ -2866,7 +2866,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.8521770068909973,
+              "tool_ms": 1.05931400321424,
               "request_bytes": 178,
               "response_bytes": 81,
               "argument_bytes": 88,
@@ -2896,8 +2896,8 @@
       ],
       "warmups": [
         {
-          "workflow_ms": 6.229542006622069,
-          "tool_ms": 1.1794230085797608,
+          "workflow_ms": 6.696152006043121,
+          "tool_ms": 1.5244259993778542,
           "argument_bytes": 164,
           "result_json_bytes": 128,
           "error_json_bytes": 0,
@@ -2938,7 +2938,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.1835830044001341,
+              "tool_ms": 0.2574829995865002,
               "request_bytes": 166,
               "response_bytes": 117,
               "argument_bytes": 76,
@@ -2962,7 +2962,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.9958400041796267,
+              "tool_ms": 1.266942999791354,
               "request_bytes": 178,
               "response_bytes": 81,
               "argument_bytes": 88,
@@ -2993,10 +2993,10 @@
       "correct_runs": 3,
       "workflow_ms": {
         "runs": 3,
-        "median": 6.220587994903326,
-        "p95": 6.4736240019556135,
-        "min": 5.9998099895892665,
-        "max": 6.4736240019556135
+        "median": 6.572426995262504,
+        "p95": 6.654199998592958,
+        "min": 6.49822800187394,
+        "max": 6.654199998592958
       },
       "tool_json_bytes": {
         "runs": 3,
@@ -3007,10 +3007,10 @@
       },
       "tool_ms": {
         "runs": 3,
-        "median": 1.2454509997041896,
-        "p95": 1.2944549816893414,
-        "min": 1.012625012663193,
-        "max": 1.2944549816893414
+        "median": 1.2730220041703433,
+        "p95": 1.3177380023989826,
+        "min": 1.2123719934606925,
+        "max": 1.3177380023989826
       }
     },
     {
@@ -3018,8 +3018,8 @@
       "scenario": "disambiguated-block",
       "samples": [
         {
-          "workflow_ms": 6.18483500147704,
-          "tool_ms": 1.1743649956770241,
+          "workflow_ms": 6.609322008443996,
+          "tool_ms": 1.4487029984593391,
           "argument_bytes": 206,
           "result_json_bytes": 184,
           "error_json_bytes": 0,
@@ -3060,7 +3060,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.19496900495141745,
+              "tool_ms": 0.34595400211401284,
               "request_bytes": 169,
               "response_bytes": 173,
               "argument_bytes": 79,
@@ -3084,7 +3084,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.9793959907256067,
+              "tool_ms": 1.1027489963453263,
               "request_bytes": 217,
               "response_bytes": 81,
               "argument_bytes": 127,
@@ -3112,8 +3112,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 6.13542199425865,
-          "tool_ms": 1.09833299939055,
+          "workflow_ms": 6.447662992286496,
+          "tool_ms": 1.3493050064425915,
           "argument_bytes": 206,
           "result_json_bytes": 184,
           "error_json_bytes": 0,
@@ -3154,7 +3154,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.19320700084790587,
+              "tool_ms": 0.3647819976322353,
               "request_bytes": 169,
               "response_bytes": 173,
               "argument_bytes": 79,
@@ -3178,7 +3178,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.9051259985426441,
+              "tool_ms": 0.9845230088103563,
               "request_bytes": 217,
               "response_bytes": 81,
               "argument_bytes": 127,
@@ -3206,8 +3206,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 6.312864992651157,
-          "tool_ms": 1.0845330107258633,
+          "workflow_ms": 6.8189739977242425,
+          "tool_ms": 1.4221330056898296,
           "argument_bytes": 206,
           "result_json_bytes": 184,
           "error_json_bytes": 0,
@@ -3248,7 +3248,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.20612700609490275,
+              "tool_ms": 0.29870300204493105,
               "request_bytes": 169,
               "response_bytes": 173,
               "argument_bytes": 79,
@@ -3272,7 +3272,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.8784060046309605,
+              "tool_ms": 1.1234300036448985,
               "request_bytes": 217,
               "response_bytes": 81,
               "argument_bytes": 127,
@@ -3302,8 +3302,8 @@
       ],
       "warmups": [
         {
-          "workflow_ms": 6.0351620049914345,
-          "tool_ms": 1.1167109914822504,
+          "workflow_ms": 6.620569998631254,
+          "tool_ms": 1.3360449956962839,
           "argument_bytes": 206,
           "result_json_bytes": 184,
           "error_json_bytes": 0,
@@ -3344,7 +3344,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.20568599575199187,
+              "tool_ms": 0.2413890033494681,
               "request_bytes": 169,
               "response_bytes": 173,
               "argument_bytes": 79,
@@ -3368,7 +3368,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.9110249957302585,
+              "tool_ms": 1.0946559923468158,
               "request_bytes": 217,
               "response_bytes": 81,
               "argument_bytes": 127,
@@ -3399,10 +3399,10 @@
       "correct_runs": 3,
       "workflow_ms": {
         "runs": 3,
-        "median": 6.18483500147704,
-        "p95": 6.312864992651157,
-        "min": 6.13542199425865,
-        "max": 6.312864992651157
+        "median": 6.609322008443996,
+        "p95": 6.8189739977242425,
+        "min": 6.447662992286496,
+        "max": 6.8189739977242425
       },
       "tool_json_bytes": {
         "runs": 3,
@@ -3413,10 +3413,10 @@
       },
       "tool_ms": {
         "runs": 3,
-        "median": 1.09833299939055,
-        "p95": 1.1743649956770241,
-        "min": 1.0845330107258633,
-        "max": 1.1743649956770241
+        "median": 1.4221330056898296,
+        "p95": 1.4487029984593391,
+        "min": 1.3493050064425915,
+        "max": 1.4487029984593391
       }
     },
     {
@@ -3424,8 +3424,8 @@
       "scenario": "global-replace",
       "samples": [
         {
-          "workflow_ms": 6.366104993503541,
-          "tool_ms": 1.2854810047429055,
+          "workflow_ms": 6.893725992995314,
+          "tool_ms": 1.6329770005540922,
           "argument_bytes": 169,
           "result_json_bytes": 485,
           "error_json_bytes": 0,
@@ -3467,7 +3467,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.30875900120008737,
+              "tool_ms": 0.37342499126680195,
               "request_bytes": 164,
               "response_bytes": 474,
               "argument_bytes": 74,
@@ -3492,7 +3492,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.9767220035428181,
+              "tool_ms": 1.2595520092872903,
               "request_bytes": 185,
               "response_bytes": 81,
               "argument_bytes": 95,
@@ -3520,8 +3520,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 6.287979005719535,
-          "tool_ms": 1.266334016690962,
+          "workflow_ms": 6.701600010273978,
+          "tool_ms": 1.431486991350539,
           "argument_bytes": 169,
           "result_json_bytes": 485,
           "error_json_bytes": 0,
@@ -3563,7 +3563,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.2955000090878457,
+              "tool_ms": 0.3141670022159815,
               "request_bytes": 164,
               "response_bytes": 474,
               "argument_bytes": 74,
@@ -3588,7 +3588,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.9708340076031163,
+              "tool_ms": 1.1173199891345575,
               "request_bytes": 185,
               "response_bytes": 81,
               "argument_bytes": 95,
@@ -3616,8 +3616,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 6.2622300029033795,
-          "tool_ms": 1.1917519877897575,
+          "workflow_ms": 6.9354570005089045,
+          "tool_ms": 1.5806799929123372,
           "argument_bytes": 169,
           "result_json_bytes": 485,
           "error_json_bytes": 0,
@@ -3659,7 +3659,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.275569997029379,
+              "tool_ms": 0.4288380005164072,
               "request_bytes": 164,
               "response_bytes": 474,
               "argument_bytes": 74,
@@ -3684,7 +3684,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.9161819907603785,
+              "tool_ms": 1.15184199239593,
               "request_bytes": 185,
               "response_bytes": 81,
               "argument_bytes": 95,
@@ -3714,8 +3714,8 @@
       ],
       "warmups": [
         {
-          "workflow_ms": 6.471841988968663,
-          "tool_ms": 1.3110389845678583,
+          "workflow_ms": 6.9276849972084165,
+          "tool_ms": 1.6092309961095452,
           "argument_bytes": 169,
           "result_json_bytes": 485,
           "error_json_bytes": 0,
@@ -3757,7 +3757,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.2539979905122891,
+              "tool_ms": 0.3204660024493933,
               "request_bytes": 164,
               "response_bytes": 474,
               "argument_bytes": 74,
@@ -3782,7 +3782,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 1.0570409940555692,
+              "tool_ms": 1.288764993660152,
               "request_bytes": 185,
               "response_bytes": 81,
               "argument_bytes": 95,
@@ -3813,10 +3813,10 @@
       "correct_runs": 3,
       "workflow_ms": {
         "runs": 3,
-        "median": 6.287979005719535,
-        "p95": 6.366104993503541,
-        "min": 6.2622300029033795,
-        "max": 6.366104993503541
+        "median": 6.893725992995314,
+        "p95": 6.9354570005089045,
+        "min": 6.701600010273978,
+        "max": 6.9354570005089045
       },
       "tool_json_bytes": {
         "runs": 3,
@@ -3827,10 +3827,10 @@
       },
       "tool_ms": {
         "runs": 3,
-        "median": 1.266334016690962,
-        "p95": 1.2854810047429055,
-        "min": 1.1917519877897575,
-        "max": 1.2854810047429055
+        "median": 1.5806799929123372,
+        "p95": 1.6329770005540922,
+        "min": 1.431486991350539,
+        "max": 1.6329770005540922
       }
     },
     {
@@ -3838,8 +3838,8 @@
       "scenario": "same-file-batch",
       "samples": [
         {
-          "workflow_ms": 7.191041004261933,
-          "tool_ms": 2.1055599936516955,
+          "workflow_ms": 8.490196007187478,
+          "tool_ms": 2.9601989954244345,
           "argument_bytes": 252,
           "result_json_bytes": 132,
           "error_json_bytes": 0,
@@ -3889,7 +3889,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.17027299327310175,
+              "tool_ms": 0.21541000751312822,
               "request_bytes": 165,
               "response_bytes": 121,
               "argument_bytes": 75,
@@ -3922,7 +3922,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 1.9352870003785938,
+              "tool_ms": 2.7447889879113063,
               "request_bytes": 268,
               "response_bytes": 81,
               "argument_bytes": 177,
@@ -3950,8 +3950,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 7.921546988654882,
-          "tool_ms": 2.5437220028834417,
+          "workflow_ms": 8.177683004760183,
+          "tool_ms": 2.9028440039837733,
           "argument_bytes": 252,
           "result_json_bytes": 132,
           "error_json_bytes": 0,
@@ -4001,7 +4001,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.1674090017331764,
+              "tool_ms": 0.2224810014013201,
               "request_bytes": 165,
               "response_bytes": 121,
               "argument_bytes": 75,
@@ -4034,7 +4034,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 2.3763130011502653,
+              "tool_ms": 2.680363002582453,
               "request_bytes": 268,
               "response_bytes": 81,
               "argument_bytes": 177,
@@ -4062,8 +4062,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 7.080475988914259,
-          "tool_ms": 2.1272720041451976,
+          "workflow_ms": 8.608913005446084,
+          "tool_ms": 2.9500139935407788,
           "argument_bytes": 252,
           "result_json_bytes": 132,
           "error_json_bytes": 0,
@@ -4113,7 +4113,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.17538000247441232,
+              "tool_ms": 0.22756900580134243,
               "request_bytes": 165,
               "response_bytes": 121,
               "argument_bytes": 75,
@@ -4146,7 +4146,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 1.9518920016707852,
+              "tool_ms": 2.7224449877394363,
               "request_bytes": 268,
               "response_bytes": 81,
               "argument_bytes": 177,
@@ -4176,8 +4176,8 @@
       ],
       "warmups": [
         {
-          "workflow_ms": 7.656023008166812,
-          "tool_ms": 2.585333990282379,
+          "workflow_ms": 9.053736008354463,
+          "tool_ms": 3.915659981430508,
           "argument_bytes": 252,
           "result_json_bytes": 132,
           "error_json_bytes": 0,
@@ -4227,7 +4227,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.19699300173670053,
+              "tool_ms": 0.26508398877922446,
               "request_bytes": 165,
               "response_bytes": 121,
               "argument_bytes": 75,
@@ -4260,7 +4260,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 2.3883409885456786,
+              "tool_ms": 3.6505759926512837,
               "request_bytes": 268,
               "response_bytes": 81,
               "argument_bytes": 177,
@@ -4291,10 +4291,10 @@
       "correct_runs": 3,
       "workflow_ms": {
         "runs": 3,
-        "median": 7.191041004261933,
-        "p95": 7.921546988654882,
-        "min": 7.080475988914259,
-        "max": 7.921546988654882
+        "median": 8.490196007187478,
+        "p95": 8.608913005446084,
+        "min": 8.177683004760183,
+        "max": 8.608913005446084
       },
       "tool_json_bytes": {
         "runs": 3,
@@ -4305,10 +4305,10 @@
       },
       "tool_ms": {
         "runs": 3,
-        "median": 2.1272720041451976,
-        "p95": 2.5437220028834417,
-        "min": 2.1055599936516955,
-        "max": 2.5437220028834417
+        "median": 2.9500139935407788,
+        "p95": 2.9601989954244345,
+        "min": 2.9028440039837733,
+        "max": 2.9601989954244345
       }
     },
     {
@@ -4316,8 +4316,8 @@
       "scenario": "multi-file-batch",
       "samples": [
         {
-          "workflow_ms": 10.055049002403393,
-          "tool_ms": 4.782730989973061,
+          "workflow_ms": 11.19171199388802,
+          "tool_ms": 6.012124998960644,
           "argument_bytes": 431,
           "result_json_bytes": 225,
           "error_json_bytes": 0,
@@ -4388,7 +4388,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.2266469964524731,
+              "tool_ms": 0.23527999292127788,
               "request_bytes": 160,
               "response_bytes": 97,
               "argument_bytes": 70,
@@ -4412,7 +4412,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.15346800500992686,
+              "tool_ms": 0.18863100558519363,
               "request_bytes": 160,
               "response_bytes": 94,
               "argument_bytes": 70,
@@ -4436,7 +4436,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.14388399722520262,
+              "tool_ms": 0.1770530070643872,
               "request_bytes": 160,
               "response_bytes": 93,
               "argument_bytes": 70,
@@ -4474,7 +4474,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 4.258731991285458,
+              "tool_ms": 5.411160993389785,
               "request_bytes": 312,
               "response_bytes": 81,
               "argument_bytes": 221,
@@ -4524,8 +4524,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 9.722243994474411,
-          "tool_ms": 4.65238701144699,
+          "workflow_ms": 10.652518991264515,
+          "tool_ms": 5.4054809879744425,
           "argument_bytes": 431,
           "result_json_bytes": 225,
           "error_json_bytes": 0,
@@ -4596,7 +4596,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.18462400475982577,
+              "tool_ms": 0.22575499315280467,
               "request_bytes": 160,
               "response_bytes": 97,
               "argument_bytes": 70,
@@ -4620,7 +4620,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.14327300596050918,
+              "tool_ms": 0.16403400513809174,
               "request_bytes": 160,
               "response_bytes": 94,
               "argument_bytes": 70,
@@ -4644,7 +4644,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.10937299521174282,
+              "tool_ms": 0.1497819903306663,
               "request_bytes": 160,
               "response_bytes": 93,
               "argument_bytes": 70,
@@ -4682,7 +4682,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 4.215117005514912,
+              "tool_ms": 4.86590999935288,
               "request_bytes": 312,
               "response_bytes": 81,
               "argument_bytes": 221,
@@ -4732,8 +4732,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 10.60576799500268,
-          "tool_ms": 5.418946981080808,
+          "workflow_ms": 11.736911998013966,
+          "tool_ms": 6.219672010047361,
           "argument_bytes": 431,
           "result_json_bytes": 225,
           "error_json_bytes": 0,
@@ -4804,7 +4804,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.20907100406475365,
+              "tool_ms": 0.26263999461662024,
               "request_bytes": 160,
               "response_bytes": 97,
               "argument_bytes": 70,
@@ -4828,7 +4828,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.12432498624548316,
+              "tool_ms": 0.2252140111522749,
               "request_bytes": 160,
               "response_bytes": 94,
               "argument_bytes": 70,
@@ -4852,7 +4852,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.11368899140506983,
+              "tool_ms": 0.20676800340879709,
               "request_bytes": 160,
               "response_bytes": 93,
               "argument_bytes": 70,
@@ -4890,7 +4890,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 4.971861999365501,
+              "tool_ms": 5.525050000869669,
               "request_bytes": 312,
               "response_bytes": 81,
               "argument_bytes": 221,
@@ -4942,8 +4942,8 @@
       ],
       "warmups": [
         {
-          "workflow_ms": 9.38658500672318,
-          "tool_ms": 4.377386998385191,
+          "workflow_ms": 10.995950986398384,
+          "tool_ms": 5.653140993672423,
           "argument_bytes": 431,
           "result_json_bytes": 225,
           "error_json_bytes": 0,
@@ -5014,7 +5014,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.16488500114064664,
+              "tool_ms": 0.25445800565648824,
               "request_bytes": 160,
               "response_bytes": 97,
               "argument_bytes": 70,
@@ -5038,7 +5038,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.1126870047301054,
+              "tool_ms": 0.16166998830158263,
               "request_bytes": 160,
               "response_bytes": 94,
               "argument_bytes": 70,
@@ -5062,7 +5062,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.08838099893182516,
+              "tool_ms": 0.18726800044532865,
               "request_bytes": 160,
               "response_bytes": 93,
               "argument_bytes": 70,
@@ -5100,7 +5100,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 4.011433993582614,
+              "tool_ms": 5.0497449992690235,
               "request_bytes": 312,
               "response_bytes": 81,
               "argument_bytes": 221,
@@ -5153,10 +5153,10 @@
       "correct_runs": 3,
       "workflow_ms": {
         "runs": 3,
-        "median": 10.055049002403393,
-        "p95": 10.60576799500268,
-        "min": 9.722243994474411,
-        "max": 10.60576799500268
+        "median": 11.19171199388802,
+        "p95": 11.736911998013966,
+        "min": 10.652518991264515,
+        "max": 11.736911998013966
       },
       "tool_json_bytes": {
         "runs": 3,
@@ -5167,10 +5167,10 @@
       },
       "tool_ms": {
         "runs": 3,
-        "median": 4.782730989973061,
-        "p95": 5.418946981080808,
-        "min": 4.65238701144699,
-        "max": 5.418946981080808
+        "median": 6.012124998960644,
+        "p95": 6.219672010047361,
+        "min": 5.4054809879744425,
+        "max": 6.219672010047361
       }
     },
     {
@@ -5178,8 +5178,8 @@
       "scenario": "long-line",
       "samples": [
         {
-          "workflow_ms": 17.498946996056475,
-          "tool_ms": 11.713593994500116,
+          "workflow_ms": 16.918480992899276,
+          "tool_ms": 11.236138001549989,
           "argument_bytes": 148,
           "result_json_bytes": 40109,
           "error_json_bytes": 0,
@@ -5220,7 +5220,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 10.49153799249325,
+              "tool_ms": 9.89720800134819,
               "request_bytes": 159,
               "response_bytes": 40098,
               "argument_bytes": 69,
@@ -5244,7 +5244,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 1.222056002006866,
+              "tool_ms": 1.338930000201799,
               "request_bytes": 169,
               "response_bytes": 81,
               "argument_bytes": 79,
@@ -5272,8 +5272,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 16.141517990035936,
-          "tool_ms": 10.918472995399497,
+          "workflow_ms": 16.231511006481014,
+          "tool_ms": 10.851696992176585,
           "argument_bytes": 148,
           "result_json_bytes": 40109,
           "error_json_bytes": 0,
@@ -5314,7 +5314,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 9.724117000587285,
+              "tool_ms": 9.54752899997402,
               "request_bytes": 159,
               "response_bytes": 40098,
               "argument_bytes": 69,
@@ -5338,7 +5338,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 1.1943559948122129,
+              "tool_ms": 1.304167992202565,
               "request_bytes": 169,
               "response_bytes": 81,
               "argument_bytes": 79,
@@ -5366,8 +5366,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 15.810465993126854,
-          "tool_ms": 10.691043993574567,
+          "workflow_ms": 16.699544998118654,
+          "tool_ms": 11.081557997385971,
           "argument_bytes": 148,
           "result_json_bytes": 40109,
           "error_json_bytes": 0,
@@ -5408,7 +5408,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 9.605240004020743,
+              "tool_ms": 9.817398997256532,
               "request_bytes": 159,
               "response_bytes": 40098,
               "argument_bytes": 69,
@@ -5432,7 +5432,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 1.085803989553824,
+              "tool_ms": 1.264159000129439,
               "request_bytes": 169,
               "response_bytes": 81,
               "argument_bytes": 79,
@@ -5462,8 +5462,8 @@
       ],
       "warmups": [
         {
-          "workflow_ms": 15.912647999357432,
-          "tool_ms": 10.861718998057768,
+          "workflow_ms": 17.93484200607054,
+          "tool_ms": 11.812012002337724,
           "argument_bytes": 148,
           "result_json_bytes": 40109,
           "error_json_bytes": 0,
@@ -5504,7 +5504,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 9.546943998429924,
+              "tool_ms": 10.220456999377348,
               "request_bytes": 159,
               "response_bytes": 40098,
               "argument_bytes": 69,
@@ -5528,7 +5528,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 1.3147749996278435,
+              "tool_ms": 1.5915550029603764,
               "request_bytes": 169,
               "response_bytes": 81,
               "argument_bytes": 79,
@@ -5559,10 +5559,10 @@
       "correct_runs": 3,
       "workflow_ms": {
         "runs": 3,
-        "median": 16.141517990035936,
-        "p95": 17.498946996056475,
-        "min": 15.810465993126854,
-        "max": 17.498946996056475
+        "median": 16.699544998118654,
+        "p95": 16.918480992899276,
+        "min": 16.231511006481014,
+        "max": 16.918480992899276
       },
       "tool_json_bytes": {
         "runs": 3,
@@ -5573,10 +5573,10 @@
       },
       "tool_ms": {
         "runs": 3,
-        "median": 10.918472995399497,
-        "p95": 11.713593994500116,
-        "min": 10.691043993574567,
-        "max": 11.713593994500116
+        "median": 11.081557997385971,
+        "p95": 11.236138001549989,
+        "min": 10.851696992176585,
+        "max": 11.236138001549989
       }
     },
     {
@@ -5584,8 +5584,8 @@
       "scenario": "insert-after-anchor",
       "samples": [
         {
-          "workflow_ms": 6.1089030059520155,
-          "tool_ms": 0.9874190000118688,
+          "workflow_ms": 6.5847150108311325,
+          "tool_ms": 1.1239800078328699,
           "argument_bytes": 186,
           "result_json_bytes": 138,
           "error_json_bytes": 0,
@@ -5626,7 +5626,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.16451500414405018,
+              "tool_ms": 0.22273100330494344,
               "request_bytes": 169,
               "response_bytes": 127,
               "argument_bytes": 79,
@@ -5650,7 +5650,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.8229039958678186,
+              "tool_ms": 0.9012490045279264,
               "request_bytes": 197,
               "response_bytes": 81,
               "argument_bytes": 107,
@@ -5678,8 +5678,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 6.2858249875716865,
-          "tool_ms": 1.1998429981758818,
+          "workflow_ms": 6.9699669984402135,
+          "tool_ms": 1.3374269910855219,
           "argument_bytes": 186,
           "result_json_bytes": 138,
           "error_json_bytes": 0,
@@ -5720,7 +5720,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.2095709933200851,
+              "tool_ms": 0.22831899696029723,
               "request_bytes": 169,
               "response_bytes": 127,
               "argument_bytes": 79,
@@ -5744,7 +5744,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.9902720048557967,
+              "tool_ms": 1.1091079941252246,
               "request_bytes": 197,
               "response_bytes": 81,
               "argument_bytes": 107,
@@ -5772,8 +5772,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 6.212577005499043,
-          "tool_ms": 1.0901810164796188,
+          "workflow_ms": 6.168567007989623,
+          "tool_ms": 1.1575199896469712,
           "argument_bytes": 186,
           "result_json_bytes": 138,
           "error_json_bytes": 0,
@@ -5814,7 +5814,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.16057900211308151,
+              "tool_ms": 0.14100999396760017,
               "request_bytes": 169,
               "response_bytes": 127,
               "argument_bytes": 79,
@@ -5838,7 +5838,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.9296020143665373,
+              "tool_ms": 1.016509995679371,
               "request_bytes": 197,
               "response_bytes": 81,
               "argument_bytes": 107,
@@ -5868,8 +5868,8 @@
       ],
       "warmups": [
         {
-          "workflow_ms": 6.380505990819074,
-          "tool_ms": 1.3005929940845817,
+          "workflow_ms": 7.997724998858757,
+          "tool_ms": 1.7419490031898022,
           "argument_bytes": 186,
           "result_json_bytes": 138,
           "error_json_bytes": 0,
@@ -5910,7 +5910,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.19305699970573187,
+              "tool_ms": 0.24233000294771045,
               "request_bytes": 169,
               "response_bytes": 127,
               "argument_bytes": 79,
@@ -5934,7 +5934,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 1.1075359943788499,
+              "tool_ms": 1.4996190002420917,
               "request_bytes": 197,
               "response_bytes": 81,
               "argument_bytes": 107,
@@ -5965,10 +5965,10 @@
       "correct_runs": 3,
       "workflow_ms": {
         "runs": 3,
-        "median": 6.212577005499043,
-        "p95": 6.2858249875716865,
-        "min": 6.1089030059520155,
-        "max": 6.2858249875716865
+        "median": 6.5847150108311325,
+        "p95": 6.9699669984402135,
+        "min": 6.168567007989623,
+        "max": 6.9699669984402135
       },
       "tool_json_bytes": {
         "runs": 3,
@@ -5979,10 +5979,10 @@
       },
       "tool_ms": {
         "runs": 3,
-        "median": 1.0901810164796188,
-        "p95": 1.1998429981758818,
-        "min": 0.9874190000118688,
-        "max": 1.1998429981758818
+        "median": 1.1575199896469712,
+        "p95": 1.3374269910855219,
+        "min": 1.1239800078328699,
+        "max": 1.3374269910855219
       }
     },
     {
@@ -5990,8 +5990,8 @@
       "scenario": "delete-block",
       "samples": [
         {
-          "workflow_ms": 6.210224004462361,
-          "tool_ms": 1.1580120044527575,
+          "workflow_ms": 7.015709998086095,
+          "tool_ms": 1.3695150119019672,
           "argument_bytes": 168,
           "result_json_bytes": 159,
           "error_json_bytes": 0,
@@ -6032,7 +6032,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.1882499927887693,
+              "tool_ms": 0.22456300212070346,
               "request_bytes": 162,
               "response_bytes": 148,
               "argument_bytes": 72,
@@ -6056,7 +6056,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.9697620116639882,
+              "tool_ms": 1.1449520097812638,
               "request_bytes": 186,
               "response_bytes": 81,
               "argument_bytes": 96,
@@ -6084,8 +6084,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 6.296350999036804,
-          "tool_ms": 1.2721320090349764,
+          "workflow_ms": 6.293992992141284,
+          "tool_ms": 1.167625014204532,
           "argument_bytes": 168,
           "result_json_bytes": 159,
           "error_json_bytes": 0,
@@ -6126,7 +6126,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.2017700026044622,
+              "tool_ms": 0.19540000357665122,
               "request_bytes": 162,
               "response_bytes": 148,
               "argument_bytes": 72,
@@ -6150,7 +6150,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 1.0703620064305142,
+              "tool_ms": 0.9722250106278807,
               "request_bytes": 186,
               "response_bytes": 81,
               "argument_bytes": 96,
@@ -6178,8 +6178,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 6.057997001335025,
-          "tool_ms": 1.0929749842034653,
+          "workflow_ms": 6.927324997377582,
+          "tool_ms": 1.3516690087271854,
           "argument_bytes": 168,
           "result_json_bytes": 159,
           "error_json_bytes": 0,
@@ -6220,7 +6220,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.16680799308232963,
+              "tool_ms": 0.2705220103962347,
               "request_bytes": 162,
               "response_bytes": 148,
               "argument_bytes": 72,
@@ -6244,7 +6244,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.9261669911211357,
+              "tool_ms": 1.0811469983309507,
               "request_bytes": 186,
               "response_bytes": 81,
               "argument_bytes": 96,
@@ -6274,8 +6274,8 @@
       ],
       "warmups": [
         {
-          "workflow_ms": 6.4886070031207055,
-          "tool_ms": 1.376727013848722,
+          "workflow_ms": 7.809200003976002,
+          "tool_ms": 1.841617005993612,
           "argument_bytes": 168,
           "result_json_bytes": 159,
           "error_json_bytes": 0,
@@ -6316,7 +6316,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.19782400340773165,
+              "tool_ms": 0.30934000096749514,
               "request_bytes": 162,
               "response_bytes": 148,
               "argument_bytes": 72,
@@ -6340,7 +6340,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 1.1789030104409903,
+              "tool_ms": 1.532277005026117,
               "request_bytes": 186,
               "response_bytes": 81,
               "argument_bytes": 96,
@@ -6371,10 +6371,10 @@
       "correct_runs": 3,
       "workflow_ms": {
         "runs": 3,
-        "median": 6.210224004462361,
-        "p95": 6.296350999036804,
-        "min": 6.057997001335025,
-        "max": 6.296350999036804
+        "median": 6.927324997377582,
+        "p95": 7.015709998086095,
+        "min": 6.293992992141284,
+        "max": 7.015709998086095
       },
       "tool_json_bytes": {
         "runs": 3,
@@ -6385,10 +6385,10 @@
       },
       "tool_ms": {
         "runs": 3,
-        "median": 1.1580120044527575,
-        "p95": 1.2721320090349764,
-        "min": 1.0929749842034653,
-        "max": 1.2721320090349764
+        "median": 1.3516690087271854,
+        "p95": 1.3695150119019672,
+        "min": 1.167625014204532,
+        "max": 1.3695150119019672
       }
     },
     {
@@ -6396,8 +6396,8 @@
       "scenario": "noop",
       "samples": [
         {
-          "workflow_ms": 5.338957998901606,
-          "tool_ms": 0.2880179963540286,
+          "workflow_ms": 5.61311500496231,
+          "tool_ms": 0.6078480073483661,
           "argument_bytes": 110,
           "result_json_bytes": 103,
           "error_json_bytes": 0,
@@ -6438,7 +6438,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.15149499813560396,
+              "tool_ms": 0.23140900884754956,
               "request_bytes": 144,
               "response_bytes": 90,
               "argument_bytes": 54,
@@ -6462,7 +6462,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.13652299821842462,
+              "tool_ms": 0.3764389985008165,
               "request_bytes": 146,
               "response_bytes": 83,
               "argument_bytes": 56,
@@ -6490,8 +6490,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 5.370604005292989,
-          "tool_ms": 0.3141070046694949,
+          "workflow_ms": 5.374341999413446,
+          "tool_ms": 0.34059700556099415,
           "argument_bytes": 110,
           "result_json_bytes": 103,
           "error_json_bytes": 0,
@@ -6532,7 +6532,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.17390900757163763,
+              "tool_ms": 0.1846149971242994,
               "request_bytes": 144,
               "response_bytes": 90,
               "argument_bytes": 54,
@@ -6556,7 +6556,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.1401979970978573,
+              "tool_ms": 0.15598200843669474,
               "request_bytes": 146,
               "response_bytes": 83,
               "argument_bytes": 56,
@@ -6584,8 +6584,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 5.421704991022125,
-          "tool_ms": 0.33401699329260737,
+          "workflow_ms": 5.474746008985676,
+          "tool_ms": 0.3531740076141432,
           "argument_bytes": 110,
           "result_json_bytes": 103,
           "error_json_bytes": 0,
@@ -6626,7 +6626,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.20645699987653643,
+              "tool_ms": 0.2120950084645301,
               "request_bytes": 144,
               "response_bytes": 90,
               "argument_bytes": 54,
@@ -6650,7 +6650,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.12755999341607094,
+              "tool_ms": 0.14107899914961308,
               "request_bytes": 146,
               "response_bytes": 83,
               "argument_bytes": 56,
@@ -6680,8 +6680,8 @@
       ],
       "warmups": [
         {
-          "workflow_ms": 5.284697006572969,
-          "tool_ms": 0.29972600168548524,
+          "workflow_ms": 5.681914000888355,
+          "tool_ms": 0.33317501947749406,
           "argument_bytes": 110,
           "result_json_bytes": 103,
           "error_json_bytes": 0,
@@ -6722,7 +6722,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.18678799096960574,
+              "tool_ms": 0.17676201241556555,
               "request_bytes": 144,
               "response_bytes": 90,
               "argument_bytes": 54,
@@ -6746,7 +6746,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.1129380107158795,
+              "tool_ms": 0.1564130070619285,
               "request_bytes": 146,
               "response_bytes": 83,
               "argument_bytes": 56,
@@ -6777,10 +6777,10 @@
       "correct_runs": 3,
       "workflow_ms": {
         "runs": 3,
-        "median": 5.370604005292989,
-        "p95": 5.421704991022125,
-        "min": 5.338957998901606,
-        "max": 5.421704991022125
+        "median": 5.474746008985676,
+        "p95": 5.61311500496231,
+        "min": 5.374341999413446,
+        "max": 5.61311500496231
       },
       "tool_json_bytes": {
         "runs": 3,
@@ -6791,10 +6791,10 @@
       },
       "tool_ms": {
         "runs": 3,
-        "median": 0.3141070046694949,
-        "p95": 0.33401699329260737,
-        "min": 0.2880179963540286,
-        "max": 0.33401699329260737
+        "median": 0.3531740076141432,
+        "p95": 0.6078480073483661,
+        "min": 0.34059700556099415,
+        "max": 0.6078480073483661
       }
     },
     {
@@ -6802,8 +6802,8 @@
       "scenario": "reject-stale",
       "samples": [
         {
-          "workflow_ms": 5.378686008043587,
-          "tool_ms": 0.3015690017491579,
+          "workflow_ms": 6.185192003613338,
+          "tool_ms": 0.37991399585735053,
           "argument_bytes": 124,
           "result_json_bytes": 59,
           "error_json_bytes": 93,
@@ -6844,7 +6844,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.1525169936940074,
+              "tool_ms": 0.18716799968387932,
               "request_bytes": 152,
               "response_bytes": 94,
               "argument_bytes": 62,
@@ -6864,7 +6864,7 @@
                 "code": -32600,
                 "message": "old text was not found; include exact whitespace and line endings"
               },
-              "tool_ms": 0.1490520080551505,
+              "tool_ms": 0.1927459961734712,
               "request_bytes": 152,
               "response_bytes": 127,
               "argument_bytes": 62,
@@ -6892,8 +6892,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 5.382813003961928,
-          "tool_ms": 0.34964000224135816,
+          "workflow_ms": 5.558118995395489,
+          "tool_ms": 0.3364909935044125,
           "argument_bytes": 124,
           "result_json_bytes": 59,
           "error_json_bytes": 93,
@@ -6934,7 +6934,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.18621700291987509,
+              "tool_ms": 0.17195599502883852,
               "request_bytes": 152,
               "response_bytes": 94,
               "argument_bytes": 62,
@@ -6954,7 +6954,7 @@
                 "code": -32600,
                 "message": "old text was not found; include exact whitespace and line endings"
               },
-              "tool_ms": 0.16342299932148308,
+              "tool_ms": 0.16453499847557396,
               "request_bytes": 152,
               "response_bytes": 127,
               "argument_bytes": 62,
@@ -6982,8 +6982,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 5.368131009163335,
-          "tool_ms": 0.33311499282717705,
+          "workflow_ms": 5.759459003456868,
+          "tool_ms": 0.38989998574834317,
           "argument_bytes": 124,
           "result_json_bytes": 59,
           "error_json_bytes": 93,
@@ -7024,7 +7024,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.16467498790007085,
+              "tool_ms": 0.22868999803904444,
               "request_bytes": 152,
               "response_bytes": 94,
               "argument_bytes": 62,
@@ -7044,7 +7044,7 @@
                 "code": -32600,
                 "message": "old text was not found; include exact whitespace and line endings"
               },
-              "tool_ms": 0.1684400049271062,
+              "tool_ms": 0.16120998770929873,
               "request_bytes": 152,
               "response_bytes": 127,
               "argument_bytes": 62,
@@ -7074,8 +7074,8 @@
       ],
       "warmups": [
         {
-          "workflow_ms": 5.289455002639443,
-          "tool_ms": 0.35100300738122314,
+          "workflow_ms": 5.308988998876885,
+          "tool_ms": 0.3798349935095757,
           "argument_bytes": 124,
           "result_json_bytes": 59,
           "error_json_bytes": 93,
@@ -7116,7 +7116,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.18316300702281296,
+              "tool_ms": 0.20429400319699198,
               "request_bytes": 152,
               "response_bytes": 94,
               "argument_bytes": 62,
@@ -7136,7 +7136,7 @@
                 "code": -32600,
                 "message": "old text was not found; include exact whitespace and line endings"
               },
-              "tool_ms": 0.16784000035841018,
+              "tool_ms": 0.17554099031258374,
               "request_bytes": 152,
               "response_bytes": 127,
               "argument_bytes": 62,
@@ -7167,10 +7167,10 @@
       "correct_runs": 3,
       "workflow_ms": {
         "runs": 3,
-        "median": 5.378686008043587,
-        "p95": 5.382813003961928,
-        "min": 5.368131009163335,
-        "max": 5.382813003961928
+        "median": 5.759459003456868,
+        "p95": 6.185192003613338,
+        "min": 5.558118995395489,
+        "max": 6.185192003613338
       },
       "tool_json_bytes": {
         "runs": 3,
@@ -7181,10 +7181,10 @@
       },
       "tool_ms": {
         "runs": 3,
-        "median": 0.33311499282717705,
-        "p95": 0.34964000224135816,
-        "min": 0.3015690017491579,
-        "max": 0.34964000224135816
+        "median": 0.37991399585735053,
+        "p95": 0.38989998574834317,
+        "min": 0.3364909935044125,
+        "max": 0.38989998574834317
       }
     },
     {
@@ -7192,8 +7192,8 @@
       "scenario": "reject-ambiguous",
       "samples": [
         {
-          "workflow_ms": 5.335011999704875,
-          "tool_ms": 0.3362199931871146,
+          "workflow_ms": 5.537630000617355,
+          "tool_ms": 0.3977610031142831,
           "argument_bytes": 132,
           "result_json_bytes": 56,
           "error_json_bytes": 77,
@@ -7234,7 +7234,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.17040300008375198,
+              "tool_ms": 0.19445900397840887,
               "request_bytes": 156,
               "response_bytes": 91,
               "argument_bytes": 66,
@@ -7254,7 +7254,7 @@
                 "code": -32600,
                 "message": "old text is ambiguous; include more exact context"
               },
-              "tool_ms": 0.16581699310336262,
+              "tool_ms": 0.2033019991358742,
               "request_bytes": 156,
               "response_bytes": 111,
               "argument_bytes": 66,
@@ -7282,8 +7282,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 5.319103001966141,
-          "tool_ms": 0.3437209961703047,
+          "workflow_ms": 5.45543699990958,
+          "tool_ms": 0.3566490049706772,
           "argument_bytes": 132,
           "result_json_bytes": 56,
           "error_json_bytes": 77,
@@ -7324,7 +7324,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.19725300080608577,
+              "tool_ms": 0.16940099885687232,
               "request_bytes": 156,
               "response_bytes": 91,
               "argument_bytes": 66,
@@ -7344,7 +7344,7 @@
                 "code": -32600,
                 "message": "old text is ambiguous; include more exact context"
               },
-              "tool_ms": 0.14646799536421895,
+              "tool_ms": 0.18724800611380488,
               "request_bytes": 156,
               "response_bytes": 111,
               "argument_bytes": 66,
@@ -7372,8 +7372,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 5.584883008850738,
-          "tool_ms": 0.41680000140331686,
+          "workflow_ms": 5.504368993570097,
+          "tool_ms": 0.3889279905706644,
           "argument_bytes": 132,
           "result_json_bytes": 56,
           "error_json_bytes": 77,
@@ -7414,7 +7414,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.23033299657981843,
+              "tool_ms": 0.19443899509496987,
               "request_bytes": 156,
               "response_bytes": 91,
               "argument_bytes": 66,
@@ -7434,7 +7434,7 @@
                 "code": -32600,
                 "message": "old text is ambiguous; include more exact context"
               },
-              "tool_ms": 0.18646700482349843,
+              "tool_ms": 0.19448899547569454,
               "request_bytes": 156,
               "response_bytes": 111,
               "argument_bytes": 66,
@@ -7464,8 +7464,8 @@
       ],
       "warmups": [
         {
-          "workflow_ms": 5.599644995527342,
-          "tool_ms": 0.30646499362774193,
+          "workflow_ms": 5.509437003638595,
+          "tool_ms": 0.3634099994087592,
           "argument_bytes": 132,
           "result_json_bytes": 56,
           "error_json_bytes": 77,
@@ -7506,7 +7506,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.16465400403831154,
+              "tool_ms": 0.20144900190643966,
               "request_bytes": 156,
               "response_bytes": 91,
               "argument_bytes": 66,
@@ -7526,7 +7526,7 @@
                 "code": -32600,
                 "message": "old text is ambiguous; include more exact context"
               },
-              "tool_ms": 0.1418109895894304,
+              "tool_ms": 0.16196099750231951,
               "request_bytes": 156,
               "response_bytes": 111,
               "argument_bytes": 66,
@@ -7557,10 +7557,10 @@
       "correct_runs": 3,
       "workflow_ms": {
         "runs": 3,
-        "median": 5.335011999704875,
-        "p95": 5.584883008850738,
-        "min": 5.319103001966141,
-        "max": 5.584883008850738
+        "median": 5.504368993570097,
+        "p95": 5.537630000617355,
+        "min": 5.45543699990958,
+        "max": 5.537630000617355
       },
       "tool_json_bytes": {
         "runs": 3,
@@ -7571,10 +7571,10 @@
       },
       "tool_ms": {
         "runs": 3,
-        "median": 0.3437209961703047,
-        "p95": 0.41680000140331686,
-        "min": 0.3362199931871146,
-        "max": 0.41680000140331686
+        "median": 0.3889279905706644,
+        "p95": 0.3977610031142831,
+        "min": 0.3566490049706772,
+        "max": 0.3977610031142831
       }
     },
     {
@@ -7582,8 +7582,8 @@
       "scenario": "write-create",
       "samples": [
         {
-          "workflow_ms": 6.384591993992217,
-          "tool_ms": 1.1302110069664195,
+          "workflow_ms": 7.050337007967755,
+          "tool_ms": 1.4324090006994084,
           "argument_bytes": 96,
           "result_json_bytes": 46,
           "error_json_bytes": 0,
@@ -7616,7 +7616,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 1.1302110069664195,
+              "tool_ms": 1.4324090006994084,
               "request_bytes": 186,
               "response_bytes": 81,
               "argument_bytes": 96,
@@ -7644,8 +7644,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 6.250733000342734,
-          "tool_ms": 1.1036809883080423,
+          "workflow_ms": 6.3677920115878806,
+          "tool_ms": 1.1357479961588979,
           "argument_bytes": 96,
           "result_json_bytes": 46,
           "error_json_bytes": 0,
@@ -7678,7 +7678,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 1.1036809883080423,
+              "tool_ms": 1.1357479961588979,
               "request_bytes": 186,
               "response_bytes": 81,
               "argument_bytes": 96,
@@ -7706,8 +7706,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 6.028512987541035,
-          "tool_ms": 1.0263260046485811,
+          "workflow_ms": 6.720705991028808,
+          "tool_ms": 1.2341140100033954,
           "argument_bytes": 96,
           "result_json_bytes": 46,
           "error_json_bytes": 0,
@@ -7740,7 +7740,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 1.0263260046485811,
+              "tool_ms": 1.2341140100033954,
               "request_bytes": 186,
               "response_bytes": 81,
               "argument_bytes": 96,
@@ -7770,8 +7770,8 @@
       ],
       "warmups": [
         {
-          "workflow_ms": 6.201839991263114,
-          "tool_ms": 1.2943740002810955,
+          "workflow_ms": 6.395424003130756,
+          "tool_ms": 1.2986399960936978,
           "argument_bytes": 96,
           "result_json_bytes": 46,
           "error_json_bytes": 0,
@@ -7804,7 +7804,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 1.2943740002810955,
+              "tool_ms": 1.2986399960936978,
               "request_bytes": 186,
               "response_bytes": 81,
               "argument_bytes": 96,
@@ -7835,10 +7835,10 @@
       "correct_runs": 3,
       "workflow_ms": {
         "runs": 3,
-        "median": 6.250733000342734,
-        "p95": 6.384591993992217,
-        "min": 6.028512987541035,
-        "max": 6.384591993992217
+        "median": 6.720705991028808,
+        "p95": 7.050337007967755,
+        "min": 6.3677920115878806,
+        "max": 7.050337007967755
       },
       "tool_json_bytes": {
         "runs": 3,
@@ -7849,10 +7849,10 @@
       },
       "tool_ms": {
         "runs": 3,
-        "median": 1.1036809883080423,
-        "p95": 1.1302110069664195,
-        "min": 1.0263260046485811,
-        "max": 1.1302110069664195
+        "median": 1.2341140100033954,
+        "p95": 1.4324090006994084,
+        "min": 1.1357479961588979,
+        "max": 1.4324090006994084
       }
     },
     {
@@ -7860,8 +7860,8 @@
       "scenario": "delete",
       "samples": [
         {
-          "workflow_ms": 5.29093699879013,
-          "tool_ms": 0.37656100175809115,
+          "workflow_ms": 5.521134997252375,
+          "tool_ms": 0.41505700210109353,
           "argument_bytes": 108,
           "result_json_bytes": 100,
           "error_json_bytes": 0,
@@ -7901,7 +7901,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.22313201043289155,
+              "tool_ms": 0.20887100254185498,
               "request_bytes": 146,
               "response_bytes": 89,
               "argument_bytes": 56,
@@ -7924,7 +7924,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.1534289913251996,
+              "tool_ms": 0.20618599955923855,
               "request_bytes": 142,
               "response_bytes": 81,
               "argument_bytes": 52,
@@ -7940,8 +7940,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 5.4952289938228205,
-          "tool_ms": 0.38260901055764407,
+          "workflow_ms": 6.280077010160312,
+          "tool_ms": 0.440314004663378,
           "argument_bytes": 108,
           "result_json_bytes": 100,
           "error_json_bytes": 0,
@@ -7981,7 +7981,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.19822501053567976,
+              "tool_ms": 0.24655699962750077,
               "request_bytes": 146,
               "response_bytes": 89,
               "argument_bytes": 56,
@@ -8004,7 +8004,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.1843840000219643,
+              "tool_ms": 0.19375700503587723,
               "request_bytes": 142,
               "response_bytes": 81,
               "argument_bytes": 52,
@@ -8020,8 +8020,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 5.379517999244854,
-          "tool_ms": 0.34980999771505594,
+          "workflow_ms": 5.438571999548003,
+          "tool_ms": 0.3789729962591082,
           "argument_bytes": 108,
           "result_json_bytes": 100,
           "error_json_bytes": 0,
@@ -8061,7 +8061,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.1910339924506843,
+              "tool_ms": 0.21360800019465387,
               "request_bytes": 146,
               "response_bytes": 89,
               "argument_bytes": 56,
@@ -8084,7 +8084,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.15877600526437163,
+              "tool_ms": 0.16536499606445432,
               "request_bytes": 142,
               "response_bytes": 81,
               "argument_bytes": 52,
@@ -8102,8 +8102,8 @@
       ],
       "warmups": [
         {
-          "workflow_ms": 5.627175996778533,
-          "tool_ms": 0.4276360123185441,
+          "workflow_ms": 5.689044002792798,
+          "tool_ms": 0.329450995195657,
           "argument_bytes": 108,
           "result_json_bytes": 100,
           "error_json_bytes": 0,
@@ -8143,7 +8143,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.19854500715155154,
+              "tool_ms": 0.16511599824298173,
               "request_bytes": 146,
               "response_bytes": 89,
               "argument_bytes": 56,
@@ -8166,7 +8166,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.22909100516699255,
+              "tool_ms": 0.16433499695267528,
               "request_bytes": 142,
               "response_bytes": 81,
               "argument_bytes": 52,
@@ -8185,10 +8185,10 @@
       "correct_runs": 3,
       "workflow_ms": {
         "runs": 3,
-        "median": 5.379517999244854,
-        "p95": 5.4952289938228205,
-        "min": 5.29093699879013,
-        "max": 5.4952289938228205
+        "median": 5.521134997252375,
+        "p95": 6.280077010160312,
+        "min": 5.438571999548003,
+        "max": 6.280077010160312
       },
       "tool_json_bytes": {
         "runs": 3,
@@ -8199,10 +8199,10 @@
       },
       "tool_ms": {
         "runs": 3,
-        "median": 0.37656100175809115,
-        "p95": 0.38260901055764407,
-        "min": 0.34980999771505594,
-        "max": 0.38260901055764407
+        "median": 0.41505700210109353,
+        "p95": 0.440314004663378,
+        "min": 0.3789729962591082,
+        "max": 0.440314004663378
       }
     },
     {
@@ -8210,8 +8210,8 @@
       "scenario": "rename",
       "samples": [
         {
-          "workflow_ms": 7.113336003385484,
-          "tool_ms": 2.1172080014366657,
+          "workflow_ms": 8.603826005128212,
+          "tool_ms": 2.990734006743878,
           "argument_bytes": 147,
           "result_json_bytes": 103,
           "error_json_bytes": 0,
@@ -8252,7 +8252,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.18193099822383374,
+              "tool_ms": 0.238353997701779,
               "request_bytes": 146,
               "response_bytes": 92,
               "argument_bytes": 56,
@@ -8276,7 +8276,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 1.935277003212832,
+              "tool_ms": 2.752380009042099,
               "request_bytes": 181,
               "response_bytes": 81,
               "argument_bytes": 91,
@@ -8304,8 +8304,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 7.290829002158716,
-          "tool_ms": 2.1639869955834,
+          "workflow_ms": 9.556946999509819,
+          "tool_ms": 3.8501710077980533,
           "argument_bytes": 147,
           "result_json_bytes": 103,
           "error_json_bytes": 0,
@@ -8346,7 +8346,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.20897999638691545,
+              "tool_ms": 0.22329200874082744,
               "request_bytes": 146,
               "response_bytes": 92,
               "argument_bytes": 56,
@@ -8370,7 +8370,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 1.9550069991964847,
+              "tool_ms": 3.626878999057226,
               "request_bytes": 181,
               "response_bytes": 81,
               "argument_bytes": 91,
@@ -8398,8 +8398,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 6.943462998606265,
-          "tool_ms": 1.9770599901676178,
+          "workflow_ms": 8.33403499564156,
+          "tool_ms": 2.730506981606595,
           "argument_bytes": 147,
           "result_json_bytes": 103,
           "error_json_bytes": 0,
@@ -8440,7 +8440,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.17735399887897074,
+              "tool_ms": 0.1960809895535931,
               "request_bytes": 146,
               "response_bytes": 92,
               "argument_bytes": 56,
@@ -8464,7 +8464,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 1.799705991288647,
+              "tool_ms": 2.534425992053002,
               "request_bytes": 181,
               "response_bytes": 81,
               "argument_bytes": 91,
@@ -8494,8 +8494,8 @@
       ],
       "warmups": [
         {
-          "workflow_ms": 7.625707003171556,
-          "tool_ms": 2.3074899945640936,
+          "workflow_ms": 9.609621003619395,
+          "tool_ms": 3.560080993338488,
           "argument_bytes": 147,
           "result_json_bytes": 103,
           "error_json_bytes": 0,
@@ -8536,7 +8536,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.214739004150033,
+              "tool_ms": 0.2244240022264421,
               "request_bytes": 146,
               "response_bytes": 92,
               "argument_bytes": 56,
@@ -8560,7 +8560,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 2.0927509904140607,
+              "tool_ms": 3.335656991112046,
               "request_bytes": 181,
               "response_bytes": 81,
               "argument_bytes": 91,
@@ -8591,10 +8591,10 @@
       "correct_runs": 3,
       "workflow_ms": {
         "runs": 3,
-        "median": 7.113336003385484,
-        "p95": 7.290829002158716,
-        "min": 6.943462998606265,
-        "max": 7.290829002158716
+        "median": 8.603826005128212,
+        "p95": 9.556946999509819,
+        "min": 8.33403499564156,
+        "max": 9.556946999509819
       },
       "tool_json_bytes": {
         "runs": 3,
@@ -8605,10 +8605,10 @@
       },
       "tool_ms": {
         "runs": 3,
-        "median": 2.1172080014366657,
-        "p95": 2.1639869955834,
-        "min": 1.9770599901676178,
-        "max": 2.1639869955834
+        "median": 2.990734006743878,
+        "p95": 3.8501710077980533,
+        "min": 2.730506981606595,
+        "max": 3.8501710077980533
       }
     },
     {
@@ -8616,8 +8616,8 @@
       "scenario": "reject-late-batch",
       "samples": [
         {
-          "workflow_ms": 5.881645003682934,
-          "tool_ms": 0.6171679997351021,
+          "workflow_ms": 8.077051999862306,
+          "tool_ms": 2.8758440021192655,
           "argument_bytes": 285,
           "result_json_bytes": 104,
           "error_json_bytes": 192,
@@ -8675,7 +8675,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.21444899903144687,
+              "tool_ms": 0.22222100233193487,
               "request_bytes": 157,
               "response_bytes": 87,
               "argument_bytes": 67,
@@ -8699,7 +8699,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.14929199824109674,
+              "tool_ms": 2.3569019977003336,
               "request_bytes": 157,
               "response_bytes": 87,
               "argument_bytes": 67,
@@ -8728,7 +8728,7 @@
                 "code": -32600,
                 "message": "phase1: phase 1 (validation) failed for cases/reject-late-batch/1/b.txt: edit precondition failed: old text was not found; include exact whitespace and line endings"
               },
-              "tool_ms": 0.25342700246255845,
+              "tool_ms": 0.29672100208699703,
               "request_bytes": 242,
               "response_bytes": 226,
               "argument_bytes": 151,
@@ -8767,8 +8767,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 5.59703100589104,
-          "tool_ms": 0.4679959820350632,
+          "workflow_ms": 8.2778009964386,
+          "tool_ms": 0.697126000886783,
           "argument_bytes": 285,
           "result_json_bytes": 104,
           "error_json_bytes": 192,
@@ -8826,7 +8826,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.16841098840814084,
+              "tool_ms": 0.2715239970711991,
               "request_bytes": 157,
               "response_bytes": 87,
               "argument_bytes": 67,
@@ -8850,7 +8850,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.10629800090100616,
+              "tool_ms": 0.1723360037431121,
               "request_bytes": 157,
               "response_bytes": 87,
               "argument_bytes": 67,
@@ -8879,7 +8879,7 @@
                 "code": -32600,
                 "message": "phase1: phase 1 (validation) failed for cases/reject-late-batch/2/b.txt: edit precondition failed: old text was not found; include exact whitespace and line endings"
               },
-              "tool_ms": 0.1932869927259162,
+              "tool_ms": 0.2532660000724718,
               "request_bytes": 242,
               "response_bytes": 226,
               "argument_bytes": 151,
@@ -8918,8 +8918,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 5.8187410031678155,
-          "tool_ms": 0.6326309958240017,
+          "workflow_ms": 6.850870995549485,
+          "tool_ms": 0.49529498210176826,
           "argument_bytes": 285,
           "result_json_bytes": 104,
           "error_json_bytes": 192,
@@ -8977,7 +8977,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.23128399334382266,
+              "tool_ms": 0.18196000019088387,
               "request_bytes": 157,
               "response_bytes": 87,
               "argument_bytes": 67,
@@ -9001,7 +9001,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.16548600979149342,
+              "tool_ms": 0.12293198960833251,
               "request_bytes": 157,
               "response_bytes": 87,
               "argument_bytes": 67,
@@ -9030,7 +9030,7 @@
                 "code": -32600,
                 "message": "phase1: phase 1 (validation) failed for cases/reject-late-batch/3/b.txt: edit precondition failed: old text was not found; include exact whitespace and line endings"
               },
-              "tool_ms": 0.23586099268868566,
+              "tool_ms": 0.19040299230255187,
               "request_bytes": 242,
               "response_bytes": 226,
               "argument_bytes": 151,
@@ -9071,8 +9071,8 @@
       ],
       "warmups": [
         {
-          "workflow_ms": 5.765641006291844,
-          "tool_ms": 0.5877349758520722,
+          "workflow_ms": 5.6245890009449795,
+          "tool_ms": 0.5416250060079619,
           "argument_bytes": 285,
           "result_json_bytes": 104,
           "error_json_bytes": 192,
@@ -9130,7 +9130,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.1887909893412143,
+              "tool_ms": 0.17113400099333376,
               "request_bytes": 157,
               "response_bytes": 87,
               "argument_bytes": 67,
@@ -9154,7 +9154,7 @@
                 ]
               },
               "error": null,
-              "tool_ms": 0.15162599447648972,
+              "tool_ms": 0.1667280012043193,
               "request_bytes": 157,
               "response_bytes": 87,
               "argument_bytes": 67,
@@ -9183,7 +9183,7 @@
                 "code": -32600,
                 "message": "phase1: phase 1 (validation) failed for cases/reject-late-batch/0/b.txt: edit precondition failed: old text was not found; include exact whitespace and line endings"
               },
-              "tool_ms": 0.24731799203436822,
+              "tool_ms": 0.20376300381030887,
               "request_bytes": 242,
               "response_bytes": 226,
               "argument_bytes": 151,
@@ -9225,10 +9225,10 @@
       "correct_runs": 3,
       "workflow_ms": {
         "runs": 3,
-        "median": 5.8187410031678155,
-        "p95": 5.881645003682934,
-        "min": 5.59703100589104,
-        "max": 5.881645003682934
+        "median": 8.077051999862306,
+        "p95": 8.2778009964386,
+        "min": 6.850870995549485,
+        "max": 8.2778009964386
       },
       "tool_json_bytes": {
         "runs": 3,
@@ -9239,10 +9239,10 @@
       },
       "tool_ms": {
         "runs": 3,
-        "median": 0.6171679997351021,
-        "p95": 0.6326309958240017,
-        "min": 0.4679959820350632,
-        "max": 0.6326309958240017
+        "median": 0.697126000886783,
+        "p95": 2.8758440021192655,
+        "min": 0.49529498210176826,
+        "max": 2.8758440021192655
       }
     },
     {
@@ -9250,8 +9250,8 @@
       "scenario": "tiny-config",
       "samples": [
         {
-          "workflow_ms": 4.977470001904294,
-          "tool_ms": 1.5283320000000002,
+          "workflow_ms": 5.075893001048826,
+          "tool_ms": 1.5565829999999998,
           "argument_bytes": 154,
           "result_json_bytes": 198,
           "error_json_bytes": 0,
@@ -9293,7 +9293,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.361217,
+              "tool_ms": 0.349319,
               "argument_bytes": 71,
               "result_json_bytes": 128,
               "error_json_bytes": 0
@@ -9316,7 +9316,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.1671150000000001,
+              "tool_ms": 1.207264,
               "argument_bytes": 83,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -9342,8 +9342,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 5.2640859939856455,
-          "tool_ms": 1.734118,
+          "workflow_ms": 5.200277999392711,
+          "tool_ms": 1.734047,
           "argument_bytes": 154,
           "result_json_bytes": 198,
           "error_json_bytes": 0,
@@ -9385,7 +9385,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.39392499999999997,
+              "tool_ms": 0.41752100000000003,
               "argument_bytes": 71,
               "result_json_bytes": 128,
               "error_json_bytes": 0
@@ -9408,7 +9408,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.340193,
+              "tool_ms": 1.3165259999999999,
               "argument_bytes": 83,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -9434,8 +9434,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 5.169305004528724,
-          "tool_ms": 1.7648730000000001,
+          "workflow_ms": 5.426393996458501,
+          "tool_ms": 1.667128,
           "argument_bytes": 154,
           "result_json_bytes": 198,
           "error_json_bytes": 0,
@@ -9477,7 +9477,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.40223800000000004,
+              "tool_ms": 0.414546,
               "argument_bytes": 71,
               "result_json_bytes": 128,
               "error_json_bytes": 0
@@ -9500,7 +9500,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.362635,
+              "tool_ms": 1.2525819999999999,
               "argument_bytes": 83,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -9528,8 +9528,8 @@
       ],
       "warmups": [
         {
-          "workflow_ms": 5.699212997569703,
-          "tool_ms": 1.5728080000000002,
+          "workflow_ms": 6.536173008498736,
+          "tool_ms": 1.998008,
           "argument_bytes": 154,
           "result_json_bytes": 198,
           "error_json_bytes": 0,
@@ -9571,7 +9571,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.38170800000000005,
+              "tool_ms": 0.395267,
               "argument_bytes": 71,
               "result_json_bytes": 128,
               "error_json_bytes": 0
@@ -9594,7 +9594,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.1911,
+              "tool_ms": 1.602741,
               "argument_bytes": 83,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -9623,10 +9623,10 @@
       "correct_runs": 3,
       "workflow_ms": {
         "runs": 3,
-        "median": 5.169305004528724,
-        "p95": 5.2640859939856455,
-        "min": 4.977470001904294,
-        "max": 5.2640859939856455
+        "median": 5.200277999392711,
+        "p95": 5.426393996458501,
+        "min": 5.075893001048826,
+        "max": 5.426393996458501
       },
       "tool_json_bytes": {
         "runs": 3,
@@ -9637,10 +9637,10 @@
       },
       "tool_ms": {
         "runs": 3,
-        "median": 1.734118,
-        "p95": 1.7648730000000001,
-        "min": 1.5283320000000002,
-        "max": 1.7648730000000001
+        "median": 1.667128,
+        "p95": 1.734047,
+        "min": 1.5565829999999998,
+        "max": 1.734047
       }
     },
     {
@@ -9648,8 +9648,8 @@
       "scenario": "large-local-change",
       "samples": [
         {
-          "workflow_ms": 5.2972310077166185,
-          "tool_ms": 1.6819600000000001,
+          "workflow_ms": 6.081876999814995,
+          "tool_ms": 2.00534,
           "argument_bytes": 194,
           "result_json_bytes": 6503,
           "error_json_bytes": 0,
@@ -9691,7 +9691,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.457861,
+              "tool_ms": 0.528946,
               "argument_bytes": 78,
               "result_json_bytes": 6433,
               "error_json_bytes": 0
@@ -9714,7 +9714,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.224099,
+              "tool_ms": 1.476394,
               "argument_bytes": 116,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -9740,8 +9740,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 5.485301007865928,
-          "tool_ms": 1.673687,
+          "workflow_ms": 6.025062990374863,
+          "tool_ms": 1.9471640000000001,
           "argument_bytes": 194,
           "result_json_bytes": 6503,
           "error_json_bytes": 0,
@@ -9783,7 +9783,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.446183,
+              "tool_ms": 0.481045,
               "argument_bytes": 78,
               "result_json_bytes": 6433,
               "error_json_bytes": 0
@@ -9806,7 +9806,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.227504,
+              "tool_ms": 1.4661190000000002,
               "argument_bytes": 116,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -9832,8 +9832,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 5.552680988330394,
-          "tool_ms": 1.8173810000000001,
+          "workflow_ms": 5.7099750119959936,
+          "tool_ms": 1.862979,
           "argument_bytes": 194,
           "result_json_bytes": 6503,
           "error_json_bytes": 0,
@@ -9875,7 +9875,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.474796,
+              "tool_ms": 0.45749,
               "argument_bytes": 78,
               "result_json_bytes": 6433,
               "error_json_bytes": 0
@@ -9898,7 +9898,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.3425850000000001,
+              "tool_ms": 1.405489,
               "argument_bytes": 116,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -9926,8 +9926,8 @@
       ],
       "warmups": [
         {
-          "workflow_ms": 5.26888899912592,
-          "tool_ms": 1.636152,
+          "workflow_ms": 6.023631998687051,
+          "tool_ms": 2.029755,
           "argument_bytes": 194,
           "result_json_bytes": 6503,
           "error_json_bytes": 0,
@@ -9969,7 +9969,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.463169,
+              "tool_ms": 0.568404,
               "argument_bytes": 78,
               "result_json_bytes": 6433,
               "error_json_bytes": 0
@@ -9992,7 +9992,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.172983,
+              "tool_ms": 1.461351,
               "argument_bytes": 116,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -10021,10 +10021,10 @@
       "correct_runs": 3,
       "workflow_ms": {
         "runs": 3,
-        "median": 5.485301007865928,
-        "p95": 5.552680988330394,
-        "min": 5.2972310077166185,
-        "max": 5.552680988330394
+        "median": 6.025062990374863,
+        "p95": 6.081876999814995,
+        "min": 5.7099750119959936,
+        "max": 6.081876999814995
       },
       "tool_json_bytes": {
         "runs": 3,
@@ -10035,10 +10035,10 @@
       },
       "tool_ms": {
         "runs": 3,
-        "median": 1.6819600000000001,
-        "p95": 1.8173810000000001,
-        "min": 1.673687,
-        "max": 1.8173810000000001
+        "median": 1.9471640000000001,
+        "p95": 2.00534,
+        "min": 1.862979,
+        "max": 2.00534
       }
     },
     {
@@ -10046,8 +10046,8 @@
       "scenario": "multiline-function",
       "samples": [
         {
-          "workflow_ms": 4.979189005098306,
-          "tool_ms": 1.524526,
+          "workflow_ms": 5.188299997826107,
+          "tool_ms": 1.5972430000000002,
           "argument_bytes": 281,
           "result_json_bytes": 317,
           "error_json_bytes": 0,
@@ -10089,7 +10089,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.35961499999999996,
+              "tool_ms": 0.347536,
               "argument_bytes": 78,
               "result_json_bytes": 247,
               "error_json_bytes": 0
@@ -10112,7 +10112,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.164911,
+              "tool_ms": 1.2497070000000001,
               "argument_bytes": 203,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -10138,8 +10138,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 4.887722010607831,
-          "tool_ms": 1.480509,
+          "workflow_ms": 5.720941000618041,
+          "tool_ms": 1.9744240000000002,
           "argument_bytes": 281,
           "result_json_bytes": 317,
           "error_json_bytes": 0,
@@ -10181,7 +10181,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.362328,
+              "tool_ms": 0.462707,
               "argument_bytes": 78,
               "result_json_bytes": 247,
               "error_json_bytes": 0
@@ -10204,7 +10204,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.118181,
+              "tool_ms": 1.5117170000000002,
               "argument_bytes": 203,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -10230,8 +10230,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 4.93062699388247,
-          "tool_ms": 1.4674800000000001,
+          "workflow_ms": 5.612591005046852,
+          "tool_ms": 1.7888479999999998,
           "argument_bytes": 281,
           "result_json_bytes": 317,
           "error_json_bytes": 0,
@@ -10273,7 +10273,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.33865300000000004,
+              "tool_ms": 0.428006,
               "argument_bytes": 78,
               "result_json_bytes": 247,
               "error_json_bytes": 0
@@ -10296,7 +10296,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.128827,
+              "tool_ms": 1.3608419999999999,
               "argument_bytes": 203,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -10324,8 +10324,8 @@
       ],
       "warmups": [
         {
-          "workflow_ms": 5.194828991079703,
-          "tool_ms": 1.6705009999999998,
+          "workflow_ms": 6.013866994180717,
+          "tool_ms": 2.07949,
           "argument_bytes": 281,
           "result_json_bytes": 317,
           "error_json_bytes": 0,
@@ -10367,7 +10367,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.381957,
+              "tool_ms": 0.507614,
               "argument_bytes": 78,
               "result_json_bytes": 247,
               "error_json_bytes": 0
@@ -10390,7 +10390,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.288544,
+              "tool_ms": 1.571876,
               "argument_bytes": 203,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -10419,10 +10419,10 @@
       "correct_runs": 3,
       "workflow_ms": {
         "runs": 3,
-        "median": 4.93062699388247,
-        "p95": 4.979189005098306,
-        "min": 4.887722010607831,
-        "max": 4.979189005098306
+        "median": 5.612591005046852,
+        "p95": 5.720941000618041,
+        "min": 5.188299997826107,
+        "max": 5.720941000618041
       },
       "tool_json_bytes": {
         "runs": 3,
@@ -10433,10 +10433,10 @@
       },
       "tool_ms": {
         "runs": 3,
-        "median": 1.480509,
-        "p95": 1.524526,
-        "min": 1.4674800000000001,
-        "max": 1.524526
+        "median": 1.7888479999999998,
+        "p95": 1.9744240000000002,
+        "min": 1.5972430000000002,
+        "max": 1.9744240000000002
       }
     },
     {
@@ -10444,8 +10444,8 @@
       "scenario": "unicode",
       "samples": [
         {
-          "workflow_ms": 5.520222999621183,
-          "tool_ms": 1.799334,
+          "workflow_ms": 5.804396001622081,
+          "tool_ms": 1.954755,
           "argument_bytes": 165,
           "result_json_bytes": 205,
           "error_json_bytes": 0,
@@ -10487,7 +10487,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.380185,
+              "tool_ms": 0.437571,
               "argument_bytes": 67,
               "result_json_bytes": 135,
               "error_json_bytes": 0
@@ -10510,7 +10510,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.419149,
+              "tool_ms": 1.517184,
               "argument_bytes": 98,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -10536,8 +10536,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 4.8222759942291304,
-          "tool_ms": 1.427181,
+          "workflow_ms": 5.356298992410302,
+          "tool_ms": 1.692846,
           "argument_bytes": 165,
           "result_json_bytes": 205,
           "error_json_bytes": 0,
@@ -10579,7 +10579,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.372664,
+              "tool_ms": 0.365724,
               "argument_bytes": 67,
               "result_json_bytes": 135,
               "error_json_bytes": 0
@@ -10602,7 +10602,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.0545170000000001,
+              "tool_ms": 1.3271220000000001,
               "argument_bytes": 98,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -10628,8 +10628,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 5.092648003483191,
-          "tool_ms": 1.501782,
+          "workflow_ms": 5.693200000678189,
+          "tool_ms": 1.741157,
           "argument_bytes": 165,
           "result_json_bytes": 205,
           "error_json_bytes": 0,
@@ -10671,7 +10671,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.359865,
+              "tool_ms": 0.38211799999999996,
               "argument_bytes": 67,
               "result_json_bytes": 135,
               "error_json_bytes": 0
@@ -10694,7 +10694,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.141917,
+              "tool_ms": 1.359039,
               "argument_bytes": 98,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -10722,8 +10722,8 @@
       ],
       "warmups": [
         {
-          "workflow_ms": 4.932719995849766,
-          "tool_ms": 1.4134599999999997,
+          "workflow_ms": 5.251084003248252,
+          "tool_ms": 1.579066,
           "argument_bytes": 165,
           "result_json_bytes": 205,
           "error_json_bytes": 0,
@@ -10765,7 +10765,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.38089599999999996,
+              "tool_ms": 0.352564,
               "argument_bytes": 67,
               "result_json_bytes": 135,
               "error_json_bytes": 0
@@ -10788,7 +10788,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.0325639999999998,
+              "tool_ms": 1.226502,
               "argument_bytes": 98,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -10817,10 +10817,10 @@
       "correct_runs": 3,
       "workflow_ms": {
         "runs": 3,
-        "median": 5.092648003483191,
-        "p95": 5.520222999621183,
-        "min": 4.8222759942291304,
-        "max": 5.520222999621183
+        "median": 5.693200000678189,
+        "p95": 5.804396001622081,
+        "min": 5.356298992410302,
+        "max": 5.804396001622081
       },
       "tool_json_bytes": {
         "runs": 3,
@@ -10831,10 +10831,10 @@
       },
       "tool_ms": {
         "runs": 3,
-        "median": 1.501782,
-        "p95": 1.799334,
-        "min": 1.427181,
-        "max": 1.799334
+        "median": 1.741157,
+        "p95": 1.954755,
+        "min": 1.692846,
+        "max": 1.954755
       }
     },
     {
@@ -10842,8 +10842,8 @@
       "scenario": "crlf",
       "samples": [
         {
-          "workflow_ms": 5.1611100061563775,
-          "tool_ms": 1.489344,
+          "workflow_ms": 5.093599000247195,
+          "tool_ms": 1.6010689999999999,
           "argument_bytes": 140,
           "result_json_bytes": 204,
           "error_json_bytes": 0,
@@ -10885,7 +10885,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.405112,
+              "tool_ms": 0.366895,
               "argument_bytes": 64,
               "result_json_bytes": 134,
               "error_json_bytes": 0
@@ -10908,7 +10908,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.084232,
+              "tool_ms": 1.2341739999999999,
               "argument_bytes": 76,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -10934,8 +10934,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 5.180096995900385,
-          "tool_ms": 1.5504149999999999,
+          "workflow_ms": 4.888114010100253,
+          "tool_ms": 1.5315660000000002,
           "argument_bytes": 140,
           "result_json_bytes": 204,
           "error_json_bytes": 0,
@@ -10977,7 +10977,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.412664,
+              "tool_ms": 0.35371600000000003,
               "argument_bytes": 64,
               "result_json_bytes": 134,
               "error_json_bytes": 0
@@ -11000,7 +11000,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.137751,
+              "tool_ms": 1.17785,
               "argument_bytes": 76,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -11026,8 +11026,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 5.578950003837235,
-          "tool_ms": 1.5961020000000001,
+          "workflow_ms": 4.881732995272614,
+          "tool_ms": 1.5651549999999999,
           "argument_bytes": 140,
           "result_json_bytes": 204,
           "error_json_bytes": 0,
@@ -11069,7 +11069,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.42232800000000004,
+              "tool_ms": 0.36395999999999995,
               "argument_bytes": 64,
               "result_json_bytes": 134,
               "error_json_bytes": 0
@@ -11092,7 +11092,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.173774,
+              "tool_ms": 1.201195,
               "argument_bytes": 76,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -11120,8 +11120,8 @@
       ],
       "warmups": [
         {
-          "workflow_ms": 5.671488004736602,
-          "tool_ms": 1.720647,
+          "workflow_ms": 4.984027007594705,
+          "tool_ms": 1.483665,
           "argument_bytes": 140,
           "result_json_bytes": 204,
           "error_json_bytes": 0,
@@ -11163,7 +11163,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.407065,
+              "tool_ms": 0.35815199999999997,
               "argument_bytes": 64,
               "result_json_bytes": 134,
               "error_json_bytes": 0
@@ -11186,7 +11186,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.313582,
+              "tool_ms": 1.125513,
               "argument_bytes": 76,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -11215,10 +11215,10 @@
       "correct_runs": 3,
       "workflow_ms": {
         "runs": 3,
-        "median": 5.180096995900385,
-        "p95": 5.578950003837235,
-        "min": 5.1611100061563775,
-        "max": 5.578950003837235
+        "median": 4.888114010100253,
+        "p95": 5.093599000247195,
+        "min": 4.881732995272614,
+        "max": 5.093599000247195
       },
       "tool_json_bytes": {
         "runs": 3,
@@ -11229,10 +11229,10 @@
       },
       "tool_ms": {
         "runs": 3,
-        "median": 1.5504149999999999,
-        "p95": 1.5961020000000001,
-        "min": 1.489344,
-        "max": 1.5961020000000001
+        "median": 1.5651549999999999,
+        "p95": 1.6010689999999999,
+        "min": 1.5315660000000002,
+        "max": 1.6010689999999999
       }
     },
     {
@@ -11240,8 +11240,8 @@
       "scenario": "no-final-newline",
       "samples": [
         {
-          "workflow_ms": 5.267457992886193,
-          "tool_ms": 1.5899530000000002,
+          "workflow_ms": 5.473183991853148,
+          "tool_ms": 1.794336,
           "argument_bytes": 164,
           "result_json_bytes": 176,
           "error_json_bytes": 0,
@@ -11283,7 +11283,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.39990400000000004,
+              "tool_ms": 0.5178389999999999,
               "argument_bytes": 76,
               "result_json_bytes": 106,
               "error_json_bytes": 0
@@ -11306,7 +11306,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.1900490000000001,
+              "tool_ms": 1.276497,
               "argument_bytes": 88,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -11332,8 +11332,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 5.069983992143534,
-          "tool_ms": 1.5631620000000002,
+          "workflow_ms": 5.230182010564022,
+          "tool_ms": 1.6740989999999998,
           "argument_bytes": 164,
           "result_json_bytes": 176,
           "error_json_bytes": 0,
@@ -11375,7 +11375,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.35629900000000003,
+              "tool_ms": 0.361878,
               "argument_bytes": 76,
               "result_json_bytes": 106,
               "error_json_bytes": 0
@@ -11398,7 +11398,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.206863,
+              "tool_ms": 1.3122209999999999,
               "argument_bytes": 88,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -11424,8 +11424,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 5.730504999519326,
-          "tool_ms": 1.7064059999999999,
+          "workflow_ms": 5.201569991186261,
+          "tool_ms": 1.720807,
           "argument_bytes": 164,
           "result_json_bytes": 176,
           "error_json_bytes": 0,
@@ -11467,7 +11467,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.44172599999999995,
+              "tool_ms": 0.355518,
               "argument_bytes": 76,
               "result_json_bytes": 106,
               "error_json_bytes": 0
@@ -11490,7 +11490,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.26468,
+              "tool_ms": 1.365289,
               "argument_bytes": 88,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -11518,8 +11518,8 @@
       ],
       "warmups": [
         {
-          "workflow_ms": 5.452801997307688,
-          "tool_ms": 1.567158,
+          "workflow_ms": 5.0831239932449535,
+          "tool_ms": 1.5905040000000001,
           "argument_bytes": 164,
           "result_json_bytes": 176,
           "error_json_bytes": 0,
@@ -11561,7 +11561,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.350821,
+              "tool_ms": 0.358062,
               "argument_bytes": 76,
               "result_json_bytes": 106,
               "error_json_bytes": 0
@@ -11584,7 +11584,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.216337,
+              "tool_ms": 1.232442,
               "argument_bytes": 88,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -11613,10 +11613,10 @@
       "correct_runs": 3,
       "workflow_ms": {
         "runs": 3,
-        "median": 5.267457992886193,
-        "p95": 5.730504999519326,
-        "min": 5.069983992143534,
-        "max": 5.730504999519326
+        "median": 5.230182010564022,
+        "p95": 5.473183991853148,
+        "min": 5.201569991186261,
+        "max": 5.473183991853148
       },
       "tool_json_bytes": {
         "runs": 3,
@@ -11627,10 +11627,10 @@
       },
       "tool_ms": {
         "runs": 3,
-        "median": 1.5899530000000002,
-        "p95": 1.7064059999999999,
-        "min": 1.5631620000000002,
-        "max": 1.7064059999999999
+        "median": 1.720807,
+        "p95": 1.794336,
+        "min": 1.6740989999999998,
+        "max": 1.794336
       }
     },
     {
@@ -11638,8 +11638,8 @@
       "scenario": "disambiguated-block",
       "samples": [
         {
-          "workflow_ms": 5.521666011190973,
-          "tool_ms": 1.586719,
+          "workflow_ms": 5.178295003133826,
+          "tool_ms": 1.6709129999999999,
           "argument_bytes": 206,
           "result_json_bytes": 232,
           "error_json_bytes": 0,
@@ -11681,7 +11681,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.41702,
+              "tool_ms": 0.362218,
               "argument_bytes": 79,
               "result_json_bytes": 162,
               "error_json_bytes": 0
@@ -11704,7 +11704,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.169699,
+              "tool_ms": 1.308695,
               "argument_bytes": 127,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -11730,8 +11730,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 5.212535994360223,
-          "tool_ms": 1.654669,
+          "workflow_ms": 5.035523005062714,
+          "tool_ms": 1.6619410000000001,
           "argument_bytes": 206,
           "result_json_bytes": 232,
           "error_json_bytes": 0,
@@ -11773,7 +11773,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.395057,
+              "tool_ms": 0.35631999999999997,
               "argument_bytes": 79,
               "result_json_bytes": 162,
               "error_json_bytes": 0
@@ -11796,7 +11796,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.259612,
+              "tool_ms": 1.3056210000000001,
               "argument_bytes": 127,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -11822,8 +11822,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 5.16635699023027,
-          "tool_ms": 1.582812,
+          "workflow_ms": 5.22231099603232,
+          "tool_ms": 1.642992,
           "argument_bytes": 206,
           "result_json_bytes": 232,
           "error_json_bytes": 0,
@@ -11865,7 +11865,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.400615,
+              "tool_ms": 0.412994,
               "argument_bytes": 79,
               "result_json_bytes": 162,
               "error_json_bytes": 0
@@ -11888,7 +11888,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.1821970000000002,
+              "tool_ms": 1.229998,
               "argument_bytes": 127,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -11916,8 +11916,8 @@
       ],
       "warmups": [
         {
-          "workflow_ms": 5.037725990405306,
-          "tool_ms": 1.4398499999999999,
+          "workflow_ms": 5.011547007597983,
+          "tool_ms": 1.643112,
           "argument_bytes": 206,
           "result_json_bytes": 232,
           "error_json_bytes": 0,
@@ -11959,7 +11959,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.33615,
+              "tool_ms": 0.357892,
               "argument_bytes": 79,
               "result_json_bytes": 162,
               "error_json_bytes": 0
@@ -11982,7 +11982,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.1037,
+              "tool_ms": 1.2852199999999998,
               "argument_bytes": 127,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -12011,10 +12011,10 @@
       "correct_runs": 3,
       "workflow_ms": {
         "runs": 3,
-        "median": 5.212535994360223,
-        "p95": 5.521666011190973,
-        "min": 5.16635699023027,
-        "max": 5.521666011190973
+        "median": 5.178295003133826,
+        "p95": 5.22231099603232,
+        "min": 5.035523005062714,
+        "max": 5.22231099603232
       },
       "tool_json_bytes": {
         "runs": 3,
@@ -12025,10 +12025,10 @@
       },
       "tool_ms": {
         "runs": 3,
-        "median": 1.586719,
-        "p95": 1.654669,
-        "min": 1.582812,
-        "max": 1.654669
+        "median": 1.6619410000000001,
+        "p95": 1.6709129999999999,
+        "min": 1.642992,
+        "max": 1.6709129999999999
       }
     },
     {
@@ -12036,8 +12036,8 @@
       "scenario": "global-replace",
       "samples": [
         {
-          "workflow_ms": 5.121270005474798,
-          "tool_ms": 1.58827,
+          "workflow_ms": 5.059517992776819,
+          "tool_ms": 1.6951489999999998,
           "argument_bytes": 169,
           "result_json_bytes": 533,
           "error_json_bytes": 0,
@@ -12080,7 +12080,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.38471099999999997,
+              "tool_ms": 0.379514,
               "argument_bytes": 74,
               "result_json_bytes": 463,
               "error_json_bytes": 0
@@ -12104,7 +12104,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.203559,
+              "tool_ms": 1.3156349999999999,
               "argument_bytes": 95,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -12130,8 +12130,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 5.443814996397123,
-          "tool_ms": 1.6949779999999999,
+          "workflow_ms": 5.216947000008076,
+          "tool_ms": 1.7756189999999998,
           "argument_bytes": 169,
           "result_json_bytes": 533,
           "error_json_bytes": 0,
@@ -12174,7 +12174,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.402528,
+              "tool_ms": 0.37099099999999996,
               "argument_bytes": 74,
               "result_json_bytes": 463,
               "error_json_bytes": 0
@@ -12198,7 +12198,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.2924499999999999,
+              "tool_ms": 1.404628,
               "argument_bytes": 95,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -12224,8 +12224,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 5.610476000583731,
-          "tool_ms": 1.6830919999999998,
+          "workflow_ms": 5.073624997748993,
+          "tool_ms": 1.707507,
           "argument_bytes": 169,
           "result_json_bytes": 533,
           "error_json_bytes": 0,
@@ -12268,7 +12268,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.38663499999999995,
+              "tool_ms": 0.39582799999999996,
               "argument_bytes": 74,
               "result_json_bytes": 463,
               "error_json_bytes": 0
@@ -12292,7 +12292,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.296457,
+              "tool_ms": 1.311679,
               "argument_bytes": 95,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -12320,8 +12320,8 @@
       ],
       "warmups": [
         {
-          "workflow_ms": 5.256560994894244,
-          "tool_ms": 1.679035,
+          "workflow_ms": 5.17836501239799,
+          "tool_ms": 1.6897309999999999,
           "argument_bytes": 169,
           "result_json_bytes": 533,
           "error_json_bytes": 0,
@@ -12388,7 +12388,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.323897,
+              "tool_ms": 1.334593,
               "argument_bytes": 95,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -12417,10 +12417,10 @@
       "correct_runs": 3,
       "workflow_ms": {
         "runs": 3,
-        "median": 5.443814996397123,
-        "p95": 5.610476000583731,
-        "min": 5.121270005474798,
-        "max": 5.610476000583731
+        "median": 5.073624997748993,
+        "p95": 5.216947000008076,
+        "min": 5.059517992776819,
+        "max": 5.216947000008076
       },
       "tool_json_bytes": {
         "runs": 3,
@@ -12431,10 +12431,10 @@
       },
       "tool_ms": {
         "runs": 3,
-        "median": 1.6830919999999998,
-        "p95": 1.6949779999999999,
-        "min": 1.58827,
-        "max": 1.6949779999999999
+        "median": 1.707507,
+        "p95": 1.7756189999999998,
+        "min": 1.6951489999999998,
+        "max": 1.7756189999999998
       }
     },
     {
@@ -12442,8 +12442,8 @@
       "scenario": "same-file-batch",
       "samples": [
         {
-          "workflow_ms": 6.915851990925148,
-          "tool_ms": 3.08878,
+          "workflow_ms": 6.870119002996944,
+          "tool_ms": 3.33085,
           "argument_bytes": 252,
           "result_json_bytes": 180,
           "error_json_bytes": 0,
@@ -12494,7 +12494,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.419103,
+              "tool_ms": 0.365423,
               "argument_bytes": 75,
               "result_json_bytes": 110,
               "error_json_bytes": 0
@@ -12526,7 +12526,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 2.669677,
+              "tool_ms": 2.965427,
               "argument_bytes": 177,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -12552,8 +12552,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 6.768858002033085,
-          "tool_ms": 2.946123,
+          "workflow_ms": 7.2393169975839555,
+          "tool_ms": 3.516155,
           "argument_bytes": 252,
           "result_json_bytes": 180,
           "error_json_bytes": 0,
@@ -12604,7 +12604,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.400275,
+              "tool_ms": 0.5014649999999999,
               "argument_bytes": 75,
               "result_json_bytes": 110,
               "error_json_bytes": 0
@@ -12636,7 +12636,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 2.545848,
+              "tool_ms": 3.01469,
               "argument_bytes": 177,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -12662,8 +12662,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 6.361303006997332,
-          "tool_ms": 2.735845,
+          "workflow_ms": 7.663568001589738,
+          "tool_ms": 3.774188,
           "argument_bytes": 252,
           "result_json_bytes": 180,
           "error_json_bytes": 0,
@@ -12714,7 +12714,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.351372,
+              "tool_ms": 0.468376,
               "argument_bytes": 75,
               "result_json_bytes": 110,
               "error_json_bytes": 0
@@ -12746,7 +12746,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 2.384473,
+              "tool_ms": 3.305812,
               "argument_bytes": 177,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -12774,8 +12774,8 @@
       ],
       "warmups": [
         {
-          "workflow_ms": 6.411206995835528,
-          "tool_ms": 2.7902959999999997,
+          "workflow_ms": 7.419369998387992,
+          "tool_ms": 3.6032949999999997,
           "argument_bytes": 252,
           "result_json_bytes": 180,
           "error_json_bytes": 0,
@@ -12826,7 +12826,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.402028,
+              "tool_ms": 0.346866,
               "argument_bytes": 75,
               "result_json_bytes": 110,
               "error_json_bytes": 0
@@ -12858,7 +12858,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 2.3882679999999996,
+              "tool_ms": 3.256429,
               "argument_bytes": 177,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -12887,10 +12887,10 @@
       "correct_runs": 3,
       "workflow_ms": {
         "runs": 3,
-        "median": 6.768858002033085,
-        "p95": 6.915851990925148,
-        "min": 6.361303006997332,
-        "max": 6.915851990925148
+        "median": 7.2393169975839555,
+        "p95": 7.663568001589738,
+        "min": 6.870119002996944,
+        "max": 7.663568001589738
       },
       "tool_json_bytes": {
         "runs": 3,
@@ -12901,10 +12901,10 @@
       },
       "tool_ms": {
         "runs": 3,
-        "median": 2.946123,
-        "p95": 3.08878,
-        "min": 2.735845,
-        "max": 3.08878
+        "median": 3.516155,
+        "p95": 3.774188,
+        "min": 3.33085,
+        "max": 3.774188
       }
     },
     {
@@ -12912,8 +12912,8 @@
       "scenario": "multi-file-batch",
       "samples": [
         {
-          "workflow_ms": 8.799325994914398,
-          "tool_ms": 5.152476,
+          "workflow_ms": 10.316900996258482,
+          "tool_ms": 6.522202,
           "argument_bytes": 431,
           "result_json_bytes": 321,
           "error_json_bytes": 0,
@@ -12985,7 +12985,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.43550799999999995,
+              "tool_ms": 0.419813,
               "argument_bytes": 70,
               "result_json_bytes": 86,
               "error_json_bytes": 0
@@ -13008,7 +13008,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.31195300000000004,
+              "tool_ms": 0.382288,
               "argument_bytes": 70,
               "result_json_bytes": 83,
               "error_json_bytes": 0
@@ -13031,7 +13031,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.346855,
+              "tool_ms": 0.303571,
               "argument_bytes": 70,
               "result_json_bytes": 82,
               "error_json_bytes": 0
@@ -13068,7 +13068,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 4.05816,
+              "tool_ms": 5.41653,
               "argument_bytes": 221,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -13116,8 +13116,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 9.331016000942327,
-          "tool_ms": 5.696994,
+          "workflow_ms": 10.876093001570553,
+          "tool_ms": 7.249133,
           "argument_bytes": 431,
           "result_json_bytes": 321,
           "error_json_bytes": 0,
@@ -13189,7 +13189,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.396969,
+              "tool_ms": 0.36133699999999996,
               "argument_bytes": 70,
               "result_json_bytes": 86,
               "error_json_bytes": 0
@@ -13212,7 +13212,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.312184,
+              "tool_ms": 0.347526,
               "argument_bytes": 70,
               "result_json_bytes": 83,
               "error_json_bytes": 0
@@ -13235,7 +13235,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.305634,
+              "tool_ms": 0.296421,
               "argument_bytes": 70,
               "result_json_bytes": 82,
               "error_json_bytes": 0
@@ -13272,7 +13272,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 4.682207,
+              "tool_ms": 6.243849,
               "argument_bytes": 221,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -13320,8 +13320,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 8.609102995251305,
-          "tool_ms": 4.948524,
+          "workflow_ms": 12.201421995996498,
+          "tool_ms": 7.881012,
           "argument_bytes": 431,
           "result_json_bytes": 321,
           "error_json_bytes": 0,
@@ -13393,7 +13393,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.351382,
+              "tool_ms": 0.499963,
               "argument_bytes": 70,
               "result_json_bytes": 86,
               "error_json_bytes": 0
@@ -13416,7 +13416,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.33810300000000004,
+              "tool_ms": 0.47897199999999995,
               "argument_bytes": 70,
               "result_json_bytes": 83,
               "error_json_bytes": 0
@@ -13439,7 +13439,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.332995,
+              "tool_ms": 0.415237,
               "argument_bytes": 70,
               "result_json_bytes": 82,
               "error_json_bytes": 0
@@ -13476,7 +13476,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 3.926044,
+              "tool_ms": 6.48684,
               "argument_bytes": 221,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -13526,8 +13526,8 @@
       ],
       "warmups": [
         {
-          "workflow_ms": 9.034243994392455,
-          "tool_ms": 5.435047,
+          "workflow_ms": 10.629796001012437,
+          "tool_ms": 6.789449,
           "argument_bytes": 431,
           "result_json_bytes": 321,
           "error_json_bytes": 0,
@@ -13599,7 +13599,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.414236,
+              "tool_ms": 0.385213,
               "argument_bytes": 70,
               "result_json_bytes": 86,
               "error_json_bytes": 0
@@ -13622,7 +13622,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.30867900000000004,
+              "tool_ms": 0.301758,
               "argument_bytes": 70,
               "result_json_bytes": 83,
               "error_json_bytes": 0
@@ -13645,7 +13645,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.296871,
+              "tool_ms": 0.340576,
               "argument_bytes": 70,
               "result_json_bytes": 82,
               "error_json_bytes": 0
@@ -13682,7 +13682,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 4.415261,
+              "tool_ms": 5.761902,
               "argument_bytes": 221,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -13733,10 +13733,10 @@
       "correct_runs": 3,
       "workflow_ms": {
         "runs": 3,
-        "median": 8.799325994914398,
-        "p95": 9.331016000942327,
-        "min": 8.609102995251305,
-        "max": 9.331016000942327
+        "median": 10.876093001570553,
+        "p95": 12.201421995996498,
+        "min": 10.316900996258482,
+        "max": 12.201421995996498
       },
       "tool_json_bytes": {
         "runs": 3,
@@ -13747,10 +13747,10 @@
       },
       "tool_ms": {
         "runs": 3,
-        "median": 5.152476,
-        "p95": 5.696994,
-        "min": 4.948524,
-        "max": 5.696994
+        "median": 7.249133,
+        "p95": 7.881012,
+        "min": 6.522202,
+        "max": 7.881012
       }
     },
     {
@@ -13758,8 +13758,8 @@
       "scenario": "long-line",
       "samples": [
         {
-          "workflow_ms": 6.373361000441946,
-          "tool_ms": 1.871442,
+          "workflow_ms": 6.460469987359829,
+          "tool_ms": 1.97234,
           "argument_bytes": 148,
           "result_json_bytes": 40157,
           "error_json_bytes": 0,
@@ -13801,7 +13801,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.6686040000000001,
+              "tool_ms": 0.692419,
               "argument_bytes": 69,
               "result_json_bytes": 40087,
               "error_json_bytes": 0
@@ -13824,7 +13824,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.2028379999999999,
+              "tool_ms": 1.279921,
               "argument_bytes": 79,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -13850,8 +13850,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 6.781706993933767,
-          "tool_ms": 2.176364,
+          "workflow_ms": 6.502331991214305,
+          "tool_ms": 2.0205830000000002,
           "argument_bytes": 148,
           "result_json_bytes": 40157,
           "error_json_bytes": 0,
@@ -13893,7 +13893,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.7156429999999999,
+              "tool_ms": 0.665849,
               "argument_bytes": 69,
               "result_json_bytes": 40087,
               "error_json_bytes": 0
@@ -13916,7 +13916,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.460721,
+              "tool_ms": 1.354734,
               "argument_bytes": 79,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -13942,8 +13942,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 6.439018005039543,
-          "tool_ms": 2.0063709999999997,
+          "workflow_ms": 6.54062999819871,
+          "tool_ms": 2.017277,
           "argument_bytes": 148,
           "result_json_bytes": 40157,
           "error_json_bytes": 0,
@@ -13985,7 +13985,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.669505,
+              "tool_ms": 0.6471009999999999,
               "argument_bytes": 69,
               "result_json_bytes": 40087,
               "error_json_bytes": 0
@@ -14008,7 +14008,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.3368659999999999,
+              "tool_ms": 1.370176,
               "argument_bytes": 79,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -14036,8 +14036,8 @@
       ],
       "warmups": [
         {
-          "workflow_ms": 6.929616996785626,
-          "tool_ms": 2.1977450000000003,
+          "workflow_ms": 7.120006004697643,
+          "tool_ms": 2.0906670000000003,
           "argument_bytes": 148,
           "result_json_bytes": 40157,
           "error_json_bytes": 0,
@@ -14079,7 +14079,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.71366,
+              "tool_ms": 0.734932,
               "argument_bytes": 69,
               "result_json_bytes": 40087,
               "error_json_bytes": 0
@@ -14102,7 +14102,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.484085,
+              "tool_ms": 1.3557350000000001,
               "argument_bytes": 79,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -14131,10 +14131,10 @@
       "correct_runs": 3,
       "workflow_ms": {
         "runs": 3,
-        "median": 6.439018005039543,
-        "p95": 6.781706993933767,
-        "min": 6.373361000441946,
-        "max": 6.781706993933767
+        "median": 6.502331991214305,
+        "p95": 6.54062999819871,
+        "min": 6.460469987359829,
+        "max": 6.54062999819871
       },
       "tool_json_bytes": {
         "runs": 3,
@@ -14145,10 +14145,10 @@
       },
       "tool_ms": {
         "runs": 3,
-        "median": 2.0063709999999997,
-        "p95": 2.176364,
-        "min": 1.871442,
-        "max": 2.176364
+        "median": 2.017277,
+        "p95": 2.0205830000000002,
+        "min": 1.97234,
+        "max": 2.0205830000000002
       }
     },
     {
@@ -14156,8 +14156,8 @@
       "scenario": "insert-after-anchor",
       "samples": [
         {
-          "workflow_ms": 7.311363995540887,
-          "tool_ms": 1.652495,
+          "workflow_ms": 5.356328998459503,
+          "tool_ms": 1.7932350000000001,
           "argument_bytes": 186,
           "result_json_bytes": 186,
           "error_json_bytes": 0,
@@ -14199,7 +14199,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.362639,
+              "tool_ms": 0.34040600000000004,
               "argument_bytes": 79,
               "result_json_bytes": 116,
               "error_json_bytes": 0
@@ -14222,7 +14222,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.2898560000000001,
+              "tool_ms": 1.4528290000000001,
               "argument_bytes": 107,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -14248,8 +14248,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 5.097125002066605,
-          "tool_ms": 1.4453889999999998,
+          "workflow_ms": 5.788011010736227,
+          "tool_ms": 2.1469110000000002,
           "argument_bytes": 186,
           "result_json_bytes": 186,
           "error_json_bytes": 0,
@@ -14291,7 +14291,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.340827,
+              "tool_ms": 0.474866,
               "argument_bytes": 79,
               "result_json_bytes": 116,
               "error_json_bytes": 0
@@ -14314,7 +14314,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.1045619999999998,
+              "tool_ms": 1.672045,
               "argument_bytes": 107,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -14340,8 +14340,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 5.0222020072396845,
-          "tool_ms": 1.498577,
+          "workflow_ms": 5.826398992212489,
+          "tool_ms": 2.0369979999999996,
           "argument_bytes": 186,
           "result_json_bytes": 186,
           "error_json_bytes": 0,
@@ -14383,7 +14383,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.34955,
+              "tool_ms": 0.506383,
               "argument_bytes": 79,
               "result_json_bytes": 116,
               "error_json_bytes": 0
@@ -14406,7 +14406,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.149027,
+              "tool_ms": 1.5306149999999998,
               "argument_bytes": 107,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -14434,8 +14434,8 @@
       ],
       "warmups": [
         {
-          "workflow_ms": 5.091565995826386,
-          "tool_ms": 1.5302950000000002,
+          "workflow_ms": 5.310521999490447,
+          "tool_ms": 1.692746,
           "argument_bytes": 186,
           "result_json_bytes": 186,
           "error_json_bytes": 0,
@@ -14477,7 +14477,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.35019100000000003,
+              "tool_ms": 0.36982,
               "argument_bytes": 79,
               "result_json_bytes": 116,
               "error_json_bytes": 0
@@ -14500,7 +14500,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.180104,
+              "tool_ms": 1.322926,
               "argument_bytes": 107,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -14529,10 +14529,10 @@
       "correct_runs": 3,
       "workflow_ms": {
         "runs": 3,
-        "median": 5.097125002066605,
-        "p95": 7.311363995540887,
-        "min": 5.0222020072396845,
-        "max": 7.311363995540887
+        "median": 5.788011010736227,
+        "p95": 5.826398992212489,
+        "min": 5.356328998459503,
+        "max": 5.826398992212489
       },
       "tool_json_bytes": {
         "runs": 3,
@@ -14543,10 +14543,10 @@
       },
       "tool_ms": {
         "runs": 3,
-        "median": 1.498577,
-        "p95": 1.652495,
-        "min": 1.4453889999999998,
-        "max": 1.652495
+        "median": 2.0369979999999996,
+        "p95": 2.1469110000000002,
+        "min": 1.7932350000000001,
+        "max": 2.1469110000000002
       }
     },
     {
@@ -14554,8 +14554,8 @@
       "scenario": "delete-block",
       "samples": [
         {
-          "workflow_ms": 5.166918010218069,
-          "tool_ms": 1.7014369999999999,
+          "workflow_ms": 5.6575079943286255,
+          "tool_ms": 1.857861,
           "argument_bytes": 168,
           "result_json_bytes": 207,
           "error_json_bytes": 0,
@@ -14597,7 +14597,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.39813099999999996,
+              "tool_ms": 0.402288,
               "argument_bytes": 72,
               "result_json_bytes": 137,
               "error_json_bytes": 0
@@ -14620,7 +14620,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.3033059999999999,
+              "tool_ms": 1.455573,
               "argument_bytes": 96,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -14646,8 +14646,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 5.312433990184218,
-          "tool_ms": 1.605576,
+          "workflow_ms": 5.257031007204205,
+          "tool_ms": 1.787766,
           "argument_bytes": 168,
           "result_json_bytes": 207,
           "error_json_bytes": 0,
@@ -14689,7 +14689,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.360836,
+              "tool_ms": 0.36357,
               "argument_bytes": 72,
               "result_json_bytes": 137,
               "error_json_bytes": 0
@@ -14712,7 +14712,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.24474,
+              "tool_ms": 1.424196,
               "argument_bytes": 96,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -14738,8 +14738,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 4.8310389975085855,
-          "tool_ms": 1.4351619999999998,
+          "workflow_ms": 5.056453999713995,
+          "tool_ms": 1.666718,
           "argument_bytes": 168,
           "result_json_bytes": 207,
           "error_json_bytes": 0,
@@ -14781,7 +14781,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.362639,
+              "tool_ms": 0.411943,
               "argument_bytes": 72,
               "result_json_bytes": 137,
               "error_json_bytes": 0
@@ -14804,7 +14804,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.072523,
+              "tool_ms": 1.254775,
               "argument_bytes": 96,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -14832,8 +14832,8 @@
       ],
       "warmups": [
         {
-          "workflow_ms": 4.957757002557628,
-          "tool_ms": 1.520399,
+          "workflow_ms": 5.193628006963991,
+          "tool_ms": 1.75627,
           "argument_bytes": 168,
           "result_json_bytes": 207,
           "error_json_bytes": 0,
@@ -14875,7 +14875,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.350911,
+              "tool_ms": 0.362058,
               "argument_bytes": 72,
               "result_json_bytes": 137,
               "error_json_bytes": 0
@@ -14898,7 +14898,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.169488,
+              "tool_ms": 1.394212,
               "argument_bytes": 96,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -14927,10 +14927,10 @@
       "correct_runs": 3,
       "workflow_ms": {
         "runs": 3,
-        "median": 5.166918010218069,
-        "p95": 5.312433990184218,
-        "min": 4.8310389975085855,
-        "max": 5.312433990184218
+        "median": 5.257031007204205,
+        "p95": 5.6575079943286255,
+        "min": 5.056453999713995,
+        "max": 5.6575079943286255
       },
       "tool_json_bytes": {
         "runs": 3,
@@ -14941,10 +14941,10 @@
       },
       "tool_ms": {
         "runs": 3,
-        "median": 1.605576,
-        "p95": 1.7014369999999999,
-        "min": 1.4351619999999998,
-        "max": 1.7014369999999999
+        "median": 1.787766,
+        "p95": 1.857861,
+        "min": 1.666718,
+        "max": 1.857861
       }
     },
     {
@@ -14952,8 +14952,8 @@
       "scenario": "noop",
       "samples": [
         {
-          "workflow_ms": 4.149136002524756,
-          "tool_ms": 0.711868,
+          "workflow_ms": 4.723759993794374,
+          "tool_ms": 0.8590760000000001,
           "argument_bytes": 110,
           "result_json_bytes": 151,
           "error_json_bytes": 0,
@@ -14995,7 +14995,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.37679,
+              "tool_ms": 0.40967800000000004,
               "argument_bytes": 54,
               "result_json_bytes": 79,
               "error_json_bytes": 0
@@ -15018,7 +15018,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.335078,
+              "tool_ms": 0.449398,
               "argument_bytes": 56,
               "result_json_bytes": 72,
               "error_json_bytes": 0
@@ -15044,8 +15044,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 4.102606006199494,
-          "tool_ms": 0.717166,
+          "workflow_ms": 4.33815699943807,
+          "tool_ms": 0.708172,
           "argument_bytes": 110,
           "result_json_bytes": 151,
           "error_json_bytes": 0,
@@ -15087,7 +15087,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.33378599999999997,
+              "tool_ms": 0.342228,
               "argument_bytes": 54,
               "result_json_bytes": 79,
               "error_json_bytes": 0
@@ -15110,7 +15110,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.38338,
+              "tool_ms": 0.365944,
               "argument_bytes": 56,
               "result_json_bytes": 72,
               "error_json_bytes": 0
@@ -15136,8 +15136,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 4.155233997153118,
-          "tool_ms": 0.653321,
+          "workflow_ms": 4.4238139962544665,
+          "tool_ms": 0.7244870000000001,
           "argument_bytes": 110,
           "result_json_bytes": 151,
           "error_json_bytes": 0,
@@ -15179,7 +15179,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.337552,
+              "tool_ms": 0.35788200000000003,
               "argument_bytes": 54,
               "result_json_bytes": 79,
               "error_json_bytes": 0
@@ -15202,7 +15202,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.31576899999999997,
+              "tool_ms": 0.366605,
               "argument_bytes": 56,
               "result_json_bytes": 72,
               "error_json_bytes": 0
@@ -15230,8 +15230,8 @@
       ],
       "warmups": [
         {
-          "workflow_ms": 4.136977004236542,
-          "tool_ms": 0.690967,
+          "workflow_ms": 4.879340995103121,
+          "tool_ms": 0.9172629999999999,
           "argument_bytes": 110,
           "result_json_bytes": 151,
           "error_json_bytes": 0,
@@ -15273,7 +15273,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.355679,
+              "tool_ms": 0.499863,
               "argument_bytes": 54,
               "result_json_bytes": 79,
               "error_json_bytes": 0
@@ -15296,7 +15296,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.335288,
+              "tool_ms": 0.4174,
               "argument_bytes": 56,
               "result_json_bytes": 72,
               "error_json_bytes": 0
@@ -15325,10 +15325,10 @@
       "correct_runs": 3,
       "workflow_ms": {
         "runs": 3,
-        "median": 4.149136002524756,
-        "p95": 4.155233997153118,
-        "min": 4.102606006199494,
-        "max": 4.155233997153118
+        "median": 4.4238139962544665,
+        "p95": 4.723759993794374,
+        "min": 4.33815699943807,
+        "max": 4.723759993794374
       },
       "tool_json_bytes": {
         "runs": 3,
@@ -15339,10 +15339,10 @@
       },
       "tool_ms": {
         "runs": 3,
-        "median": 0.711868,
-        "p95": 0.717166,
-        "min": 0.653321,
-        "max": 0.717166
+        "median": 0.7244870000000001,
+        "p95": 0.8590760000000001,
+        "min": 0.708172,
+        "max": 0.8590760000000001
       }
     },
     {
@@ -15350,8 +15350,8 @@
       "scenario": "reject-stale",
       "samples": [
         {
-          "workflow_ms": 4.197447007754818,
-          "tool_ms": 0.736085,
+          "workflow_ms": 4.194553010165691,
+          "tool_ms": 0.654102,
           "argument_bytes": 124,
           "result_json_bytes": 83,
           "error_json_bytes": 93,
@@ -15393,7 +15393,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.397842,
+              "tool_ms": 0.335539,
               "argument_bytes": 62,
               "result_json_bytes": 83,
               "error_json_bytes": 0
@@ -15411,7 +15411,7 @@
                 "code": -32600,
                 "message": "old text was not found; include exact whitespace and line endings"
               },
-              "tool_ms": 0.338243,
+              "tool_ms": 0.318563,
               "argument_bytes": 62,
               "result_json_bytes": 0,
               "error_json_bytes": 93
@@ -15437,8 +15437,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 4.3175449973205104,
-          "tool_ms": 0.699569,
+          "workflow_ms": 4.644873013603501,
+          "tool_ms": 0.8651059999999999,
           "argument_bytes": 124,
           "result_json_bytes": 83,
           "error_json_bytes": 93,
@@ -15480,7 +15480,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.358342,
+              "tool_ms": 0.424461,
               "argument_bytes": 62,
               "result_json_bytes": 83,
               "error_json_bytes": 0
@@ -15498,7 +15498,7 @@
                 "code": -32600,
                 "message": "old text was not found; include exact whitespace and line endings"
               },
-              "tool_ms": 0.341227,
+              "tool_ms": 0.44064499999999995,
               "argument_bytes": 62,
               "result_json_bytes": 0,
               "error_json_bytes": 93
@@ -15524,8 +15524,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 4.251217003911734,
-          "tool_ms": 0.753479,
+          "workflow_ms": 4.045221998239867,
+          "tool_ms": 0.625049,
           "argument_bytes": 124,
           "result_json_bytes": 83,
           "error_json_bytes": 93,
@@ -15567,7 +15567,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.33986500000000003,
+              "tool_ms": 0.33710100000000004,
               "argument_bytes": 62,
               "result_json_bytes": 83,
               "error_json_bytes": 0
@@ -15585,7 +15585,7 @@
                 "code": -32600,
                 "message": "old text was not found; include exact whitespace and line endings"
               },
-              "tool_ms": 0.413614,
+              "tool_ms": 0.287948,
               "argument_bytes": 62,
               "result_json_bytes": 0,
               "error_json_bytes": 93
@@ -15613,8 +15613,8 @@
       ],
       "warmups": [
         {
-          "workflow_ms": 4.193301007035188,
-          "tool_ms": 0.6921980000000001,
+          "workflow_ms": 4.216264991555363,
+          "tool_ms": 0.706549,
           "argument_bytes": 124,
           "result_json_bytes": 83,
           "error_json_bytes": 93,
@@ -15656,7 +15656,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.35703,
+              "tool_ms": 0.35649899999999995,
               "argument_bytes": 62,
               "result_json_bytes": 83,
               "error_json_bytes": 0
@@ -15674,7 +15674,7 @@
                 "code": -32600,
                 "message": "old text was not found; include exact whitespace and line endings"
               },
-              "tool_ms": 0.335168,
+              "tool_ms": 0.35005000000000003,
               "argument_bytes": 62,
               "result_json_bytes": 0,
               "error_json_bytes": 93
@@ -15703,10 +15703,10 @@
       "correct_runs": 3,
       "workflow_ms": {
         "runs": 3,
-        "median": 4.251217003911734,
-        "p95": 4.3175449973205104,
-        "min": 4.197447007754818,
-        "max": 4.3175449973205104
+        "median": 4.194553010165691,
+        "p95": 4.644873013603501,
+        "min": 4.045221998239867,
+        "max": 4.644873013603501
       },
       "tool_json_bytes": {
         "runs": 3,
@@ -15717,10 +15717,10 @@
       },
       "tool_ms": {
         "runs": 3,
-        "median": 0.736085,
-        "p95": 0.753479,
-        "min": 0.699569,
-        "max": 0.753479
+        "median": 0.654102,
+        "p95": 0.8651059999999999,
+        "min": 0.625049,
+        "max": 0.8651059999999999
       }
     },
     {
@@ -15728,8 +15728,8 @@
       "scenario": "reject-ambiguous",
       "samples": [
         {
-          "workflow_ms": 4.232268998748623,
-          "tool_ms": 0.6761349999999999,
+          "workflow_ms": 4.213420994346961,
+          "tool_ms": 0.724186,
           "argument_bytes": 132,
           "result_json_bytes": 80,
           "error_json_bytes": 77,
@@ -15771,7 +15771,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.389349,
+              "tool_ms": 0.377651,
               "argument_bytes": 66,
               "result_json_bytes": 80,
               "error_json_bytes": 0
@@ -15789,7 +15789,7 @@
                 "code": -32600,
                 "message": "old text is ambiguous; include more exact context"
               },
-              "tool_ms": 0.286786,
+              "tool_ms": 0.346535,
               "argument_bytes": 66,
               "result_json_bytes": 0,
               "error_json_bytes": 77
@@ -15815,8 +15815,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 4.297475999919698,
-          "tool_ms": 0.730666,
+          "workflow_ms": 4.105640997295268,
+          "tool_ms": 0.669835,
           "argument_bytes": 132,
           "result_json_bytes": 80,
           "error_json_bytes": 77,
@@ -15858,7 +15858,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.401407,
+              "tool_ms": 0.375979,
               "argument_bytes": 66,
               "result_json_bytes": 80,
               "error_json_bytes": 0
@@ -15876,7 +15876,7 @@
                 "code": -32600,
                 "message": "old text is ambiguous; include more exact context"
               },
-              "tool_ms": 0.32925899999999997,
+              "tool_ms": 0.293856,
               "argument_bytes": 66,
               "result_json_bytes": 0,
               "error_json_bytes": 77
@@ -15902,8 +15902,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 4.605854002875276,
-          "tool_ms": 0.8219110000000001,
+          "workflow_ms": 4.2296660103602335,
+          "tool_ms": 0.7072510000000001,
           "argument_bytes": 132,
           "result_json_bytes": 80,
           "error_json_bytes": 77,
@@ -15945,7 +15945,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.439883,
+              "tool_ms": 0.36118700000000004,
               "argument_bytes": 66,
               "result_json_bytes": 80,
               "error_json_bytes": 0
@@ -15963,7 +15963,7 @@
                 "code": -32600,
                 "message": "old text is ambiguous; include more exact context"
               },
-              "tool_ms": 0.38202800000000003,
+              "tool_ms": 0.346064,
               "argument_bytes": 66,
               "result_json_bytes": 0,
               "error_json_bytes": 77
@@ -15991,8 +15991,8 @@
       ],
       "warmups": [
         {
-          "workflow_ms": 4.521469003520906,
-          "tool_ms": 0.8130580000000001,
+          "workflow_ms": 4.05667899758555,
+          "tool_ms": 0.64613,
           "argument_bytes": 132,
           "result_json_bytes": 80,
           "error_json_bytes": 77,
@@ -16034,7 +16034,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.46637300000000004,
+              "tool_ms": 0.356249,
               "argument_bytes": 66,
               "result_json_bytes": 80,
               "error_json_bytes": 0
@@ -16052,7 +16052,7 @@
                 "code": -32600,
                 "message": "old text is ambiguous; include more exact context"
               },
-              "tool_ms": 0.346685,
+              "tool_ms": 0.289881,
               "argument_bytes": 66,
               "result_json_bytes": 0,
               "error_json_bytes": 77
@@ -16081,10 +16081,10 @@
       "correct_runs": 3,
       "workflow_ms": {
         "runs": 3,
-        "median": 4.297475999919698,
-        "p95": 4.605854002875276,
-        "min": 4.232268998748623,
-        "max": 4.605854002875276
+        "median": 4.213420994346961,
+        "p95": 4.2296660103602335,
+        "min": 4.105640997295268,
+        "max": 4.2296660103602335
       },
       "tool_json_bytes": {
         "runs": 3,
@@ -16095,10 +16095,10 @@
       },
       "tool_ms": {
         "runs": 3,
-        "median": 0.730666,
-        "p95": 0.8219110000000001,
-        "min": 0.6761349999999999,
-        "max": 0.8219110000000001
+        "median": 0.7072510000000001,
+        "p95": 0.724186,
+        "min": 0.669835,
+        "max": 0.724186
       }
     },
     {
@@ -16106,8 +16106,8 @@
       "scenario": "write-create",
       "samples": [
         {
-          "workflow_ms": 5.053078988566995,
-          "tool_ms": 1.343466,
+          "workflow_ms": 4.5684990036534145,
+          "tool_ms": 1.301534,
           "argument_bytes": 96,
           "result_json_bytes": 70,
           "error_json_bytes": 0,
@@ -16141,7 +16141,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.343466,
+              "tool_ms": 1.301534,
               "argument_bytes": 96,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -16167,8 +16167,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 4.917708007269539,
-          "tool_ms": 1.26472,
+          "workflow_ms": 4.751440996187739,
+          "tool_ms": 1.37248,
           "argument_bytes": 96,
           "result_json_bytes": 70,
           "error_json_bytes": 0,
@@ -16202,7 +16202,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.26472,
+              "tool_ms": 1.37248,
               "argument_bytes": 96,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -16228,8 +16228,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 5.336139001883566,
-          "tool_ms": 1.602021,
+          "workflow_ms": 5.164393995073624,
+          "tool_ms": 1.460801,
           "argument_bytes": 96,
           "result_json_bytes": 70,
           "error_json_bytes": 0,
@@ -16263,7 +16263,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.602021,
+              "tool_ms": 1.460801,
               "argument_bytes": 96,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -16291,8 +16291,8 @@
       ],
       "warmups": [
         {
-          "workflow_ms": 4.738580988487229,
-          "tool_ms": 1.336346,
+          "workflow_ms": 4.957388009643182,
+          "tool_ms": 1.5771030000000001,
           "argument_bytes": 96,
           "result_json_bytes": 70,
           "error_json_bytes": 0,
@@ -16326,7 +16326,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.336346,
+              "tool_ms": 1.5771030000000001,
               "argument_bytes": 96,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -16355,10 +16355,10 @@
       "correct_runs": 3,
       "workflow_ms": {
         "runs": 3,
-        "median": 5.053078988566995,
-        "p95": 5.336139001883566,
-        "min": 4.917708007269539,
-        "max": 5.336139001883566
+        "median": 4.751440996187739,
+        "p95": 5.164393995073624,
+        "min": 4.5684990036534145,
+        "max": 5.164393995073624
       },
       "tool_json_bytes": {
         "runs": 3,
@@ -16369,10 +16369,10 @@
       },
       "tool_ms": {
         "runs": 3,
-        "median": 1.343466,
-        "p95": 1.602021,
-        "min": 1.26472,
-        "max": 1.602021
+        "median": 1.37248,
+        "p95": 1.460801,
+        "min": 1.301534,
+        "max": 1.460801
       }
     },
     {
@@ -16380,8 +16380,8 @@
       "scenario": "delete",
       "samples": [
         {
-          "workflow_ms": 4.206711004371755,
-          "tool_ms": 0.783744,
+          "workflow_ms": 4.753054003231227,
+          "tool_ms": 0.858907,
           "argument_bytes": 108,
           "result_json_bytes": 148,
           "error_json_bytes": 0,
@@ -16422,7 +16422,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.38288900000000003,
+              "tool_ms": 0.327186,
               "argument_bytes": 56,
               "result_json_bytes": 78,
               "error_json_bytes": 0
@@ -16444,7 +16444,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.40085499999999996,
+              "tool_ms": 0.531721,
               "argument_bytes": 52,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -16458,8 +16458,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 4.567586991470307,
-          "tool_ms": 0.744556,
+          "workflow_ms": 4.697591008152813,
+          "tool_ms": 0.9064369999999999,
           "argument_bytes": 108,
           "result_json_bytes": 148,
           "error_json_bytes": 0,
@@ -16500,7 +16500,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.339264,
+              "tool_ms": 0.394256,
               "argument_bytes": 56,
               "result_json_bytes": 78,
               "error_json_bytes": 0
@@ -16522,7 +16522,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.40529200000000004,
+              "tool_ms": 0.512181,
               "argument_bytes": 52,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -16536,8 +16536,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 4.462130993488245,
-          "tool_ms": 0.8793360000000001,
+          "workflow_ms": 4.286359995603561,
+          "tool_ms": 0.7280420000000001,
           "argument_bytes": 108,
           "result_json_bytes": 148,
           "error_json_bytes": 0,
@@ -16578,7 +16578,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.490188,
+              "tool_ms": 0.338764,
               "argument_bytes": 56,
               "result_json_bytes": 78,
               "error_json_bytes": 0
@@ -16600,7 +16600,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.38914800000000005,
+              "tool_ms": 0.389278,
               "argument_bytes": 52,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -16616,8 +16616,8 @@
       ],
       "warmups": [
         {
-          "workflow_ms": 4.374541007564403,
-          "tool_ms": 0.735663,
+          "workflow_ms": 4.193330998532474,
+          "tool_ms": 0.741482,
           "argument_bytes": 108,
           "result_json_bytes": 148,
           "error_json_bytes": 0,
@@ -16658,7 +16658,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.352714,
+              "tool_ms": 0.369249,
               "argument_bytes": 56,
               "result_json_bytes": 78,
               "error_json_bytes": 0
@@ -16680,7 +16680,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.382949,
+              "tool_ms": 0.37223300000000004,
               "argument_bytes": 52,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -16697,10 +16697,10 @@
       "correct_runs": 3,
       "workflow_ms": {
         "runs": 3,
-        "median": 4.462130993488245,
-        "p95": 4.567586991470307,
-        "min": 4.206711004371755,
-        "max": 4.567586991470307
+        "median": 4.697591008152813,
+        "p95": 4.753054003231227,
+        "min": 4.286359995603561,
+        "max": 4.753054003231227
       },
       "tool_json_bytes": {
         "runs": 3,
@@ -16711,10 +16711,10 @@
       },
       "tool_ms": {
         "runs": 3,
-        "median": 0.783744,
-        "p95": 0.8793360000000001,
-        "min": 0.744556,
-        "max": 0.8793360000000001
+        "median": 0.858907,
+        "p95": 0.9064369999999999,
+        "min": 0.7280420000000001,
+        "max": 0.9064369999999999
       }
     },
     {
@@ -16722,8 +16722,8 @@
       "scenario": "rename",
       "samples": [
         {
-          "workflow_ms": 6.000567009323277,
-          "tool_ms": 2.268842,
+          "workflow_ms": 6.816199005697854,
+          "tool_ms": 3.103952,
           "argument_bytes": 147,
           "result_json_bytes": 151,
           "error_json_bytes": 0,
@@ -16765,7 +16765,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.369129,
+              "tool_ms": 0.34684499999999996,
               "argument_bytes": 56,
               "result_json_bytes": 81,
               "error_json_bytes": 0
@@ -16788,7 +16788,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.899713,
+              "tool_ms": 2.757107,
               "argument_bytes": 91,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -16814,8 +16814,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 6.338534003589302,
-          "tool_ms": 2.522078,
+          "workflow_ms": 7.502253996790387,
+          "tool_ms": 3.64061,
           "argument_bytes": 147,
           "result_json_bytes": 151,
           "error_json_bytes": 0,
@@ -16857,7 +16857,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.402488,
+              "tool_ms": 0.5106890000000001,
               "argument_bytes": 56,
               "result_json_bytes": 81,
               "error_json_bytes": 0
@@ -16880,7 +16880,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 2.11959,
+              "tool_ms": 3.129921,
               "argument_bytes": 91,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -16906,8 +16906,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 6.597914005396888,
-          "tool_ms": 2.593595,
+          "workflow_ms": 8.433231996605173,
+          "tool_ms": 4.749887999999999,
           "argument_bytes": 147,
           "result_json_bytes": 151,
           "error_json_bytes": 0,
@@ -16949,7 +16949,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.417361,
+              "tool_ms": 0.439664,
               "argument_bytes": 56,
               "result_json_bytes": 81,
               "error_json_bytes": 0
@@ -16972,7 +16972,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 2.176234,
+              "tool_ms": 4.310224,
               "argument_bytes": 91,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -17000,8 +17000,8 @@
       ],
       "warmups": [
         {
-          "workflow_ms": 5.80341400927864,
-          "tool_ms": 2.306387,
+          "workflow_ms": 7.385881006484851,
+          "tool_ms": 3.5211930000000002,
           "argument_bytes": 147,
           "result_json_bytes": 151,
           "error_json_bytes": 0,
@@ -17043,7 +17043,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.32556399999999996,
+              "tool_ms": 0.425473,
               "argument_bytes": 56,
               "result_json_bytes": 81,
               "error_json_bytes": 0
@@ -17066,7 +17066,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 1.980823,
+              "tool_ms": 3.09572,
               "argument_bytes": 91,
               "result_json_bytes": 70,
               "error_json_bytes": 0
@@ -17095,10 +17095,10 @@
       "correct_runs": 3,
       "workflow_ms": {
         "runs": 3,
-        "median": 6.338534003589302,
-        "p95": 6.597914005396888,
-        "min": 6.000567009323277,
-        "max": 6.597914005396888
+        "median": 7.502253996790387,
+        "p95": 8.433231996605173,
+        "min": 6.816199005697854,
+        "max": 8.433231996605173
       },
       "tool_json_bytes": {
         "runs": 3,
@@ -17109,10 +17109,10 @@
       },
       "tool_ms": {
         "runs": 3,
-        "median": 2.522078,
-        "p95": 2.593595,
-        "min": 2.268842,
-        "max": 2.593595
+        "median": 3.64061,
+        "p95": 4.749887999999999,
+        "min": 3.103952,
+        "max": 4.749887999999999
       }
     },
     {
@@ -17120,8 +17120,8 @@
       "scenario": "reject-late-batch",
       "samples": [
         {
-          "workflow_ms": 5.198766011744738,
-          "tool_ms": 1.380872,
+          "workflow_ms": 5.2041739982087165,
+          "tool_ms": 1.24475,
           "argument_bytes": 285,
           "result_json_bytes": 152,
           "error_json_bytes": 192,
@@ -17180,7 +17180,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.347266,
+              "tool_ms": 0.40339899999999995,
               "argument_bytes": 67,
               "result_json_bytes": 76,
               "error_json_bytes": 0
@@ -17203,7 +17203,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.669815,
+              "tool_ms": 0.398753,
               "argument_bytes": 67,
               "result_json_bytes": 76,
               "error_json_bytes": 0
@@ -17230,7 +17230,7 @@
                 "code": -32600,
                 "message": "phase1: phase 1 (validation) failed for cases/reject-late-batch/1/b.txt: edit precondition failed: old text was not found; include exact whitespace and line endings"
               },
-              "tool_ms": 0.363791,
+              "tool_ms": 0.442598,
               "argument_bytes": 151,
               "result_json_bytes": 0,
               "error_json_bytes": 192
@@ -17267,8 +17267,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 4.568549004034139,
-          "tool_ms": 1.025975,
+          "workflow_ms": 4.856447005295195,
+          "tool_ms": 1.145201,
           "argument_bytes": 285,
           "result_json_bytes": 152,
           "error_json_bytes": 192,
@@ -17327,7 +17327,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.35849200000000003,
+              "tool_ms": 0.449277,
               "argument_bytes": 67,
               "result_json_bytes": 76,
               "error_json_bytes": 0
@@ -17350,7 +17350,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.30923,
+              "tool_ms": 0.366164,
               "argument_bytes": 67,
               "result_json_bytes": 76,
               "error_json_bytes": 0
@@ -17377,7 +17377,7 @@
                 "code": -32600,
                 "message": "phase1: phase 1 (validation) failed for cases/reject-late-batch/2/b.txt: edit precondition failed: old text was not found; include exact whitespace and line endings"
               },
-              "tool_ms": 0.358253,
+              "tool_ms": 0.32976,
               "argument_bytes": 151,
               "result_json_bytes": 0,
               "error_json_bytes": 192
@@ -17414,8 +17414,8 @@
           "model_calls": 0
         },
         {
-          "workflow_ms": 4.663571002311073,
-          "tool_ms": 1.019716,
+          "workflow_ms": 4.743019002489746,
+          "tool_ms": 1.002029,
           "argument_bytes": 285,
           "result_json_bytes": 152,
           "error_json_bytes": 192,
@@ -17474,7 +17474,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.333716,
+              "tool_ms": 0.34392100000000003,
               "argument_bytes": 67,
               "result_json_bytes": 76,
               "error_json_bytes": 0
@@ -17497,7 +17497,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.32546400000000003,
+              "tool_ms": 0.323862,
               "argument_bytes": 67,
               "result_json_bytes": 76,
               "error_json_bytes": 0
@@ -17524,7 +17524,7 @@
                 "code": -32600,
                 "message": "phase1: phase 1 (validation) failed for cases/reject-late-batch/3/b.txt: edit precondition failed: old text was not found; include exact whitespace and line endings"
               },
-              "tool_ms": 0.360536,
+              "tool_ms": 0.334246,
               "argument_bytes": 151,
               "result_json_bytes": 0,
               "error_json_bytes": 192
@@ -17563,8 +17563,8 @@
       ],
       "warmups": [
         {
-          "workflow_ms": 5.387345008784905,
-          "tool_ms": 1.294975,
+          "workflow_ms": 4.656178993172944,
+          "tool_ms": 1.0453420000000002,
           "argument_bytes": 285,
           "result_json_bytes": 152,
           "error_json_bytes": 192,
@@ -17623,7 +17623,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.411452,
+              "tool_ms": 0.34137700000000004,
               "argument_bytes": 67,
               "result_json_bytes": 76,
               "error_json_bytes": 0
@@ -17646,7 +17646,7 @@
                 "resultType": "complete"
               },
               "error": null,
-              "tool_ms": 0.41918300000000003,
+              "tool_ms": 0.349629,
               "argument_bytes": 67,
               "result_json_bytes": 76,
               "error_json_bytes": 0
@@ -17673,7 +17673,7 @@
                 "code": -32600,
                 "message": "phase1: phase 1 (validation) failed for cases/reject-late-batch/0/b.txt: edit precondition failed: old text was not found; include exact whitespace and line endings"
               },
-              "tool_ms": 0.46434,
+              "tool_ms": 0.35433600000000004,
               "argument_bytes": 151,
               "result_json_bytes": 0,
               "error_json_bytes": 192
@@ -17713,10 +17713,10 @@
       "correct_runs": 3,
       "workflow_ms": {
         "runs": 3,
-        "median": 4.663571002311073,
-        "p95": 5.198766011744738,
-        "min": 4.568549004034139,
-        "max": 5.198766011744738
+        "median": 4.856447005295195,
+        "p95": 5.2041739982087165,
+        "min": 4.743019002489746,
+        "max": 5.2041739982087165
       },
       "tool_json_bytes": {
         "runs": 3,
@@ -17727,10 +17727,10 @@
       },
       "tool_ms": {
         "runs": 3,
-        "median": 1.025975,
-        "p95": 1.380872,
-        "min": 1.019716,
-        "max": 1.380872
+        "median": 1.145201,
+        "p95": 1.24475,
+        "min": 1.002029,
+        "max": 1.24475
       }
     }
   ],

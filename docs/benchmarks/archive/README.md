@@ -7,6 +7,7 @@ Original result paths and raw fingerprints stay available for reproduction.
 
 | Recorded study | Evidence |
 |---|---|
+| 0.6.0 candidate, 1,878 measured workflows; dependency gate failed before publication | [Snapshot and reports](2026-11-06-v0.6.0-candidate/README.md) · [Original hashes](2026-11-06-v0.6.0-candidate/index.json) |
 | Ten integration cohorts before 0.6.0, 1,878 measured workflows | [Snapshot and reports](2026-11-06-pre-0.6.0/README.md) · [Original hashes](2026-11-06-pre-0.6.0/index.json) |
 | 13 editing tasks / 41 editor profiles, xnip 0.5.5 | [Report](../results.md) · [Raw run](../results.json) · [Derived frontier](../relative-results.json) |
 | Six host-to-xnip MCP bridge profiles | [Captured exchanges](../host-exchange-results.json) |

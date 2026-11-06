@@ -30,7 +30,7 @@ cast_possible_wrap = "allow"
 
 [package]
 name = "xnip"
-version = "0.6.0"
+version = "0.6.1"
 description = "Precise text editing CLI for LLM agents"
 edition.workspace = true
 rust-version.workspace = true
@@ -78,7 +78,7 @@ zip = { version = "9", default-features = false, features = ["deflate-flate2"] }
 # - tokio: rmcp 的异步运行时;只启用 `rt`(单线程)避免 panic=abort 与多线程 worker 冲突
 #   并降低同步 cli 路径无关代价(MCP stdio 单连接串行处理,无需多线程)
 rmcp = { version = "=3.4.1", features = ["server", "macros", "transport-io"] }
-tokio = { version = "1", features = ["rt", "macros", "io-std"] }
+tokio = { version = "1.53.3", features = ["rt", "macros", "io-std"] }
 # JsonSchema for MCP tool input schemas.
 schemars = "1.2"
 

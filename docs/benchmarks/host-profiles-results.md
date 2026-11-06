@@ -8,7 +8,7 @@ Every sample starts a new MCP connection. Workflow time includes local spawn/con
 
 Tool JSON bytes count canonical UTF-8 JSON for the actual public arguments and client result/error objects. The shared lane also retains measured JSONL request/response frame bytes. Goose client DTOs and any GUI/model-visible projection retain separate boundaries; these byte counts describe local calls, rather than billing.
 
-Binary SHA-256 `144f76db0a340d7eede61b7fc2545c8c7c1d7d937300f378fd6c77c8da3e0688`; maintained source `41019f387dcee5d797baa93cbc127575dda339d9f4cf5b683c75ebb1c25ee06a`. Python 3.12.14; Goose 1.55.0.
+Binary SHA-256 `b01cc02a39864cb7f460cdd29fc84c8059855229acc6aec97c43d1070505d012`; maintained source `6589f1698c59e9710c5f5d64114feb56901564cc52c6c036a067e8a9e313717a`. Python 3.12.14; Goose 1.55.0.
 
 | Profile | Configuration evidence | Measured lane |
 |---|---|---|
@@ -29,26 +29,26 @@ Binary SHA-256 `144f76db0a340d7eede61b7fc2545c8c7c1d7d937300f378fd6c77c8da3e0688
 
 | Fixture | Shared workflow median / p95 ms | Goose workflow median / p95 ms | Shared / Goose tool JSON bytes | Shared / Goose correct |
 |---|---:|---:|---:|---:|
-| tiny-config | 6.38 / 6.60 | 5.17 / 5.26 | 304 / 352 | 3/3 / 3/3 |
-| large-local-change | 7.99 / 8.15 | 5.49 / 5.55 | 6,649 / 6,697 | 3/3 / 3/3 |
-| multiline-function | 6.15 / 6.27 | 4.93 / 4.98 | 550 / 598 | 3/3 / 3/3 |
-| unicode | 6.14 / 6.18 | 5.09 / 5.52 | 322 / 370 | 3/3 / 3/3 |
-| crlf | 6.14 / 6.14 | 5.18 / 5.58 | 296 / 344 | 3/3 / 3/3 |
-| no-final-newline | 6.22 / 6.47 | 5.27 / 5.73 | 292 / 340 | 3/3 / 3/3 |
-| disambiguated-block | 6.18 / 6.31 | 5.21 / 5.52 | 390 / 438 | 3/3 / 3/3 |
-| global-replace | 6.29 / 6.37 | 5.44 / 5.61 | 654 / 702 | 3/3 / 3/3 |
-| same-file-batch | 7.19 / 7.92 | 6.77 / 6.92 | 384 / 432 | 3/3 / 3/3 |
-| multi-file-batch | 10.06 / 10.61 | 8.80 / 9.33 | 656 / 752 | 3/3 / 3/3 |
-| long-line | 16.14 / 17.50 | 6.44 / 6.78 | 40,257 / 40,305 | 3/3 / 3/3 |
-| insert-after-anchor | 6.21 / 6.29 | 5.10 / 7.31 | 324 / 372 | 3/3 / 3/3 |
-| delete-block | 6.21 / 6.30 | 5.17 / 5.31 | 327 / 375 | 3/3 / 3/3 |
-| noop | 5.37 / 5.42 | 4.15 / 4.16 | 213 / 261 | 3/3 / 3/3 |
-| reject-stale | 5.38 / 5.38 | 4.25 / 4.32 | 276 / 300 | 3/3 / 3/3 |
-| reject-ambiguous | 5.34 / 5.58 | 4.30 / 4.61 | 265 / 289 | 3/3 / 3/3 |
-| write-create | 6.25 / 6.38 | 5.05 / 5.34 | 142 / 166 | 3/3 / 3/3 |
-| delete | 5.38 / 5.50 | 4.46 / 4.57 | 208 / 256 | 3/3 / 3/3 |
-| rename | 7.11 / 7.29 | 6.34 / 6.60 | 250 / 298 | 3/3 / 3/3 |
-| reject-late-batch | 5.82 / 5.88 | 4.66 / 5.20 | 581 / 629 | 3/3 / 3/3 |
+| tiny-config | 6.60 / 6.61 | 5.20 / 5.43 | 304 / 352 | 3/3 / 3/3 |
+| large-local-change | 8.35 / 8.70 | 6.03 / 6.08 | 6,649 / 6,697 | 3/3 / 3/3 |
+| multiline-function | 6.86 / 6.90 | 5.61 / 5.72 | 550 / 598 | 3/3 / 3/3 |
+| unicode | 6.55 / 6.73 | 5.69 / 5.80 | 322 / 370 | 3/3 / 3/3 |
+| crlf | 6.48 / 6.51 | 4.89 / 5.09 | 296 / 344 | 3/3 / 3/3 |
+| no-final-newline | 6.57 / 6.65 | 5.23 / 5.47 | 292 / 340 | 3/3 / 3/3 |
+| disambiguated-block | 6.61 / 6.82 | 5.18 / 5.22 | 390 / 438 | 3/3 / 3/3 |
+| global-replace | 6.89 / 6.94 | 5.07 / 5.22 | 654 / 702 | 3/3 / 3/3 |
+| same-file-batch | 8.49 / 8.61 | 7.24 / 7.66 | 384 / 432 | 3/3 / 3/3 |
+| multi-file-batch | 11.19 / 11.74 | 10.88 / 12.20 | 656 / 752 | 3/3 / 3/3 |
+| long-line | 16.70 / 16.92 | 6.50 / 6.54 | 40,257 / 40,305 | 3/3 / 3/3 |
+| insert-after-anchor | 6.58 / 6.97 | 5.79 / 5.83 | 324 / 372 | 3/3 / 3/3 |
+| delete-block | 6.93 / 7.02 | 5.26 / 5.66 | 327 / 375 | 3/3 / 3/3 |
+| noop | 5.47 / 5.61 | 4.42 / 4.72 | 213 / 261 | 3/3 / 3/3 |
+| reject-stale | 5.76 / 6.19 | 4.19 / 4.64 | 276 / 300 | 3/3 / 3/3 |
+| reject-ambiguous | 5.50 / 5.54 | 4.21 / 4.23 | 265 / 289 | 3/3 / 3/3 |
+| write-create | 6.72 / 7.05 | 4.75 / 5.16 | 142 / 166 | 3/3 / 3/3 |
+| delete | 5.52 / 6.28 | 4.70 / 4.75 | 208 / 256 | 3/3 / 3/3 |
+| rename | 8.60 / 9.56 | 7.50 / 8.43 | 250 / 298 | 3/3 / 3/3 |
+| reject-late-batch | 8.08 / 8.28 | 4.86 / 5.20 | 581 / 629 | 3/3 / 3/3 |
 
 ## Reproduce
 

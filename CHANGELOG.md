@@ -4,7 +4,9 @@ User-visible changes are recorded here. Versions follow Semantic Versioning; com
 
 ## [Unreleased]
 
-## [0.6.0] - 2026-11-06
+## [0.6.1] - 2026-11-06
+
+- Update Tokio to 1.53.3 to address RUSTSEC-2026-0386 before stable publication.
 
 - Add a single integration catalog and support matrix for host backends, plugin tools, SDK toolsets and client MCP profiles; expose the same entries through `doctor --native`.
 - Add four xnip tools through OpenCode's official plugin API and aider's IO backend for eight pinned Coder formats.

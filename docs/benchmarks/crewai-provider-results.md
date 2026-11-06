@@ -8,36 +8,36 @@ Every real MCP outcome is retained through an observer that delegates the origin
 
 Timing includes complete public tool calls, fresh process creation, initialize, SDK argument/result processing, retry policy and connection closure. Fixture reset, byte accounting and file validation run outside it. Counts describe serialized JSON payloads and projected tool text rather than model billing. Each warm-up is retained; with three measured samples, nearest-rank p95 is the maximum.
 
-Binary SHA-256 `144f76db0a340d7eede61b7fc2545c8c7c1d7d937300f378fd6c77c8da3e0688`; source `68f77db2dc03eca67993b4980dac9aec710982c1091ad047054a2750c5384248`. Python 3.12.14; MCP 1.30.0.
+Binary SHA-256 `b01cc02a39864cb7f460cdd29fc84c8059855229acc6aec97c43d1070505d012`; source `1f2d5fc6690ee7f26e8f8d4ad1353c9d0a8697902322882d20f38f5fc87d97cc`. Python 3.12.14; MCP 1.30.0.
 
 | Fixture | Direct mutation median / p95 ms | CrewAI mutation median / p95 ms | Direct / CrewAI RPC attempts | Direct / CrewAI correct |
 |---|---:|---:|---:|---:|
-| tiny-config | 4.20 / 4.36 | 6.39 / 6.46 | 2 / 2 | 3/3 / 3/3 |
-| large-local-change | 4.31 / 4.35 | 6.74 / 7.32 | 2 / 2 | 3/3 / 3/3 |
-| multiline-function | 4.08 / 4.11 | 6.40 / 6.71 | 2 / 2 | 3/3 / 3/3 |
-| unicode | 4.23 / 4.24 | 5.98 / 6.69 | 2 / 2 | 3/3 / 3/3 |
-| crlf | 4.23 / 4.26 | 6.04 / 6.46 | 2 / 2 | 3/3 / 3/3 |
-| no-final-newline | 4.14 / 4.22 | 6.57 / 6.72 | 2 / 2 | 3/3 / 3/3 |
-| disambiguated-block | 4.04 / 4.15 | 5.77 / 6.63 | 2 / 2 | 3/3 / 3/3 |
-| global-replace | 4.18 / 4.22 | 6.80 / 7.11 | 2 / 2 | 3/3 / 3/3 |
-| same-file-batch | 5.41 / 5.73 | 7.50 / 7.85 | 2 / 2 | 3/3 / 3/3 |
-| multi-file-batch | 7.74 / 8.18 | 10.10 / 10.16 | 4 / 4 | 3/3 / 3/3 |
-| long-line | 4.25 / 4.40 | 6.94 / 7.06 | 2 / 2 | 3/3 / 3/3 |
-| insert-after-anchor | 4.26 / 4.28 | 6.81 / 6.81 | 2 / 2 | 3/3 / 3/3 |
-| delete-block | 4.18 / 4.26 | 6.93 / 6.94 | 2 / 2 | 3/3 / 3/3 |
-| noop | 3.29 / 3.38 | 6.15 / 6.17 | 2 / 2 | 3/3 / 3/3 |
-| reject-stale | 2.83 / 2.83 | 5.50 / 6.03 | 2 / 2 | 3/3 / 3/3 |
-| reject-ambiguous | 2.74 / 2.79 | 3012.42 / 3012.62 | 2 / 4 | 3/3 / 3/3 |
-| write-create | 4.73 / 5.78 | 6.67 / 7.38 | 1 / 1 | 3/3 / 3/3 |
-| delete | 3.41 / 3.43 | 5.99 / 6.01 | 2 / 2 | 3/3 / 3/3 |
-| rename | 5.02 / 5.27 | 7.60 / 8.11 | 2 / 2 | 3/3 / 3/3 |
-| reject-late-batch | 2.84 / 2.85 | 5.50 / 5.57 | 3 / 3 | 3/3 / 3/3 |
-| bom-crlf | 4.00 / 4.34 | 6.11 / 6.67 | 2 / 2 | 3/3 / 3/3 |
-| mixed-eol | 3.94 / 4.03 | 6.65 / 7.39 | 2 / 2 | 3/3 / 3/3 |
-| preview | 3.47 / 3.55 | 5.91 / 6.27 | 2 / 2 | 3/3 / 3/3 |
-| large-65536 | 4.21 / 4.52 | 6.88 / 6.92 | 2 / 2 | 3/3 / 3/3 |
-| large-1048576 | 5.90 / 5.94 | 8.42 / 8.96 | 2 / 2 | 3/3 / 3/3 |
-| large-5242880 | 13.73 / 14.16 | 17.24 / 17.51 | 2 / 2 | 3/3 / 3/3 |
+| tiny-config | 4.67 / 4.76 | 6.46 / 8.00 | 2 / 2 | 3/3 / 3/3 |
+| large-local-change | 4.77 / 4.86 | 7.36 / 7.64 | 2 / 2 | 3/3 / 3/3 |
+| multiline-function | 4.42 / 4.64 | 7.07 / 7.22 | 2 / 2 | 3/3 / 3/3 |
+| unicode | 4.42 / 4.44 | 7.35 / 7.60 | 2 / 2 | 3/3 / 3/3 |
+| crlf | 4.36 / 4.56 | 7.21 / 7.26 | 2 / 2 | 3/3 / 3/3 |
+| no-final-newline | 4.50 / 4.69 | 7.19 / 7.82 | 2 / 2 | 3/3 / 3/3 |
+| disambiguated-block | 4.63 / 5.19 | 7.08 / 7.17 | 2 / 2 | 3/3 / 3/3 |
+| global-replace | 4.60 / 4.75 | 7.10 / 7.32 | 2 / 2 | 3/3 / 3/3 |
+| same-file-batch | 6.52 / 6.64 | 8.20 / 8.75 | 2 / 2 | 3/3 / 3/3 |
+| multi-file-batch | 7.58 / 7.64 | 10.57 / 10.61 | 4 / 4 | 3/3 / 3/3 |
+| long-line | 4.46 / 4.66 | 7.01 / 7.28 | 2 / 2 | 3/3 / 3/3 |
+| insert-after-anchor | 4.22 / 4.28 | 7.48 / 7.75 | 2 / 2 | 3/3 / 3/3 |
+| delete-block | 4.45 / 4.54 | 7.56 / 7.63 | 2 / 2 | 3/3 / 3/3 |
+| noop | 3.59 / 3.67 | 6.67 / 7.78 | 2 / 2 | 3/3 / 3/3 |
+| reject-stale | 2.94 / 2.98 | 6.19 / 6.70 | 2 / 2 | 3/3 / 3/3 |
+| reject-ambiguous | 3.00 / 3.02 | 3014.73 / 3016.16 | 2 / 4 | 3/3 / 3/3 |
+| write-create | 4.29 / 4.61 | 8.09 / 8.31 | 1 / 1 | 3/3 / 3/3 |
+| delete | 3.64 / 3.66 | 6.55 / 6.64 | 2 / 2 | 3/3 / 3/3 |
+| rename | 5.37 / 5.38 | 8.52 / 8.74 | 2 / 2 | 3/3 / 3/3 |
+| reject-late-batch | 3.13 / 3.43 | 6.84 / 8.38 | 3 / 3 | 3/3 / 3/3 |
+| bom-crlf | 4.62 / 5.67 | 7.12 / 7.60 | 2 / 2 | 3/3 / 3/3 |
+| mixed-eol | 4.38 / 4.87 | 7.40 / 7.45 | 2 / 2 | 3/3 / 3/3 |
+| preview | 3.71 / 4.03 | 5.90 / 6.26 | 2 / 2 | 3/3 / 3/3 |
+| large-65536 | 4.99 / 5.35 | 7.30 / 7.42 | 2 / 2 | 3/3 / 3/3 |
+| large-1048576 | 6.39 / 6.73 | 9.61 / 9.66 | 2 / 2 | 3/3 / 3/3 |
+| large-5242880 | 14.39 / 14.72 | 15.73 / 15.89 | 2 / 2 | 3/3 / 3/3 |
 
 ## Reproduce
 

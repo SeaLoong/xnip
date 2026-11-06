@@ -8,35 +8,35 @@ Independent exact byte goals for both providers, known success receipts and publ
 
 One configured local inert provider; HTTP trap counts actual model endpoint requests. Official debug source executes tools without a model loop; interactive ASK and session before/after hooks lie outside this entry.
 
-Binary SHA-256 `144f76db0a340d7eede61b7fc2545c8c7c1d7d937300f378fd6c77c8da3e0688`; source `632ce552959782c341f572aed9522e83f160f683c27d7a691ab76a66cc36f31d`. Raw JSON retains source/package fingerprints, actual arguments/results, recomputable digests, public errors and complete file oracles. Large result payloads use lossless gzip+base64 encoding.
+Binary SHA-256 `b01cc02a39864cb7f460cdd29fc84c8059855229acc6aec97c43d1070505d012`; source `57b24836902e70d53cf0fd0b0cf673662f649b133c53fa12fce3a2f0543d9dbe`. Raw JSON retains source/package fingerprints, actual arguments/results, recomputable digests, public errors and complete file oracles. Large result payloads use lossless gzip+base64 encoding.
 
 The plugin adds explicit xnip tools. OpenCode builtins retain their own result/UI, formatting and fuzzy matching behavior. The multi-file patch fixture uses one xnip_apply call versus separate original edit calls; tool counts remain visible. This is tool-only CLI execution, not agent generation or billed tokens. Three measured runs make nearest-rank p95 the maximum.
 
 | Scenario | Original median / p95 ms | xnip median / p95 ms | Original / xnip calls | Original / xnip goal+outcome |
 |---|---:|---:|---:|---:|
-| tiny-config | 937.61 / 992.64 | 998.29 / 1007.03 | 1 / 1 | 3/3 / 3/3 |
-| large-local-change | 939.06 / 955.43 | 965.65 / 1022.75 | 1 / 1 | 3/3 / 3/3 |
-| multiline-function | 956.42 / 957.70 | 977.65 / 1050.47 | 1 / 1 | 3/3 / 3/3 |
-| unicode | 950.57 / 998.30 | 967.63 / 1028.03 | 1 / 1 | 3/3 / 3/3 |
-| crlf | 978.14 / 979.09 | 973.20 / 997.26 | 1 / 1 | 3/3 / 3/3 |
-| no-final-newline | 933.67 / 949.32 | 979.15 / 981.97 | 1 / 1 | 3/3 / 3/3 |
-| disambiguated-block | 953.35 / 984.80 | 998.20 / 1011.21 | 1 / 1 | 3/3 / 3/3 |
-| global-replace | 993.61 / 1022.86 | 983.43 / 1035.86 | 1 / 1 | 3/3 / 3/3 |
-| same-file-batch | 1958.92 / 1985.58 | 1953.08 / 2358.49 | 2 / 2 | 3/3 / 3/3 |
-| multi-file-batch | 2860.62 / 2869.17 | 3031.10 / 3072.69 | 3 / 3 | 3/3 / 3/3 |
-| long-line | 980.12 / 1005.96 | 1011.17 / 1053.28 | 1 / 1 | 3/3 / 3/3 |
-| insert-after-anchor | 988.91 / 1007.95 | 1007.74 / 1045.23 | 1 / 1 | 3/3 / 3/3 |
-| delete-block | 945.01 / 1101.51 | 988.53 / 1003.12 | 1 / 1 | 3/3 / 3/3 |
-| large-65536 | 961.93 / 997.74 | 999.08 / 1025.21 | 1 / 1 | 3/3 / 3/3 |
-| large-1048576 | 997.21 / 1000.58 | 1021.95 / 1088.47 | 1 / 1 | 3/3 / 3/3 |
-| large-5242880 | 1018.67 / 1055.72 | 1174.48 / 1193.50 | 1 / 1 | 3/3 / 3/3 |
-| bom-crlf | 915.59 / 969.60 | 995.59 / 1034.25 | 1 / 1 | 3/3 / 3/3 |
-| missing-guard | 964.62 / 1012.40 | 959.57 / 968.89 | 1 / 1 | 3/3 / 3/3 |
-| ambiguous-guard | 960.61 / 964.45 | 972.26 / 988.37 | 1 / 1 | 3/3 / 3/3 |
-| identical-edit | 980.69 / 984.10 | 1003.28 / 1017.83 | 1 / 1 | 3/3 / 3/3 |
-| policy-denied | 915.56 / 962.57 | 989.68 / 1037.70 | 1 / 1 | 3/3 / 3/3 |
-| write-create | 971.32 / 975.68 | 1019.47 / 1046.13 | 1 / 1 | 3/3 / 3/3 |
-| patch-multifile | 1957.65 / 1993.72 | 989.81 / 1002.55 | 2 / 1 | 3/3 / 3/3 |
+| tiny-config | 953.84 / 973.58 | 1044.25 / 1060.08 | 1 / 1 | 3/3 / 3/3 |
+| large-local-change | 900.17 / 961.65 | 983.05 / 991.15 | 1 / 1 | 3/3 / 3/3 |
+| multiline-function | 945.26 / 966.15 | 993.32 / 1005.22 | 1 / 1 | 3/3 / 3/3 |
+| unicode | 898.44 / 935.28 | 972.39 / 984.12 | 1 / 1 | 3/3 / 3/3 |
+| crlf | 898.57 / 942.64 | 1008.76 / 1009.66 | 1 / 1 | 3/3 / 3/3 |
+| no-final-newline | 1025.42 / 1038.56 | 978.37 / 983.54 | 1 / 1 | 3/3 / 3/3 |
+| disambiguated-block | 921.58 / 926.41 | 966.33 / 990.71 | 1 / 1 | 3/3 / 3/3 |
+| global-replace | 963.35 / 965.03 | 980.64 / 1005.31 | 1 / 1 | 3/3 / 3/3 |
+| same-file-batch | 1877.25 / 1891.49 | 2016.23 / 2034.63 | 2 / 2 | 3/3 / 3/3 |
+| multi-file-batch | 2815.59 / 2916.48 | 2955.24 / 3038.18 | 3 / 3 | 3/3 / 3/3 |
+| long-line | 946.60 / 976.60 | 942.47 / 1035.79 | 1 / 1 | 3/3 / 3/3 |
+| insert-after-anchor | 962.76 / 964.25 | 970.77 / 989.27 | 1 / 1 | 3/3 / 3/3 |
+| delete-block | 962.95 / 1124.64 | 1000.47 / 1034.93 | 1 / 1 | 3/3 / 3/3 |
+| large-65536 | 975.65 / 988.83 | 1019.82 / 1032.65 | 1 / 1 | 3/3 / 3/3 |
+| large-1048576 | 993.70 / 1016.14 | 974.48 / 1059.01 | 1 / 1 | 3/3 / 3/3 |
+| large-5242880 | 1027.08 / 1069.88 | 1090.05 / 1137.54 | 1 / 1 | 3/3 / 3/3 |
+| bom-crlf | 941.37 / 962.14 | 979.65 / 990.38 | 1 / 1 | 3/3 / 3/3 |
+| missing-guard | 943.15 / 1013.30 | 1000.05 / 1056.19 | 1 / 1 | 3/3 / 3/3 |
+| ambiguous-guard | 971.58 / 974.01 | 1001.90 / 1007.43 | 1 / 1 | 3/3 / 3/3 |
+| identical-edit | 966.63 / 1037.72 | 965.14 / 978.38 | 1 / 1 | 3/3 / 3/3 |
+| policy-denied | 929.91 / 933.19 | 980.46 / 984.87 | 1 / 1 | 3/3 / 3/3 |
+| write-create | 939.62 / 990.00 | 988.39 / 998.14 | 1 / 1 | 3/3 / 3/3 |
+| patch-multifile | 1886.04 / 1951.32 | 963.61 / 1012.30 | 2 / 1 | 3/3 / 3/3 |
 
 ## Reproduce
 

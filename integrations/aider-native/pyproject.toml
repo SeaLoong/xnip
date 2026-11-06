@@ -4,11 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "xnip-aider"
-version = "0.6.0"
+version = "0.6.1"
 description = "Guarded xnip persistence for the pinned Aider Python scripting API"
 requires-python = ">=3.13"
 dependencies = [
-  "xnip-native-client==0.6.0",
+  "xnip-native-client==0.6.1",
   "aider-chat @ git+https://github.com/Aider-AI/aider@5dc9490bb35f9729ef2c95d00a19ccd30c26339c",
 ]
 

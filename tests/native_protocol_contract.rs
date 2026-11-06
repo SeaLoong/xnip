@@ -219,9 +219,10 @@ fn ordered_lifecycle_operations_share_virtual_state_and_binary_receipts() {
         [239, 187, 191, 65, 13, 10]
     );
     let changes = committed["result"]["changes"].as_array().unwrap();
+    let canonical_renamed = xnip::core::transaction::normalize(&renamed).unwrap();
     let receipt = changes
         .iter()
-        .find(|change| change["path"] == json!(renamed))
+        .find(|change| change["path"] == json!(canonical_renamed))
         .unwrap();
     assert!(receipt["before"].is_null());
     assert_eq!(receipt["after"], json!([239, 187, 191, 65, 13, 10]));

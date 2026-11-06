@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "xnip-smolagents"
-version = "0.6.0"
+version = "0.6.1"
 description = "xnip MCP tools for smolagents applications"
 requires-python = ">=3.12"
 dependencies = ["smolagents[mcp]==1.26.0", "mcp==1.30.0", "mcpadapt==0.1.20"]

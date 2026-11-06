@@ -274,7 +274,13 @@ fn recovery_authorizes_all_journal_paths_including_unchanged_entries() {
     let mut calls = 0;
     let result = transaction::recover_authorized(&error.journal, false, &mut |paths| {
         calls += 1;
-        assert_eq!(paths, [a.clone(), b.clone()]);
+        assert_eq!(
+            paths,
+            [
+                transaction::normalize(&a).unwrap(),
+                transaction::normalize(&b).unwrap(),
+            ]
+        );
         anyhow::bail!("outside host roots")
     });
     assert!(result.is_err());

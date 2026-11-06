@@ -242,8 +242,8 @@ GitHub Actions OIDC job, the publisher command is:
 python .github/scripts/publish_npm.py --prepared candidate/dist-npm --source-commit COMMIT_SHA --auth oidc
 ```
 
-Add `--prerelease` for a development version; first-publication bootstrap may
-explicitly use `--auth token` instead. Stable uses `latest`, development uses `next`. All existing
+Development CI uses `--auth token --prerelease`; first-publication bootstrap
+also selects token authentication explicitly. Stable uses `latest`, development uses `next`. All existing
 versions and channel tags are checked before any write. Platform packages are
 published and verified before the parent; only matching immutable integrities
 can be skipped on retry. An inconsistent existing version, tag mismatch or
@@ -254,9 +254,8 @@ The registry can return success before a new version becomes publicly installabl
 The publisher submits the six platform packs first, then polls them as one batch
 for up to 12 minutes. It submits the parent only after every platform's exact
 version, integrity and channel are visible, then verifies the parent with its own
-12-minute window. A temporary `0.0.0-stage` placeholder alone does not prove that
-human approval is required; check the candidate's actual visibility and account
-status before retrying. A timeout never counts as publication success.
+12-minute window. Check the candidate's actual visibility and account status
+before retrying. A timeout never counts as publication success.
 
 Publication is serialized per stable/development channel. After a partial
 failure, **rerun failed jobs**, keeping the same verified `delivery-<version>`
@@ -265,13 +264,18 @@ an already-published version cannot be replaced. Tag promotion is a separate
 explicit operation, not an implicit retry repair. GitHub publication runs after
 npm verifies and can resume its draft independently.
 
-### First publication and Trusted Publisher transition
+### First publication and Trusted Publisher configuration
 
-Stable releases default to OIDC through `publish.yml`. Development prereleases
-retain explicit token authentication until `ci.yml` has also been configured as
-a trusted publisher on all seven packages. Repository Actions variable
-`XNIP_NPM_AUTH` overrides both defaults: use `oidc` after both callers are ready,
-or explicitly use `token` for first-publication bootstrap.
+The npm registry supports **one Trusted Publisher configuration per package**.
+Configure each of the seven packages for stable releases through `publish.yml`.
+Development prereleases through `ci.yml` use token authentication.
+The official [npm trust documentation](https://raw.githubusercontent.com/npm/cli/latest/docs/lib/content/commands/npm-trust.md)
+records the registry limit.
+
+With repository Actions variable `XNIP_NPM_AUTH` unset, the workflow selects
+OIDC for stable releases and token authentication for development prereleases.
+That variable overrides both defaults when an explicit maintenance override
+is needed, including token authentication for first-publication bootstrap.
 
 Token mode passes the Actions secret `NPM_TOKEN` as `NODE_AUTH_TOKEN`;
 `NODE_AUTH_TOKEN` is also accepted as the secret name when `NPM_TOKEN` is absent.
@@ -282,20 +286,16 @@ status and safe error codes.
 For each package name not yet published, first complete an authorized initial
 publication using a credential allowed to create that package. Then configure
 that package's Trusted Publisher. The official [trust prerequisites](https://docs.npmjs.com/cli/v11/commands/npm-trust/#prerequisites)
-require an existing package, write access and account 2FA. Staged creation is an
-alternative, but it creates a public `0.0.0-stage` placeholder and is not a local
-dry run. [Staging behavior](https://docs.npmjs.com/staged-publishing/)
+require an existing package, write access and account 2FA.
 
 For OIDC, configure each package for `SeaLoong/xnip` and the actual caller filename:
-`publish.yml` for stable tags, plus `ci.yml` if development publishing is enabled.
+`publish.yml` for stable tags.
 Use the exact filename, rather than the Actions display name: the stable entry
 is `.github/workflows/publish.yml`, while its display name remains `release`.
 The reusable `build-release.yml` does not replace this caller identity.
 Allow direct publishing when automatic publication is intended. The workflows
 already grant `id-token: write` through caller and reusable callee; the publisher
-uses GitHub-hosted runners. Set repository Actions variable
-`XNIP_NPM_AUTH=oidc` after both callers are configured, to enable OIDC for development
-publication as well. OIDC mode
+uses GitHub-hosted runners. OIDC mode
 does not inject the bootstrap credential. The npm subprocess uses an isolated
 working directory and empty user/global configuration files, with publishing
 tokens and npm configuration overrides removed from its environment. A failed
@@ -305,31 +305,17 @@ detection cannot silently omit the signed provenance statement.
 A new trust configuration needs a successful publish within two days.
 [Official OIDC configuration and reusable-workflow rules](https://docs.npmjs.com/trusted-publishers/)
 
-Verify the next actual version through OIDC before retiring the bootstrap
-credential. Rerunning an already-complete version only checks its integrity and
-does not prove that OIDC publication works. To verify both caller workflows:
-
-1. Configure both trusted publishers on all seven packages, allowing direct
-   publishing, and set the repository Actions variable `XNIP_NPM_AUTH` to `oidc`.
-2. Prepare the next source release and push its commit to the default branch
-   without a matching stable tag. The ordinary CI run publishes a new development
-   version through `ci.yml`, leaving the existing stable `latest` channel intact.
-3. After that run succeeds, create the stable tag matching Cargo at the same
-   source commit. The tag run publishes through `publish.yml` using the successful
-   full source gate. No source rewrite or existing-tag move is needed.
-4. Confirm that each run published seven new packages, the receipt reports
-   `authentication: oidc`, and npm provenance identifies the expected repository,
-   source commit and caller workflow. A receipt alone records the requested mode;
-   actual new publication and provenance provide the external evidence.
-
-This transition sequence differs from ordinary atomic stable commit/tag pushes
-because it intentionally exercises both configured callers. It requires existing
-stable packages; first-time package bootstrapping follows the token procedure
-above. Complete both new trust relationships within npm's activation window.
+Verify OIDC with a new stable version through the ordinary tagged-release
+procedure. Confirm all seven packages are publicly installable, the publication
+receipt reports `authentication: oidc`, and npm provenance identifies the
+expected repository, source commit and `publish.yml` caller. Existing-version
+reruns verify immutable integrity; a new publication provides authentication
+evidence. Keep the authorized development token available for `ci.yml`'s
+separate `next` channel.
 
 Ordinary direct OIDC publication requires npm 11.5.1+ and Node 22.14+; the hosted
 publishing job uses Node 24.
-The `npm trust` setup CLI and staging require npm 11.15+.
+The `npm trust` setup CLI requires npm 11.15+.
 [CLI prerequisites](https://docs.npmjs.com/cli/v11/commands/npm-trust/#prerequisites)
 
 Public-repository/public-package OIDC publication generates provenance

@@ -1,0 +1,102 @@
+[
+  {
+    "file": "openhands-provider-results.json",
+    "sha256": "ffec874b9412195f4fc11bd7e0cc12ec7ab687e5fc73ebb5f35db66b36320068",
+    "binary_sha256": "144f76db0a340d7eede61b7fc2545c8c7c1d7d937300f378fd6c77c8da3e0688",
+    "measured_workflows": 138,
+    "markdown_file": "openhands-provider-results.md",
+    "markdown_source": "docs/benchmarks/openhands-provider-results.md",
+    "markdown_original_sha256": "2b07065be9c030ff5cda1c101b06ad9cd4dddfcbd4aa607cd134dcde1de5dd16",
+    "markdown_sha256": "2b07065be9c030ff5cda1c101b06ad9cd4dddfcbd4aa607cd134dcde1de5dd16"
+  },
+  {
+    "file": "python-agents-provider-results.json",
+    "sha256": "c3dbeb53a7f3454a098feaa7679134cf17c8d874bd7847a0ab82e6ca764cee2d",
+    "binary_sha256": "144f76db0a340d7eede61b7fc2545c8c7c1d7d937300f378fd6c77c8da3e0688",
+    "measured_workflows": 276,
+    "markdown_file": "python-agents-provider-results.md",
+    "markdown_source": "docs/benchmarks/python-agents-provider-results.md",
+    "markdown_original_sha256": "779b0e750a4b592e9e9f10392e773f406c9ea32508f3cf71511908f6ed17887f",
+    "markdown_sha256": "779b0e750a4b592e9e9f10392e773f406c9ea32508f3cf71511908f6ed17887f"
+  },
+  {
+    "file": "agents-sdk-provider-results.json",
+    "sha256": "ca6c925789c3876d8ab8ca0f147e904974fe887c41026b9da936013fb3b077c7",
+    "binary_sha256": "144f76db0a340d7eede61b7fc2545c8c7c1d7d937300f378fd6c77c8da3e0688",
+    "measured_workflows": 156,
+    "markdown_file": "agents-sdk-provider-results.md",
+    "markdown_source": "docs/benchmarks/agents-sdk-provider-results.md",
+    "markdown_original_sha256": "b12a200274cee16427eb28cae6a3cd1e4e6eb162a24a1bd93d0f102741ec416f",
+    "markdown_sha256": "b12a200274cee16427eb28cae6a3cd1e4e6eb162a24a1bd93d0f102741ec416f"
+  },
+  {
+    "file": "autogen-provider-results.json",
+    "sha256": "02f4dc0ca134472e5d770c96f191d7652f78e4c509a14535e63e3cd9e29dfed4",
+    "binary_sha256": "144f76db0a340d7eede61b7fc2545c8c7c1d7d937300f378fd6c77c8da3e0688",
+    "measured_workflows": 156,
+    "markdown_file": "autogen-provider-results.md",
+    "markdown_source": "docs/benchmarks/autogen-provider-results.md",
+    "markdown_original_sha256": "49c7e0527060608cd201b2366e382122b92f8fb352070fc639ad000e59cd15d7",
+    "markdown_sha256": "49c7e0527060608cd201b2366e382122b92f8fb352070fc639ad000e59cd15d7"
+  },
+  {
+    "file": "smolagents-provider-results.json",
+    "sha256": "5ac87532ac63d86ed99d2406d68d6e6e06dd20cd232b581336fde761ce069e16",
+    "binary_sha256": "144f76db0a340d7eede61b7fc2545c8c7c1d7d937300f378fd6c77c8da3e0688",
+    "measured_workflows": 156,
+    "markdown_file": "smolagents-provider-results.md",
+    "markdown_source": "docs/benchmarks/smolagents-provider-results.md",
+    "markdown_original_sha256": "1e573d690384a64022b989caf8cdd6c6b183bf930d12fef52309aa9d3c7f12ac",
+    "markdown_sha256": "1e573d690384a64022b989caf8cdd6c6b183bf930d12fef52309aa9d3c7f12ac"
+  },
+  {
+    "file": "host-profiles-results.json",
+    "sha256": "d8faf06ed5d7100cfc962a9e4e1020d2f2f7097b132165a036318d55143e4376",
+    "binary_sha256": "144f76db0a340d7eede61b7fc2545c8c7c1d7d937300f378fd6c77c8da3e0688",
+    "measured_workflows": 120,
+    "markdown_file": "host-profiles-results.md",
+    "markdown_source": "docs/benchmarks/host-profiles-results.md",
+    "markdown_original_sha256": "161bca270968bded4604d57b702aaece27e6c951a1a21a0c7dda0389b175f9c8",
+    "markdown_sha256": "40695c18bee33bd0566e73311f354a81d50bacfb9802d0673a774048217950fe"
+  },
+  {
+    "file": "google-adk-provider-results.json",
+    "sha256": "74c2c60687c6dd5768598d9f7f80fd90d533be39fca240c99bbfc30324fc7ff5",
+    "binary_sha256": "144f76db0a340d7eede61b7fc2545c8c7c1d7d937300f378fd6c77c8da3e0688",
+    "measured_workflows": 156,
+    "markdown_file": "google-adk-provider-results.md",
+    "markdown_source": "docs/benchmarks/google-adk-provider-results.md",
+    "markdown_original_sha256": "07c3f2949023b8cb1c55d1cf9158ded877f1c09c3bdc19c8b815a55606cad7d5",
+    "markdown_sha256": "ad156ea980cf613fbc19f6b97339bdc41a0fa51b74ea9aecaffb955f68b9e35d"
+  },
+  {
+    "file": "crewai-provider-results.json",
+    "sha256": "ef66e31532e1cf70ea0778ce02bf8046281150fcf6247246e0e6e0f0243f0fd2",
+    "binary_sha256": "144f76db0a340d7eede61b7fc2545c8c7c1d7d937300f378fd6c77c8da3e0688",
+    "measured_workflows": 156,
+    "markdown_file": "crewai-provider-results.md",
+    "markdown_source": "docs/benchmarks/crewai-provider-results.md",
+    "markdown_original_sha256": "c47778a3426373cae4d62c8780e309e55b9bb5df1c3caf8d5a97c070b368e2a7",
+    "markdown_sha256": "19d984880c6f570052f2ebc45d39c0930a737832f02d44bac3fb57836172a2f0"
+  },
+  {
+    "file": "aider-provider-results.json",
+    "sha256": "addef42b75bc5a499293d7147182cf0a9335ac51371e364aa85e29fb125fb167",
+    "binary_sha256": "144f76db0a340d7eede61b7fc2545c8c7c1d7d937300f378fd6c77c8da3e0688",
+    "measured_workflows": 426,
+    "markdown_file": "aider-provider-results.md",
+    "markdown_source": "docs/benchmarks/aider-provider-results.md",
+    "markdown_original_sha256": "2474e4e58873618579c0dc791a917bce8ed50128b7cbdae718fa10c54da27b36",
+    "markdown_sha256": "6beb841412924560122368c554690a1b38787bccbd87d134e7b7189506cae085"
+  },
+  {
+    "file": "opencode-provider-results.json",
+    "sha256": "da117a68d3c948bb897fd14ecf8a3298ed533ebb67abc6d37bd29f68dc14c2c4",
+    "binary_sha256": "144f76db0a340d7eede61b7fc2545c8c7c1d7d937300f378fd6c77c8da3e0688",
+    "measured_workflows": 138,
+    "markdown_file": "opencode-provider-results.md",
+    "markdown_source": "docs/benchmarks/opencode-provider-results.md",
+    "markdown_original_sha256": "3ac54a39c2162f19deac77b8653bc4bc76c3b21c8c9b4d170136699c3506fdd4",
+    "markdown_sha256": "b776389d2386d98eb97b780ca9699b0c1bcb7831cd628e3503071e1e60ab83ce"
+  }
+]
