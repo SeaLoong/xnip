@@ -16,6 +16,86 @@ struct FailAfter {
     fired: bool,
 }
 
+// Build the retained name-based layout with the real official package manager.
+// Only this historical setup needs npm/pnpm; the product stages a small bundle.
+struct LegacyPackageInstall {
+    host: CommandLifecycle,
+    tarball: Option<PathBuf>,
+}
+
+impl Lifecycle for LegacyPackageInstall {
+    fn preflight(&mut self) -> Result<Capabilities> {
+        self.host.preflight()
+    }
+
+    fn observe(&mut self) -> Result<Observation> {
+        self.host.observe()
+    }
+
+    fn stage(&mut self, directory: &Path) -> Result<()> {
+        self.host.stage(directory)?;
+        let packed = Command::new("npm")
+            .arg("pack")
+            .arg(directory.join("package"))
+            .arg("--pack-destination")
+            .arg(directory)
+            .args(["--ignore-scripts", "--offline", "--json"])
+            .output()?;
+        ensure!(
+            packed.status.success(),
+            "legacy fixture package failed: {}",
+            String::from_utf8_lossy(&packed.stderr)
+        );
+        let result: serde_json::Value = serde_json::from_slice(&packed.stdout)?;
+        self.tarball = Some(
+            directory.join(
+                result[0]["filename"]
+                    .as_str()
+                    .context("npm pack fixture omitted its tarball filename")?,
+            ),
+        );
+        Ok(())
+    }
+
+    fn apply(&mut self, _directory: &Path) -> Result<()> {
+        let installed = Command::new(&self.host.dsh)
+            .args(["plugin", "--profile"])
+            .arg(self.host.profile.file_name().context("profile name")?)
+            .args(["add", "--ignore-scripts", "--offline"])
+            .arg(self.tarball.as_ref().context("legacy fixture tarball")?)
+            .current_dir(&self.host.profile)
+            .env(
+                "DSH_HOME",
+                self.host
+                    .profile
+                    .parent()
+                    .and_then(Path::parent)
+                    .context("DSH home")?,
+            )
+            .env("XNIP_AUTO_UPDATE", "0")
+            .output()?;
+        ensure!(
+            installed.status.success(),
+            "official legacy bundle installation failed: {}\n{}",
+            String::from_utf8_lossy(&installed.stdout),
+            String::from_utf8_lossy(&installed.stderr)
+        );
+        Ok(())
+    }
+
+    fn activate(&mut self, installed: bool) -> Result<()> {
+        self.host.activate(installed)
+    }
+
+    fn remove(&mut self) -> Result<()> {
+        self.host.remove()
+    }
+
+    fn verify(&mut self, installed: bool) -> Result<Verification> {
+        self.host.verify(installed)
+    }
+}
+
 impl FailAfter {
     fn checkpoint(&mut self, phase: Phase) -> Result<()> {
         if !self.fired && phase == self.phase {
@@ -191,5 +271,77 @@ fn real_dsh_failures_after_each_install_phase_restore_original_native_editing() 
             "real DSH {phase:?}: injected after real phase; original bytes, catalog/prompt and native edit restored"
         );
     }
+    // Match the old installation's three managed roots and name-based bundle
+    // membership, then let the current driver select the official removal path.
+    let temporary = tempfile::tempdir()?;
+    let home = fs::canonicalize(temporary.path())?;
+    let initialized = Command::new(&dsh)
+        .args(["--profile", "web", "--dump-config"])
+        .env("DSH_HOME", &home)
+        .env("XNIP_AUTO_UPDATE", "0")
+        .output()?;
+    ensure!(
+        initialized.status.success(),
+        "legacy fixture initialization failed"
+    );
+    let profile = home.join("profiles/web");
+    let package_before = fs::read(profile.join("package.json"))?;
+    let patch_before = fs::read(profile.join("cordis.patch.yml"))?;
+    let lock_before = optional_file(&profile.join("pnpm-lock.yaml"))?;
+    ensure!(
+        !profile.join("node_modules").exists(),
+        "legacy fixture must start fresh"
+    );
+    let mut command = CommandLifecycle {
+        node,
+        driver: repository.join("integrations/dsh-native/lifecycle.mjs"),
+        profile: profile.clone(),
+        dsh,
+        plugin: repository.join("integrations/dsh-native"),
+        executable,
+    };
+    let baseline = command.observe()?;
+    let state = home.join("legacy-installation-state");
+    let mut plan = command.install_plan(state.clone())?;
+    plan.managed_paths = ["package.json", "pnpm-lock.yaml", "node_modules"]
+        .map(|name| profile.join(name))
+        .into();
+    plan.observed_paths
+        .retain(|path| path.file_name().is_none_or(|name| name != "pnpm-lock.yaml"));
+    let mut legacy = LegacyPackageInstall {
+        host: command,
+        tarball: None,
+    };
+    ensure!(native::install(&plan, &mut legacy)?.phase == Phase::Active);
+    let active: serde_json::Value =
+        serde_json::from_slice(&fs::read(profile.join("package.json"))?)?;
+    let bundles = active["dsh"]["profile"]["bundles"]
+        .as_array()
+        .context("legacy bundles")?;
+    ensure!(bundles.iter().any(|name| name == "xnip-dsh-native"));
+    ensure!(bundles.iter().all(|name| name != "./.xnip-native-package"));
+    ensure!(
+        profile
+            .join("node_modules/xnip-dsh-native/index.mjs")
+            .is_file()
+    );
+    ensure!(!profile.join(".xnip-native-package").exists());
+    let mut current = legacy.host;
+    ensure!(native::uninstall(&state, &mut current)?.phase == Phase::Restored);
+    ensure!(fs::read(profile.join("package.json"))? == package_before);
+    ensure!(fs::read(profile.join("cordis.patch.yml"))? == patch_before);
+    ensure!(optional_file(&profile.join("pnpm-lock.yaml"))? == lock_before);
+    ensure!(!profile.join("node_modules").exists());
+    ensure!(current.observe()? == baseline);
+    let restored = native::verify(&state, &mut current, true)?;
+    ensure!(
+        restored
+            .verification
+            .context("restored verification")?
+            .functional_edit
+    );
+    eprintln!(
+        "real DSH legacy name-based bundle: official add/remove, retained snapshots, original bytes and native edit restored"
+    );
     Ok(())
 }

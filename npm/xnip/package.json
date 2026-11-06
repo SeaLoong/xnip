@@ -1,6 +1,6 @@
 {
   "name": "xnip-cli",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "private": true,
   "description": "Byte-preserving editing CLI and MCP server for coding agents",
   "license": "MIT",
@@ -14,6 +14,9 @@
   "exports": {
     "./native": "./lib/native.cjs",
     "./dsh": "./integrations/dsh/index.mjs",
+    "./dsh-native": "./integrations/dsh-native/index.mjs",
+    "./dsh-native/lifecycle": "./integrations/dsh-native/lifecycle.mjs",
+    "./dsh-native/package.json": "./integrations/dsh-native/package.json",
     "./pi": "./integrations/pi/index.mjs",
     "./pi-native": "./integrations/pi-native/index.mjs",
     "./gemini-native": "./integrations/gemini-native/index.mjs",

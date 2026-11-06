@@ -157,6 +157,13 @@ def main():
         if result is None or result.groups() != ("1", "0", "0"):
             raise AssertionError("The real-host lifecycle test must execute and pass")
         checks.append({"suite": "lifecycle", "tests": 1, "pass": 1, "phases": 5})
+        environment["XNIP_NPM_DSH_EVIDENCE"] = str(directory / "npm-installed-lifecycle.json")
+        output = execute(
+            [sys.executable, "tests/npm_dsh_lifecycle.py"], environment,
+            directory / "npm-installed-lifecycle.log",
+        )
+        checks.append({"suite": "npm-installed-lifecycle", **require_unittest(output, 3)})
+        print(f"DSH {version}: npm-installed-lifecycle 3/3", flush=True)
         report["versions"].append({"host": version, "checks": checks})
         print(f"DSH {version}: lifecycle 5/5 phases", flush=True)
     for host, (version, suites) in NODE_SDKS.items():

@@ -17,6 +17,7 @@ use serde::{Deserialize, Serialize};
 use snapshot::{Snapshot, atomic_json};
 
 const MANIFEST: &str = "install-manifest.json";
+const COORDINATION_LOCK: &str = "operation.lock";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Capabilities {
@@ -162,6 +163,76 @@ pub struct NativeReport {
     pub verification: Option<Verification>,
 }
 
+/// Distinguish an empty installation from retained data needing inspection.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum NativeStateCode {
+    StateMissing,
+    StateEmpty,
+    ManifestMissing,
+}
+
+impl std::fmt::Display for NativeStateCode {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter.write_str(match self {
+            Self::StateMissing => "state_missing",
+            Self::StateEmpty => "state_empty",
+            Self::ManifestMissing => "manifest_missing",
+        })
+    }
+}
+
+/// An actionable state diagnostic, retained through `anyhow` for CLI JSON output.
+#[derive(Debug, Serialize, thiserror::Error)]
+#[error("{code}: {message} (state directory: {state_dir})")]
+pub struct NativeStateError {
+    pub code: NativeStateCode,
+    pub state_dir: PathBuf,
+    pub message: String,
+}
+
+impl NativeStateError {
+    fn new(state: &Path, code: NativeStateCode) -> Self {
+        let message = match code {
+            NativeStateCode::StateMissing => {
+                "Native installation state directory is missing. Select the --state-dir used during installation."
+            }
+            NativeStateCode::StateEmpty => {
+                "Native installation data is empty. Any retained operation.lock coordinates concurrent commands. Recovery requires a retained --state-dir containing install-manifest.json."
+            }
+            NativeStateCode::ManifestMissing => {
+                "Installation data remains, and install-manifest.json is missing. Preserve this directory for inspection and select a --state-dir containing the retained installation manifest."
+            }
+        };
+        Self {
+            code,
+            state_dir: state.to_path_buf(),
+            message: message.into(),
+        }
+    }
+}
+
+/// Cleanup clears installation data while retaining the stable coordination inode.
+#[derive(Debug, Serialize)]
+pub(crate) struct CleanReport {
+    pub state_dir: PathBuf,
+    pub installation_data: &'static str,
+    pub removed: Vec<PathBuf>,
+    pub retained_coordination_paths: Vec<PathBuf>,
+}
+
+impl CleanReport {
+    fn cleared(state: &Path, removed: Vec<PathBuf>) -> Self {
+        let lock = state.join(COORDINATION_LOCK);
+        Self {
+            state_dir: state.to_path_buf(),
+            installation_data: "cleared",
+            removed,
+            retained_coordination_paths: lock.is_file().then_some(lock).into_iter().collect(),
+        }
+    }
+}
+
 struct Lock(File);
 
 impl Lock {
@@ -172,7 +243,7 @@ impl Lock {
             .write(true)
             .create(true)
             .truncate(false)
-            .open(state.join("operation.lock"))?;
+            .open(state.join(COORDINATION_LOCK))?;
         file.try_lock()
             .context("another native installation operation owns this state directory")?;
         Ok(Self(file))
@@ -185,7 +256,7 @@ impl Drop for Lock {
     }
 }
 
-fn ensure_private_state(state: &Path) -> Result<()> {
+fn validate_state_path(state: &Path) -> Result<()> {
     ensure!(state.is_absolute(), "state directory must be absolute");
     ensure!(
         !state.components().any(|part| matches!(
@@ -205,6 +276,22 @@ fn ensure_private_state(state: &Path) -> Result<()> {
         }
         parent = path.parent();
     }
+    Ok(())
+}
+
+/// Resolve CLI paths after checking the supplied path's ownership boundary.
+pub(crate) fn resolve_state_path(state: &Path) -> Result<PathBuf> {
+    let absolute = if state.is_absolute() {
+        state.to_path_buf()
+    } else {
+        std::env::current_dir()?.join(state)
+    };
+    validate_state_path(&absolute)?;
+    crate::core::transaction::normalize(&absolute)
+}
+
+fn ensure_private_state(state: &Path) -> Result<()> {
+    validate_state_path(state)?;
     fs::create_dir_all(state)?;
     #[cfg(unix)]
     {
@@ -242,6 +329,8 @@ fn profile_lock(profile: &Path) -> Result<Lock> {
 /// Restore an interrupted operation from its durable baseline. This explicit
 /// recovery operation does not infer that a surviving host process was stopped.
 pub fn recover(state: &Path, lifecycle: &mut dyn Lifecycle) -> Result<NativeReport> {
+    // An empty recovery request leaves the directory exactly as observed.
+    load(state)?;
     let _lock = Lock::acquire(state)?;
     let mut manifest = load(state)?;
     let _profile_lock = profile_lock(&manifest.profile)?;
@@ -258,13 +347,44 @@ fn save(state: &Path, manifest: &Manifest) -> Result<()> {
     atomic_json(&state.join(MANIFEST), manifest)
 }
 
-fn load(state: &Path) -> Result<Manifest> {
+fn canonical_state(state: &Path) -> Result<()> {
     ensure!(state.is_absolute(), "state directory must be absolute");
+    match fs::symlink_metadata(state) {
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            return Err(NativeStateError::new(state, NativeStateCode::StateMissing).into());
+        }
+        Err(error) => return Err(error.into()),
+        Ok(_) => {}
+    }
     ensure!(
         fs::canonicalize(state)? == state,
         "state directory must be its real canonical path"
     );
-    let manifest: Manifest = serde_json::from_slice(&fs::read(state.join(MANIFEST))?)?;
+    Ok(())
+}
+
+fn missing_manifest(state: &Path) -> Result<NativeStateError> {
+    for entry in fs::read_dir(state)? {
+        let entry = entry?;
+        if entry.file_name() != COORDINATION_LOCK || !entry.file_type()?.is_file() {
+            return Ok(NativeStateError::new(
+                state,
+                NativeStateCode::ManifestMissing,
+            ));
+        }
+    }
+    Ok(NativeStateError::new(state, NativeStateCode::StateEmpty))
+}
+
+fn load(state: &Path) -> Result<Manifest> {
+    canonical_state(state)?;
+    let bytes = match fs::read(state.join(MANIFEST)) {
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            return Err(missing_manifest(state)?.into());
+        }
+        result => result?,
+    };
+    let manifest: Manifest = serde_json::from_slice(&bytes)?;
     ensure!(
         manifest.schema_version == 1,
         "unsupported native manifest schema"
@@ -491,7 +611,7 @@ pub fn uninstall(state: &Path, lifecycle: &mut dyn Lifecycle) -> Result<NativeRe
         differences.is_empty(),
         "profile changed after installation; refusing to overwrite: {differences:?}"
     );
-    // Validate original backup contents before asking the package manager to
+    // Validate original backup contents before asking the host lifecycle to
     // remove anything; a corrupt backup must leave the current host untouched.
     manifest.baseline.verify_blobs(state)?;
     installed.verify_blobs(state)?;
@@ -631,12 +751,34 @@ fn report(state: &Path, manifest: &Manifest) -> Result<NativeReport> {
 /// Clean only this installation's backups after a verified restoration. Editing
 /// journals and .bak files are never inferred or deleted from arbitrary paths.
 pub fn clean(state: &Path, purge_user_data: bool) -> Result<Vec<PathBuf>> {
+    Ok(clean_report(state, purge_user_data)?.removed)
+}
+
+pub(crate) fn clean_report(state: &Path, purge_user_data: bool) -> Result<CleanReport> {
     ensure!(
         purge_user_data,
         "clean requires explicit purge_user_data for retained backup contents"
     );
+    if let Err(error) = canonical_state(state) {
+        if error
+            .downcast_ref::<NativeStateError>()
+            .is_some_and(|state| state.code == NativeStateCode::StateMissing)
+        {
+            return Ok(CleanReport::cleared(state, Vec::new()));
+        }
+        return Err(error);
+    }
     let _lock = Lock::acquire(state)?;
-    let manifest = load(state)?;
+    let manifest = match load(state) {
+        Err(error)
+            if error
+                .downcast_ref::<NativeStateError>()
+                .is_some_and(|state| state.code == NativeStateCode::StateEmpty) =>
+        {
+            return Ok(CleanReport::cleared(state, Vec::new()));
+        }
+        result => result?,
+    };
     let _profile_lock = profile_lock(&manifest.profile)?;
     ensure!(
         manifest.phase == Phase::Restored,
@@ -656,7 +798,8 @@ pub fn clean(state: &Path, purge_user_data: bool) -> Result<Vec<PathBuf>> {
     }
     fs::remove_file(state.join(MANIFEST))?;
     removed.push(state.join(MANIFEST));
-    Ok(removed)
+    // Keep operation.lock's inode stable for commands that already opened it.
+    Ok(CleanReport::cleared(state, removed))
 }
 
 fn remove_stage(path: &Path) -> Result<()> {
@@ -736,11 +879,23 @@ impl CommandLifecycle {
     pub fn install_plan(&mut self, state_dir: PathBuf) -> Result<InstallPlan> {
         let capabilities = self.preflight()?;
         let profile = fs::canonicalize(&self.profile)?;
-        let managed_paths = ["package.json", "pnpm-lock.yaml", "node_modules"]
+        let managed_paths = ["package.json", ".xnip-native-package"]
             .iter()
             .map(|name| profile.join(name))
             .collect();
-        let mut observed_paths = vec![profile.join("cordis.patch.yml")];
+        let mut observed_paths = vec![
+            profile.join("cordis.patch.yml"),
+            profile.join("pnpm-lock.yaml"),
+        ];
+        // Dependency contents belong to the profile's existing package manager.
+        // A root link is an opaque observation; ordinary dependency trees stay
+        // outside both installation snapshots and filesystem mutations.
+        let dependencies = profile.join("node_modules");
+        if fs::symlink_metadata(&dependencies)
+            .is_ok_and(|metadata| metadata.file_type().is_symlink())
+        {
+            observed_paths.push(dependencies);
+        }
         if let Some(home) = profile.parent().and_then(Path::parent) {
             observed_paths.push(home.join("cordis.patch.yml"));
         }

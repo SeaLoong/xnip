@@ -73,7 +73,7 @@ $env:XNIP_VERSION = 'v1.2.4-dev.123.gabcdef123456'
 ./install.ps1
 ```
 
-The default installers and [silent updater](updates.md) remain on stable releases. A preview based on the next patch cannot be replaced by the previous stable version.
+The default installers and [silent updater](updates.md) remain on stable releases. A preview with a higher patch version stays ahead of the previous stable release.
 
 ## Stable release procedure
 
@@ -192,6 +192,10 @@ These checks cover offline installation without lifecycle scripts, binary
 identity and tampering, concurrent first starts, stdin/EOF forwarding, exit
 behavior and an active MCP session surviving package removal. They never publish.
 
+Each of the six native npm acceptance runners also resolves the installed DSH
+native exports and loads the packaged provider, runtime, rewind helper and shared
+client. The Linux harness separately exercises the official DSH profile lifecycle.
+
 The launcher copies a verified executable into an immutable
 version/platform/SHA256 directory rather than mapping the package-manager
 payload. Concurrent first launches publish a complete cache directory atomically.
@@ -239,7 +243,7 @@ The two commands above do not publish. The release job selects its authenticatio
 GitHub Actions OIDC job, the publisher command is:
 
 ```sh
-python .github/scripts/publish_npm.py --prepared candidate/dist-npm --source-commit COMMIT_SHA --auth oidc
+python .github/scripts/publish_npm.py --prepared dist-npm --source-commit COMMIT_SHA --auth oidc
 ```
 
 Development CI uses `--auth token --prerelease`; first-publication bootstrap
@@ -254,7 +258,7 @@ The registry can return success before a new version becomes publicly installabl
 The publisher submits the six platform packs first, then polls them as one batch
 for up to 12 minutes. It submits the parent only after every platform's exact
 version, integrity and channel are visible, then verifies the parent with its own
-12-minute window. Check the candidate's actual visibility and account status
+12-minute window. Check the new version's actual visibility and account status
 before retrying. A timeout never counts as publication success.
 
 Publication is serialized per stable/development channel. After a partial

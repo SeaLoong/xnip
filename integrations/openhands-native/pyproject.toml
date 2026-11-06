@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "xnip-openhands"
-version = "0.6.1"
+version = "0.6.2"
 description = "xnip storage for OpenHands SDK file_editor tools"
 requires-python = ">=3.12"
-dependencies = ["xnip-native-client==0.6.1", "openhands-sdk==1.60.1", "openhands-tools==1.60.1"]
+dependencies = ["xnip-native-client==0.6.2", "openhands-sdk==1.60.1", "openhands-tools==1.60.1"]
 
 [tool.setuptools]
 py-modules = ["xnip_openhands"]

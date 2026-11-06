@@ -36,7 +36,7 @@ RELEASE_PREFIXES = (
     ".cargo/", ".github/skills/xnip-editing/", "xtask/src/",
     "integrations/agents-md/", "integrations/aider/", "integrations/claude-code/",
     "integrations/codex/", "integrations/copilot/", "integrations/cursor/", "integrations/generic/",
-    "integrations/dsh/", "integrations/pi/", "integrations/native/",
+    "integrations/dsh/", "integrations/dsh-native/", "integrations/pi/", "integrations/native/",
     "integrations/pi-native/", "integrations/gemini-native/", "integrations/cline-native/",
     "integrations/opencode/", "integrations/host-profiles/", "npm/",
 )

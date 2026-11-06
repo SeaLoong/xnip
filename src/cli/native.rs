@@ -64,9 +64,9 @@ struct Host {
     /// Existing DSH profile directory, not a profile name.
     #[arg(long)]
     profile: PathBuf,
-    /// Local native adapter package directory; no registry publication is needed.
+    /// Adapter directory override. The npm launcher selects its bundled adapter.
     #[arg(long)]
-    plugin: PathBuf,
+    plugin: Option<PathBuf>,
     #[arg(long)]
     state_dir: Option<PathBuf>,
     #[arg(long, default_value = "node")]
@@ -83,15 +83,21 @@ impl Host {
             self.framework
         );
         let profile = std::fs::canonicalize(self.profile)?;
-        let plugin = std::fs::canonicalize(self.plugin)?;
+        let plugin = self
+            .plugin
+            .or_else(|| std::env::var_os("XNIP_DSH_NATIVE_PLUGIN").map(PathBuf::from))
+            .ok_or_else(|| {
+                anyhow::anyhow!(
+                    "DSH native adapter location is required: use the xnip-cli npm launcher for its bundled adapter, or pass --plugin DIRECTORY"
+                )
+            })?;
+        let plugin = std::fs::canonicalize(&plugin).map_err(|error| {
+            anyhow::anyhow!("DSH native adapter directory {}: {error}", plugin.display())
+        })?;
         let state = self
             .state_dir
             .unwrap_or_else(|| profile.join(".xnip-native"));
-        let state = if state.is_absolute() {
-            state
-        } else {
-            std::env::current_dir()?.join(state)
-        };
+        let state = state_path(&state)?;
         if state.join("install-manifest.json").exists() {
             anyhow::ensure!(
                 native::installation_profile(&state)? == profile,
@@ -163,19 +169,43 @@ pub fn run(args: Args) -> anyhow::Result<u8> {
             let (state, mut lifecycle) = host.resolve()?;
             serde_json::to_value(native::verify(&state, &mut lifecycle, restored)?)?
         }
-        Command::Doctor(state) => serde_json::to_value(native::doctor(&state.state_dir)?)?,
+        Command::Doctor(state) => state_report(&state.state_dir)?,
         Command::Clean {
             state,
             purge_user_data,
-        } => {
-            serde_json::json!({"removed":native::clean(&state.state_dir, purge_user_data)?})
-        }
+        } => serde_json::to_value(native::clean_report(
+            &state_path(&state.state_dir)?,
+            purge_user_data,
+        )?)?,
     };
     let out = std::io::stdout();
     let mut out = out.lock();
     serde_json::to_writer_pretty(&mut out, &result)?;
     std::io::Write::write_all(&mut out, b"\n")?;
     Ok(crate::output::exit::SUCCESS)
+}
+
+fn state_path(state: &std::path::Path) -> anyhow::Result<PathBuf> {
+    native::resolve_state_path(state)
+}
+
+fn state_report(state: &std::path::Path) -> anyhow::Result<serde_json::Value> {
+    match native::doctor(&state_path(state)?) {
+        Ok(report) => Ok(serde_json::to_value(report)?),
+        Err(error) => {
+            if let Some(diagnostic) = error.downcast_ref::<native::NativeStateError>() {
+                match diagnostic.code {
+                    native::NativeStateCode::StateMissing | native::NativeStateCode::StateEmpty => {
+                        let mut report = serde_json::to_value(diagnostic)?;
+                        report["installed"] = false.into();
+                        return Ok(report);
+                    }
+                    native::NativeStateCode::ManifestMissing => {}
+                }
+            }
+            Err(error)
+        }
+    }
 }
 
 #[derive(Debug, ClapArgs)]
@@ -196,7 +226,7 @@ pub fn doctor(args: &DoctorArgs) -> anyhow::Result<u8> {
         use std::io::Write;
         writeln!(out, "  native-protocol: 1 (core transactions)")?;
         if let Some(state) = &args.state_dir {
-            serde_json::to_writer_pretty(&mut out, &native::doctor(state)?)?;
+            serde_json::to_writer_pretty(&mut out, &state_report(state)?)?;
             writeln!(out)?;
         }
         let catalog: IntegrationCatalog =

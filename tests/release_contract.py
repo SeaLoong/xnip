@@ -116,6 +116,9 @@ class EligibilityContracts(unittest.TestCase):
             ".github/scripts/publish_release.py", ".github/scripts/publish_npm.py",
             "npm/prepare.py", "npm/xnip/package.json", "npm/xnip/bin/xnip.cjs", "npm/README.md",
             "integrations/dsh/index.mjs", "integrations/pi/index.mjs", "integrations/catalog.json",
+            "integrations/dsh-native/index.mjs", "integrations/dsh-native/lifecycle.mjs",
+            "integrations/dsh-native/package.json", "integrations/dsh-native/cordis.patch.yml",
+            "integrations/dsh-native/README.md",
             ".github/workflows/build-release.yml", ".github/workflows/publish.yml",
         ]
         for path in eligible:

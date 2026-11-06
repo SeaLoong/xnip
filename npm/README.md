@@ -12,10 +12,16 @@ x64 or ARM64. Keep optional dependencies enabled so npm can select the native
 executable for your system. No Rust compiler is required.
 
 ```sh
-npm install --global xnip-cli
+npm install --global xnip-cli@latest
 xnip --version
 xnip doctor
 ```
+
+If `xnip` is missing after installation, inspect `npm prefix --global`. npm puts
+global commands in `<prefix>/bin` on macOS/Linux and `<prefix>` on Windows.
+Add that command directory to the launching shell or client's `PATH` using the
+[platform-specific checks](https://github.com/SeaLoong/xnip/blob/master/docs/installation.md#find-the-global-command).
+The full command path can verify the installed package before updating `PATH`.
 
 For a project-local installation:
 
@@ -150,8 +156,14 @@ Select native entries explicitly when loading a Pi extension or constructing
 an SDK session. The JavaScript adapters resolve the installed xnip executable;
 the native setup and test matrix use Node 24.
 
+`xnip-cli` 0.6.2 bundles the DSH native adapter. The
+[DSH lifecycle guide](https://github.com/SeaLoong/xnip/blob/master/docs/native.md#dsh-profile-setup)
+covers installation, verification, restoration and cleanup through the installed
+command.
+
 | Entry | Host seam and verified version |
 |---|---|
+| `xnip native install --profile ... --dsh ...` | [DSH rc.2 / rc.5 Linux host journey](https://github.com/SeaLoong/xnip/blob/master/docs/native.md#dsh-profile-setup), using the package's bundled adapter |
 | `xnip-cli/pi-native` | [Pi 1.3.0 same-name tools](https://github.com/SeaLoong/xnip/blob/master/docs/pi-native.md) through its extension loader |
 | `xnip-cli/gemini-native` | [Gemini core 0.27.2](https://github.com/SeaLoong/xnip/blob/master/docs/gemini-native.md) local `Config` filesystem service and per-tool scope |
 | `xnip-cli/cline-native` | [Cline SDK/core 0.2.0](https://github.com/SeaLoong/xnip/blob/master/docs/cline-native.md) public `apply_patch` tool executor |
@@ -160,7 +172,8 @@ the native setup and test matrix use Node 24.
 
 Each guide covers session construction, host tool execution and restoration.
 The [DSH provider guide](https://github.com/SeaLoong/xnip/blob/master/docs/native.md)
-describes its profile installer. Existing MCP registrations retain their
+describes installation, verification, removal and cleanup through the installed
+`xnip` command. Existing MCP registrations retain their
 original setup paths above.
 
 The support matrix also covers aider IO, DeepAgents backends, LangGraph tools

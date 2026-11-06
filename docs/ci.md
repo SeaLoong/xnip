@@ -39,6 +39,13 @@ Current host dependencies live under `target/native-hosts`; historical
 source-adapter fixtures retain `target/native-bench`. The same scope classifier
 selects these checks for adapters, shared clients, profiles and benchmark code.
 
+The Ubuntu job also runs the installed-npm DSH journey on rc.2 and rc.5: three
+profile layouts per version exercise the installed command shim, bundled
+adapter discovery and the complete install/verify/restore/clean lifecycle.
+Shared symlinks and ordinary dependency trees retain their baseline state.
+This DSH host gate records Linux evidence. The Linux/macOS/Windows npm matrix
+separately verifies the CLI/MCP launcher, payload and execution-cache contracts.
+
 The six packaged reference documents are `apply-format.md`, `error-codes.md`, `examples.md`, `patch.md`, `recovery.md` and `edit.md`. The selector constants are authoritative; update their boundary contracts when adding a generated input or a document consumed by Rust tests. Release eligibility remains a separate policy in [releasing](releasing.md).
 
 ## Job contents
@@ -48,7 +55,7 @@ The six packaged reference documents are `apply-format.md`, `error-codes.md`, `e
 | `scope` | Determine changed inputs and default-branch release eligibility once |
 | `quality` | On Rust inputs: rustfmt, Clippy with all targets, rustdoc with warnings denied, and verified crate packaging. On integration inputs: regenerate and compare generated integration files |
 | `test` | One `cargo test --workspace --locked` per OS when Rust is selected; packaging-only changes build the CLI once per OS. Selected npm checks prepare/install private host tarballs offline and test actual process/cache behavior. The Windows Rust leg also runs offline PowerShell installer contracts |
-| `harnesses` | Ubuntu: Node 24.13.0, Python 3.13, pnpm 11.25.0; frozen catalog routes, isolated Python SDK families, real plugin/SDK/stdio calls, private-package entries, setup and measured-runner contracts |
+| `harnesses` | Ubuntu: Node 24.13.0, Python 3.13, pnpm 11.25.0; frozen catalog routes, isolated Python SDK families, real plugin/SDK/stdio calls, installed-npm DSH lifecycle on Linux, setup and measured-runner contracts |
 | `compatibility` | Rust 1.89 check for all workspace targets, then cargo-deny |
 | `contracts` | actionlint plus offline scope, release-verification, release-planner, publisher, native-benchmark plumbing and POSIX installer contracts; shell syntax check |
 | `ci` | Require every selected job to pass; emit the expanded full-verification marker only after all checks in full mode pass |

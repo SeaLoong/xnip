@@ -2,12 +2,17 @@
 "use strict";
 
 const { spawn } = require("node:child_process");
+const path = require("node:path");
 const { resolveNativeExecutable, childEnvironment } = require("../lib/native.cjs");
 
 let child;
 try {
   child = spawn(resolveNativeExecutable(), process.argv.slice(2), {
-    stdio: ["pipe", "pipe", "pipe"], shell: false, windowsHide: true, env: childEnvironment(),
+    stdio: ["pipe", "pipe", "pipe"], shell: false, windowsHide: true,
+    env: {
+      ...childEnvironment(),
+      XNIP_DSH_NATIVE_PLUGIN: path.resolve(__dirname, "../integrations/dsh-native"),
+    },
   });
 } catch (error) {
   process.stderr.write(error.message + "\n");

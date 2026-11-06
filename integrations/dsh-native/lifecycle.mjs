@@ -20,6 +20,11 @@ const dsh = option('--dsh');
 const pluginDir = option('--plugin');
 const executable = option('--executable') ?? process.env.XNIP_EDITOR_EXECUTABLE ?? 'xnip';
 const name = 'xnip-dsh-native';
+const bundleDirectory = '.xnip-native-package';
+const bundleEntry = './' + bundleDirectory;
+const bundleRoot = path.join(profile, bundleDirectory);
+const bundleFiles = ['package.json', 'index.mjs', 'lifecycle.mjs', 'runtime.mjs',
+  'rewind-validation.mjs', 'editor-client.mjs', 'cordis.patch.yml'];
 const stage = option('--stage');
 const installed = args.includes('--installed');
 const execute = promisify(execFile);
@@ -27,6 +32,19 @@ function selectedEntries(entries) {
   return entries.flatMap(entry => entry.disabled === true ? [] : [entry,
     ...selectedEntries(Array.isArray(entry.config) ? entry.config : entry.config?.plugins ?? []),
   ]);
+}
+
+async function writeProfileManifest(manifest) {
+  // The temporary file belongs to the managed bundle directory. A crash leaves
+  // both the old manifest and any temporary bytes inside the snapshot boundary.
+  const temporary = await fs.mkdtemp(path.join(bundleRoot, '.manifest-'));
+  try {
+    const filename = path.join(temporary, 'package.json');
+    await fs.writeFile(filename, JSON.stringify(manifest, null, 2) + '\n', {
+      mode: (await fs.stat(path.join(profile, 'package.json'))).mode,
+    });
+    await fs.rename(filename, path.join(profile, 'package.json'));
+  } finally { await fs.rm(temporary, { recursive: true, force: true }); }
 }
 
 async function main() {
@@ -42,7 +60,7 @@ async function main() {
   const manifest = JSON.parse(await fs.readFile(path.join(profile, 'package.json'), 'utf8'));
   await fs.access(path.join(profile, 'cordis.patch.yml'));
   const bundles = manifest.dsh?.profile?.bundles ?? [];
-  const active = bundles.includes(name);
+  const active = bundles.includes(name) || bundles.includes(bundleEntry);
   const dump = () => run(['--profile', path.basename(profile), '--dump-config']);
   const fixtureOptions = async cwd => {
     const require = createRequire(path.join(hostRoot, 'package.json'));
@@ -63,7 +81,7 @@ async function main() {
     if (active !== providerEntries.some(entry => entry.id === 'xnip-native-fs' && !entry.disabled)) throw new Error('Native provider patch did not compose as intended');
     let plugin;
     if (active) {
-      const packageRoot = path.join(profile, 'node_modules', name);
+      const packageRoot = bundles.includes(bundleEntry) ? bundleRoot : path.join(profile, 'node_modules', name);
       const metadata = JSON.parse(await fs.readFile(path.join(packageRoot, 'package.json'), 'utf8'));
       if (metadata.name !== name) throw new Error('Installed native package identity mismatch');
       plugin = await import(pathToFileURL(path.join(packageRoot, 'index.mjs')).href);
@@ -96,28 +114,60 @@ async function main() {
     if (!stage || !pluginDir) throw new Error('stage requires --stage and --plugin');
     await fs.mkdir(stage, { recursive: true });
     const packaged = path.join(stage, 'package');
-    await fs.cp(path.resolve(pluginDir), packaged, { recursive: true });
+    await fs.mkdir(packaged, { recursive: true });
+    await Promise.all(bundleFiles.filter(file => !['editor-client.mjs', 'cordis.patch.yml'].includes(file))
+      .map(file => fs.copyFile(path.join(pluginDir, file), path.join(packaged, file))));
     await fs.copyFile(clientSource, path.join(packaged, 'editor-client.mjs'));
     // This configuration belongs to the installed package. The profile user's
     // patch remains untouched, and runtime and verification use the same binary.
     await fs.writeFile(path.join(packaged, 'cordis.patch.yml'),
       `- id: xnip-mcp\n  disabled: true\n- id: fs-sandbox\n  disabled: true\n- insert:\n    - id: xnip-native-fs\n      name: ./index.mjs\n      config:\n        executable: ${JSON.stringify(executable)}\n`);
-    const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-    const result = JSON.parse((await execute(npm, ['pack', packaged, '--pack-destination', path.resolve(stage), '--ignore-scripts', '--json'], { encoding: 'utf8', env, timeout: 30000 })).stdout);
-    await fs.writeFile(path.join(stage, 'package.json'), JSON.stringify({ tarball: result[0].filename, integrity: result[0].integrity }));
+    const files = await Promise.all(bundleFiles.map(async file => ({
+      path: file,
+      sha256: createHash('sha256').update(await fs.readFile(path.join(packaged, file))).digest('hex'),
+    })));
+    await fs.writeFile(path.join(stage, 'package.json'), JSON.stringify({ files }));
     return {};
   }
   if (verb === 'apply') {
     if (!stage) throw new Error('apply requires --stage');
     const metadata = JSON.parse(await fs.readFile(path.join(stage, 'package.json'), 'utf8'));
-    const tarball = path.resolve(stage, metadata.tarball);
-    if (path.dirname(tarball) !== path.resolve(stage)) throw new Error('Invalid staged package path');
-    const digest = 'sha512-' + createHash('sha512').update(await fs.readFile(tarball)).digest('base64');
-    if (digest !== metadata.integrity) throw new Error('Staged package integrity mismatch');
-    await run(['plugin', '--profile', path.basename(profile), 'add', '--ignore-scripts', tarball]);
+    const packaged = path.resolve(stage, 'package');
+    const files = await Promise.all(metadata.files.map(async file => {
+      const source = path.resolve(packaged, file.path);
+      const destination = path.resolve(bundleRoot, file.path);
+      if (!source.startsWith(packaged + path.sep) || !destination.startsWith(bundleRoot + path.sep)) {
+        throw new Error('Invalid staged bundle file path');
+      }
+      const content = await fs.readFile(source);
+      if (createHash('sha256').update(content).digest('hex') !== file.sha256) throw new Error('Staged bundle file integrity mismatch');
+      return { destination, content };
+    }));
+    await fs.rm(bundleRoot, { recursive: true, force: true });
+    for (const file of files) {
+      await fs.mkdir(path.dirname(file.destination), { recursive: true });
+      await fs.writeFile(file.destination, file.content);
+    }
+    const next = { ...manifest, dsh: { ...manifest.dsh, profile: { ...manifest.dsh?.profile,
+      bundles: [...bundles.filter(entry => entry !== bundleEntry), bundleEntry],
+    } } };
+    await writeProfileManifest(next);
     return {};
   }
-  if (verb === 'remove') { await run(['plugin', '--profile', path.basename(profile), 'remove', name]); return {}; }
+  if (verb === 'remove') {
+    if (bundles.includes(bundleEntry)) {
+      const next = { ...manifest, dsh: { ...manifest.dsh, profile: { ...manifest.dsh.profile,
+        bundles: bundles.filter(entry => entry !== bundleEntry),
+      } } };
+      await writeProfileManifest(next);
+      await fs.rm(bundleRoot, { recursive: true });
+    } else {
+      // Retained manifests from package-manager installations keep their
+      // original removal lifecycle and dependency snapshots.
+      await run(['plugin', '--profile', path.basename(profile), 'remove', name]);
+    }
+    return {};
+  }
   if (verb === 'activate') { await dump(); return {}; }
   if (verb === 'verify') {
     if (active !== installed) throw new Error('Profile native bundle membership does not match requested state');

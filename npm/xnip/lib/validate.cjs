@@ -154,6 +154,9 @@ if (native) {
   if (metadata.localOnly && JSON.stringify(pkg.bundledDependencies) !== JSON.stringify(Object.keys(expectedDependencies))) fail("private host-local package must bundle its one payload");
   const required = {
     "./native": "./lib/native.cjs", "./dsh": "./integrations/dsh/index.mjs",
+    "./dsh-native": "./integrations/dsh-native/index.mjs",
+    "./dsh-native/lifecycle": "./integrations/dsh-native/lifecycle.mjs",
+    "./dsh-native/package.json": "./integrations/dsh-native/package.json",
     "./pi": "./integrations/pi/index.mjs", "./pi-native": "./integrations/pi-native/index.mjs",
     "./gemini-native": "./integrations/gemini-native/index.mjs", "./cline-native": "./integrations/cline-native/index.mjs",
     "./opencode": "./integrations/opencode/index.mjs",
@@ -164,4 +167,7 @@ if (native) {
       || pkg.dsh?.bundle?.patch !== "./integrations/dsh/cordis.patch.yml"
       || JSON.stringify(pkg.pi?.extensions) !== '["./integrations/pi/index.mjs"]') fail("invalid CLI or harness entry points");
   for (const relative of [pkg.bin.xnip, ...Object.values(required), pkg.dsh.bundle.patch]) ordinary(relative);
+  for (const relative of ["integrations/dsh-native/editor-client.mjs", "integrations/dsh-native/runtime.mjs",
+      "integrations/dsh-native/rewind-validation.mjs", "integrations/dsh-native/cordis.patch.yml",
+      "integrations/native/editor-client.mjs"]) ordinary(relative);
 }

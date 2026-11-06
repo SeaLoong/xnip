@@ -118,6 +118,74 @@ class NpmContract(unittest.TestCase):
             result=subprocess.run([NODE,str(directory/"lib/validate.cjs")],capture_output=True,timeout=15)
             self.assertEqual(result.returncode,0,result.stderr)
 
+    def test_installed_dsh_native_provider_loads_its_complete_graph_and_edits(self):
+        # Copy only the already tarball-installed prefix outside the checkout.
+        # All module resolution and execution below starts from that prefix.
+        with tempfile.TemporaryDirectory(prefix="xnip-installed-dsh-") as temporary:
+            directory=Path(temporary).resolve()
+            prefix=directory/"installed"
+            shutil.copytree(self.install,prefix)
+            project=directory/"project";project.mkdir()
+            package=prefix/"node_modules"/prepare.PARENT_NAME
+            env={**self.env,"XNIP_NPM_CACHE_DIR":str(directory/"native-cache")}
+            env.pop("NODE_PATH",None)
+            script=r"""
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { createRequire } from 'node:module';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { spawnSync } from 'node:child_process';
+const require = createRequire(path.join(process.cwd(), 'package.json'));
+const packageRoot = await fs.realpath(path.dirname(require.resolve('xnip-cli/package.json')));
+assert.equal(packageRoot, await fs.realpath(process.argv[1]));
+const pluginRoot = path.dirname(require.resolve('xnip-cli/dsh-native/package.json'));
+assert.equal(pluginRoot, path.join(packageRoot, 'integrations', 'dsh-native'));
+assert.deepEqual((await fs.readdir(pluginRoot)).sort(), [
+  'README.md', 'cordis.patch.yml', 'editor-client.mjs', 'index.mjs', 'lifecycle.mjs',
+  'package.json', 'rewind-validation.mjs', 'runtime.mjs',
+].sort());
+const provider = await import(pathToFileURL(require.resolve('xnip-cli/dsh-native')));
+assert.equal(provider.default.name, 'xnip-native-fs');
+assert.equal(typeof provider.createXnipPlugin, 'function');
+const load = relative => import(pathToFileURL(path.join(pluginRoot, relative)));
+assert.equal(typeof (await load('runtime.mjs')).createFixture, 'function');
+assert.equal(typeof (await load('rewind-validation.mjs')).validateRewind, 'function');
+const { EditorClient, clientSource } = await load('editor-client.mjs');
+const sharedClient = path.join(packageRoot, 'integrations', 'native', 'editor-client.mjs');
+assert.equal(await fs.realpath(fileURLToPath(clientSource)), await fs.realpath(sharedClient));
+assert.equal(EditorClient, (await import(pathToFileURL(sharedClient))).EditorClient);
+const lifecycle = require.resolve('xnip-cli/dsh-native/lifecycle');
+const result = spawnSync(process.execPath, [lifecycle], { cwd: process.argv[2], encoding: 'utf8' });
+assert.equal(result.status, 1, result.stderr);
+assert.match(result.stderr, /--dsh must name the absolute official DSH executable/);
+const executable = require('xnip-cli/native').resolveNativeExecutable();
+const target = path.join(process.argv[2], '标题 空格.txt');
+const before = '\ufeff标题=旧值\r\nkeep=1';
+const after = '\ufeff标题=新值 🌏\r\nkeep=1';
+await fs.writeFile(target, before);
+const editor = new EditorClient(executable, process.argv[2]);
+try {
+  const capabilities = await editor.request('capabilities');
+  assert.equal(capabilities.api_version.split('.')[0], '1');
+  const plan = await editor.request('plan', { content_encoding: 'utf8', operations: [
+    { op: 'exact_replace', path: target, old: '旧值', text: '新值 🌏' },
+  ] });
+  assert.equal(plan.changes[0].before, before);
+  await editor.request('commit', { plan_id: plan.plan_id,
+    policy: { read_only: false, writable_roots: [process.argv[2]] } });
+  assert.equal((await editor.request('read', { path: target, content_encoding: 'utf8' })).text, after);
+  assert.equal(await fs.readFile(target, 'utf8'), after);
+} finally { await editor.close(); }
+console.log(JSON.stringify({ provider: provider.default.name, lifecycle: 'loaded', edit: 'committed' }));
+"""
+            result=subprocess.run([NODE,"--input-type=module","-e",script,str(package),str(project)],
+                cwd=prefix,env=env,capture_output=True,timeout=30)
+            self.assertEqual(result.returncode,0,result.stderr.decode(errors="replace"))
+            self.assertEqual(json.loads(result.stdout),{
+                "provider":"xnip-native-fs","lifecycle":"loaded","edit":"committed"})
+            self.assertEqual(result.stderr,b"")
+
     def test_private_host_parent_and_payload_cannot_become_public_by_flag_only(self):
         _,package=self.clone()
         native=package/"node_modules"/self.host_entry(package)["package"]

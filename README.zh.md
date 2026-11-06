@@ -27,7 +27,7 @@ curl -fsSL https://github.com/SeaLoong/xnip/releases/latest/download/install.sh 
 Invoke-RestMethod https://github.com/SeaLoong/xnip/releases/latest/download/install.ps1 | Invoke-Expression
 ~~~
 
-也可[下载发布文件](https://github.com/SeaLoong/xnip/releases)，或使用 [npm 包 `xnip-cli`](docs/installation.md#npm)。PATH、校验和及其他选项见[安装说明](docs/installation.md)。
+也可[下载发布文件](https://github.com/SeaLoong/xnip/releases)，或使用 [npm 包 `xnip-cli`](docs/installation.md#npm)。[npm 命令路径检查](docs/installation.md#find-the-global-command)可定位全局 launcher；PATH、校验和及其他选项见[安装说明](docs/installation.md)。
 
 独立二进制支持静默更新；设置 `XNIP_AUTO_UPDATE=0` 可关闭。npm 安装通过 npm 更新。详见[更新行为](docs/updates.md)。
 
@@ -87,8 +87,9 @@ xnip apply edits.json --format compact
 [支持矩阵](docs/support.md)列出当前 catalog 的入口、工具名和验证证据。[Codex](docs/codex.md)、[Claude Code](integrations/claude-code/SKILL.md)、[Cursor](integrations/cursor/xnip.mdc)、[Copilot](integrations/copilot/xnip.md)和 [aider](integrations/aider/CONVENTIONS.md)仍提供项目指令。简短接入可用 [AGENTS 片段](integrations/agents-md/AGENTS.md)或[操作指南](docs/SKILL.md)。
 
 [原生 DSH provider](docs/native.md) 保留宿主的 `read`、`write`、`edit` 工具及审批、沙箱和可选 rewind，与 CLI、MCP 共用现有 core 事务。按 profile 安装时会验证真实编辑，并保留恢复快照。
+`xnip-cli` 0.6.2 内置 DSH 适配器，通过[安装后的命令](docs/native.md#dsh-profile-setup)管理完整生命周期。DSH 宿主生命周期的证据来自 Linux；CLI、MCP 的跨平台验证分别统计。
 [Pi 原生扩展](docs/pi-native.md)通过官方 extension API 保留 Pi `1.3.0` 的工具 schema、匹配、渲染和 hooks。
-[SDK 适配](docs/native.md)还支持 Gemini 本地文件系统服务、Cline `apply_patch` 执行器和 OpenHands `file_editor` IO，共用现有 core。[369 项 E2E](docs/testing.md#native-host-e2e)执行真实注册工具，核验文件字节、治理链和恢复行为。
+[SDK 适配](docs/native.md)还支持 Gemini 本地文件系统服务、Cline `apply_patch` 执行器和 OpenHands `file_editor` IO，共用现有 core。[375 项 E2E](docs/testing.md#native-host-e2e)执行真实注册工具，核验文件字节、治理链和恢复行为。
 
 ## 为什么能节省编辑上下文
 

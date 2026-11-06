@@ -102,7 +102,7 @@ On Windows use the environment's `Scripts/python.exe` and `xnip.exe`.
 `--output-prefix` selects fresh local artifacts; `--scenarios` selects a named
 fixture subset. SDK families use their own virtual environments and locked MCP
 versions. The test guide lists actual measured-runner contracts alongside
-the full 369-check execution matrix.
+the full 375-check execution matrix.
 
 ## Earlier provider snapshots
 

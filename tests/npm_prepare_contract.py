@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib.util
 import io
 import json
+import os
 import shutil
 import subprocess
 from unittest import mock
@@ -208,6 +209,25 @@ class NpmPreparationContract(unittest.TestCase):
             self.assertEqual(result.returncode,0,result.stderr)
 
     @unittest.skipUnless(shutil.which("node"),"Node required for prepack validation")
+    def test_prepack_requires_every_dsh_native_runtime_file_and_shared_client(self):
+        self.fixture_dist()
+        prepare.prepare(self.base,self.base/"public",public=True)
+        directory=self.base/"public/packages/xnip"
+        required=["dsh-native/"+name for name in ["package.json","index.mjs","editor-client.mjs",
+            "lifecycle.mjs","runtime.mjs","rewind-validation.mjs","cordis.patch.yml"]]
+        required.append("native/editor-client.mjs")
+        for relative in required:
+            with self.subTest(file=relative):
+                file=directory/"integrations"/relative
+                contents=file.read_bytes();file.unlink()
+                try:
+                    result=subprocess.run([shutil.which("node"),str(directory/"lib/validate.cjs")],
+                        capture_output=True,timeout=15)
+                    self.assertNotEqual(result.returncode,0)
+                    self.assertIn(relative.encode(),result.stderr.replace(b"\\",b"/"))
+                finally:file.write_bytes(contents)
+
+    @unittest.skipUnless(shutil.which("node"),"Node required for prepack validation")
     def test_prepack_rejects_legacy_or_unexpected_parent_names(self):
         self.fixture_dist()
         prepare.prepare(self.base,self.base/"public",public=True)
@@ -284,5 +304,31 @@ class NpmPreparationContract(unittest.TestCase):
         other=next(key for key in prepare.PLATFORMS if key!=actual)
         with self.assertRaisesRegex(ValueError,"expected native platform"):
             smoke(self.base/"public",commit,expected_platform=other)
+
+    @unittest.skipUnless(shutil.which("node"),"Node required for the installed module graph")
+    def test_release_smoke_loads_isolated_dsh_graph_without_official_host_modules(self):
+        from npm_release_smoke import installed_dsh_module_graph
+        self.fixture_dist()
+        prepare.prepare(self.base,self.base/"public",public=True)
+        consumer=self.base/"consumer"
+        package=consumer/"node_modules"/prepare.PARENT_NAME
+        shutil.copytree(self.base/"public/packages/xnip",package)
+        # The format-fixture binaries are kept on disk and never executed here.
+        self.assertEqual(set(path.name for path in (consumer/"node_modules").iterdir()),{prepare.PARENT_NAME})
+        proof=installed_dsh_module_graph(shutil.which("node"),consumer,os.environ)
+        self.assertEqual(proof,{"provider":"xnip-native-fs","runtime":"loaded","rewind":"loaded",
+                                "client":"shared","lifecycle":"resolved"})
+
+    @unittest.skipUnless(shutil.which("node"),"Node required for the installed module graph")
+    def test_release_smoke_rejects_the_installed_graph_with_its_shared_client_missing(self):
+        from npm_release_smoke import installed_dsh_module_graph
+        self.fixture_dist()
+        prepare.prepare(self.base,self.base/"public",public=True)
+        consumer=self.base/"consumer"
+        package=consumer/"node_modules"/prepare.PARENT_NAME
+        shutil.copytree(self.base/"public/packages/xnip",package)
+        (package/"integrations/native/editor-client.mjs").unlink()
+        with self.assertRaisesRegex(ValueError,"editor-client.mjs"):
+            installed_dsh_module_graph(shutil.which("node"),consumer,os.environ)
 
 if __name__=="__main__":unittest.main()

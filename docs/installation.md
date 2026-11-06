@@ -112,7 +112,7 @@ Requires Node **22.14+**. The package is named `xnip-cli`; the installed command
 is `xnip`:
 
 ```sh
-npm install --global xnip-cli
+npm install --global xnip-cli@latest
 xnip --version
 # Pin a version (replace <version>):
 npm install --global 'xnip-cli@<version>'
@@ -125,6 +125,60 @@ your OS and CPU. The package also contains JavaScript host adapters, the
 integration catalog and client-profile generator; activate the selected route
 explicitly. See the [support matrix](support.md) and
 [npm usage guide](../npm/README.md) for project-local use and MCP configuration.
+`xnip-cli` 0.6.2 includes the adapter for the
+[DSH native lifecycle](native.md#dsh-profile-setup).
+Its recorded DSH host journey runs on Linux; the six executable targets above
+describe the CLI/MCP distribution.
+
+### Find the global command
+
+npm creates the command link or shim under its configured global prefix. Your
+shell and the application launching MCP select commands through their `PATH`.
+Use the npm belonging to your selected Node installation to inspect that prefix:
+
+```sh
+npm prefix --global
+npm list --global --depth=0 xnip-cli
+```
+
+| Platform | Global command directory |
+|---|---|
+| macOS / Linux | `<prefix>/bin` |
+| Windows | `<prefix>` |
+
+On macOS/Linux, verify the installed command directly, then add its directory
+to the current shell:
+
+```sh
+xnip_npm_prefix="$(npm prefix --global)"
+"$xnip_npm_prefix/bin/xnip" --version
+export PATH="$xnip_npm_prefix/bin:$PATH"
+command -v xnip
+type -a xnip
+```
+
+In Windows PowerShell:
+
+```powershell
+$xnipNpmPrefix = (npm.cmd prefix --global).Trim()
+& (Join-Path $xnipNpmPrefix 'xnip.cmd') --version
+$env:Path = "$xnipNpmPrefix;$env:Path"
+Get-Command xnip -All
+where.exe xnip
+```
+
+Keep the same command directory in your shell startup or Node version manager
+configuration; Windows users can add it to their user `PATH` through Environment
+Variables. Reopen terminals and restart GUI clients after changing their launch
+environment. `command -v node` / `command -v npm`, or `Get-Command node,npm -All`,
+help identify multiple Node installations.
+
+`npm root --global` locates installed modules, including
+`xnip-cli/bin/xnip.cjs`. It serves a different purpose from the command directory
+above. MCP clients can use an absolute Node executable and that `.cjs` launcher;
+see the [direct launcher example](../npm/README.md#connect-an-mcp-client).
+The [npm folder reference](https://docs.npmjs.com/cli/v11/configuring-npm/folders#executables)
+describes its platform-specific links and shims.
 
 npm manages this installation's updates; native self-update is disabled.
 Restart MCP sessions after upgrading. If an older standalone executable appears
@@ -159,7 +213,7 @@ tool arguments and receipts.
 
 | Symptom | Action |
 |---|---|
-| `xnip` is not found | Use `command -v xnip` or `Get-Command xnip`, check PATH, and restart the terminal/client. |
+| `xnip` is not found | Check the [npm global command directory](#find-the-global-command), or the installation directory for a standalone build, then restart the terminal/client. |
 | Wrong executable starts | Inspect all matches with `type -a xnip` or `Get-Command xnip -All`; remove the stale installation. |
 | Download returns 404 | Check the exact tag and supported architecture on the release page. |
 | GitHub latest lookup is rate-limited | Set `XNIP_VERSION` to an explicit tag or download the assets manually. |

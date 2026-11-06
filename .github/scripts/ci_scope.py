@@ -52,6 +52,7 @@ NPM_TESTS = {"tests/npm_contract.py", "tests/npm_prepare_contract.py", "tests/np
 HARNESS_TESTS = {
     "tests/dsh_adapter_contract.py", "tests/dsh_integration_contract.cjs",
     "tests/dsh_integration_live.cjs", "tests/dsh_packaged_live.cjs", "tests/pi_contract.mjs",
+    "tests/npm_dsh_lifecycle.py",
     "tests/goose_native_contract.py", "tests/node_runtime_contract.mjs",
     "tests/native_e2e.py", "tests/native_byte_contract.py",
     "tests/native_e2e_contract.py",
@@ -77,10 +78,10 @@ HARNESS_TESTS = {
     "tests/google_adk_contract.py", "tests/crewai_contract.py", "tests/google_adk_bench_contract.py",
     "tests/crewai_provider_bench_contract.py",
 }
-PACKAGED_HARNESSES = ("integrations/dsh/", "integrations/pi/", "integrations/pi-native/", "integrations/native/",
+PACKAGED_HARNESSES = ("integrations/dsh/", "integrations/dsh-native/", "integrations/pi/", "integrations/pi-native/", "integrations/native/",
                       "integrations/gemini-native/", "integrations/cline-native/", "integrations/opencode/",
                       "integrations/host-profiles/")
-LIVE_INTEGRATIONS = (*PACKAGED_HARNESSES, "integrations/dsh-native/", "integrations/goose/", "integrations/openhands-native/",
+LIVE_INTEGRATIONS = (*PACKAGED_HARNESSES, "integrations/goose/", "integrations/openhands-native/",
                      "integrations/native-python/", "integrations/aider-native/", "integrations/python-agents/",
                      "integrations/agents-sdk/", "integrations/autogen/", "integrations/smolagents/",
                      "integrations/google-adk/", "integrations/crewai/")

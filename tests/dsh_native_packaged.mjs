@@ -22,7 +22,7 @@ async function validatePackagedProfile({ mcp = false } = {}) {
   const home = path.join(directory, 'home');
   const profileDir = path.join(home, 'profiles', 'validation');
   const project = path.join(directory, 'project');
-  const installedPackage = path.join(profileDir, 'node_modules', 'xnip-dsh-native');
+  const installedPackage = path.join(profileDir, '.xnip-native-package');
   const basePackage = path.join(directory, 'base-host');
   const mcpArtifacts = path.join(directory, 'mcp-artifacts');
   const stage = path.join(directory, 'stage');
@@ -79,6 +79,12 @@ async function validatePackagedProfile({ mcp = false } = {}) {
     }));
     const userPatch = '# The installer must preserve this user-owned patch.\n[]\n';
     await fs.writeFile(path.join(profileDir, 'cordis.patch.yml'), userPatch);
+    // Establish the user's existing bundles through the official package
+    // manager before native installs its separate profile-owned directory.
+    await execute(path.join(hostRoot, 'node_modules/.bin/dsh'),
+      ['plugin', '--profile', 'validation', 'install', '--ignore-scripts', '--offline'],
+      { cwd: profileDir, env: { ...process.env, DSH_HOME: home, XNIP_AUTO_UPDATE: '0' },
+        encoding: 'utf8', timeout: 120000, maxBuffer: 32 * 1024 * 1024 });
     const lifecycle = verb => execute(process.execPath, [path.join(root, 'integrations/dsh-native/lifecycle.mjs'), verb,
       '--profile', profileDir, '--dsh', path.join(hostRoot, 'node_modules/.bin/dsh'),
       '--plugin', path.join(root, 'integrations/dsh-native'), '--executable', executable, '--stage', stage],

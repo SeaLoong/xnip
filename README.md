@@ -27,7 +27,7 @@ curl -fsSL https://github.com/SeaLoong/xnip/releases/latest/download/install.sh 
 Invoke-RestMethod https://github.com/SeaLoong/xnip/releases/latest/download/install.ps1 | Invoke-Expression
 ~~~
 
-Or use [release downloads](https://github.com/SeaLoong/xnip/releases) or the [npm package, `xnip-cli`](docs/installation.md#npm). See [installation](docs/installation.md) for PATH setup, checksums and all options.
+Or use [release downloads](https://github.com/SeaLoong/xnip/releases) or the [npm package, `xnip-cli`](docs/installation.md#npm). The [npm command-path checks](docs/installation.md#find-the-global-command) locate its global launcher. See [installation](docs/installation.md) for PATH setup, checksums and all options.
 
 Standalone binaries support silent updates. Set `XNIP_AUTO_UPDATE=0` to disable them; npm installations update through npm. See [update behavior](docs/updates.md).
 
@@ -90,11 +90,15 @@ The [native DSH provider](docs/native.md) keeps the host's `read`, `write` and
 `edit` tools, approval, sandbox and optional rewind while calling the same core
 transactions as CLI and MCP. Its profile installer verifies a real edit and
 retains snapshots for restoration.
+`xnip-cli` 0.6.2 bundles its DSH adapter for the
+[installed-command lifecycle](docs/native.md#dsh-profile-setup).
+DSH host-lifecycle evidence is on Linux;
+the CLI and MCP have their own cross-platform verification.
 The [Pi native extension](docs/pi-native.md) preserves Pi `1.3.0` tool schemas,
 matching, rendering and hooks through its official extension API.
 The [SDK adapters](docs/native.md) also connect Gemini's local filesystem service,
 Cline's `apply_patch` executor and OpenHands' `file_editor` IO to the same core.
-The [369-check E2E matrix](docs/testing.md#native-host-e2e) starts real registered tools
+The [375-check E2E matrix](docs/testing.md#native-host-e2e) starts real registered tools
 across the catalog routes and checks file bytes, governance and restoration.
 
 ## Why it saves editing context

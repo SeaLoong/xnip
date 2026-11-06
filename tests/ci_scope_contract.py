@@ -153,6 +153,7 @@ class GroupBoundaryContracts(unittest.TestCase):
 
     def test_native_harness_sources_and_contracts_select_the_real_ubuntu_checks(self):
         for path in ["benches/native/dsh_setup.mjs", "benches/native/dsh_package-lock.json",
+                     "tests/npm_dsh_lifecycle.py",
                      "benches/native/node_runtime.mjs", "tests/node_runtime_contract.mjs",
                      "benches/native/pi_adapter.mjs", "benches/native/pi_package.json",
                      "benches/native/goose_adapter.py", "benches/native/goose_sources.json",
@@ -168,10 +169,12 @@ class GroupBoundaryContracts(unittest.TestCase):
     def test_native_adapter_and_measurement_inputs_select_their_real_host_checks(self):
         for path in ["integrations/pi-native/index.mjs", "integrations/native/editor-client.mjs",
                      "integrations/gemini-native/index.mjs", "integrations/cline-native/extension.mjs",
-                     "integrations/opencode/index.mjs", "integrations/host-profiles/xnip_profiles.py"]:
+                     "integrations/opencode/index.mjs", "integrations/host-profiles/xnip_profiles.py",
+                     "integrations/dsh-native/index.mjs", "integrations/dsh-native/lifecycle.mjs",
+                     "integrations/dsh-native/package.json", "integrations/dsh-native/cordis.patch.yml",
+                     "integrations/dsh-native/nested/runtime.mjs"]:
             with self.subTest(path=path):
                 self.assert_scope(path, integrations=True, npm=True, harnesses=True)
-        self.assert_scope("integrations/dsh-native/index.mjs", integrations=True, harnesses=True)
         self.assert_scope("integrations/openhands-native/xnip_openhands.py", integrations=True, harnesses=True)
         for path in ["tests/native_e2e.py", "tests/native_e2e_contract.py", "tests/native_byte_contract.py",
                      "tests/pi_native_runtime.mjs", "tests/pi_native_packaged.mjs",
@@ -196,6 +199,7 @@ class GroupBoundaryContracts(unittest.TestCase):
 
     def test_pure_harness_documentation_and_hints_do_not_rebuild_platform_packages(self):
         for path in ["integrations/dsh/README.md", "integrations/pi/README.md",
+                     "integrations/dsh-native/README.md",
                      "integrations/goose/README.md", "integrations/goose/.goosehints"]:
             with self.subTest(path=path):
                 self.assert_scope(path, integrations=True)

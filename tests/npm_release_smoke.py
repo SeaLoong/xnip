@@ -29,6 +29,46 @@ def require(condition, message):
         raise ValueError(message)
 
 
+def installed_dsh_module_graph(node, consumer, environment):
+    """Load the installed provider graph without an official DSH host dependency."""
+    script = r'''
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import {createRequire} from 'node:module';
+import {fileURLToPath,pathToFileURL} from 'node:url';
+const require=createRequire(path.join(process.argv[1],'package.json'));
+const packageRoot=await fs.realpath(path.dirname(require.resolve('xnip-cli/package.json')));
+const pluginRoot=path.dirname(require.resolve('xnip-cli/dsh-native/package.json'));
+assert.equal(pluginRoot,path.join(packageRoot,'integrations','dsh-native'));
+assert.equal(require('xnip-cli/dsh-native/package.json').name,'xnip-dsh-native');
+const provider=await import(pathToFileURL(require.resolve('xnip-cli/dsh-native')));
+assert.equal(provider.default.name,'xnip-native-fs');
+assert.equal(typeof provider.createXnipPlugin,'function');
+assert.equal(typeof provider.default.apply,'function');
+const load=name=>import(pathToFileURL(path.join(pluginRoot,name)));
+assert.equal(typeof (await load('runtime.mjs')).createFixture,'function');
+assert.equal(typeof (await load('rewind-validation.mjs')).validateRewind,'function');
+const {EditorClient,clientSource}=await load('editor-client.mjs');
+const shared=path.join(packageRoot,'integrations','native','editor-client.mjs');
+assert.equal(await fs.realpath(fileURLToPath(clientSource)),await fs.realpath(shared));
+assert.equal(EditorClient,(await import(pathToFileURL(shared))).EditorClient);
+assert.equal(require.resolve('xnip-cli/dsh-native/lifecycle'),path.join(pluginRoot,'lifecycle.mjs'));
+await fs.access(path.join(pluginRoot,'cordis.patch.yml'));
+console.log(JSON.stringify({provider:provider.default.name,runtime:'loaded',rewind:'loaded',client:'shared',lifecycle:'resolved'}));
+'''
+    env = dict(environment)
+    env.pop("NODE_PATH", None)
+    result = subprocess.run([node, "--input-type=module", "-e", script, str(consumer)],
+                            cwd=consumer, env=env, capture_output=True, text=True, timeout=20)
+    require(result.returncode == 0, "installed DSH module graph failed: " + result.stderr[-4000:])
+    proof = json.loads(result.stdout)
+    require(proof == {"provider": "xnip-native-fs", "runtime": "loaded", "rewind": "loaded",
+                      "client": "shared", "lifecycle": "resolved"},
+            "installed DSH module graph returned incomplete evidence")
+    return proof
+
+
 def smoke(prepared, source_commit, expected_platform=None):
     prepared = Path(prepared).resolve()
     require(re.fullmatch(r"[a-f0-9]{40}", source_commit), "expected a lowercase 40-hex source commit")
@@ -96,6 +136,7 @@ def smoke(prepared, source_commit, expected_platform=None):
         work = root/"workspace"; work.mkdir()
         env = {**os.environ,"XNIP_AUTO_UPDATE":"0","XNIP_NPM_CACHE_DIR":str(root/"exec-cache"),
             "XNIP_UPDATE_STATE_DIR":str(root/"update-state")}
+        dsh_graph = installed_dsh_module_graph(node, consumer, env)
         launcher = package/"bin/xnip.cjs"
         def run(*args):
             return subprocess.run([node,str(launcher),*args],cwd=work,env=env,
@@ -127,7 +168,9 @@ def smoke(prepared, source_commit, expected_platform=None):
         require(not (root/"update-state").exists(), "npm child must not enable native auto-update")
     return {"ok":True,"platform":key,"version":version,"source_commit":source_commit,
         "binary_sha256":payload["sha256"],"installation":"offline-local-tarballs-ignore-scripts",
-        "checks":["seven-tarball-integrity","installed-public-provenance","version","doctor","real-stdio-MCP","EOF"]}
+        "dsh_module_graph":dsh_graph,
+        "checks":["seven-tarball-integrity","installed-public-provenance","installed-dsh-module-graph",
+                  "version","doctor","real-stdio-MCP","EOF"]}
 
 
 def main():

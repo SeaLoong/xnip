@@ -4,6 +4,126 @@ use common::{Workspace, json_lines, utf8};
 use serde_json::{Value, json};
 
 #[test]
+fn native_diagnostics_and_clean_cover_the_empty_installation_journey() {
+    let w = Workspace::new(&[]);
+    for (directory, code) in [("missing", "state_missing"), ("empty", "state_empty")] {
+        if directory == "empty" {
+            w.write("empty/operation.lock", b"");
+        }
+        let output = w
+            .cli(&["native", "doctor", "--state-dir", directory])
+            .assert()
+            .success()
+            .get_output()
+            .clone();
+        let report: Value = serde_json::from_slice(&output.stdout).unwrap();
+        assert_eq!(report["code"], code);
+        assert_eq!(report["installed"], false);
+        assert_eq!(
+            report["state_dir"],
+            json!(xnip::core::transaction::normalize(&w.path(directory)).unwrap())
+        );
+        assert!(report["message"].as_str().unwrap().contains("--state-dir"));
+        let output = w
+            .cli(&["doctor", "--native", "--state-dir", directory])
+            .assert()
+            .success()
+            .get_output()
+            .clone();
+        assert!(utf8(&output.stdout).contains(code));
+        assert!(utf8(&output.stdout).contains("dsh:"));
+        for _ in 0..2 {
+            let output = w
+                .cli(&[
+                    "native",
+                    "clean",
+                    "--state-dir",
+                    directory,
+                    "--purge-user-data",
+                ])
+                .assert()
+                .success()
+                .get_output()
+                .clone();
+            let report: Value = serde_json::from_slice(&output.stdout).unwrap();
+            assert_eq!(report["installation_data"], "cleared");
+            assert_eq!(report["removed"], json!([]));
+            assert_eq!(
+                report["retained_coordination_paths"],
+                if directory == "empty" {
+                    json!([
+                        xnip::core::transaction::normalize(&w.path("empty/operation.lock"))
+                            .unwrap()
+                    ])
+                } else {
+                    json!([])
+                }
+            );
+        }
+    }
+    w.absent("missing");
+    w.assert_bytes("empty/operation.lock", b"");
+}
+
+#[cfg(unix)]
+#[test]
+fn native_state_cli_preserves_link_targets_when_resolving_state_paths() {
+    use std::os::unix::fs::symlink;
+
+    let w = Workspace::new(&[
+        ("target/retained.txt", b"state target bytes"),
+        ("parent/child/retained.txt", b"ancestor target bytes"),
+    ]);
+    symlink("target", w.path("linked-state")).unwrap();
+    symlink("parent", w.path("linked-parent")).unwrap();
+    for state in ["linked-state", "linked-parent/child"] {
+        for args in [
+            vec!["native", "doctor", "--state-dir", state],
+            vec!["doctor", "--native", "--state-dir", state],
+            vec!["native", "clean", "--state-dir", state, "--purge-user-data"],
+        ] {
+            let output = w.cli(&args).assert().failure().get_output().clone();
+            assert!(utf8(&output.stderr).contains("symlink"));
+            w.assert_bytes("target/retained.txt", b"state target bytes");
+            w.assert_bytes("parent/child/retained.txt", b"ancestor target bytes");
+            w.absent("target/operation.lock");
+            w.absent("parent/child/operation.lock");
+            assert_eq!(
+                std::fs::read_link(w.path("linked-state")).unwrap(),
+                std::path::Path::new("target")
+            );
+            assert_eq!(
+                std::fs::read_link(w.path("linked-parent")).unwrap(),
+                std::path::Path::new("parent")
+            );
+        }
+    }
+}
+
+#[test]
+fn native_diagnostics_preserve_retained_evidence_when_the_manifest_is_missing() {
+    let w = Workspace::new(&[("state/blobs/original", b"original bytes")]);
+    for args in [
+        vec!["native", "doctor", "--state-dir", "state"],
+        vec!["doctor", "--native", "--state-dir", "state"],
+        vec![
+            "native",
+            "clean",
+            "--state-dir",
+            "state",
+            "--purge-user-data",
+        ],
+    ] {
+        let output = w.cli(&args).assert().failure().get_output().clone();
+        let message = utf8(&output.stderr);
+        assert!(message.contains("manifest_missing"));
+        assert!(message.contains("install-manifest.json"));
+        assert!(message.contains("state"));
+        w.assert_bytes("state/blobs/original", b"original bytes");
+    }
+}
+
+#[test]
 fn mcp_reports_an_unavailable_working_directory_before_protocol_startup() {
     let w = Workspace::new(&[]);
     let output = w

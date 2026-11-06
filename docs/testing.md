@@ -144,12 +144,12 @@ Each preparation uses its own cache root: historical workers under
 The E2E runner's `--hosts-dir /absolute/host-parent` selects another parent
 containing the versioned `dsh-<version>` directories.
 
-The full matrix completes 369 checks across the [support catalog](support.md),
-with zero failed or skipped cases:
+The full matrix completes 375 checks across the [support catalog](support.md),
+including six npm-installed DSH journeys, with zero failed or skipped cases:
 
 | Runtime group | Checks | Tool and lifecycle boundary |
 |---|---:|---|
-| DSH rc.2 and rc.5 | 40 | Official provider/tools, approval/diff/rewind, profile composition and installation failure phases |
+| DSH rc.2 and rc.5 | 46 | Official provider/tools, approval/diff/rewind, profile composition, failure phases and installed-npm lifecycle on Linux |
 | Pi | 24 | SDK loader, original tool factories, hooks, packaged coexistence and builtin restoration |
 | Gemini SDK | 24 | Local `Config`, original registry, per-invocation snapshots, approval and service restoration |
 | Cline SDK | 24 | Official patch parsing/executor wrapper, actual agent policies/hooks and original-tool restoration |
@@ -197,6 +197,20 @@ runner executes it against each selected host. Transaction and installer fixture
 tests remain part of the standard Rust workspace suite. See [native
 adapters](native.md) for installation, restoration and protocol details.
 
+The [installed-npm journey](../tests/npm_dsh_lifecycle.py) packs and
+installs the actual product outside the checkout, then invokes its npm command
+shim with no `--plugin` argument. Three layouts per DSH version cover a fresh
+profile, shared dependency-root symlinks and ordinary dependencies with a
+lockfile. The sequence runs install, verify, uninstall, restored verification,
+cleanup and empty-state doctor/recover/cleanup reentry. It checks actual edits,
+approvals, rewind, installed-source hashes, unchanged neighboring profiles and
+the dependency tree, with zero model calls. The root symlink and ordinary
+dependency layouts retain their bytes, modes and link targets.
+
+These product journeys execute on Linux. Their per-version logs and
+`npm-installed-lifecycle.json` remain under `target/native-e2e/<version>`.
+CLI/MCP contracts have their own Linux, macOS and Windows execution evidence.
+
 Pi's [native extension](pi-native.md) suites also run individually:
 
 ```sh
@@ -231,7 +245,8 @@ includes native adapters, shared transport, suites and measured runners.
 | [native installer](../tests/native_installer_contract.rs) | Phase rollback, snapshots, user-change preservation, interrupted recovery, profile locking and restoration |
 | [DSH native host preparation](../tests/dsh_native_setup.mjs) | Frozen full-host dependency installs; exact versions and hashes; actual original tool execution; drift detection and repeatable restoration |
 | [DSH provider](../tests/dsh_native_contract.mjs) / [rewind](../tests/dsh_native_rewind.mjs) | Official filesystem tools, observations, sandbox, stale versions, approval audit, diff projection and compatible rewind plugin |
-| [native E2E matrix](../tests/native_e2e.py) | 369 checks across catalog backends, plugins, framework SDKs and client profiles; one pinned executable and capability probe; actual registries, processes, file results, restoration and lifecycle phases; zero skipped cases and model generations |
+| [native E2E matrix](../tests/native_e2e.py) | 375 checks across catalog backends, plugins, framework SDKs and client profiles; one pinned executable and capability probe; actual registries, processes, file results, restoration and lifecycle phases; exact completed-count and zero-skip gates |
+| [installed-npm DSH journey](../tests/npm_dsh_lifecycle.py) | Three profile layouts per rc.2/rc.5 on Linux; installed command shim, packaged adapter discovery, actual host edits/governance/rewind, full restoration/cleanup and empty-state reentry outside the checkout |
 | [E2E result gates](../tests/native_e2e_contract.py) | Ten stdlib contracts require complete TAP/unittest summaries and exact counts; exercise CRLF, duplicate/truncated summaries, failures, skips/cancellations/TODOs, application `OK` diagnostics and unittest expected-failure/unexpected-success outcomes; counted separately from SDK E2E |
 | [Pi native extension](../tests/pi_native_contract.mjs) / [byte fixtures](../tests/pi_native_bytes.mjs) / [installed package](../tests/pi_native_packaged.mjs) | Actual official loader/session/runner and default private-tarball entry; same-name host tools; hooks, matching, queue, cancellation, rendering, binary reads, original byte scenarios and reload restoration |
 | [Gemini SDK](../tests/gemini_native_contract.mjs) / [byte fixtures](../tests/gemini_native_bytes.mjs) / [installed package](../tests/gemini_native_packaged.mjs) | Original `Config` and tools, per-tool snapshots/concurrency, approval, host byte policy, local npm entry and service restoration |
@@ -256,6 +271,7 @@ includes native adapters, shared transport, suites and measured runners.
 | [MCP lifecycle compatibility](../tests/mcp_discovery_contract.rs) | Typed SDK discovery with 2026 per-request metadata; legacy 2025 initialization; tools/list, stale rejection and retry, unknown-method errors followed by successful edits, text receipts, Unicode paths and EOF shutdown |
 | [npm archive/build identity](../tests/npm_prepare_contract.py) | Foreign binary version/target markers; old-version refusal before output creation; architecture/static linking; tar/ZIP inventory, traversal and link rejection |
 | [private npm distribution](../tests/npm_contract.py) | Local tarball preparation and offline installation; compiled identity and checksum validation; host-only payloads; byte/exit-code fidelity; concurrent immutable cache publication; tamper refusal; mapped-process lifetime during uninstall; abrupt wrapper death and native input EOF |
+| [public npm native acceptance](../tests/npm_release_smoke.py) | Seven same-commit packs installed offline on six OS/CPU runners; installed DSH exports and local provider/runtime/rewind/shared-client graph; actual CLI, doctor, MCP byte edits and EOF |
 | [DSH integration configuration](../tests/dsh_integration_contract.cjs) | Explicit Cordis entry; native resolution; cwd, environment and receipt options; invalid options and official bridge loading failures |
 | [DSH native and bridge](../tests/dsh_adapter_contract.py) / [bundle loader](../tests/dsh_integration_live.cjs) / [installed package](../tests/dsh_packaged_live.cjs) | Official ToolRuntime and filesystem executors; observation/stale/read-window policy; literal and str editor behavior; raw values versus model projection; real package patch resolution and xnip stdio |
 | [Pi native and bridge](../tests/pi_contract.mjs) | Official argument preparation and mutation queue; original-coordinate multi-edit rejection; fuzzy/EOL/BOM behavior; writes; extension registration; real MCP discovery, projection and disposal |

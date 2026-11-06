@@ -5,34 +5,47 @@ the `read`, `write` and `edit` tools, permission checks, observations, diff
 presentation and rewind events. The provider calls xnip's existing core through
 the local `xnip native serve` JSON-lines process.
 
-Use the transactional installer from a source checkout, with an initialized DSH
-profile and the intended DSH executable:
+`xnip-cli` 0.6.2 bundles this adapter. Install it and use its `xnip` launcher with
+an initialized DSH profile and the intended DSH executable:
 
 ```sh
-target/debug/xnip native install --host dsh \
+npm install --global xnip-cli@latest
+xnip native install --host dsh \
   --profile /absolute/DSH_HOME/profiles/web \
-  --plugin /absolute/xnip/integrations/dsh-native \
   --dsh /absolute/path/to/dsh
 ```
 
-Installation packs a local copy with the current xnip executable's absolute path
-in its package-owned bundle configuration. The profile user's patch stays
-unchanged. The installer records a baseline and restores it after any failed
-phase. Use the same arguments with `native uninstall` to restore the original
-provider and verify a real edit. Existing host sessions pick up provider changes
-after restarting.
+The npm launcher selects this bundled adapter. Standalone/source builds select
+the package directory with `--plugin DIRECTORY`; an explicit option takes
+precedence over the npm selection.
+
+Fresh installations stage the adapter in
+`PROFILE/.xnip-native-package` and select the relative bundle
+`./.xnip-native-package` in the profile manifest. Configuration binds it to the
+current xnip executable's absolute path. The profile's user patch, dependency
+contents, lockfile and existing `node_modules` root symlink stay intact.
+Installation snapshots cover the manifest and private adapter directory.
+Retained name-based 0.6.1 installations keep their original restoration path.
+
+Use the same host arguments with `native verify`, `native uninstall` and
+`native verify --restored`; the [lifecycle guide](../../docs/native.md) covers
+cleanup status and retained coordination locks. Existing host sessions pick up
+provider changes after restarting.
 
 The existing `xnip-cli/dsh` MCP integration remains available independently.
 Enable this bundle when choosing the native provider; its bundle patch disables
 `fs-sandbox` and the existing `xnip-mcp` bridge, then inserts exactly one
 `xnip-native-fs` entry. Removing it restores the earlier bundle composition.
 
-Validated host versions are DSH `0.2.1-rc.2` and `0.2.1-rc.5`, with
+Recorded host-lifecycle evidence is Linux with DSH `0.2.1-rc.2` and `0.2.1-rc.5`, with
 `dsh-rewind-plugin@0.19.2` for profiles that enable rewind. Validation uses the real official
 Loader, tools, idle AgentLoop, approval service, Session, diff presentation and
 rewind plugin, without model calls. The lifecycle verifier exercises rewind when
 it is selected by the profile. Other host versions are checked for the required
 filesystem APIs before installation.
+
+macOS and Windows DSH host journeys await dedicated validation. The CLI and MCP
+have their own cross-platform executable verification.
 
 Host-normalized CRLF matching is translated to exact byte edits while preserving
 untouched storage bytes, BOM and EOF. Mixed newline spellings in a global
