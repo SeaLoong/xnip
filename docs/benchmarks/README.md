@@ -1,96 +1,146 @@
-# Native editing tools versus xnip
+# Integration and editing benchmarks
 
-This benchmark executes each available harness's own editing implementation and xnip on fresh copies of identical files. It retains real inputs, responses, failures and final file bytes. No third-party tool is simulated by sending its patch through xnip.
+Start with the [support matrix](../support.md): it maps current catalog entries
+to their tool surfaces, contracts and reports. Benchmarks execute real host
+tools, plugins, framework SDKs and MCP clients with model generation idle.
+Each cohort records its own API, storage and timing boundary.
 
-- [Results and conclusions](results.md), [raw transcripts and provenance](results.json), [derived statistics](relative-results.json).
-- [README summary frontier](charts/readme-frontier.svg), [per-task frontier](charts/frontier.svg), [literal-baseline overview](charts/overview.svg), [input ratios](charts/input-ratios.svg), [scenario matrix](charts/scenario-ratios.svg), [file results](charts/byte-exact.svg).
-- [Native methodology](native-methodology.md), [editing-strategy diagnosis](editing-strategies.md), [runner](../../benches/native_tools.py), [report generator](../../benches/native_report.py), [native adapters](../../benches/native/).
-- [Supplementary representation results](representation-results.md) and [method](representation-methodology.md) measure current xnip interfaces, schemas, prompts and output budgets separately.
-- [Core performance](core-performance.md) retains the 0.4.0 in-memory/CLI kernel measurements (the kernel is unchanged); the new harness run uses 0.5.5. Its evidence includes [Criterion samples](core-criterion-results.json) and [CLI samples](core-performance-results.json).
+## Current integration reports
 
-## Execution matrix
+Ten current cohorts contain 1,878 measured workflows with zero model calls.
+The recorded groups use one warm-up and three measured workflows. Reports and
+their JSON companions retain every sample, argument/result byte counts and
+hashes, captured payloads where recorded, file oracles, package versions,
+source fingerprints and executable identity. Each report is a snapshot of its
+recorded source and executable; release builds have their own identities.
 
-The default matrix contains **13 unchanged scenarios and 41 editor profiles**, plus six separate host→xnip bridge profiles, with three repetitions in the recorded tokenized run, plus matching-policy probes. Unavailable products are recorded rather than assigned a simulated score.
+| Report | Fixtures | Groups / measured workflows | Executed boundary |
+|---|---:|---:|---|
+| [OpenCode](opencode-provider-results.md) · [JSON](opencode-provider-results.json) | 23 | 46 / 138 | Actual CLI builtin and plugin tools, including startup and disposal |
+| [OpenHands SDK](openhands-provider-results.md) · [JSON](openhands-provider-results.json) | 23 | 46 / 138 | Original `file_editor` versus xnip IO through `Conversation.execute_tool` |
+| [aider](aider-provider-results.md) · [JSON](aider-provider-results.json) | 24 | 142 / 426 | Original Coder `diff` / `whole` / `udiff` pipelines and native persistence |
+| [DeepAgents / LangGraph / PydanticAI](python-agents-provider-results.md) · [JSON](python-agents-provider-results.json) | 23 | 92 / 276 | DeepAgents backend pair, registered ToolNode tools and official MCPToolset |
+| [OpenAI Agents SDK](agents-sdk-provider-results.md) · [JSON](agents-sdk-provider-results.json) | 26 | 52 / 156 | Direct MCP reference and actual FunctionTool invocation |
+| [AutoGen](autogen-provider-results.md) · [JSON](autogen-provider-results.json) | 26 | 52 / 156 | Direct MCP reference and official McpWorkbench |
+| [smolagents](smolagents-provider-results.md) · [JSON](smolagents-provider-results.json) | 26 | 52 / 156 | Direct MCP reference and ToolCallingAgent tool execution |
+| [Google ADK](google-adk-provider-results.md) · [JSON](google-adk-provider-results.json) | 26 | 52 / 156 | ClientSession reference and actual McpToolset / ToolContext |
+| [CrewAI](crewai-provider-results.md) · [JSON](crewai-provider-results.json) | 26 | 52 / 156 | ClientSession reference and official MCP resolver / BaseTools |
+| [Client profiles / Goose](host-profiles-results.md) · [JSON](host-profiles-results.json) | 20 | 40 / 120 | Fourteen configuration profiles, shared stdio and the official Goose client |
 
-| Family | Profiles and execution |
+The [OpenCode plugin guide](../opencode.md) and
+[CLI benchmark runner](../../benches/opencode_provider.mjs) identify its four
+additional xnip tools and actual CLI execution surface.
+Its recorded CLI debug entry includes startup, complete stdout capture and
+decoding, with formatters and LSP disabled in both lanes. Original fuzzy/EOL
+editing and the plugin's exact matching retain their named contracts.
+
+Provider comparisons use a real original editor where the host supplies one.
+LangGraph tools and MCP SDK cohorts measure their registered tool/transport
+pipeline. SDK and direct-MCP projections remain separate returned layers.
+Client-profile timings describe shared stdio; Goose has an executed official
+client lane. Actual Codex, Claude Code and Copilot CLI configuration checks
+are recorded separately from GUI application behavior.
+
+## Byte goals and host behavior
+
+Each sample checks the complete expected file set, exact bytes or absence,
+the SDK receipt and the specific error for a rejected operation. A host's
+format/newline policy and the independent literal-byte goal are separate:
+
+| Cohort | Host-policy / SDK-compatible workflows | Literal byte-goal workflows | Recorded difference |
+|---|---:|---:|---|
+| OpenHands | 138 / 138 | 120 / 138 | CRLF, BOM+CRLF and mixed-EOL normalization |
+| aider | 426 / 426 | 390 / 426 | CRLF and final-newline representation across three formats |
+| Python frameworks | 276 / 276 | 258 / 276 | DeepAgents normalizes three newline cases; LangGraph and PydanticAI retain literal goals |
+
+The original 13 shared fixtures retain their supplied inputs. Each format or
+SDK route declares its own matching, permission and representation policy.
+Warm-ups use the same correctness gates as measured workflows.
+
+## Timing and byte accounting
+
+Read, mutation and setup fields retain their named scopes. `setup_ms` describes
+runtime/session construction. In the DeepAgents/LangGraph/PydanticAI cohort,
+Python interpreter and module imports happen before that timer. CrewAI and
+client-profile workflows include a fresh MCP connection and graceful closure;
+CrewAI's actual SDK retries and backoff remain timed. Each report states its
+session and bootstrap policy.
+
+| Counter | Captured data |
 |---|---|
-| xnip MCP | Original absolute-path `xnip-edit`; case-root relative edit; pre-execution adaptive guarded/snapshot policies, each with explicitly selected structured and text-only receipts |
-| xnip CLI | Real stdin native programs and compact maps, each with guarded and snapshot policies; cold process startup is recorded |
-| Codex | Real executable's apply_patch dispatcher; original three-line context and separately generated unique-context patches |
-| Gemini CLI | Real EditTool and StandardFileSystemService; prescribed/minimal inputs, absolute/relative variants and a complete-known-file trim profile |
-| OpenCode | Pinned official EditTool/ApplyPatchTool; absolute/relative literal edits, a complete-known-file trim profile and original/unique-context patches |
-| aider | Pinned native diff/whole/udiff kernels with platform/LF modes; additional unique-context diff and EOF-aware whole profiles |
-| DSH | Pinned real ToolRuntime and filesystem; observed fs edit/write and optional str editor include real read/view; explicit bare lanes stay separate |
-| Pi | Pinned real edit/write, original-coordinate multi-edit, fuzzy/BOM/EOL, mutation queue and IO |
-| Goose | Pinned real Rust EditTools edit/write; raw MCP DTO retained, provider-result boundary unknown |
-| Claude Code / Cursor | No independently callable official editing executor connected; not measured |
+| Public arguments | Actual tool-call object or supplied Coder reply |
+| SDK projection | Actual ToolMessage content, tool result or returned SDK value |
+| Exception bytes | Actual thrown error text, kept separate from returned content |
+| MCP frames | Measured request/response bytes where the client observes them |
+| Native JSONL | Actual child stdin/stdout for adapters that own that connection |
 
-All original 31 profiles and all original thirteen task names remain in the same run. The extra profiles distinguish path configuration, edit representation and allowed preconditions rather than replacing inconvenient original rows.
+These layers retain their own byte counts. An MCP frame contains arguments
+already counted at the tool boundary; SDK projection and raw RPC results are
+separate representations. Model calls stay at zero, and reports make claims
+at their recorded local execution boundary.
 
-**Guarded** policies retain a supplied old-content, anchor or whole-file precondition. **Snapshot** policies may use explicit whole-file upserts without an old-content check because the complete desired file is supplied. They can still select a guarded edit when it is smaller. Required-old probes always retain their original stale/ambiguous old bytes; snapshot policies cannot bypass them with a write.
+Three measured samples yield a median and nearest-rank p95; p95 is the maximum
+of those three samples. Machine, interpreter, SDK, source and binary provenance
+accompany each cohort. Compare original and native lanes within the declared
+host policy and lifecycle.
 
-The adaptive choice uses the complete serialized candidate input under the selected counter **before any candidate executes**. MCP policies also consider native literal manifests through the existing `manifest_text` argument, including its JSON wrapper cost. Snapshot-capable MCP/native CLI adds existing line programs and unique common-prefix/suffix trims derived from the complete known file; compact CLI adds trimmed pairs; relative OpenCode/Gemini profiles receive the same literal-trimming opportunity. Guarded profiles and required-old probes retain the original supplied old bytes. Candidate names, costs, input hashes and the selected contract are retained. A post-run byte oracle never chooses the candidate. These are editing-executor experiments; a complete agent A/B also needs model trajectories, reads, tool choice, retries and provider usage.
+## Reproduce a current cohort
 
-## Read the frontier and cost layers
+Prepare the matching isolated environment using
+[host/framework setup](../testing.md#native-host-e2e), finish the release build,
+then run measurements sequentially. Each report contains its exact invocation.
+For example:
 
-The primary frontier selects the **best observed byte-exact supplied profile** per task, independently for input and input plus known returned text. The guarded pool accepts guarded profiles only. The snapshot-enabled pool symmetrically permits guarded and snapshot candidates on both sides, since allowing a whole write does not require using one. Xnip MCP and CLI pools remain separate, and winners retain their actual contract. Native candidates can span native transports; the winning profile and its transport are named. DSH policies are excluded from that combined minimum and receive separate policy frontiers with required reads included. Host→xnip lanes stay in [host-exchange-results.json](host-exchange-results.json), with native catalogs, public names, prompt/schema/rendered content and internal DTOs measured separately.
-
-Ratios are native best / xnip best; values above 1 mean xnip's observed input is smaller. Each task gets one geometric-mean vote. The summary chart also reports xnip wins, ties, losses and unavailable comparisons. This derived frontier is not a claim of global optimality or a strategy replayed by the runner.
-
-| Layer | Counted evidence |
-|---|---|
-| Executor input | Complete tool argument object, native patch/edit message, or complete CLI stdin program |
-| Captured returned text | Actual tool text/error at the recorded native boundary; aider's final model-facing return and Goose provider projection remain unknown |
-| Serialized MCP reply | Canonical serialization of the captured normalized JSON-RPC reply, including protocol/result/structured fields, when recorded |
-| CLI invocation | Executed argv displayed with host-platform quoting; binary path and `apply --format ... --from-stdin` are counted separately |
-| Serialized MCP request | Captured protocol request with tool name and arguments; overlaps executor input and is not added to it |
-
-Two paired `-text` strategies start MCP with `--receipts text`; original structured counterparts explicitly choose `--receipts structured` while current xnip defaults to text. The report compares actual full replies only when both profiles are byte-exact and their actual inputs and returned text match exactly. The supplementary suite also discovers a real compact/text tool catalog, so the output-schema change is measured rather than inferred.
-
-Unknown values stay unknown. These layers describe different boundaries and must not be summed indiscriminately. The full MCP object may contain fields a host does not put into model context. No column represents billed usage.
-
-The full report also retains ratios to the original literal baseline, all-task and byte-exact paired cohorts, sensitivity without the extreme long line, and every nonexact result. CLI cold-start timing and warm MCP/kernel timing are kept separate; no mixed latency ranking is made.
-
-## Reproduce
-
-Python 3.10+, Node 24, a built xnip and the selected native implementations are required. Aider setup uses Git and uv to create an isolated Python 3.13 environment under target/native-bench.
-
-~~~sh
+```sh
 cargo build --release --locked
-python benches/native/setup_aider.py
-node --test tests/node_runtime_contract.mjs
-node benches/native/dsh_setup.mjs
-node --test tests/pi_contract.mjs
-python benches/native/goose_adapter.py --check
-python benches/native_tools.py --xnip target/release/xnip --repeats 3 --json target/native-bench/results.json --markdown target/native-bench/results.md
-~~~
+target/native-hosts/python-agents/.venv/bin/python benches/python_agents_provider.py \
+  --executable target/release/xnip --repeats 3 --warmups 1 \
+  --output-prefix target/benchmarks/python-agents
+```
 
-On Windows, use `target/release/xnip.exe`. Codex is discovered on PATH or in the desktop app's bundled binaries; select one with `--codex` or `XNIP_BENCH_CODEX`. Gemini uses the installed core package or `GEMINI_CORE_PATH`. OpenCode preparation uses SHA-verified pinned official sources and locked dependencies under target/native-bench. No account, inference provider or model call is required. DSH preparation verifies pinned official source and isolated locked dependencies. Pi builds its source-verified native adapter at first use; Goose setup builds its isolated locked Rust executor. See [DSH](../dsh.md), [Pi](../pi.md) and [Goose](../goose.md) for exact boundaries and preparation. Omit added harnesses with `--harnesses ""` for the historical 31-profile matrix; `--skip-host-exchange` omits the separate bridges. A development-only `--only-profiles` subset still needs `xnip-edit` for relative reports.
+On Windows use the environment's `Scripts/python.exe` and `xnip.exe`.
+`--output-prefix` selects fresh local artifacts; `--scenarios` selects a named
+fixture subset. SDK families use their own virtual environments and locked MCP
+versions. The test guide lists actual measured-runner contracts alongside
+the full 369-check execution matrix.
 
-For the recorded tokenizer:
+## Earlier provider snapshots
 
-~~~sh
-python -m pip install --target target/benchmark-python tiktoken==0.14.0
-python benches/native_tools.py --xnip target/release/xnip --encoding o200k_base --repeats 3 --json docs/benchmarks/results.json --markdown docs/benchmarks/results.md
-~~~
+These records keep their original implementation versions and fingerprints:
 
-The runner loads that private dependency directory automatically. Counts are exact for the normalized strings and named encoding; without `--encoding` it reports exact UTF-8 bytes and null tokens. A first tokenizer vocabulary load may need the network; cache it for offline reruns. Every xnip subprocess has `XNIP_AUTO_UPDATE=0`.
+| Report | Fixtures | Groups / measured workflows | Boundary |
+|---|---:|---:|---|
+| [DSH rc.2 / rc.5](native-provider-results.md) · [JSON](native-provider-results.json) | 32 | 128 / 384 | Official filesystem tools, observation/sandbox policy and native IPC |
+| [Pi 1.3.0](pi-provider-results.md) · [JSON](pi-provider-results.json) | 20 | 40 / 120 | Original SDK tools, mutation queue, hooks and public JSON |
+| [Gemini core 0.27.2](gemini-provider-results.md) · [JSON](gemini-provider-results.json) | 30 | 60 / 180 | Local Config service, original tool invocations and native IPC |
+| [Cline SDK/core 0.2.0](cline-provider-results.md) · [JSON](cline-provider-results.json) | 31 | 62 / 186 | Official patch parser, SDK dispatch and operation output |
 
-Finish builds and source/integration generation before measuring. Adapter and binary changes during a run prevent publication. Original calls and normalized copies remain available; random temporary root names do not determine the score.
+Gemini's two lanes match SDK results and storage; its independent literal goal
+holds for 174 of 180 workflows because both lanes normalize mixed EOL.
+Cline's large-file cases use the official EOF hint in both lanes, alongside an
+unhinted 64 KiB pressure case. Its [matcher probe](cline-matcher-probe.json) and
+[partial diagnostic](cline-provider-partial-diagnostic.json) retain component
+and partial-run evidence separately from the complete SDK matrix.
 
-## Regenerate reports without editors
+The [DSH encoding control](native-provider-encoding.md) compares byte arrays and
+UTF-8 with one fixed release binary, source and tool flow. It isolates that
+bridge representation choice; provider reports retain the original host's
+local execution cost beside xnip's IO and transaction work.
 
-~~~sh
-python benches/native_tools.py --report-only docs/benchmarks/results.json --markdown docs/benchmarks/results.md
-python tests/native_benchmark_contract.py
-~~~
+## Historical editing-executor archive
 
-Report-only uses the Python standard library. It invokes no editor or tokenizer, performs no network request and leaves raw JSON/provenance unchanged. It writes Markdown, derived JSON and six deterministic SVG charts. The derived JSON records the raw JSON SHA-256.
+The [archive index](archive/README.md) retains the original **13-task / 41-profile**
+editing-executor run, six host-MCP exchange profiles, supplementary
+representation measurements and core-performance snapshots. Its raw JSON,
+frontier statistics and charts retain the recorded cohorts. Current plugin,
+SDK and client-profile evidence has the named boundaries above.
 
-## Supplementary measurements
+The [historical methodology](native-methodology.md) documents input selection,
+guards, probes and accounting. To render the stored run into fresh local files:
 
-~~~sh
-python benches/edit_cost.py --xnip target/release/xnip --encoding o200k_base --repeats 3 --json docs/benchmarks/representation-results.json --markdown docs/benchmarks/representation-results.md
-~~~
+```sh
+python benches/native_tools.py --report-only docs/benchmarks/results.json \
+  --markdown target/native-bench/report-only/results.md
+```
 
-The supplementary suite verifies 139 xnip format/fixture executions per repetition and records actual catalogs, current integration prompts, reads, preview budgets, output modes and rejected-call recovery. Its third-party serialization examples are not native executions; use the primary suite for product behavior.
+Report-only uses the Python standard library and the captured raw run.

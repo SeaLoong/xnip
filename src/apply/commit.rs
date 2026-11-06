@@ -81,6 +81,36 @@ pub fn execute(ops: Vec<Op>, opts: &ExecOpts) -> Result<Vec<PathBuf>, ExecError>
 
 /// Structured execution for MCP: never print diffs to protocol stdout.
 pub fn execute_report(ops: Vec<Op>, opts: &ExecOpts) -> Result<Report, ExecError> {
+    let plan = prepare(ops, opts)?;
+    if opts.dry_run {
+        return Ok(plan.preview());
+    }
+    if opts.check {
+        return Ok(Report {
+            files: plan.changed_files(),
+            ..Report::default()
+        });
+    }
+    plan.commit(opts.backup).map_err(|error| {
+        if error
+            .downcast_ref::<crate::core::transaction::CommitError>()
+            .is_some()
+        {
+            ExecError::Phase2 {
+                path: PathBuf::new(),
+                msg: format!("{error:#}"),
+                planned: plan.changed_files(),
+            }
+        } else {
+            phase1(std::path::Path::new(""), format!("{error:#}"))
+        }
+    })
+}
+
+/// Prepare the complete batch without writing files or recovery records.
+/// Grouped edits retain their original-coordinate semantics; ordered file
+/// operations retain the virtual state of preceding operations.
+pub fn prepare(ops: Vec<Op>, opts: &ExecOpts) -> Result<Plan, ExecError> {
     if opts.check && opts.dry_run {
         return Err(ExecError::Phase1 {
             path: PathBuf::new(),
@@ -102,7 +132,7 @@ pub fn execute_report(ops: Vec<Op>, opts: &ExecOpts) -> Result<Report, ExecError
     // Step 1: 把 FilesFrom 展开
     let expanded = expand_files_from(ops, opts)?;
     if opts.sequential || expanded.iter().any(|op| matches!(op, Op::File { .. })) {
-        return execute_ordered(expanded, opts);
+        return prepare_ordered(expanded, opts);
     }
 
     // Step 2: 按文件分组（保留组内 op 原顺序）
@@ -164,7 +194,7 @@ pub fn execute_report(ops: Vec<Op>, opts: &ExecOpts) -> Result<Report, ExecError
         plan.stage(&prepared.path, &prepared.before, prepared.after)
             .map_err(|e| phase1(&prepared.path, e))?;
     }
-    finish_plan(&plan, opts)
+    Ok(plan)
 }
 
 fn phase1(path: &std::path::Path, error: impl std::fmt::Display) -> ExecError {
@@ -174,79 +204,58 @@ fn phase1(path: &std::path::Path, error: impl std::fmt::Display) -> ExecError {
     }
 }
 
-fn finish_plan(plan: &Plan, opts: &ExecOpts) -> Result<Report, ExecError> {
-    if opts.dry_run {
-        return Ok(plan.preview());
-    }
-    if opts.check {
-        return Ok(Report {
-            files: plan.changed_files(),
-            ..Report::default()
-        });
-    }
-    plan.commit(opts.backup).map_err(|error| {
-        if error
-            .downcast_ref::<crate::core::transaction::CommitError>()
-            .is_some()
-        {
-            ExecError::Phase2 {
-                path: PathBuf::new(),
-                msg: format!("{error:#}"),
-                planned: plan.changed_files(),
-            }
-        } else {
-            phase1(std::path::Path::new(""), format!("{error:#}"))
-        }
-    })
-}
-
-fn execute_ordered(ops: Vec<Op>, opts: &ExecOpts) -> Result<Report, ExecError> {
+fn prepare_ordered(ops: Vec<Op>, opts: &ExecOpts) -> Result<Plan, ExecError> {
     let mut plan = Plan::default();
     for op in ops {
         let Target::File(path) = op.target() else {
             unreachable!("expanded file list");
         };
-        let result = (|| -> Result<()> {
-            if let Op::File { operation, .. } = &op {
-                match operation {
-                    FileOp::Create(content) => plan.create(path, load_op_content(content, opts)?),
-                    FileOp::Write { content, was } => {
-                        plan.write(path, load_op_content(content, opts)?, was.as_deref())
-                    }
-                    FileOp::Delete { was } => plan.delete(path, was.as_deref()),
-                    FileOp::Rename { to, was } => plan.rename(path, to, was.as_deref()),
-                    FileOp::Exact { old, text, all } => {
-                        let old = borrow_op_content(old, opts)?;
-                        let text = borrow_op_content(text, opts)?;
-                        plan.replace_exact(path, &old, &text, *all).map(|_| ())
-                    }
-                    FileOp::Patch(patch) => {
-                        let before = if patch.create {
-                            Vec::new()
-                        } else {
-                            plan.read(path)?
-                        };
-                        let after = crate::apply::patch::apply(&before, patch)?;
-                        if patch.create {
-                            plan.create(path, after)?;
-                        } else if patch.delete {
-                            plan.delete(path, Some(&before))?;
-                        } else {
-                            plan.update(path, after)?;
-                        }
-                        if let Some(to) = &patch.rename_to {
-                            plan.rename(path, to, None)?;
-                        }
-                        Ok(())
-                    }
-                }
-            } else {
-                plan.transform(path, |before| apply_one_op(&op, before, opts))
-            }
-        })();
-        result.map_err(|e| phase1(path, format!("{e:#}")))?;
+        stage_ordered(&mut plan, &op, opts).map_err(|e| phase1(path, format!("{e:#}")))?;
     }
-    finish_plan(&plan, opts)
+    Ok(plan)
+}
+
+/// Apply one already-expanded operation to an existing virtual plan.
+pub(crate) fn stage_ordered(plan: &mut Plan, op: &Op, opts: &ExecOpts) -> Result<()> {
+    let Target::File(path) = op.target() else {
+        bail!("file lists must be expanded before staging");
+    };
+    if let Op::File { operation, .. } = &op {
+        match operation {
+            FileOp::Create(content) => plan.create(path, load_op_content(content, opts)?),
+            FileOp::Write { content, was } => {
+                plan.write(path, load_op_content(content, opts)?, was.as_deref())
+            }
+            FileOp::Delete { was } => plan.delete(path, was.as_deref()),
+            FileOp::Rename { to, was } => plan.rename(path, to, was.as_deref()),
+            FileOp::Exact { old, text, all } => {
+                let old = borrow_op_content(old, opts)?;
+                let text = borrow_op_content(text, opts)?;
+                plan.replace_exact(path, &old, &text, *all).map(|_| ())
+            }
+            FileOp::Patch(patch) => {
+                let before = if patch.create {
+                    Vec::new()
+                } else {
+                    plan.read(path)?
+                };
+                let after = crate::apply::patch::apply(&before, patch)?;
+                if patch.create {
+                    plan.create(path, after)?;
+                } else if patch.delete {
+                    plan.delete(path, Some(&before))?;
+                } else {
+                    plan.update(path, after)?;
+                }
+                if let Some(to) = &patch.rename_to {
+                    plan.rename(path, to, None)?;
+                }
+                Ok(())
+            }
+        }
+    } else {
+        plan.transform(path, |before| apply_one_op(op, before, opts))
+    }
 }
 
 struct Phase1Out {

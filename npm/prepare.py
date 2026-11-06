@@ -151,7 +151,11 @@ def prepare(dist, output, pack=False, host_binary=None, public=False, source_com
     if not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+(?:[-+][0-9A-Za-z.+-]+)?", version):
         raise ValueError("Cargo package version must be a valid npm-compatible version")
     for relative in ["integrations/dsh/index.mjs", "integrations/dsh/cordis.patch.yml",
-                     "integrations/pi/index.mjs", "npm/xnip/lib/validate.cjs",
+                     "integrations/pi/index.mjs", "integrations/pi-native/index.mjs",
+                     "integrations/gemini-native/index.mjs", "integrations/cline-native/index.mjs",
+                     "integrations/opencode/index.mjs",
+                     "integrations/host-profiles/xnip_profiles.py", "integrations/catalog.json",
+                     "integrations/native/editor-client.mjs", "npm/xnip/lib/validate.cjs",
                      "npm/xnip/lib/native.cjs", "npm/xnip/bin/xnip.cjs", "npm/README.md",
                      "LICENSE", "THIRD_PARTY_LICENSES.md"]:
         if not (ROOT/relative).is_file():
@@ -247,11 +251,13 @@ def prepare(dist, output, pack=False, host_binary=None, public=False, source_com
         (directory/entry["binary"]).chmod(0o755)
         manifest["platforms"][platform] = entry
         packages.append(directory)
-    for integration in ["dsh","pi"]:
+    for integration in ["dsh","pi","native","pi-native","gemini-native","cline-native","opencode","host-profiles"]:
         source = ROOT/"integrations"/integration
         if not source.is_dir():
             raise ValueError("integration source not ready: " + integration)
-        shutil.copytree(source, parent/"integrations"/integration)
+        shutil.copytree(source, parent/"integrations"/integration,
+                        ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*.pyo"))
+    shutil.copyfile(ROOT/"integrations/catalog.json", parent/"integrations/catalog.json")
     for name in ["LICENSE","THIRD_PARTY_LICENSES.md"]:
         shutil.copyfile(ROOT/name, parent/name)
     shutil.copyfile(ROOT/"npm/README.md", parent/"README.md")

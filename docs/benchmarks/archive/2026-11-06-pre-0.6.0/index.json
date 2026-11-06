@@ -1,0 +1,102 @@
+[
+  {
+    "file": "openhands-provider-results.json",
+    "sha256": "e25b8215b4cf64ddf2e72092202faf2e4f53966b017b547ab49ad7a4def4124e",
+    "binary_sha256": "16cecdbad176790492338643e29480d2dc7793c5cda5629102e0dde434be8deb",
+    "measured_workflows": 138,
+    "markdown_file": "openhands-provider-results.md",
+    "markdown_source": "docs/benchmarks/openhands-provider-results.md",
+    "markdown_original_sha256": "8f0d18d0afcb6a49dc94c3d04a4cbc2fae1b5cfa0cb81fa2dca66d275e63db0d",
+    "markdown_sha256": "8f0d18d0afcb6a49dc94c3d04a4cbc2fae1b5cfa0cb81fa2dca66d275e63db0d"
+  },
+  {
+    "file": "python-agents-provider-results.json",
+    "sha256": "4c45268963b04c508747e3ad345b0c4e267c407a23a2f7085fb2111a5dc5fbe8",
+    "binary_sha256": "16cecdbad176790492338643e29480d2dc7793c5cda5629102e0dde434be8deb",
+    "measured_workflows": 276,
+    "markdown_file": "python-agents-provider-results.md",
+    "markdown_source": "docs/benchmarks/python-agents-provider-results.md",
+    "markdown_original_sha256": "3835141c6d0f74b830ba33072cf1d4f01e722f59dd1fea63b67bb333fbdf61f0",
+    "markdown_sha256": "3835141c6d0f74b830ba33072cf1d4f01e722f59dd1fea63b67bb333fbdf61f0"
+  },
+  {
+    "file": "agents-sdk-provider-results.json",
+    "sha256": "5997588a5dd935f2b80bba99f366168d8f6e7b8287597b96be1898165abf8f6c",
+    "binary_sha256": "16cecdbad176790492338643e29480d2dc7793c5cda5629102e0dde434be8deb",
+    "measured_workflows": 156,
+    "markdown_file": "agents-sdk-provider-results.md",
+    "markdown_source": "docs/benchmarks/agents-sdk-provider-results.md",
+    "markdown_original_sha256": "44720a3a829c493d9ac883a3727ae7e68cea51696ae9a446b1fbf9e2946fb757",
+    "markdown_sha256": "44720a3a829c493d9ac883a3727ae7e68cea51696ae9a446b1fbf9e2946fb757"
+  },
+  {
+    "file": "autogen-provider-results.json",
+    "sha256": "e7f4e96ffd2d88bf362a4b835ec199ddbde7316a4f509861a5830d9f57813ed2",
+    "binary_sha256": "16cecdbad176790492338643e29480d2dc7793c5cda5629102e0dde434be8deb",
+    "measured_workflows": 156,
+    "markdown_file": "autogen-provider-results.md",
+    "markdown_source": "docs/benchmarks/autogen-provider-results.md",
+    "markdown_original_sha256": "ad9625854235c574b899cfe0dd334bca7d72f89568e69fb498aa325fc8771dcb",
+    "markdown_sha256": "ad9625854235c574b899cfe0dd334bca7d72f89568e69fb498aa325fc8771dcb"
+  },
+  {
+    "file": "smolagents-provider-results.json",
+    "sha256": "47288580f96000accf41378524d36f6a409c26239512c99aaf86026d3bb37687",
+    "binary_sha256": "16cecdbad176790492338643e29480d2dc7793c5cda5629102e0dde434be8deb",
+    "measured_workflows": 156,
+    "markdown_file": "smolagents-provider-results.md",
+    "markdown_source": "docs/benchmarks/smolagents-provider-results.md",
+    "markdown_original_sha256": "ddb4fab32b9188ad37e9619b8206befcd78aa6fb77a6b2120cc03ee36be1561a",
+    "markdown_sha256": "ddb4fab32b9188ad37e9619b8206befcd78aa6fb77a6b2120cc03ee36be1561a"
+  },
+  {
+    "file": "host-profiles-results.json",
+    "sha256": "5121a1a58e63787c12314350141b9747203412b1a984066d4e38baa644be28c4",
+    "binary_sha256": "16cecdbad176790492338643e29480d2dc7793c5cda5629102e0dde434be8deb",
+    "measured_workflows": 120,
+    "markdown_file": "host-profiles-results.md",
+    "markdown_source": "docs/benchmarks/host-profiles-results.md",
+    "markdown_original_sha256": "8e9fd0786ecc38e49904f05659dfec8cab69c3b3cf3012af621ed11f09cf75cf",
+    "markdown_sha256": "5a64c69c156ccdf4a249944fbda4a00ea507713a9b1e15eb71960945e42bcc70"
+  },
+  {
+    "file": "google-adk-provider-results.json",
+    "sha256": "dbd85adb4225e1face7b8883cea41503ab8c7f8f0f37d7110af2c48d906c71e7",
+    "binary_sha256": "16cecdbad176790492338643e29480d2dc7793c5cda5629102e0dde434be8deb",
+    "measured_workflows": 156,
+    "markdown_file": "google-adk-provider-results.md",
+    "markdown_source": "docs/benchmarks/google-adk-provider-results.md",
+    "markdown_original_sha256": "ccd248c17d32a0cd5f0889c8d1e7e0705b80956f1efaa26f213246cda4429739",
+    "markdown_sha256": "b4e50da2a476ff642a89fdf8fd3907933219eb29f7341139ba1fcdbebf224418"
+  },
+  {
+    "file": "crewai-provider-results.json",
+    "sha256": "a2fe360a6ad9c338b6fa5a229eceb097c6d95764033b30fcfaeae8fb52b1d5f0",
+    "binary_sha256": "16cecdbad176790492338643e29480d2dc7793c5cda5629102e0dde434be8deb",
+    "measured_workflows": 156,
+    "markdown_file": "crewai-provider-results.md",
+    "markdown_source": "docs/benchmarks/crewai-provider-results.md",
+    "markdown_original_sha256": "690f8f90eb6d82ac1c3a6337a1b47e738c3119db3ef77c27a05e295298ee219e",
+    "markdown_sha256": "86c0ed76a8bc923d9df79575e6a8ba9869f7c424f71b18072f50c89ddc2e7e4f"
+  },
+  {
+    "file": "aider-provider-results.json",
+    "sha256": "cdedcf40ccbb7df292898918b35cb69ca600b23f3ae7eb64627850b6a81612f3",
+    "binary_sha256": "16cecdbad176790492338643e29480d2dc7793c5cda5629102e0dde434be8deb",
+    "measured_workflows": 426,
+    "markdown_file": "aider-provider-results.md",
+    "markdown_source": "docs/benchmarks/aider-provider-results.md",
+    "markdown_original_sha256": "e90f848d731a02949ef132f048178b9032ed5d319361f4066e57a002e92a643b",
+    "markdown_sha256": "03bd8ee09f0fa658ee2aad3d99ca6161d7c6de638f323b956483a356ac145f59"
+  },
+  {
+    "file": "opencode-provider-results.json",
+    "sha256": "64783786bd144d70c8d79a9602a495180ec238a2d6d6f392e41b47eeb10cd076",
+    "binary_sha256": "16cecdbad176790492338643e29480d2dc7793c5cda5629102e0dde434be8deb",
+    "measured_workflows": 138,
+    "markdown_file": "opencode-provider-results.md",
+    "markdown_source": "docs/benchmarks/opencode-provider-results.md",
+    "markdown_original_sha256": "b03c5393ff4de50734d673bd0e76eb222010e4524e8a5de99629f469dc36c12c",
+    "markdown_sha256": "9087ea900b5283bf339a4b92697112bf16f8f7ea799175d65ace0f64f5fb2352"
+  }
+]

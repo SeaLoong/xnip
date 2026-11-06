@@ -17,13 +17,23 @@ Both paths share core editing algorithms. Input fields, error handling and avail
 ## Starting the server
 
 ```sh
-xnip mcp --receipts text  # concise agent receipts
+xnip mcp --cwd /absolute/project --receipts text  # project-scoped agent receipts
 # Use xnip mcp for structured metadata (the default).
 # The process prints nothing. It waits for the client to feed JSON-RPC frames via stdin.
 # Exit: Ctrl-D (close stdin) or client disconnect.
 ```
 
 For the primary editing workflow use [xnip_edit](edit.md#mcp); it accepts literal old/new blocks and supports preview/check without writes. Reuse context already available rather than issuing a mandatory peek before every edit.
+
+`--cwd` selects the server's working directory before discovery and tool calls.
+Use an absolute project path for a stable launch from GUI clients. It belongs
+in the server's command arguments; tool schemas retain their existing path
+fields. Relative tool paths resolve from this directory, and absolute paths
+use the process's normal filesystem authority.
+
+The [support matrix](support.md) lists official SDK toolsets and the
+[14 client profiles](host-profiles.md), with client-specific configuration,
+CLI and stdio evidence. Generated profiles include `--cwd` in their arguments.
 
 Use `xnip mcp --toolset full` when a client needs specialized replace/insert/move/indent or doctor tools. xnip 0.5.0+ supports modern `server/discover` negotiation and legacy `initialize`, followed by `tools/list` / `tools/call` over stdio. This resolves the pinned Goose client's default negotiation; 0.4 releases use the older SDK. See [DSH](dsh.md), [Pi](pi.md), [Goose](goose.md) and [npm installation](../npm/README.md) for host-specific setup. Restart an existing server to discover a changed toolset.
 
@@ -110,7 +120,10 @@ Tool call failures return a JSON-RPC `error` object (not `result.isError=true`).
 
 ## Client configuration
 
-These examples keep the default structured receipts. With xnip 0.4.0 or newer, use `args: ["mcp", "--receipts", "text"]` when the client only needs text receipts. Restart existing connections after upgrading or changing server options.
+The [profile generator](host-profiles.md) provides the current configuration
+for each supported client. These examples keep structured receipts; append
+`--receipts text` for concise acknowledgements. Set the absolute project path
+in `--cwd`, then restart the connection after changing server options.
 
 ### Claude Desktop / Claude Code
 
@@ -121,7 +134,7 @@ These examples keep the default structured receipts. With xnip 0.4.0 or newer, u
   "mcpServers": {
     "xnip": {
       "command": "xnip",
-      "args": ["mcp"]
+      "args": ["mcp", "--cwd", "/absolute/project"]
     }
   }
 }
@@ -134,7 +147,7 @@ These examples keep the default structured receipts. With xnip 0.4.0 or newer, u
 ```json
 {
   "mcpServers": {
-    "xnip": { "command": "xnip", "args": ["mcp"] }
+    "xnip": { "command": "xnip", "args": ["mcp", "--cwd", "/absolute/project"] }
   }
 }
 ```
@@ -145,13 +158,16 @@ Open the MCP Servers panel, choose Configure, then Configure MCP Servers. Add xn
 
 ### Continue
 
-Add an entry to the `mcpServers` list in the active `config.yaml`:
+Use a project file at `.continue/mcpServers/xnip.yaml`:
 
 ```yaml
+name: xnip
+version: 1.0.0
+schema: v1
 mcpServers:
   - name: xnip
     command: xnip
-    args: [mcp]
+    args: [mcp, --cwd, /absolute/project]
 ```
 
 Use Continue's agent mode for MCP tools. See the [Continue MCP setup guide](https://docs.continue.dev/customize/deep-dives/mcp).
@@ -163,7 +179,7 @@ Add a local server in Zed's MCP settings, or edit the settings file opened by `z
 ```json
 {
   "context_servers": {
-    "xnip": { "command": "xnip", "args": ["mcp"] }
+    "xnip": { "command": "xnip", "args": ["mcp", "--cwd", "/absolute/project"] }
   }
 }
 ```

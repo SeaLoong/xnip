@@ -1,0 +1,12 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "xnip-native-client"
+version = "0.6.0"
+description = "Python JSON-lines transport for the xnip native executable"
+requires-python = ">=3.11"
+
+[tool.setuptools]
+py-modules = ["xnip_native_client"]

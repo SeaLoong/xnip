@@ -1,12 +1,12 @@
 # Editing strategies and the remaining tradeoffs
 
-The [current native run](results.json), [derived statistics](relative-results.json) and [readable results](results.md) compare real editing executors horizontally. The original literal xnip-edit profile remains alongside relative-path, adaptive, CLI and text-receipt variants; it is not replaced by the best new result. Native profiles likewise keep their original representations, failures and byte-incompatible outcomes.
+The [recorded native run](results.json), [derived statistics](relative-results.json) and [readable results](results.md) compare real editing executors horizontally. This study belongs to the [historical evidence archive](archive/README.md). The original literal xnip-edit profile remains alongside relative-path, adaptive, CLI and text-receipt variants; it is not replaced by the best new result. Native profiles likewise keep their original representations, failures and byte-incompatible outcomes.
 
 The relevant target is less complete observable edit exchange under a stated contract. The smallest old/new block, a shared-file batch and a whole-file rewrite are useful in different situations. Changing a persistence algorithm after receiving a large payload cannot recover tokens already transmitted.
 
-## What the current measurements show
+## What the recorded measurements show
 
-The current 0.5.5 run executes 41 editor profiles on the same 13 scenarios, three times each, plus six separate host→xnip bridge profiles on those tasks. All original 31 profiles remain. DSH observation/filesystem policies receive separate frontiers; they and the host bridge lanes are excluded from the pooled native minimum. Only outputs that match expected file bytes in every repetition qualify for the best-observed frontier. Native and xnip use symmetric candidate permissions; snapshot-enabled includes guarded candidates on both sides.
+The recorded 0.5.5 run executes 41 editor profiles on the same 13 scenarios, three times each, plus six separate host→xnip bridge profiles on those tasks. All original 31 profiles remain. DSH observation/filesystem policies receive separate frontiers; they and the host bridge lanes are excluded from the pooled native minimum. Only outputs that match expected file bytes in every repetition qualify for the best-observed frontier. Native and xnip use symmetric candidate permissions; snapshot-enabled includes guarded candidates on both sides.
 
 | xnip transport / permitted operations | Geometric mean native best / xnip best input | xnip shorter / tied / native shorter |
 |---|---:|---:|
@@ -17,7 +17,7 @@ The current 0.5.5 run executes 41 editor profiles on the same 13 scenarios, thre
 
 CLI minima span native programs and compact maps, with invocation cost reported separately; this table is executor input, not total shell/MCP session usage. The original profiles remain visible beside the added configurations. Goose supplies the smallest guarded native input on 12 tasks, while OpenCode wins the global-replace native input. Across these 41 measured profiles, the MCP guarded input ratio is 1.23x.
 
-Five short-file cases exposed missing candidate strategies rather than an unavoidable JSON lower bound. The current run executes the alternatives through existing interfaces and verifies the goal bytes in every repetition:
+Five short-file cases exposed missing candidate strategies rather than an unavoidable JSON lower bound. The recorded run executes the alternatives through existing interfaces and verifies the goal bytes in every repetition:
 
 | Task | Native best input tokens | Best xnip MCP input tokens | Selected xnip representation |
 |---|---:|---:|---|
@@ -31,11 +31,11 @@ Whole-file JSON has wrapper and escaping costs, but that does not establish a lo
 
 The same complete-file trimming opportunity is provided to accepted-relative OpenCode and Gemini literal profiles. Both new profiles are byte-exact on all thirteen tasks. Their permission cohort is snapshot-enabled, while their selected unique literal edits retain an actual guarded contract. This prevents crediting xnip for a one-sided input policy.
 
-CLI snapshot policies reuse the same trim helper and actual counter; native programs also reuse the line candidates, while compact maps receive trimmed pairs. On `large-local-change`, OpenCode's known-file trim costs **21** tokens, xnip MCP's trim costs **16**, and the native CLI trim costs **13**. All three retain the complete relative path and a unique old literal. Existing native literal manifests also reduce the guarded global replacement to **14** MCP input tokens and the multi-file batch to **29**; the known-file long-line candidate costs **11**. The complete `manifest_text` JSON wrapper is included. Every current input frontier task favors xnip except snapshot-enabled MCP `delete-block`, which ties at **12 / 12**; guarded deletion still favors xnip at **19 / 18**. These are best observed inputs among the supplied strategies, not proof that any interface has reached its shortest possible encoding. No failing or inconvenient profile is removed.
+CLI snapshot policies reuse the same trim helper and actual counter; native programs also reuse the line candidates, while compact maps receive trimmed pairs. On `large-local-change`, OpenCode's known-file trim costs **21** tokens, xnip MCP's trim costs **16**, and the native CLI trim costs **13**. All three retain the complete relative path and a unique old literal. Existing native literal manifests also reduce the guarded global replacement to **14** MCP input tokens and the multi-file batch to **29**; the known-file long-line candidate costs **11**. The complete `manifest_text` JSON wrapper is included. Every recorded input frontier task favors xnip except snapshot-enabled MCP `delete-block`, which ties at **12 / 12**; guarded deletion still favors xnip at **19 / 18**. These are best observed inputs among the supplied strategies, not proof that any interface has reached its shortest possible encoding. No failing or inconvenient profile is removed.
 
 Aider's final returned text and Goose's provider-rendered output are unknown, so their input counts cannot be turned into fabricated complete-exchange wins or losses. The known-return frontier names its own eligible winner independently.
 
-The matched structured/text receipt experiment has 26 byte-exact pairs with identical actual inputs and returned text. Canonical full JSON-RPC reply counts sum to **1,600 versus 702 tokens**, saving 898 at that captured layer; the equal-pair text/default geometric mean is **0.440x**. The same five-tool compact catalog is **2,303 structured versus 1,754 text-receipt tokens**. These measured reply/catalog differences do not stand in for provider billing. [Current results](results.md), [raw evidence](results.json), [current catalogs and prompts](representation-results.md)
+The matched structured/text receipt experiment has 26 byte-exact pairs with identical actual inputs and returned text. Canonical full JSON-RPC reply counts sum to **1,600 versus 702 tokens**, saving 898 at that captured layer; the equal-pair text/default geometric mean is **0.440x**. The same five-tool compact catalog is **2,303 structured versus 1,754 text-receipt tokens**. These measured reply/catalog differences do not stand in for provider billing. [Recorded results](results.md), [raw evidence](results.json), [recorded catalogs and prompts](representation-results.md)
 
 ## What the added harnesses change
 
@@ -55,7 +55,7 @@ Thus a shorter edit/receipt does not establish a smaller complete session: the x
 
 Aider WholeFileCoder receives the final complete file and writes it. Its pinned apply_edits does not require an old matching block in the message; the whole-file prompt explicitly asks for the updated file. A deletion-heavy rewrite can therefore omit much of the old content. [Pinned implementation](https://github.com/Aider-AI/aider/blob/5dc9490bb35f9729ef2c95d00a19ccd30c26339c/aider/coders/wholefile_coder.py#L124-L128), [whole-file prompt](https://github.com/Aider-AI/aider/blob/5dc9490bb35f9729ef2c95d00a19ccd30c26339c/aider/coders/wholefile_prompts.py)
 
-This is an operation choice, not evidence that literal replacement has a broken implementation. A complete small final file can be shorter than the old block plus its replacement. A large file with a tiny local change reverses that relationship. The current run measures both and checks CRLF/final-newline bytes.
+This is an operation choice, not evidence that literal replacement has a broken implementation. A complete small final file can be shorter than the old block plus its replacement. A large file with a tiny local change reverses that relationship. The recorded run measures both and checks CRLF/final-newline bytes.
 
 Xnip now has explicit whole-file write/upsert operations, with an optional whole-old-file precondition. Snapshot-enabled policies may use an unguarded whole write when the complete intended snapshot is already supplied; guarded policies retain old-content checks. The ordinary exact edit continues to reject missing or ambiguous old text. [Current edit contract](../edit.md), [strategy methodology](native-methodology.md)
 
@@ -103,7 +103,7 @@ Aider EOF-aware whole profiles are measured separately from canonical closed-fen
 
 ## Compact text and complete replies
 
-The current default text MCP receipt omits structuredContent and outputSchema while retaining written/unchanged/check/preview/journal text and errors. Explicit --receipts structured keeps machine-readable change metadata; the original benchmark counterparts select it deliberately. This changes the captured full reply/catalog boundary without changing per-edit arguments.
+The recorded text-receipt profiles explicitly select `--receipts text`, which omits `structuredContent` and `outputSchema` while retaining written/unchanged/check/preview/journal text and errors. Their structured counterparts explicitly select `--receipts structured`, the default for `xnip mcp`. This changes the captured full reply/catalog boundary without changing per-edit arguments.
 
 The report pairs the same adaptive strategy under structured and text-only receipt modes. It calculates a receipt-mode reduction only when both outputs are byte-exact and the actual inputs and returned text are identical. Equal token counts alone cannot establish identical content. Catalogs are discovered from real running servers under each advertised mode. [MCP receipt contract](../mcp.md), [paired receipt statistics](../../benches/native_report.py)
 
@@ -111,7 +111,7 @@ Captured returned text and the full serialized JSON-RPC object are not interchan
 
 Aider's final model-facing return and Goose's provider projection remain unknown. Empty editing-kernel stdout or a raw internal MCP DTO does not become a zero-token complete response, and an unknown value cannot win a combined input/return comparison.
 
-## Interpreting the current results
+## Interpreting the recorded results
 
 Use the [README frontier](charts/readme-frontier.svg) for four input-only permission/transport groups and [per-task frontier](charts/frontier.svg) for absolute winners and known-text exchanges. The [full report](results.md) retains every profile, candidate contract, byte result, invocation cost and captured MCP layer.
 

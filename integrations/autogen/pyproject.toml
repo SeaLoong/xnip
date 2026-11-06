@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "xnip-autogen"
+version = "0.6.0"
+description = "xnip MCP workbench for Microsoft AutoGen AgentChat"
+requires-python = ">=3.10"
+dependencies = ["autogen-agentchat==0.7.5", "autogen-ext[mcp]==0.7.5", "mcp==1.30.0"]
+
+[tool.setuptools]
+py-modules = ["xnip_autogen"]

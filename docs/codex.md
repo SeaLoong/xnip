@@ -2,9 +2,14 @@
 
 xnip is an editing tool. For automatic use without a `$xnip-editing` entry, install the [Codex instruction package](../integrations/codex/AGENTS.md) as ordinary agent instructions and a guide.
 
+For MCP tool registration, the [host profile generator](host-profiles.md#codex)
+writes Codex's actual `[mcp_servers.xnip]` format with an explicit project working
+directory. Its isolated configuration check uses the official Codex CLI; the
+ordinary instructions below remain available alongside that server.
+
 ## Install
 
-1. Install the xnip executable using the [installation instructions](installation.md). Optionally configure its [MCP server](mcp.md#client-configuration) for editing calls; xnip 0.4.0 or newer supports `--receipts text` for agents that only need text acknowledgements. Restart existing MCP connections after upgrading.
+1. Install the xnip executable using the [installation instructions](installation.md). Optionally configure its [MCP server](mcp.md#client-configuration) for editing calls with `--cwd /absolute/project`; select `--receipts text` for text acknowledgements. Restart existing MCP connections after upgrading.
 2. Create `~/.codex/guides/xnip-editing/`. Copy `guide.md` and the complete `references/` directory from `integrations/codex/` into it. Keep these files outside skill discovery directories.
 3. Merge the short `integrations/codex/AGENTS.md` section into the active global instruction file, normally `~/.codex/AGENTS.md`. If a nonempty `AGENTS.override.md` exists there, Codex loads it instead. Preserve existing instructions. If `CODEX_HOME` is customized, use that home and update the guide path in the section. See [official instruction discovery](https://learn.chatgpt.com/docs/agent-configuration/agents-md#how-codex-discovers-guidance).
 4. If migrating from the old installation, move `~/.codex/skills/xnip-editing/` outside the skills directory, preserving any local customizations. Check `~/.agents/skills/` and repository skill directories for additional installed copies.
@@ -12,9 +17,11 @@ xnip is an editing tool. For automatic use without a `$xnip-editing` entry, inst
 
 Codex now receives a small rule for text-editing tasks and reads the detailed guide when needed. It calls `xnip_edit`, `xnip_apply` and other MCP tools, or the CLI, directly. The guide is a plain document with no skill frontmatter or registered skill name, so it provides no `$xnip-editing` selector entry. The registered MCP tools remain available for the agent to perform edits. Users can still request particular tool behavior in ordinary language; this integration controls the skill entry, not user authority.
 
-## Why use instructions instead of an automatic-only skill?
+## Instruction and skill selection
 
-Codex documents explicit and implicit skill invocation. Its `allow_implicit_invocation` setting controls automatic selection; setting it to false disables that selection. Codex currently exposes no corresponding option to retain automatic skill selection while hiding only its manual entry. See the [official skill documentation](https://learn.chatgpt.com/docs/build-skills#optional-metadata). Adding another client's `user-invocable: false` field does not implement that behavior in Codex.
+This route uses Codex's ordinary instruction discovery and a plain guide.
+Skill selection and visibility remain client settings described in the
+[official skill documentation](https://learn.chatgpt.com/docs/build-skills#optional-metadata).
 
 The repository still offers [generic/GitHub](../.github/skills/xnip-editing/SKILL.md) and [Claude Code](../integrations/claude-code/SKILL.md) skills for clients and users who want skill discovery and manual entries. Those are optional integrations; use the Codex instructions above when no manual skill command is wanted.
 

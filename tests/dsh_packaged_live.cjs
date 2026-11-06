@@ -27,7 +27,7 @@ test('installed private package loads its default native resolver and official b
   assert.equal(manifest.private, true, 'this test accepts the prepared private package only');
   assert.equal(nativeManifest.localOnly, true, 'a real host-only native payload is required');
   const peer = JSON.parse(await fs.readFile(requireInstalled.resolve('@deepseek-ai/dsh-mcp-client/package.json'), 'utf8'));
-  assert.equal(peer.version, '0.2.1-rc.2');
+  assert.ok(['0.2.1-rc.2', '0.2.1-rc.5'].includes(peer.version), 'the peer must be an explicitly tested official version');
   const runtime = await import(pathToFileURL(runtimePath).href);
   assert.equal(typeof runtime.loadOptionalPatches, 'function');
   const patches = runtime.loadOptionalPatches('xnip-installed-test', path.join(packageDir, manifest.dsh.bundle.patch));

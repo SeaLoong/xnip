@@ -1,0 +1,18 @@
+{
+  "recorded_at": "2026-11-06T02:39:54.042373+00:00",
+  "status": "partial diagnostic; stopped during the original-provider 5MiB cohort before any complete report",
+  "raw_progress_log": "target/native-bench/cline-provider-partial-unanchored.log",
+  "raw_log_sha256": "bc098c43eb3a4960c436c96689dcdb9b6fef98210a72806b029f0dbea70c0c8d",
+  "binary_sha256": "33bf6effc23db6f10fe8d5d1881e98003db95cb59a8af144a2a523fbc97f3884",
+  "runner_sha256": "058659c3bef1822ee9001aaebae58d043586ae9e94ddbbf9b3d0835ab6a66df4",
+  "host": "@cline/sdk 0.2.0",
+  "measured_repeats_requested": 3,
+  "warmups_requested": 1,
+  "observed_complete_original_medians_ms": {
+    "large-local-change": 279.87,
+    "large-65536": 859.57,
+    "large-1048576": 13932.01
+  },
+  "interpretation": "Full source and executable validation gate was not reached. These progress summaries remain diagnostic observations.",
+  "raw_progress": "cline-original tiny-config: 4.76 ms patch\ncline-original large-local-change: 279.87 ms patch\ncline-original multiline-function: 0.58 ms patch\ncline-original unicode: 0.46 ms patch\ncline-original crlf: 0.46 ms patch\ncline-original no-final-newline: 0.44 ms patch\ncline-original disambiguated-block: 0.46 ms patch\ncline-original global-replace: 0.54 ms patch\ncline-original same-file-batch: 0.53 ms patch\ncline-original multi-file-batch: 0.77 ms patch\ncline-original long-line: 4.54 ms patch\ncline-original insert-after-anchor: 0.33 ms patch\ncline-original delete-block: 0.33 ms patch\ncline-original large-65536: 859.57 ms patch\ncline-original large-1048576: 13932.01 ms patch\n"
+}

@@ -229,9 +229,15 @@ async fn bridge(request: &Value) -> Result<Value, String> {
         let started = Instant::now();
         let result = client
             .call_tool(&ctx, name, Some(arguments), CancellationToken::new())
-            .await
-            .map_err(|e| e.to_string())?;
-        results.push(json!({"native_input":call,"ok":!result.is_error.unwrap_or(false),"result":result,"elapsed_ms":started.elapsed().as_secs_f64()*1000.0}));
+            .await;
+        let elapsed_ms = started.elapsed().as_secs_f64() * 1000.0;
+        match result {
+            Ok(result) => results.push(json!({"native_input":call,"ok":!result.is_error.unwrap_or(false),"result":result,"elapsed_ms":elapsed_ms})),
+            Err(rmcp::ServiceError::McpError(error)) if request["capture_tool_errors"] == true => {
+                results.push(json!({"native_input":call,"ok":false,"rpc_error":error,"elapsed_ms":elapsed_ms}));
+            }
+            Err(error) => return Err(error.to_string()),
+        }
     }
     client.fixture_close().await?;
     let stderr = tokio::time::timeout(Duration::from_secs(5), stderr_reader)

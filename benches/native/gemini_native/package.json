@@ -1,0 +1,9 @@
+{
+  "name": "xnip-gemini-native-fixture",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "dependencies": {
+    "@google/gemini-cli-core": "0.27.2"
+  }
+}

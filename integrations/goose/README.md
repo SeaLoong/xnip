@@ -1,5 +1,10 @@
 # xnip in Goose
 
+The [host profile generator](../../docs/host-profiles.md#goose) supplies an
+absolute executable and `mcp --cwd` project directory in Goose's stdio extension
+format. The corresponding contract and benchmark exercise Goose's actual
+source-verified MCP client, alongside the shared configured-stdio lane.
+
 Use xnip **0.5.0+**, installed through npm or a standalone release, as a stdio MCP extension. A local `cargo build --release` is also supported; 0.4 binaries use an older MCP SDK. Start Goose in the project directory:
 
 ```sh

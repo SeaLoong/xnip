@@ -9,6 +9,7 @@ use std::fs::{self, Permissions};
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 #[derive(Clone)]
 struct Entry {
@@ -40,6 +41,100 @@ pub struct Report {
     /// Retained on cleanup failure; ordinary successful commits remove the journal.
     pub journal: Option<PathBuf>,
 }
+
+/// Immutable projection of one observed file. `None` means an absent file,
+/// which is deliberately distinct from an existing empty file.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct FileChange {
+    pub path: PathBuf,
+    pub before: Option<Vec<u8>>,
+    pub after: Option<Vec<u8>>,
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum ControlError {
+    #[error("commit precondition failed: {0}")]
+    Check(String),
+    #[error("commit cancelled")]
+    Cancelled,
+    #[error("host governance rejected the plan: {0}")]
+    Governance(String),
+    #[error(transparent)]
+    Io(#[from] std::io::Error),
+    #[error(transparent)]
+    Partial(#[from] CommitError),
+}
+
+impl ControlError {
+    pub fn kind(&self) -> &'static str {
+        match self {
+            Self::Check(_) => "check",
+            Self::Cancelled => "cancelled",
+            Self::Governance(_) => "governance",
+            Self::Io(_) => "io",
+            Self::Partial(_) => "partial",
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct CancellationToken(Arc<AtomicBool>);
+
+impl CancellationToken {
+    pub fn cancel(&self) {
+        self.0.store(true, Ordering::Release);
+    }
+
+    pub fn is_cancelled(&self) -> bool {
+        self.0.load(Ordering::Acquire)
+    }
+
+    fn check(&self) -> Result<(), ControlError> {
+        if self.is_cancelled() {
+            Err(ControlError::Cancelled)
+        } else {
+            Ok(())
+        }
+    }
+}
+
+#[derive(Debug, Default, Clone, Copy, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct CommitOptions {
+    #[serde(default)]
+    pub backup: bool,
+}
+
+#[derive(Debug, Serialize)]
+pub struct CommitResult {
+    pub written: bool,
+    pub changes: Vec<FileChange>,
+    pub journal: Option<PathBuf>,
+}
+
+/// Governance failures before persistence leave files untouched. A failure or
+/// cancellation at a commit checkpoint invokes the ordinary journal rollback.
+/// The completion callback is observational: it cannot turn a completed commit
+/// into an apparent rejection after bytes have already been written.
+pub trait Governance {
+    fn authorize(&mut self, _changes: &[FileChange]) -> Result<()> {
+        Ok(())
+    }
+    fn validate_versions(&mut self, _changes: &[FileChange]) -> Result<()> {
+        Ok(())
+    }
+    fn snapshot(&mut self, _changes: &[FileChange]) -> Result<()> {
+        Ok(())
+    }
+    fn checkpoint(&mut self, _step: usize, _changes: &[FileChange]) -> Result<()> {
+        Ok(())
+    }
+    fn audit(&mut self, _changes: &[FileChange], _result: &Result<CommitResult, ControlError>) {}
+}
+
+/// Explicit unrestricted local caller. Host
+/// adapters must supply their host's actual governance implementation.
+impl Governance for () {}
 
 /// Resolve existing aliases and the nearest existing ancestor of a new path.
 pub fn normalize(path: &Path) -> Result<PathBuf> {
@@ -134,6 +229,32 @@ fn reject_link(path: &Path) -> Result<()> {
 }
 
 impl Plan {
+    /// Snapshots include unchanged dependencies so governance can inspect the
+    /// complete authority needed by a plan. Editing this projection cannot alter
+    /// the plan's immutable original bytes.
+    pub fn snapshots(&self) -> Vec<FileChange> {
+        self.entries
+            .iter()
+            .map(|(path, entry)| FileChange {
+                path: path.clone(),
+                before: content_bytes(entry.before.as_ref()).map(<[u8]>::to_vec),
+                after: content_bytes(entry.after.as_ref()).map(<[u8]>::to_vec),
+            })
+            .collect()
+    }
+
+    /// Check every observed dependency without creating files or directories.
+    pub fn validate_inputs(&self) -> Result<()> {
+        for (path, entry) in &self.entries {
+            if !same_path(&normalize(path)?, path)
+                || snapshot(path)?.as_deref() != content_bytes(entry.before.as_ref())
+            {
+                bail!("file changed before commit: {}", path.display());
+            }
+        }
+        Ok(())
+    }
+
     fn entry(&mut self, path: &Path) -> Result<(PathBuf, &mut Entry)> {
         if path
             .as_os_str()
@@ -380,22 +501,55 @@ impl Plan {
             journal: None,
         }
     }
+    /// Submit this existing plan through the caller's governance hooks and
+    /// cancellation token. This is the same commit/journal engine used by plain
+    /// `commit`; callers own plan identifiers and single-use session semantics.
+    pub fn commit_controlled(
+        &self,
+        options: CommitOptions,
+        governance: &mut dyn Governance,
+        cancellation: &CancellationToken,
+    ) -> Result<CommitResult, ControlError> {
+        cancellation.check()?;
+        let changes = self.snapshots();
+        let result = (|| {
+            self.validate_inputs().map_err(control_error)?;
+            governance.authorize(&changes).map_err(governance_error)?;
+            cancellation.check()?;
+            governance
+                .validate_versions(&changes)
+                .map_err(governance_error)?;
+            cancellation.check()?;
+            governance.snapshot(&changes).map_err(governance_error)?;
+            cancellation.check()?;
+            let report = self
+                .commit_with_hook(options.backup, &mut |step| {
+                    cancellation.check()?;
+                    governance.checkpoint(step, &changes)?;
+                    cancellation.check()?;
+                    Ok(())
+                })
+                .map_err(control_error)?;
+            Ok(CommitResult {
+                written: !report.files.is_empty(),
+                changes: changes.clone(),
+                journal: report.journal,
+            })
+        })();
+        governance.audit(&changes, &result);
+        result
+    }
+
     pub fn commit(&self, backup: bool) -> Result<Report> {
         self.commit_with_hook(backup, &mut |_| Ok(()))
     }
-    fn commit_with_hook(
+    pub(crate) fn commit_with_hook(
         &self,
         backup: bool,
         hook: &mut dyn FnMut(usize) -> Result<()>,
     ) -> Result<Report> {
         // Validate every observed input, even no-op/read-only dependencies.
-        for (path, entry) in &self.entries {
-            if !same_path(&normalize(path)?, path)
-                || snapshot(path)?.as_deref() != content_bytes(entry.before.as_ref())
-            {
-                bail!("file changed before commit: {}", path.display());
-            }
-        }
+        self.validate_inputs()?;
         let changes = self.changed();
         if changes.is_empty() {
             return Ok(Report::default());
@@ -418,15 +572,18 @@ impl Plan {
             journal.directory.display()
         );
         let attempt = (|| -> Result<()> {
+            let mut step = 0;
             if backup {
                 for (path, entry) in &changes {
                     if entry.before.is_some() {
+                        hook(step)?;
+                        step += 1;
+                        journal.verify_original(path)?;
                         atomic::backup(path)?;
                     }
                 }
             }
             let mut skipped = BTreeSet::new();
-            let mut step = 0;
             for movement in &journal.manifest.moves {
                 hook(step)?;
                 step += 1;
@@ -455,6 +612,9 @@ impl Plan {
                     entry.before.is_none(),
                 )?;
             }
+            // A cancellation arriving during the final file write must still
+            // roll back while the recovery journal is available.
+            hook(step)?;
             Ok(())
         })();
         if let Err(error) = attempt {
@@ -478,6 +638,21 @@ impl Plan {
             journal: retained,
         })
     }
+}
+
+fn control_error(error: anyhow::Error) -> ControlError {
+    match error.downcast::<CommitError>() {
+        Ok(error) => ControlError::Partial(error),
+        Err(error) => match error.downcast::<ControlError>() {
+            Ok(error) => error,
+            Err(error) => ControlError::Check(format!("{error:#}")),
+        },
+    }
+}
+
+#[allow(clippy::needless_pass_by_value)]
+fn governance_error(error: anyhow::Error) -> ControlError {
+    ControlError::Governance(format!("{error:#}"))
 }
 
 fn install(
@@ -801,6 +976,25 @@ impl Journal {
 /// retained so recovery is repeatable and inspectable; conflicts never force writes.
 pub fn recover(directory: &Path, check: bool) -> Result<Report> {
     Journal::load(directory)?.restore(check)
+}
+
+/// Authorize every recorded target using the same validated journal that will
+/// be restored. Authorizing only a preview's changed paths is insufficient: an
+/// unchanged entry can change to its recorded after-state before restoration.
+pub fn recover_authorized(
+    directory: &Path,
+    check: bool,
+    authorize: &mut dyn FnMut(&[PathBuf]) -> Result<()>,
+) -> Result<Report> {
+    let journal = Journal::load(directory)?;
+    let paths = journal
+        .manifest
+        .records
+        .iter()
+        .map(|record| record.path.clone())
+        .collect::<Vec<_>>();
+    authorize(&paths)?;
+    journal.restore(check)
 }
 
 #[cfg(test)]

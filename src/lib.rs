@@ -8,6 +8,7 @@ pub mod cli;
 pub mod core;
 pub mod doctor;
 pub mod mcp;
+pub mod native;
 pub mod output;
 pub mod update;
 

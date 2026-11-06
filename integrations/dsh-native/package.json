@@ -1,0 +1,36 @@
+{
+  "name": "xnip-dsh-native",
+  "version": "0.6.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./index.mjs",
+    "./lifecycle": "./lifecycle.mjs"
+  },
+  "files": [
+    "*.mjs",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/dsh-fs": ">=0.2.1-rc.2 <0.2.2",
+    "@deepseek-ai/dsh-fs-sandbox": ">=0.2.1-rc.2 <0.2.2",
+    "@deepseek-ai/dsh-sandbox": ">=0.2.1-rc.2 <0.2.2"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/dsh-fs": {
+      "optional": true
+    },
+    "@deepseek-ai/dsh-fs-sandbox": {
+      "optional": true
+    },
+    "@deepseek-ai/dsh-sandbox": {
+      "optional": true
+    }
+  }
+}

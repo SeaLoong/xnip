@@ -69,31 +69,30 @@ xnip apply edits.json --format compact
   "mcpServers": {
     "xnip": {
       "command": "xnip",
-      "args": ["mcp", "--receipts", "text"]
+      "args": ["mcp", "--cwd", "/absolute/project", "--receipts", "text"]
     }
   }
 }
 ~~~
 
-默认五个工具覆盖编辑、批量、读取、搜索和恢复。`--toolset full` 增加专用工具；客户端需要结构化修改元数据时，可省略 `--receipts text`。相对路径基于服务进程的工作目录。各客户端差异见 [MCP 配置](docs/mcp.md)。
+把 `/absolute/project` 替换为目标项目目录。默认五个工具覆盖编辑、批量、读取、搜索和恢复。`--toolset full` 增加专用工具；客户端需要结构化修改元数据时，可省略 `--receipts text`。`--cwd` 为 GUI 和 CLI 启动方式固定相对工具路径。各客户端差异见 [MCP 配置](docs/mcp.md)。
 
-| Agent / 客户端 | 接入指南 |
+| 接入方式 | 指南 |
 |---|---|
-| Codex | [普通指令与编辑指南](docs/codex.md) |
-| Claude Code | [Skill](integrations/claude-code/SKILL.md) |
-| Cursor | [项目规则](integrations/cursor/xnip.mdc) |
-| GitHub Copilot | [项目指令](integrations/copilot/xnip.md) |
-| aider | [约定](integrations/aider/CONVENTIONS.md) |
-| DeepSeek Harness | [DSH bundle 与 MCP 插件](docs/dsh.md) |
-| Pi | [Extension](docs/pi.md) |
-| Goose | [MCP extension](docs/goose.md) |
-| 其他 agent | [通用 skill](integrations/generic/SKILL.md) |
+| DSH、Pi、Gemini SDK、Cline SDK、OpenHands、aider、DeepAgents | [宿主后端与现有编辑接口](docs/support.md#host-backends-and-registered-tools) |
+| OpenCode、LangGraph | [新增注册的 xnip 工具](docs/support.md#host-backends-and-registered-tools) |
+| PydanticAI、OpenAI Agents、AutoGen、smolagents、Google ADK、CrewAI | [官方 MCP SDK 工具集](docs/support.md#official-mcp-sdk-toolsets) |
+| Codex、Claude Code、Cursor、VS Code/Copilot、Copilot CLI、Roo、Cline GUI、Windsurf、Goose、Continue、Zed、Gemini CLI、Qwen Code | [客户端 MCP 配置](docs/support.md#client-mcp-profiles) |
 
-希望只添加简短项目指令时，可用 [AGENTS 片段](integrations/agents-md/AGENTS.md)。[操作指南](docs/SKILL.md)帮助 agent 选择编辑方式，并按需读取细节。
+[支持矩阵](docs/support.md)列出当前 catalog 的入口、工具名和验证证据。[Codex](docs/codex.md)、[Claude Code](integrations/claude-code/SKILL.md)、[Cursor](integrations/cursor/xnip.mdc)、[Copilot](integrations/copilot/xnip.md)和 [aider](integrations/aider/CONVENTIONS.md)仍提供项目指令。简短接入可用 [AGENTS 片段](integrations/agents-md/AGENTS.md)或[操作指南](docs/SKILL.md)。
+
+[原生 DSH provider](docs/native.md) 保留宿主的 `read`、`write`、`edit` 工具及审批、沙箱和可选 rewind，与 CLI、MCP 共用现有 core 事务。按 profile 安装时会验证真实编辑，并保留恢复快照。
+[Pi 原生扩展](docs/pi-native.md)通过官方 extension API 保留 Pi `1.3.0` 的工具 schema、匹配、渲染和 hooks。
+[SDK 适配](docs/native.md)还支持 Gemini 本地文件系统服务、Cline `apply_patch` 执行器和 OpenHands `file_editor` IO，共用现有 core。[369 项 E2E](docs/testing.md#native-host-e2e)执行真实注册工具，核验文件字节、治理链和恢复行为。
 
 ## 为什么能节省编辑上下文
 
-Benchmark 比较真实编辑器在 **13 个任务**中的表现。只有每次都得到预期文件字节的结果才进入下表。
+历史编辑执行器 benchmark 比较真实编辑器在 **13 个任务**中的表现。只有每次都得到预期文件字节的结果才进入该次记录的前沿表。
 
 ![字节正确配置中的最佳实测编辑输入](docs/benchmarks/charts/readme-frontier.svg)
 
@@ -112,7 +111,9 @@ Benchmark 比较真实编辑器在 **13 个任务**中的表现。只有每次�
 
 这些数值是捕获的编辑 payload 成本，不代表完整 agent 用量或计费。CLI 执行命令参数另计。DSH 各策略的结果计入必需的读取，单独列出，不混入上表。
 
-[完整结果与图表](docs/benchmarks/results.md) · [方法与复现](docs/benchmarks/README.md)
+[历史结果与图表](docs/benchmarks/archive/README.md) · [当前 benchmark 索引](docs/benchmarks/README.md)
+
+当前 [benchmark 报告](docs/benchmarks/README.md)覆盖宿主存储后端、框架工具和 MCP SDK/客户端接入，并列记录宿主兼容结果、独立字节目标及实际本地执行成本。此前的 provider 和固定二进制编码对照研究保留在[证据归档](docs/benchmarks/archive/README.md)中。
 
 ## 使用边界
 

@@ -37,6 +37,10 @@ impl Rpc {
         if let Some(receipts) = receipts {
             command.args(["--receipts", receipts]);
         }
+        Self::from_command(command)
+    }
+
+    fn from_command(mut command: std::process::Command) -> Self {
         let mut child = command
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
@@ -134,6 +138,27 @@ impl Drop for Rpc {
 
 fn text(result: &Value) -> &str {
     result["content"][0]["text"].as_str().unwrap()
+}
+
+#[test]
+fn explicit_working_directory_routes_relative_tool_paths_to_the_selected_project() {
+    let launcher = Workspace::new(&[("item.txt", b"launcher\n")]);
+    let project = Workspace::new(&[("item.txt", b"old\r\nEOF")]);
+    let mut command = std::process::Command::cargo_bin("xnip").unwrap();
+    command
+        .env("XNIP_AUTO_UPDATE", "0")
+        .current_dir(launcher.root())
+        .args(["mcp", "--cwd"])
+        .arg(project.root());
+    let mut rpc = Rpc::from_command(command);
+    rpc.ok(
+        "xnip_edit",
+        json!({"file":"item.txt","old":"old","text":"new"}),
+    );
+    let result = rpc.ok("xnip_peek", json!({"file":"item.txt","all":true}));
+    assert!(text(&result).contains("new"), "{result}");
+    project.assert_bytes("item.txt", b"new\r\nEOF");
+    launcher.assert_bytes("item.txt", b"launcher\n");
 }
 
 fn assert_no_false_defaults(schema: &Value) {

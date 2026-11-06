@@ -4,6 +4,20 @@ use common::{Workspace, json_lines, utf8};
 use serde_json::{Value, json};
 
 #[test]
+fn mcp_reports_an_unavailable_working_directory_before_protocol_startup() {
+    let w = Workspace::new(&[]);
+    let output = w
+        .cli(&["mcp", "--cwd", "missing-project"])
+        .write_stdin("")
+        .assert()
+        .failure()
+        .get_output()
+        .clone();
+    assert_eq!(output.stdout, b"");
+    assert!(utf8(&output.stderr).contains("working directory missing-project"));
+}
+
+#[test]
 fn command_discovery_version_and_doctor_work_without_a_project() {
     let w = Workspace::new(&[]);
     for args in [vec![], vec!["--help"]] {

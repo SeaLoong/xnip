@@ -121,8 +121,9 @@ npm install --global xnip-cli@latest
 ```
 
 Keep optional dependencies enabled so npm can install the executable matching
-your OS and CPU. Installation also makes the optional DSH/Pi entries available;
-activate them explicitly in your host. See the
+your OS and CPU. The package also contains JavaScript host adapters, the
+integration catalog and client-profile generator; activate the selected route
+explicitly. See the [support matrix](support.md) and
 [npm usage guide](../npm/README.md) for project-local use and MCP configuration.
 
 npm manages this installation's updates; native self-update is disabled.
@@ -149,9 +150,10 @@ from the workspace.
 
 ## Configure your agent
 
-Start the stdio server with `xnip mcp --receipts text`, then register it in your
-client. See the [MCP guide](mcp.md), [DSH](dsh.md), [Pi](pi.md) and [Goose](goose.md)
-for configuration, working directories and tool behavior.
+Register `xnip mcp --cwd /absolute/project --receipts text` in your client's
+stdio configuration. The [support matrix](support.md) covers host backends,
+plugins, SDK toolsets and client profiles; the [MCP guide](mcp.md) describes
+tool arguments and receipts.
 
 ## Troubleshooting and removal
 
@@ -162,7 +164,7 @@ for configuration, working directories and tool behavior.
 | Download returns 404 | Check the exact tag and supported architecture on the release page. |
 | GitHub latest lookup is rate-limited | Set `XNIP_VERSION` to an explicit tag or download the assets manually. |
 | Checksum mismatch | Discard the downloaded archive and retry both files from the same release. |
-| MCP cannot find relative files | Configure the client's working directory or use absolute target paths. |
+| MCP cannot find relative files | Pass `--cwd /absolute/project` in the server arguments or use absolute target paths. |
 | Windows cannot replace the executable | Stop clients using `xnip mcp`, then rerun the installer. |
 
 To uninstall a script/manual installation, delete only the installed

@@ -1,0 +1,11 @@
+{
+  "name": "xnip-opencode-native-fixture",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "dependencies": {
+    "opencode-ai": "1.19.3",
+    "opencode-linux-x64": "1.19.3",
+    "@opencode-ai/plugin": "1.19.3"
+  }
+}

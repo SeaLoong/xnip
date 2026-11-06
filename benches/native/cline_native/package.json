@@ -1,0 +1,9 @@
+{
+  "name": "xnip-cline-native-fixture",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@cline/sdk": "0.2.0"
+  }
+}

@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import ast
 from contextlib import contextmanager
 import importlib.util
 import json
@@ -91,6 +92,15 @@ def repository():
         yield Repository(Path(folder))
 
 
+def npm_integration_directories():
+    tree = ast.parse((ROOT / "npm/prepare.py").read_text(encoding="utf-8"))
+    inventories = [node.iter for node in ast.walk(tree)
+                   if isinstance(node, ast.For) and isinstance(node.target, ast.Name)
+                   and node.target.id == "integration" and isinstance(node.iter, ast.List)]
+    assert len(inventories) == 1, "Select the integration inventory copied by npm preparation"
+    return set(ast.literal_eval(inventories[0]))
+
+
 class EligibilityContracts(unittest.TestCase):
     def test_runtime_build_install_integration_and_release_inputs_are_eligible(self):
         eligible = [
@@ -105,7 +115,7 @@ class EligibilityContracts(unittest.TestCase):
             "xtask/Cargo.toml", "xtask/src/main.rs", ".github/scripts/release.py",
             ".github/scripts/publish_release.py", ".github/scripts/publish_npm.py",
             "npm/prepare.py", "npm/xnip/package.json", "npm/xnip/bin/xnip.cjs", "npm/README.md",
-            "integrations/dsh/index.mjs", "integrations/pi/index.mjs",
+            "integrations/dsh/index.mjs", "integrations/pi/index.mjs", "integrations/catalog.json",
             ".github/workflows/build-release.yml", ".github/workflows/publish.yml",
         ]
         for path in eligible:
@@ -125,6 +135,13 @@ class EligibilityContracts(unittest.TestCase):
 
     def test_unshipped_harness_fixtures_and_tests_do_not_publish_releases(self):
         for path in ["integrations/goose/config.yaml",
+                     "integrations/native-python/xnip_native/client.py",
+                     "integrations/openhands-native/xnip_openhands.py",
+                     "integrations/aider-native/xnip_aider.py",
+                     "integrations/python-agents/xnip_python_agents/langgraph.py",
+                     "integrations/agents-sdk/xnip_agents.py", "integrations/autogen/xnip_autogen.py",
+                     "integrations/smolagents/xnip_smolagents.py", "integrations/google-adk/xnip_google_adk.py",
+                     "integrations/crewai/xnip_crewai.py",
                      "tests/npm_contract.py", "tests/npm_prepare_contract.py", "tests/pi_contract.mjs",
                      "tests/goose_native_contract.py", "benches/native/dsh_adapter.mjs",
                      "benches/native/pi_adapter.mjs", "benches/native/goose_adapter/Cargo.toml"]:
@@ -132,11 +149,30 @@ class EligibilityContracts(unittest.TestCase):
                 self.assertFalse(release.release_relevant(path))
 
     def test_integration_eligibility_matches_the_actual_archive_packaging_entries(self):
+        npm_directories = npm_integration_directories()
         for directory in (ROOT / "integrations").iterdir():
             if directory.is_dir():
                 with self.subTest(integration=directory.name):
                     self.assertEqual(release.release_relevant(f"integrations/{directory.name}/entry"),
-                                     (directory / "package.sh").is_file() or directory.name in {"dsh", "pi"})
+                                     (directory / "package.sh").is_file() or directory.name in npm_directories)
+
+    def test_each_shipped_npm_integration_and_catalog_change_plans_a_release(self):
+        paths = [f"integrations/{name}/entry" for name in sorted(npm_integration_directories())]
+        for path in [*paths, "integrations/catalog.json"]:
+            with self.subTest(path=path), repository() as repo:
+                before = repo.commit("base")
+                repo.write(path)
+                head = repo.commit("update shipped integration")
+                self.assertTrue(repo.plan(before, head)["publish"])
+
+    def test_source_only_python_adapter_changes_keep_the_release_plan_empty(self):
+        with repository() as repo:
+            before = repo.commit("base")
+            for path in ["integrations/native-python/client.py", "integrations/crewai/xnip_crewai.py",
+                         "integrations/google-adk/xnip_google_adk.py"]:
+                repo.write(path)
+            head = repo.commit("update local Python adapters")
+            self.assertFalse(repo.plan(before, head)["publish"])
 
     def test_plan_inspects_entire_push_range_and_the_head_manifest(self):
         with repository() as repo:

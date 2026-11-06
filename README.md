@@ -69,31 +69,37 @@ Use the CLI from your agent's shell, or add the stdio MCP server. For clients wi
   "mcpServers": {
     "xnip": {
       "command": "xnip",
-      "args": ["mcp", "--receipts", "text"]
+      "args": ["mcp", "--cwd", "/absolute/project", "--receipts", "text"]
     }
   }
 }
 ~~~
 
-The five default tools cover editing, batches, reading, search and recovery. `--toolset full` adds specialized tools; omit `--receipts text` when the client needs structured change metadata. Relative paths use the server's working directory. See [MCP setup](docs/mcp.md) for client-specific details.
+Replace `/absolute/project` with the intended project directory. The five default tools cover editing, batches, reading, search and recovery. `--toolset full` adds specialized tools; omit `--receipts text` when the client needs structured change metadata. `--cwd` fixes relative tool paths across GUI and CLI launchers. See [MCP setup](docs/mcp.md) for client-specific details.
 
-| Agent / client | Setup |
+| Integration route | Setup |
 |---|---|
-| Codex | [Instructions and editing guide](docs/codex.md) |
-| Claude Code | [Skill](integrations/claude-code/SKILL.md) |
-| Cursor | [Project rule](integrations/cursor/xnip.mdc) |
-| GitHub Copilot | [Project instructions](integrations/copilot/xnip.md) |
-| aider | [Conventions](integrations/aider/CONVENTIONS.md) |
-| DeepSeek Harness | [DSH bundle and MCP plugin](docs/dsh.md) |
-| Pi | [Extension](docs/pi.md) |
-| Goose | [MCP extension](docs/goose.md) |
-| Other agents | [Generic skill](integrations/generic/SKILL.md) |
+| DSH, Pi, Gemini SDK, Cline SDK, OpenHands, aider, DeepAgents | [Host backends and existing editing surfaces](docs/support.md#host-backends-and-registered-tools) |
+| OpenCode, LangGraph | [Additional registered xnip tools](docs/support.md#host-backends-and-registered-tools) |
+| PydanticAI, OpenAI Agents, AutoGen, smolagents, Google ADK, CrewAI | [Official MCP SDK toolsets](docs/support.md#official-mcp-sdk-toolsets) |
+| Codex, Claude Code, Cursor, VS Code/Copilot, Copilot CLI, Roo, Cline GUI, Windsurf, Goose, Continue, Zed, Gemini CLI, Qwen Code | [Client MCP profiles](docs/support.md#client-mcp-profiles) |
 
-Prefer a short project instruction? Use the [AGENTS snippet](integrations/agents-md/AGENTS.md). The [operation guide](docs/SKILL.md) helps agents choose an edit and load details only when needed.
+The [support matrix](docs/support.md) covers current catalog entries, their tool names and evidence. Project guidance remains available for [Codex](docs/codex.md), [Claude Code](integrations/claude-code/SKILL.md), [Cursor](integrations/cursor/xnip.mdc), [Copilot](integrations/copilot/xnip.md) and [aider](integrations/aider/CONVENTIONS.md). Use the [AGENTS snippet](integrations/agents-md/AGENTS.md) or [operation guide](docs/SKILL.md) for concise editing instructions.
+
+The [native DSH provider](docs/native.md) keeps the host's `read`, `write` and
+`edit` tools, approval, sandbox and optional rewind while calling the same core
+transactions as CLI and MCP. Its profile installer verifies a real edit and
+retains snapshots for restoration.
+The [Pi native extension](docs/pi-native.md) preserves Pi `1.3.0` tool schemas,
+matching, rendering and hooks through its official extension API.
+The [SDK adapters](docs/native.md) also connect Gemini's local filesystem service,
+Cline's `apply_patch` executor and OpenHands' `file_editor` IO to the same core.
+The [369-check E2E matrix](docs/testing.md#native-host-e2e) starts real registered tools
+across the catalog routes and checks file bytes, governance and restoration.
 
 ## Why it saves editing context
 
-The benchmark compares real editors across **13 tasks**. Only results that produce the expected file bytes in every repetition qualify.
+The archived editing-executor study compares real editors across **13 tasks**. Only results that produce the expected file bytes in every repetition qualify for that recorded frontier.
 
 ![Best observed byte-exact editing input](docs/benchmarks/charts/readme-frontier.svg)
 
@@ -112,7 +118,13 @@ Compared with structured receipts, text receipts reduce captured full JSON-RPC r
 
 These are captured editing payload costs, not complete agent usage or billing. CLI invocation costs are separate. DSH's policy-specific results include required reads and are reported outside this pooled table.
 
-[Full results and charts](docs/benchmarks/results.md) · [Method and reproduction](docs/benchmarks/README.md)
+[Historical results and charts](docs/benchmarks/archive/README.md) · [Current benchmark index](docs/benchmarks/README.md)
+
+Current [benchmark reports](docs/benchmarks/README.md) cover host/storage
+adapters, framework tools and MCP SDK/client routes. They record host-compatible
+outcomes, independent byte goals and actual local execution costs. Earlier
+provider and fixed-binary encoding studies remain in the
+[evidence archive](docs/benchmarks/archive/README.md).
 
 ## Know the limits
 

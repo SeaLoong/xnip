@@ -1,8 +1,8 @@
 # xnip
 
 Precise text edits for coding agents, available as a CLI and stdio MCP server.
-Install the `xnip-cli` npm package to get the `xnip` command and optional DSH/Pi
-integrations. Standalone binaries and installers are also available in the
+Install the `xnip-cli` npm package to get the `xnip` command, JavaScript host
+adapters and client-profile generator. Standalone binaries and installers are also available in the
 [installation guide](https://github.com/SeaLoong/xnip/blob/master/docs/installation.md).
 
 ## Install
@@ -51,14 +51,15 @@ Add xnip to your client's stdio MCP configuration:
   "mcpServers": {
     "xnip": {
       "command": "xnip",
-      "args": ["mcp", "--receipts", "text"]
+      "args": ["mcp", "--cwd", "/absolute/project", "--receipts", "text"]
     }
   }
 }
 ```
 
-The client must be able to find the installed command. Set its working directory
-to your project, or use absolute target paths. Text receipts keep editing results
+The client must be able to find the installed command. Replace the project path
+with the intended absolute directory. `--cwd` anchors relative tool paths for
+both GUI and CLI launchers. Text receipts keep editing results
 concise. Five everyday tools are advertised by default.
 
 On Windows, some clients cannot directly spawn npm's `xnip.cmd` shim. Use Node
@@ -72,6 +73,8 @@ with the installed launcher instead:
       "args": [
         "C:/absolute/path/to/node_modules/xnip-cli/bin/xnip.cjs",
         "mcp",
+        "--cwd",
+        "C:/absolute/project",
         "--receipts",
         "text"
       ]
@@ -87,7 +90,32 @@ returns an absolute verified executable path, and `childEnvironment()` prepares
 its environment with native self-update disabled.
 
 See the [MCP reference](https://github.com/SeaLoong/xnip/blob/master/docs/mcp.md)
-for tool arguments, previews and result modes.
+for tool arguments, previews and result modes. The
+[support matrix](https://github.com/SeaLoong/xnip/blob/master/docs/support.md)
+lists current SDK toolsets and 14 official-client configuration profiles.
+
+## Client MCP profiles
+
+The package includes the integration catalog and standard-library profile
+generator. With Python 3.11+ and a project-local npm installation, first print
+the verified executable path:
+
+```sh
+node -e "process.stdout.write(require('xnip-cli/native').resolveNativeExecutable())"
+```
+
+Pass that path and the intended project to the generator:
+
+```sh
+python3 node_modules/xnip-cli/integrations/host-profiles/xnip_profiles.py generate \
+  --executable /absolute/verified/xnip --project /absolute/project \
+  --output xnip-client-profiles
+```
+
+The fresh output directory contains fourteen client-specific configurations.
+Review and apply the chosen artifact using the
+[profile guide](https://github.com/SeaLoong/xnip/blob/master/docs/host-profiles.md).
+Client permissions, approval and removal follow the application's lifecycle.
 
 ## DSH and Pi
 
@@ -115,6 +143,29 @@ pi -e npm:xnip-cli
 See the [Pi guide](https://github.com/SeaLoong/xnip/blob/master/docs/pi.md).
 [Goose](https://github.com/SeaLoong/xnip/blob/master/docs/goose.md) connects through
 stdio MCP. Existing host file tools remain available.
+
+## Native host and SDK adapters
+
+Select native entries explicitly when loading a Pi extension or constructing
+an SDK session. The JavaScript adapters resolve the installed xnip executable;
+the native setup and test matrix use Node 24.
+
+| Entry | Host seam and verified version |
+|---|---|
+| `xnip-cli/pi-native` | [Pi 1.3.0 same-name tools](https://github.com/SeaLoong/xnip/blob/master/docs/pi-native.md) through its extension loader |
+| `xnip-cli/gemini-native` | [Gemini core 0.27.2](https://github.com/SeaLoong/xnip/blob/master/docs/gemini-native.md) local `Config` filesystem service and per-tool scope |
+| `xnip-cli/cline-native` | [Cline SDK/core 0.2.0](https://github.com/SeaLoong/xnip/blob/master/docs/cline-native.md) public `apply_patch` tool executor |
+| `xnip-cli/opencode` | [OpenCode plugin tools](https://github.com/SeaLoong/xnip/blob/master/docs/opencode.md): `xnip_edit`, `xnip_write`, `xnip_apply`, `xnip_read` |
+| Local `xnip-openhands` Python package | [OpenHands SDK/tools 1.60.1](https://github.com/SeaLoong/xnip/blob/master/docs/openhands-native.md) `file_editor` factory; Python 3.12+ |
+
+Each guide covers session construction, host tool execution and restoration.
+The [DSH provider guide](https://github.com/SeaLoong/xnip/blob/master/docs/native.md)
+describes its profile installer. Existing MCP registrations retain their
+original setup paths above.
+
+The support matrix also covers aider IO, DeepAgents backends, LangGraph tools
+and official PydanticAI/OpenAI Agents/AutoGen/smolagents/Google ADK/CrewAI MCP toolsets. Python
+integrations use their own locked virtual environments and local packages.
 
 ## Update or uninstall
 

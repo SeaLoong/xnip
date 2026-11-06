@@ -46,7 +46,10 @@ The preview prints the proposed file within the default byte budget; only the se
 | `apply MANIFEST` | Validate a batch, then commit each file | Status or optional NDJSON |
 | `recover JOURNAL --check` | Validate recovery before restoring an interrupted transaction | Recovery report |
 | `doctor` | Inspect version, platform, target and environment | Diagnostic report |
-| `mcp` | Start the stdio tool server | JSON-RPC protocol only |
+| `mcp --cwd /absolute/project` | Start the stdio server with a fixed project directory | JSON-RPC protocol only |
+| `native serve` | Start the local host-adapter backend | JSON-lines protocol only |
+| `native install / verify / uninstall / recover` | Manage a selected DSH profile | JSON installation and verification evidence |
+| `native doctor / clean` | Inspect installation state or purge restored snapshots | JSON state report |
 
 `find` takes files, not directories; glob expansion is the shell's responsibility and differs across shells. `--match-line` searches one line at a time and prints no column. `--max-matches N` caps the total output and `--first-only` caps each file to one hit. Regexes use Rust regex syntax; lookaround and backreferences in the pattern are not supported. Only `replace --pattern --repl` expands replacement captures such as `$1` and `${name}`; exact `edit` treats dollar signs literally.
 
@@ -125,3 +128,31 @@ Validation errors leave targets unchanged. Commit errors return exit 4 after att
 ## MCP receipt modes
 
 `xnip mcp --receipts text` returns concise text without structured edit/apply/recover metadata or output schemas. Use this for agents that only need the acknowledgement, bounded preview and any recovery journal. `xnip mcp` defaults to `--receipts structured` for clients that consume `mode`, `written`, paths and counts. `--toolset full` is independent of receipt mode. See the [MCP contract](mcp.md#result-display).
+
+`--cwd /absolute/project` selects the base for relative tool paths before the
+server starts. This command argument works with client configurations that
+expose an executable and arguments. Client schemas and SDK routes are listed
+in the [support matrix](support.md).
+
+## Native host adapters
+
+`xnip native serve` lets a host retain its own tools while calling the existing
+core transactions through a persistent local process. The [native adapter
+guide](native.md) describes the protocol and backend adapters. The
+[support matrix](support.md) distinguishes existing host tools, additional
+plugin/framework tools and MCP SDK/client routes. SDK applications select their
+adapter while constructing the host session. `capabilities` reports available operations, content
+encodings and request limits at process startup.
+
+For DSH, `native install`, `verify`, `uninstall` and `recover` share `--host dsh`,
+`--profile /absolute/profile-directory`, `--plugin /absolute/local-adapter` and
+`--dsh /absolute/dsh-executable`. State defaults to the profile's `.xnip-native`
+directory; `--state-dir` selects another location. Restart the selected profile's
+running sessions after installation or removal.
+
+Use `xnip doctor --native --state-dir /absolute/profile/.xnip-native` for the
+general diagnostic report with retained installation evidence, or
+`xnip native doctor --state-dir ...` for JSON evidence alone. After verified
+restoration, `xnip native clean --state-dir ... --purge-user-data` removes that
+installation's private snapshots. Edit journals and `.bak` files retain their
+own [recovery lifecycle](recovery.md).

@@ -1,0 +1,7 @@
+deepagents==0.7.34
+langgraph==1.2.20
+langchain-core==1.7.6
+pydantic-ai-slim[mcp]==2.66.0
+mcp==2.3.0
+setuptools==80.9.0
+wheel==0.45.1

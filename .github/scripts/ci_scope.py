@@ -25,6 +25,7 @@ FULL_PATHS = {
     ".github/scripts/verified_ci.cjs", "tests/verified_ci_contract.cjs",
 }
 RUST_PATHS = {
+    "integrations/catalog.json",
     "build.rs", "Cross.toml", "deny.toml", "rust-toolchain",
     "rust-toolchain.toml", "install.sh", "install.ps1",
     "tests/install_sh.py", "tests/install_ps1.ps1",
@@ -32,17 +33,57 @@ RUST_PATHS = {
 RELEASE_SCRIPTS = {".github/scripts/release.py", ".github/scripts/publish_release.py", ".github/scripts/publish_npm.py"}
 RUST_PREFIXES = ("src/", ".cargo/", "xtask/", "installer/")
 INTEGRATION_PREFIXES = ("integrations/", ".github/skills/", "xtask/")
-HARNESS_PREFIXES = ("benches/native/dsh_", "benches/native/pi_", "benches/native/goose_")
-HARNESS_RUNNERS = {"benches/native_tools.py", "benches/harness_backends.py", "benches/harness_report.py",
-                   "benches/native/node_runtime.mjs"}
+HARNESS_PREFIXES = ("benches/native/dsh_", "benches/native/pi_", "benches/native/goose_",
+                    "benches/native/gemini_native", "benches/native/cline_native", "benches/native/openhands_",
+                    "benches/native/opencode_native", "benches/native/aider_native", "benches/native/python_agents",
+                    "benches/native/agent_sdks", "benches/native/smolagents", "benches/native/host_profiles",
+                    "benches/native/google_adk", "benches/native/crewai")
+HARNESS_RUNNERS = {"benches/edit_cost.py", "benches/native_tools.py", "benches/harness_backends.py", "benches/harness_report.py",
+                   "benches/native/node_runtime.mjs", "benches/native_provider.mjs", "benches/pi_provider.mjs",
+                   "benches/gemini_provider.mjs", "benches/cline_provider.mjs",
+                   "benches/opencode_provider.mjs", "benches/aider_provider.py", "benches/openhands_provider.py",
+                   "benches/python_agents_provider.py", "benches/agents_sdk_provider.py", "benches/host_profiles.py",
+                   "benches/autogen_provider.py", "benches/smolagents_provider.py", "benches/agent_sdk_bridge.py",
+                   "benches/google_adk_provider.py", "benches/crewai_provider.py"}
+HARNESS_HELPER_PREFIXES = ("tests/python_agents_", "tests/agent_sdks_", "tests/agents_sdk_", "tests/autogen_",
+                          "tests/smolagents_", "tests/host_profiles_", "tests/aider_native_",
+                          "tests/opencode_native_", "tests/openhands_provider_", "tests/google_adk_", "tests/crewai_")
 NPM_TESTS = {"tests/npm_contract.py", "tests/npm_prepare_contract.py", "tests/npm_release_smoke.py"}
 HARNESS_TESTS = {
     "tests/dsh_adapter_contract.py", "tests/dsh_integration_contract.cjs",
     "tests/dsh_integration_live.cjs", "tests/dsh_packaged_live.cjs", "tests/pi_contract.mjs",
     "tests/goose_native_contract.py", "tests/node_runtime_contract.mjs",
+    "tests/native_e2e.py", "tests/native_byte_contract.py",
+    "tests/native_e2e_contract.py",
+    "tests/native_provider_bench_contract.mjs", "tests/pi_provider_bench_contract.mjs",
+    "tests/dsh_native_contract.mjs", "tests/dsh_native_bytes.mjs", "tests/dsh_native_packaged.mjs",
+    "tests/dsh_native_rewind.mjs", "tests/dsh_native_setup.mjs",
+    "tests/pi_native_contract.mjs", "tests/pi_native_bytes.mjs", "tests/pi_native_packaged.mjs",
+    "tests/pi_native_runtime.mjs",
+    "tests/gemini_native_contract.mjs", "tests/gemini_native_bytes.mjs", "tests/gemini_native_packaged.mjs",
+    "tests/gemini_native_runtime.mjs", "tests/gemini_provider_bench_contract.mjs",
+    "tests/cline_native_contract.mjs", "tests/cline_native_bytes.mjs", "tests/cline_native_packaged.mjs",
+    "tests/cline_native_runtime.mjs", "tests/cline_provider_bench_contract.mjs",
+    "tests/openhands_native_contract.py",
+    "tests/integration_catalog_contract.py", "tests/opencode_native_runtime.mjs",
+    "tests/opencode_native_contract.mjs", "tests/opencode_native_bytes.mjs", "tests/opencode_native_packaged.mjs",
+    "tests/aider_native_contract.py", "tests/python_agents_contract.py", "tests/agents_sdk_contract.py",
+    "tests/autogen_contract.py", "tests/smolagents_contract.py", "tests/host_profiles_contract.py",
+    "tests/agent_sdks_runtime.py",
+    "tests/openhands_provider_bench_contract.py", "tests/opencode_provider_bench_contract.mjs",
+    "tests/aider_provider_bench_contract.py", "tests/python_agents_bench_contract.py",
+    "tests/agent_sdk_bench_contract.py", "tests/host_profiles_runtime.py",
+    "tests/host_profiles_bench_contract.py", "tests/python_agents_runtime.py", "tests/agent_sdks_contract_common.py",
+    "tests/google_adk_contract.py", "tests/crewai_contract.py", "tests/google_adk_bench_contract.py",
+    "tests/crewai_provider_bench_contract.py",
 }
-PACKAGED_HARNESSES = ("integrations/dsh/", "integrations/pi/")
-LIVE_INTEGRATIONS = (*PACKAGED_HARNESSES, "integrations/goose/")
+PACKAGED_HARNESSES = ("integrations/dsh/", "integrations/pi/", "integrations/pi-native/", "integrations/native/",
+                      "integrations/gemini-native/", "integrations/cline-native/", "integrations/opencode/",
+                      "integrations/host-profiles/")
+LIVE_INTEGRATIONS = (*PACKAGED_HARNESSES, "integrations/dsh-native/", "integrations/goose/", "integrations/openhands-native/",
+                     "integrations/native-python/", "integrations/aider-native/", "integrations/python-agents/",
+                     "integrations/agents-sdk/", "integrations/autogen/", "integrations/smolagents/",
+                     "integrations/google-adk/", "integrations/crewai/")
 
 
 def executable_integration(path: str) -> bool:
@@ -83,11 +124,11 @@ def classify(paths: list[str]) -> dict[str, bool]:
     npm = any(path.startswith("npm/") or path in NPM_TESTS or (
         path.startswith(PACKAGED_HARNESSES) and executable_integration(path)
     ) for path in paths)
-    harnesses = any(path in HARNESS_TESTS or path in HARNESS_RUNNERS or path.startswith(HARNESS_PREFIXES)
+    harnesses = any(path in HARNESS_TESTS or path in HARNESS_RUNNERS or path.startswith((*HARNESS_PREFIXES, *HARNESS_HELPER_PREFIXES))
         or executable_integration(path) for path in paths)
     rust = False
     for path in paths:
-        if path.startswith(("npm/", *HARNESS_PREFIXES)) or path in HARNESS_TESTS or path in HARNESS_RUNNERS or path in NPM_TESTS:
+        if path.startswith(("npm/", *HARNESS_PREFIXES, *HARNESS_HELPER_PREFIXES)) or path in HARNESS_TESTS or path in HARNESS_RUNNERS or path in NPM_TESTS:
             continue
         if (
             path in RUST_PATHS or path in EXECUTABLE_DOCS

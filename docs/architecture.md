@@ -14,7 +14,7 @@ xnip minimizes the context an agent must read and generate to make a correct tex
 | Smaller prompts | Canonical entry guide selects operations and discloses branch-specific references |
 | Behavioral verification | Fresh contract suites cover byte output, rejected writes, lifecycle, recovery, platform safety and transports |
 | Reproducible cost evidence | Paired native-editor/xnip execution records real bytes, inputs and results; representation costs are a supplementary experiment |
-| Harness reuse | DSH/Pi host registration and Goose stdio use the same MCP edit engine; local npm distribution runs the same pinned native executable |
+| Harness reuse | Native host and SDK adapters reuse core transactions; existing DSH/Pi/Goose MCP paths and local npm distribution run the same executable |
 
 The [glossary](../GLOSSARY.md) defines editing terms. Benchmark methodology and measured results live under [benchmarks](benchmarks/README.md). Representation cost is distinct from model quality or native harness reliability.
 
@@ -27,7 +27,27 @@ MCP adapter ─┤
              └─ apply module ──────────── manifests/patches + edit plan
                          └─ transaction module ─ snapshots + commit + recovery
 Receipts ──── output module ───────────── compact / JSON / human presentation
+Native host IO ─ native serve ─────────── byte reads + core transactions
 ```
+
+Native adapters call the same core implementation as CLI and MCP. The public
+`core::transaction::Plan` prepares virtual edits and exposes immutable before/after
+snapshots without modifying targets. `apply::commit::prepare` builds the same plan
+from manifests while retaining grouped and sequential semantics. Controlled commit
+lets a host authorize paths, validate observed versions and capture undo snapshots
+before persistence; cancellation during writes uses the existing journal rollback
+path. Host tool names, policy and result presentation stay in the adapter. Native
+integrations extend these existing modules directly.
+
+The host seam determines installation and restoration. DSH selects a filesystem
+provider for one profile; Pi registers same-name builtin tools. SDK applications
+select Gemini's local `Config` service, Cline's `apply_patch` executor,
+OpenHands' `file_editor` factory, aider's IO adapter or DeepAgents' filesystem
+backend. These routes keep the wrapped host's editing surface and policy.
+OpenCode plugins and LangGraph tool collections register additional xnip tools.
+Official MCP SDK toolsets and client profiles retain their own discovery and
+session interfaces. The [support matrix](support.md) records each surface and
+its concrete execution boundary.
 
 The read module accepts a query and returns bounded output, absorbing regex validation, selection, limits and partial IO reporting. Peek uses borrowed line cursors and merges context online; find visits hits without retaining a match list. Once the byte prefix is full, unlimited find still counts selected hits for compatible receipts but stops formatting discarded hits. Both transport adapters share this seam; fixes and contract tests apply to both.
 
@@ -46,13 +66,21 @@ MCP advertises `edit/apply/peek/find/recover` by default. `xnip mcp --toolset fu
 - `src/core/read.rs`: shared read queries and bounded rendering.
 - `src/core/edit.rs`: guarded literal edits and standalone file lifecycle.
 - `src/core/ops`, `location.rs`, `content.rs`: byte transformations, locators and content loading.
-- `src/core/transaction.rs`: edit plans, snapshots, commit and recovery.
+- `src/core/transaction.rs`: edit plans, immutable snapshots, controlled commit, cancellation and recovery.
 - `src/apply`: manifest/patch parsing and batch planning.
+- `src/native`: host protocol operations, installation snapshots and lifecycle restoration.
+- `integrations/catalog.json`: current integration entries, setup guides, contracts and benchmark paths; embedded by `doctor --native`.
+- `src/cli/native_backend.rs`: local JSON-lines bridge to core transactions.
 - `src/output`: receipts, UTF-8-safe preview budgets, human/JSON output and exit codes.
 - `src/update`: background leases, singleton scheduling, release verification and platform replacement.
-- `npm`: private local package preparation, native payload verification and immutable execution cache; no npm publication workflow.
+- `npm`: private local package preparation, six-platform release payloads, verification and immutable execution-cache distribution.
 - `integrations/dsh`, `integrations/pi`: host registration adapters for the existing MCP tools; `integrations/goose`: stdio configuration and concise editing hints.
-- `tests`: observable CLI/MCP and distribution contracts; core/apply contracts are colocated with their modules.
+- `integrations/native`: shared JavaScript JSONL client; `integrations/*-native`: native host adapters, including the separate OpenHands Python package.
+- `integrations/native-python`: shared standard-library Python JSONL client used by Python IO backends.
+- `integrations/opencode`, `python-agents`: registered plugin/framework tools and backend adapters.
+- `integrations/agents-sdk`, `autogen`, `smolagents`, `google-adk`, `crewai`: official framework MCP toolset integration and lifecycle helpers.
+- `integrations/host-profiles`: reviewable official-client MCP configurations with explicit project directories.
+- `tests`: observable CLI/MCP and distribution contracts, including shared core plan contracts; core/apply contracts are colocated with their modules.
 - `benches`: core latency benchmarks and offline editing-cost comparisons.
 - `docs/SKILL.md`: canonical agent guide, copied by `xtask sync-integrations`.
 
@@ -64,13 +92,13 @@ MCP ordinary writes return `written`, with no repeated input path or operation. 
 
 ## Harness and distribution adapters
 
-The DSH and Pi adapters register the existing xnip MCP process through each host's official extension interface. They set an absolute working directory and disable native automatic updates for that child. Host tool naming and model-facing projection remain responsibilities of the official bridges; xnip's raw result and a host's rendered text are distinct measurements. Goose uses the same stdio entry with its own extension configuration. The MCP adapter supports modern `server/discover` with per-request metadata and legacy 2025 initialization, preserving the public editing behavior and error categories.
+The DSH and Pi MCP adapters register the existing xnip process through each host's official extension interface. They set an absolute working directory and disable native automatic updates for that child. Host tool naming and model-facing projection remain responsibilities of the official bridges; xnip's raw result and a host's rendered text are distinct measurements. Goose uses the same stdio entry with its own extension configuration. The MCP adapter supports modern `server/discover` with per-request metadata and legacy 2025 initialization, preserving the public editing behavior and error categories.
 
 npm packages contain the same Rust executable, with version/target identity and SHA256 checked during preparation. Host-only local packages stay private and bundle their actual host payload; an explicit public release requires six matching source-commit attestations and complete platform artifacts. Public packages use exact-version optional dependencies and are verified again before publication. The launcher verifies the packaged executable before copying it into a version/platform/hash execution directory, then atomically publishes a complete directory. Existing entries are immutable, and their hash is checked again on use. Running Windows processes map this cache instead of `node_modules`, allowing package replacement or uninstall without interrupting an existing MCP session. Cache entries are intentionally not automatically collected while process lifetimes may be unknown.
 
 The wrapper owns the native process's input pipe and forwards stdout/stderr and exit behavior. Closing or abruptly losing the wrapper therefore closes MCP input instead of leaving the original harness writer inherited by the native child. Native automatic updating is disabled because npm owns the selected package version; the standalone updater retains its own policy. Preparation and contracts do not publish packages, edit a user profile or activate a host bundle.
 
-The native harness benchmark adapters live under `benches/native`, independently of product editing. Pinned official editors and bridges perform the actual matching, policy and IO; their isolated surroundings and source/dependency hashes are explicit. These fixtures do not establish full agent/model performance. See [DSH](dsh.md), [Pi](pi.md), [Goose](goose.md) and the [test map](testing.md).
+The native harness benchmark adapters live under `benches/native`, independently of product editing. Pinned official editors and bridges perform the actual matching, policy and IO; their isolated surroundings and source/dependency hashes are explicit. Provider benchmarks separately compare original and xnip-backed tools within each host's own governance and result boundary. The [test map](testing.md) covers their actual registries, SDK execution, byte fixtures and restoration with model generation idle.
 
 ## Persistence and limits
 

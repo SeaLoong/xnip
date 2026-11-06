@@ -1,0 +1,8 @@
+openai-agents==0.24.0
+autogen-agentchat==0.7.5
+autogen-ext[mcp]==0.7.5
+mcp==1.30.0
+setuptools==80.9.0
+wheel==0.45.1
+
+packaging==26.0

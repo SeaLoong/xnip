@@ -1,0 +1,4715 @@
+{
+  "schema_version": 1,
+  "legacy": {
+    "schema_version": 1,
+    "created_at": "2026-11-05T22:42:23.331Z",
+    "methodology": {
+      "host_tools": [
+        "read",
+        "write",
+        "edit"
+      ],
+      "model_calls": 0,
+      "policy": "official observation and sandbox services; prerequisite reads through the official read tool",
+      "known_inputs": "fixtures supply replacement text; prerequisite reads retain the official default bounded output window",
+      "clock": "performance.now monotonic milliseconds",
+      "p95": "nearest rank",
+      "setup": "one persistent provider per host/version/policy, including native process handshake; first host module import is cold",
+      "warmup_runs_per_scenario": 1,
+      "measured_runs_per_scenario": 3,
+      "timed_region": "sum of actual tool execution durations; fixture reset, external updates and byte verification are outside",
+      "tool_bytes": "UTF-8 JSON.stringify arguments and complete ToolRuntime result at the local tool boundary",
+      "bridge_bytes": "actual native child stdin/stdout bytes during warm tool calls; handshake and process startup belong to setup",
+      "native_content_encoding": "legacy byte arrays selected after the normal capability handshake",
+      "correctness": "independent expected storage bytes, complete workspace file set and expected host error code/message; identical edit is rejected by official argument parser, identical write succeeds",
+      "ordering": "host versions in supplied order; original then native per policy; scenarios in fixture order; persistent process warmed per scenario",
+      "batch_fixtures": "historical batch fixture names are retained; each requested edit executes one official edit tool call",
+      "scope": "local deterministic host/tool execution; model generation, billing and interactive approval latency are outside this measurement"
+    },
+    "provenance": {
+      "node": "v24.22.1",
+      "node_executable": "node",
+      "platform": "linux",
+      "arch": "x64",
+      "kernel": "6.18.57",
+      "cpus": 5,
+      "cpu_model": "AMD EPYC 9V74 80-Core Processor",
+      "binary": {
+        "filename": "xnip",
+        "build_profile": "release",
+        "version": "xnip 0.5.7",
+        "bytes": 8479512,
+        "sha256": "5504d4f5ce31d9b04852bc61bba1d9bc7341e0bbd5fcf0fc6c24ab12d3e87ab1"
+      },
+      "source": {
+        "git_head": "4e1189f36a11f73b7a35816508e46f7e6b718057",
+        "working_tree_files_sha256": {
+          "Cargo.lock": "609663d9888ec244b3f64a59ce0d33d3fe9fcd2e32b581dd3c158f659b0c72d8",
+          "Cargo.toml": "4d94a292f8023da53d6bf5c606d368be2a73a017325cff2fae7d3f6af0cd8cae",
+          "benches/edit_cost.py": "f97eee6b6feab701ae61a12a9d5ef0bc1f6c74118aaed73919d0e7393ac4974e",
+          "benches/native_provider.mjs": "63150e4dfc5505039f5859de0286fbd5edcdd16c583e7dc885f785435f1b6bd3",
+          "integrations/dsh-native/editor-client.mjs": "9f469cc3b703ece19e4526dc8b38d0570f59f1aae32e0d4627e23417c45a7c3d",
+          "integrations/dsh-native/index.mjs": "e0388f003fc013dc4b4c192f221a4cefce3a00fbf8eb0868947386760b65d9bb",
+          "integrations/dsh-native/lifecycle.mjs": "d2969b0cb64dc5395551d1d92f7ad5d87df06c124172af115fdb3f6cca2753c8",
+          "integrations/dsh-native/package.json": "21ace4b6658183a3ff7960d40e6f3eeb8f1ec946ecfa99c954d2264aca83d1d4",
+          "integrations/dsh-native/rewind-validation.mjs": "67021d46592a0a1187af8c61b8e9acd6a3d6e7980300b442173ab296eee693b2",
+          "integrations/dsh-native/runtime.mjs": "f8d2ca3dbbc69197c8ed5dd6855193a2baca7238108a5c9a4c8f457d490ba3bd",
+          "integrations/native/editor-client.mjs": "ff0bd3c69b3c07e980658de5ea529b5fea398af92d113b27264739fec713836b",
+          "src/apply/commit.rs": "1dbb0f5e5d967238224991073bf2370fe286dcc9db7ab9a038fb6ec138b5afd1",
+          "src/apply/compact.rs": "568492a7b1b3fe0934db76bab2c5df1c4210f5492efa7b4ccdf0dce60ec8a896",
+          "src/apply/contract_tests.rs": "18568870a4b425cb01b867f7abf493172b18ef20beb1bfeae2471178593ea600",
+          "src/apply/detect.rs": "944b2dfc67ce7b294316ce5d417da1f68151f4aae67159e1e91e5668754ba649",
+          "src/apply/mod.rs": "9c0c7a620f5989ac4a1ee82412ecf884b2615c97b310234753109db4e8b19add",
+          "src/apply/parse_json.rs": "7d1491008b03fdd9620db2ff751e22477013af261254a91908029f4215026f0c",
+          "src/apply/parse_native.rs": "6d30b10799a90dbb3b209f3b9b57336df1beecde6e1dc2e17c8c48a689288440",
+          "src/apply/parse_yaml.rs": "585c91815038e266298b4f75bf19d406d003f2c0c14a4156e1457e0eab167ba5",
+          "src/apply/patch.rs": "7b10cebd6bb339e8328e93fc7e6f645001982355fac7832d934c3a16c53978e8",
+          "src/cli/apply.rs": "b933c5b693a9a14fca6593a7473ec1c81820362fcedc064214e081ab98d6e002",
+          "src/cli/common.rs": "6b705045c8a847ab82fb69b4ba0e2f8c03c25ef93f2c2fca0c5981b17dfeca46",
+          "src/cli/edit.rs": "88a9e21b4b58b8c30b571079b5889e19cdc9f64edd8c12234defcb9047573834",
+          "src/cli/find.rs": "a208cefd1bc55f8a51adcd5b446de81e0b43bd2aab374c1c7b63808ed65ea2bf",
+          "src/cli/indent.rs": "a55506736594c61286e840beeb52426409935b1b7e2307943d2ae99b698581d3",
+          "src/cli/insert.rs": "338d01c6032e615aed077226fe4c25db26e22b63035880d11c891468134c1fa9",
+          "src/cli/mcp.rs": "f9a1d411ff6ad327b1415fb1b34e9ff7a18a6753f4bd08d3dd1a4ad75fe70abe",
+          "src/cli/mod.rs": "3d8d051024959af2766ccd9bdc54877ceb380d89c1d063156dec56734ddec1a9",
+          "src/cli/move_op.rs": "9ffa51e38c2fe3ede5bb406b911eb3a001738e4bc7848fb5a96f558f619af047",
+          "src/cli/native.rs": "9ffc09a212564959a4f164302cf7ed4858156e9e7a834c261d356ab8d570dad2",
+          "src/cli/native_backend.rs": "912dc19caa10c54eff877cb0a7d0385a6d0edb9759576b3abf2c4fd415642346",
+          "src/cli/peek.rs": "30196796dcc924559a762688d29a9840b0fceeacba349867564e8eaa10ee5e05",
+          "src/cli/recover.rs": "9659858ca5ba624744976e4cd1b38d885eabd9217c546ff58347a57dc48d6175",
+          "src/cli/replace.rs": "48e38e3e98cfbf3840aae1a850c9d7fa2888cc90e1fbf2a83cb0d9d9c2e1bda3",
+          "src/core/atomic.rs": "cfc54d3272f440b006a79f9de2bcd32b196e4984a5e7fea7be69f082a12662ff",
+          "src/core/content.rs": "75bb45e1217965b7d75f1e5d0b554e9cdc7117bb2b25d7210c1aef8fe5fb3e66",
+          "src/core/contract_tests.rs": "b3ec28cd6f1350f44189d095f74306a52d84884005d6215e006b971271128cac",
+          "src/core/diff.rs": "8a55702b4b62ea194a3ec4859ad6a82c1cac9cefc03541a2d5dfdfcff0a8f40c",
+          "src/core/edit.rs": "1518a5c1b875c6c4cec8cb6dc44feeef38bcab880687f9e7c7e3cf6714a505ee",
+          "src/core/location.rs": "c22fd0c47ce4ce4934103dbbef8966d0c0e37f7d5ccaef075ca203ce4ab7dc52",
+          "src/core/mod.rs": "e1c84eeb6746635d255f7695fa659dca72257a0cd816309fcc32511b88211b61",
+          "src/core/ops/find.rs": "8e0c16ec990848ca8c8b7f299e017daef72f545645bfa777d79cedd8b7d32c57",
+          "src/core/ops/indent.rs": "1d8f909ea59032c0203049c6c5fe349c674b0081bc83d6faa7c7d7bd1bce7704",
+          "src/core/ops/insert.rs": "7781a42a8abbd1b18576e615dd01201df07879701ab1243adb1dd9b8932940ac",
+          "src/core/ops/mod.rs": "a98cce97d731c5357d38db543586f27a7a13bd9dc06d61b9ed4a5017957af26b",
+          "src/core/ops/move_op.rs": "016996b0ac07a4f7484f93fe90a88c0aef3aae937deb73a2127e7ade5df7a458",
+          "src/core/ops/peek.rs": "15a80bc3594279549d33880755ebfbc0980c2cd008d5cac7754a915003617ae3",
+          "src/core/ops/replace.rs": "94233af96625dcee0c4d299a1c7271b3a5a2dff59a5dc5f0213b97c71546f65c",
+          "src/core/read.rs": "eb253b39b7400cd143e7f41608d849f76c08602f3147a744c417f8ac100f1edd",
+          "src/core/revert.rs": "3576a34e5e2fd9b6e13beb993cfbf2541f1579a5c207c412f4620ec9240f7ebe",
+          "src/core/transaction.rs": "6100b83c75202d77ff58a0144960f1ef890fd81d38002cb3fbc5518f4c6b732a",
+          "src/doctor.rs": "a61a4a05b4a193c46ffd279490d1938a699861ca1c5592c28919c6d1679c83bb",
+          "src/lib.rs": "05818e42676437a6adbe6071f16e8d1363153423dfa296c58bd41f18ffda5ddd",
+          "src/main.rs": "5e9a4eac9a63b2756a9b901fcc2aff4312d1fbe2ac36b0a8a62a611ed002f4bf",
+          "src/mcp/mod.rs": "685ddf5a0b9ee6955a75de6251de230408e41f2bd93f9af9e5ad055a88e9db52",
+          "src/mcp/server.rs": "7faac2b99049164c61bb4395a0a18beab106099569ea710fe432129affd3a312",
+          "src/mcp/tools/apply.rs": "d20f369c74bd3cb46069992f112fbe23b4a3c93c57886f77040dc8d86d72456b",
+          "src/mcp/tools/common.rs": "bba1a27f1cc660e3eba2bf8e0485025f44ce57adf980a781e27bc8843b0de72c",
+          "src/mcp/tools/doctor.rs": "ffbcb9fb4d58ada96661cbbcf2e87806b898ca66f6ae1bb489cfecc135fc20dc",
+          "src/mcp/tools/edit.rs": "45d44800b62c523e939a74c35d181a89bc387a1e116b25dd42faf6596e3c5652",
+          "src/mcp/tools/find.rs": "4acd594cbd188852d407f3e1d7642db162afe8d4a7d7574e283cf9bcb1ab99b1",
+          "src/mcp/tools/indent.rs": "5de206220f62bfebdc27d877c6e929391a0ec555184a9e6e3379ed9c8335f33f",
+          "src/mcp/tools/insert.rs": "62176d4bee0b1ead832dd2f25af1110cdf42d02969f077e9e3d74b14844f70de",
+          "src/mcp/tools/mod.rs": "0d8ef3c7a42cbb90b94db69f51f6a0465b25b4a5432d0984124376cf9a439c64",
+          "src/mcp/tools/move_op.rs": "c84480b185994137b199f065f7571e1812b72ac034cb39c010c678bbde20e8e8",
+          "src/mcp/tools/peek.rs": "0bf76f4b37b165bdd00d4b78ef62d849b31d477f421ad80823af5e2744da8797",
+          "src/mcp/tools/recover.rs": "7e5ac5b51906926a559752a162b8218708e83aa40901e34f07213b54379669bc",
+          "src/mcp/tools/replace.rs": "e053bc440f07dd7a1fe7007bd0115c2bc6b12f85f7c462bff265ed98ea3351fc",
+          "src/native/mod.rs": "0630e9c4a6a42b76b6a16ae84393281f1b4612c6d845661b4f2302e674deddf4",
+          "src/native/operations.rs": "0867c3b6b1b92b9c577b4648eb5f80579c4df500b1c8e804304fb13096107ec9",
+          "src/native/snapshot.rs": "74357ef929198f702dc7215ccc8c7cfbfad03fb86e63dfc52fa79156b46d2526",
+          "src/output/budget.rs": "01d9e5c42430d77876e3ddcd465e909deb4f353ddd9be1102f5a600f17e2620f",
+          "src/output/exit.rs": "cae0eac0f2d360b2de5c4ff0b659848650a59dd1344b1104a03b889333de9a98",
+          "src/output/globals.rs": "5582585e836ee96c4c59c4b7f5d34df84aac03625dc799c7ace01c680a59737a",
+          "src/output/human.rs": "3ef54b8e3a3d138d7b31133d28ffb0865fa475fa0b1deefca236543a8acec142",
+          "src/output/json.rs": "a1c679e4a428dc7fb65499093927c10f7367cfd847cab3e91171a4f63170ba82",
+          "src/output/mod.rs": "d6a3184db03c6877f5a2b4c2a03c061852a637b313c7da31cb7de41de3bdb75f",
+          "src/update/contract_tests.rs": "211edb6a96c19bf532ad70fc51a52c373d6c07175e4f26ec8428a67f49a313cf",
+          "src/update/delivery.rs": "16a9e310d85aa18b2d1e6ecd60e25d2404ece5c3e2caa5f6220397750afb3d0b",
+          "src/update/mod.rs": "ed12819424f09fcafd204797c7a31b5754350d178235cd23422a455aefbcb23d",
+          "src/update/policy.rs": "faeb72c58f1f9497d60b7e4d1eea97ed7f36eb90c9ef4b0b333aedc75764847e"
+        },
+        "working_tree_sha256": "945eb2cf93b09832b8a09e0520eefc69034fa9f8784d4a438bbeae7c3684e935"
+      },
+      "hosts": {
+        "0.2.1-rc.2": {
+          "@deepseek-ai/dsh": {
+            "version": "0.2.1-rc.2",
+            "package_sha256": "bea4288aa88eb54efe829686553100a75fdf09d11c5e3bf6b329badb9a0368dd",
+            "entrypoint_sha256": "80112efe368efb1a39720c7ada0af00442e5131fb2744edaaff8a3e8bb499e6f"
+          },
+          "@deepseek-ai/dsh-fs-sandbox": {
+            "version": "0.2.1-rc.2",
+            "package_sha256": "fffd05f8833107d3b08e30f1a36afa67beda0aa73f904ed6620b85846ee64776",
+            "entrypoint_sha256": "cac65e21a0f0895b073cb9a447196ac265f2a171cc7f67c7434a6b3b7782caf5"
+          },
+          "@deepseek-ai/dsh-fs-local": {
+            "version": "0.2.1-rc.2",
+            "package_sha256": "080eaa7f613682f8ebaacf2eb508c3c7fdcf92b59d19ed0b6cd6303009d35714",
+            "entrypoint_sha256": "63fbb41d2c33e07111884b798be507e68c2752acab8249c821c20ade436e894f"
+          },
+          "@deepseek-ai/dsh-fs-observation-policy": {
+            "version": "0.2.1-rc.2",
+            "package_sha256": "34573075389e2044f13105f1748997ad542f4e02b23b163b0c6250f8c16617c2",
+            "entrypoint_sha256": "e36b54cdb5c6fa01ccfa29f0433753e810ec1ac29a6a22be349d66b77eb64b03"
+          },
+          "@deepseek-ai/dsh-tool-fs": {
+            "version": "0.2.1-rc.2",
+            "package_sha256": "1dad2787176889ab5ccceae94d0e7c4af6cdeb81c85368f6cf4377a41bde179b",
+            "entrypoint_sha256": "b11d3fa50b9042019a91cc38a6abe35d74ed651374278f95e60b42734e079df1"
+          },
+          "@deepseek-ai/dsh-tools": {
+            "version": "0.2.1-rc.2",
+            "package_sha256": "13adfd07328b98cd248054efb17be7895ba9db0e01ab87f4adca3d4c6385d636",
+            "entrypoint_sha256": "1e53932e7c4213ea24a7d87f06960b7a7702cb21f8a5741c97242b4a470a442a"
+          },
+          "@deepseek-ai/dsh-sandbox-policy": {
+            "version": "0.2.1-rc.2",
+            "package_sha256": "d899d95090af68360bde5a45bd6f942c18db83dd613b31eb78b791fc4675e579",
+            "entrypoint_sha256": "772ca58f0f786d6cb4d839deb621634c31097c13228d81b14e3f3153d0524924"
+          }
+        },
+        "0.2.1-rc.5": {
+          "@deepseek-ai/dsh": {
+            "version": "0.2.1-rc.5",
+            "package_sha256": "b10673ea6c4e20cc10da6ef20130b6ece3142cba8003b50e0d5ded25fc388b5b",
+            "entrypoint_sha256": "80112efe368efb1a39720c7ada0af00442e5131fb2744edaaff8a3e8bb499e6f"
+          },
+          "@deepseek-ai/dsh-fs-sandbox": {
+            "version": "0.2.1-rc.5",
+            "package_sha256": "1af11eff6d19e81e2e1e74e569ca546015b08c9d352774207b770990ec073d13",
+            "entrypoint_sha256": "cac65e21a0f0895b073cb9a447196ac265f2a171cc7f67c7434a6b3b7782caf5"
+          },
+          "@deepseek-ai/dsh-fs-local": {
+            "version": "0.2.1-rc.5",
+            "package_sha256": "5941249f520d7f2fe8dfd71db707303723d197431da88eb837a5e00ddb718574",
+            "entrypoint_sha256": "63fbb41d2c33e07111884b798be507e68c2752acab8249c821c20ade436e894f"
+          },
+          "@deepseek-ai/dsh-fs-observation-policy": {
+            "version": "0.2.1-rc.5",
+            "package_sha256": "13809ad6aafaedb5816daf20ca181ec0dbb6e31b141d6d12ab2fd7c5f7099c47",
+            "entrypoint_sha256": "e36b54cdb5c6fa01ccfa29f0433753e810ec1ac29a6a22be349d66b77eb64b03"
+          },
+          "@deepseek-ai/dsh-tool-fs": {
+            "version": "0.2.1-rc.5",
+            "package_sha256": "a39ea894b8104d29c7039352851bfddedb42a104da87667d3783ad3adc640900",
+            "entrypoint_sha256": "b11d3fa50b9042019a91cc38a6abe35d74ed651374278f95e60b42734e079df1"
+          },
+          "@deepseek-ai/dsh-tools": {
+            "version": "0.2.1-rc.5",
+            "package_sha256": "5ebfb49032068284f7ac422d01dc31833fea778b80fcf433d54c4866a32fb8b5",
+            "entrypoint_sha256": "1e53932e7c4213ea24a7d87f06960b7a7702cb21f8a5741c97242b4a470a442a"
+          },
+          "@deepseek-ai/dsh-sandbox-policy": {
+            "version": "0.2.1-rc.5",
+            "package_sha256": "881d1eccb566ae076d5b328d36b8b4daf0b5394f866994825330441bf2d75adb",
+            "entrypoint_sha256": "772ca58f0f786d6cb4d839deb621634c31097c13228d81b14e3f3153d0524924"
+          }
+        }
+      }
+    },
+    "scenarios": [
+      {
+        "name": "large-1048576",
+        "cohort": "provider-extension",
+        "purpose": "one small edit in exactly 1048576 bytes",
+        "mode": "workspace-write",
+        "expected_error": null,
+        "expected_error_message": null,
+        "files": {
+          "example.txt": {
+            "bytes": 1048576,
+            "sha256": "949243ddad0f3f35a0f066b28b67689364fec2dbaf886e55bb71ed5f64125b02"
+          }
+        },
+        "expected": {
+          "example.txt": {
+            "bytes": 1048576,
+            "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+          }
+        },
+        "edit_calls": 1,
+        "write_calls": 0
+      },
+      {
+        "name": "large-5242880",
+        "cohort": "provider-extension",
+        "purpose": "one small edit in exactly 5242880 bytes",
+        "mode": "workspace-write",
+        "expected_error": null,
+        "expected_error_message": null,
+        "files": {
+          "example.txt": {
+            "bytes": 5242880,
+            "sha256": "6aa0bfa7fb4bc1b6502c1f84e6313c10aba163656e6867b04580402f28cd2ff2"
+          }
+        },
+        "expected": {
+          "example.txt": {
+            "bytes": 5242880,
+            "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+          }
+        },
+        "edit_calls": 1,
+        "write_calls": 0
+      }
+    ],
+    "setup": [
+      {
+        "host_version": "0.2.1-rc.2",
+        "provider": "dsh-original",
+        "mode": "workspace-write",
+        "setup_ms": 134.51397300000002,
+        "native_content_encoding": null,
+        "tool_schema_sha256": "3fa49111bfa50170bc2485d89386252887a0e7de19b4563c69e3090985543025",
+        "prompt_sha256": "b2f96f81c0f6e3d4fe15af1d5a39c4d5a0b220838e924a2772b32dc0bf81a870"
+      },
+      {
+        "host_version": "0.2.1-rc.2",
+        "provider": "xnip-native",
+        "mode": "workspace-write",
+        "setup_ms": 13.069081000000097,
+        "native_content_encoding": "bytes",
+        "tool_schema_sha256": "3fa49111bfa50170bc2485d89386252887a0e7de19b4563c69e3090985543025",
+        "prompt_sha256": "b2f96f81c0f6e3d4fe15af1d5a39c4d5a0b220838e924a2772b32dc0bf81a870"
+      },
+      {
+        "host_version": "0.2.1-rc.5",
+        "provider": "dsh-original",
+        "mode": "workspace-write",
+        "setup_ms": 97.55638200000067,
+        "native_content_encoding": null,
+        "tool_schema_sha256": "3fa49111bfa50170bc2485d89386252887a0e7de19b4563c69e3090985543025",
+        "prompt_sha256": "b2f96f81c0f6e3d4fe15af1d5a39c4d5a0b220838e924a2772b32dc0bf81a870"
+      },
+      {
+        "host_version": "0.2.1-rc.5",
+        "provider": "xnip-native",
+        "mode": "workspace-write",
+        "setup_ms": 13.699266999999963,
+        "native_content_encoding": "bytes",
+        "tool_schema_sha256": "3fa49111bfa50170bc2485d89386252887a0e7de19b4563c69e3090985543025",
+        "prompt_sha256": "b2f96f81c0f6e3d4fe15af1d5a39c4d5a0b220838e924a2772b32dc0bf81a870"
+      }
+    ],
+    "results": [
+      {
+        "host_version": "0.2.1-rc.2",
+        "provider": "dsh-original",
+        "mode": "workspace-write",
+        "scenario": "large-1048576",
+        "cohort": "provider-extension",
+        "summary": {
+          "read_ms": {
+            "runs": 3,
+            "min": 9.085380999999984,
+            "median": 9.764639999999986,
+            "p95": 15.120560000000012,
+            "max": 15.120560000000012
+          },
+          "mutation_ms": {
+            "runs": 3,
+            "min": 8.332333000000006,
+            "median": 9.973171000000036,
+            "p95": 13.277761999999996,
+            "max": 13.277761999999996
+          },
+          "tool_ms": {
+            "runs": 3,
+            "min": 18.09697299999999,
+            "median": 19.05855200000002,
+            "p95": 28.398322000000007,
+            "max": 28.398322000000007
+          },
+          "tool_calls": {
+            "runs": 3,
+            "min": 2,
+            "median": 2,
+            "p95": 2,
+            "max": 2
+          },
+          "argument_bytes": {
+            "runs": 3,
+            "min": 292,
+            "median": 292,
+            "p95": 292,
+            "max": 292
+          },
+          "result_bytes": {
+            "runs": 3,
+            "min": 2290429,
+            "median": 2290429,
+            "p95": 2290429,
+            "max": 2290429
+          },
+          "tool_bytes": {
+            "runs": 3,
+            "min": 2290721,
+            "median": 2290721,
+            "p95": 2290721,
+            "max": 2290721
+          },
+          "bridge": {
+            "requests": {
+              "runs": 3,
+              "min": 0,
+              "median": 0,
+              "p95": 0,
+              "max": 0
+            },
+            "request_bytes": {
+              "runs": 3,
+              "min": 0,
+              "median": 0,
+              "p95": 0,
+              "max": 0
+            },
+            "response_bytes": {
+              "runs": 3,
+              "min": 0,
+              "median": 0,
+              "p95": 0,
+              "max": 0
+            },
+            "total_bytes": {
+              "runs": 3,
+              "min": 0,
+              "median": 0,
+              "p95": 0,
+              "max": 0
+            }
+          }
+        },
+        "byte_exact_runs": 3,
+        "outcome_matches_runs": 3,
+        "correct_runs": 3,
+        "samples": [
+          {
+            "read_ms": 15.120560000000012,
+            "mutation_ms": 13.277761999999996,
+            "tool_ms": 28.398322000000007,
+            "tool_calls": 2,
+            "argument_bytes": 292,
+            "result_bytes": 2290429,
+            "tool_bytes": 2290721,
+            "bridge": {
+              "requests": 0,
+              "request_bytes": 0,
+              "response_bytes": 0,
+              "total_bytes": 0,
+              "actions": {}
+            },
+            "calls": [
+              {
+                "phase": "read",
+                "name": "read",
+                "elapsed_ms": 15.120560000000012,
+                "argument_bytes": 122,
+                "result_bytes": 175490,
+                "is_error": false,
+                "error_code": null
+              },
+              {
+                "phase": "mutation",
+                "name": "edit",
+                "elapsed_ms": 13.277761999999996,
+                "argument_bytes": 170,
+                "result_bytes": 2114939,
+                "is_error": false,
+                "error_code": null
+              }
+            ],
+            "outcomes": {
+              "example.txt": {
+                "expected": {
+                  "bytes": 1048576,
+                  "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+                },
+                "actual": {
+                  "bytes": 1048576,
+                  "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+                },
+                "byte_exact": true
+              }
+            },
+            "unexpected_files": [],
+            "byte_exact": true,
+            "outcome_matches": true,
+            "correct": true
+          },
+          {
+            "read_ms": 9.085380999999984,
+            "mutation_ms": 9.973171000000036,
+            "tool_ms": 19.05855200000002,
+            "tool_calls": 2,
+            "argument_bytes": 292,
+            "result_bytes": 2290429,
+            "tool_bytes": 2290721,
+            "bridge": {
+              "requests": 0,
+              "request_bytes": 0,
+              "response_bytes": 0,
+              "total_bytes": 0,
+              "actions": {}
+            },
+            "calls": [
+              {
+                "phase": "read",
+                "name": "read",
+                "elapsed_ms": 9.085380999999984,
+                "argument_bytes": 122,
+                "result_bytes": 175490,
+                "is_error": false,
+                "error_code": null
+              },
+              {
+                "phase": "mutation",
+                "name": "edit",
+                "elapsed_ms": 9.973171000000036,
+                "argument_bytes": 170,
+                "result_bytes": 2114939,
+                "is_error": false,
+                "error_code": null
+              }
+            ],
+            "outcomes": {
+              "example.txt": {
+                "expected": {
+                  "bytes": 1048576,
+                  "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+                },
+                "actual": {
+                  "bytes": 1048576,
+                  "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+                },
+                "byte_exact": true
+              }
+            },
+            "unexpected_files": [],
+            "byte_exact": true,
+            "outcome_matches": true,
+            "correct": true
+          },
+          {
+            "read_ms": 9.764639999999986,
+            "mutation_ms": 8.332333000000006,
+            "tool_ms": 18.09697299999999,
+            "tool_calls": 2,
+            "argument_bytes": 292,
+            "result_bytes": 2290429,
+            "tool_bytes": 2290721,
+            "bridge": {
+              "requests": 0,
+              "request_bytes": 0,
+              "response_bytes": 0,
+              "total_bytes": 0,
+              "actions": {}
+            },
+            "calls": [
+              {
+                "phase": "read",
+                "name": "read",
+                "elapsed_ms": 9.764639999999986,
+                "argument_bytes": 122,
+                "result_bytes": 175490,
+                "is_error": false,
+                "error_code": null
+              },
+              {
+                "phase": "mutation",
+                "name": "edit",
+                "elapsed_ms": 8.332333000000006,
+                "argument_bytes": 170,
+                "result_bytes": 2114939,
+                "is_error": false,
+                "error_code": null
+              }
+            ],
+            "outcomes": {
+              "example.txt": {
+                "expected": {
+                  "bytes": 1048576,
+                  "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+                },
+                "actual": {
+                  "bytes": 1048576,
+                  "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+                },
+                "byte_exact": true
+              }
+            },
+            "unexpected_files": [],
+            "byte_exact": true,
+            "outcome_matches": true,
+            "correct": true
+          }
+        ]
+      },
+      {
+        "host_version": "0.2.1-rc.2",
+        "provider": "dsh-original",
+        "mode": "workspace-write",
+        "scenario": "large-5242880",
+        "cohort": "provider-extension",
+        "summary": {
+          "read_ms": {
+            "runs": 3,
+            "min": 10.341108000000077,
+            "median": 12.694095000000061,
+            "p95": 23.337797000000023,
+            "max": 23.337797000000023
+          },
+          "mutation_ms": {
+            "runs": 3,
+            "min": 32.43174499999998,
+            "median": 37.30503800000008,
+            "p95": 40.119320000000016,
+            "max": 40.119320000000016
+          },
+          "tool_ms": {
+            "runs": 3,
+            "min": 42.772853000000055,
+            "median": 49.99913300000014,
+            "p95": 63.45711700000004,
+            "max": 63.45711700000004
+          },
+          "tool_calls": {
+            "runs": 3,
+            "min": 2,
+            "median": 2,
+            "p95": 2,
+            "max": 2
+          },
+          "argument_bytes": {
+            "runs": 3,
+            "min": 292,
+            "median": 292,
+            "p95": 292,
+            "max": 292
+          },
+          "result_bytes": {
+            "runs": 3,
+            "min": 10744575,
+            "median": 10744575,
+            "p95": 10744575,
+            "max": 10744575
+          },
+          "tool_bytes": {
+            "runs": 3,
+            "min": 10744867,
+            "median": 10744867,
+            "p95": 10744867,
+            "max": 10744867
+          },
+          "bridge": {
+            "requests": {
+              "runs": 3,
+              "min": 0,
+              "median": 0,
+              "p95": 0,
+              "max": 0
+            },
+            "request_bytes": {
+              "runs": 3,
+              "min": 0,
+              "median": 0,
+              "p95": 0,
+              "max": 0
+            },
+            "response_bytes": {
+              "runs": 3,
+              "min": 0,
+              "median": 0,
+              "p95": 0,
+              "max": 0
+            },
+            "total_bytes": {
+              "runs": 3,
+              "min": 0,
+              "median": 0,
+              "p95": 0,
+              "max": 0
+            }
+          }
+        },
+        "byte_exact_runs": 3,
+        "outcome_matches_runs": 3,
+        "correct_runs": 3,
+        "samples": [
+          {
+            "read_ms": 23.337797000000023,
+            "mutation_ms": 40.119320000000016,
+            "tool_ms": 63.45711700000004,
+            "tool_calls": 2,
+            "argument_bytes": 292,
+            "result_bytes": 10744575,
+            "tool_bytes": 10744867,
+            "bridge": {
+              "requests": 0,
+              "request_bytes": 0,
+              "response_bytes": 0,
+              "total_bytes": 0,
+              "actions": {}
+            },
+            "calls": [
+              {
+                "phase": "read",
+                "name": "read",
+                "elapsed_ms": 23.337797000000023,
+                "argument_bytes": 122,
+                "result_bytes": 175492,
+                "is_error": false,
+                "error_code": null
+              },
+              {
+                "phase": "mutation",
+                "name": "edit",
+                "elapsed_ms": 40.119320000000016,
+                "argument_bytes": 170,
+                "result_bytes": 10569083,
+                "is_error": false,
+                "error_code": null
+              }
+            ],
+            "outcomes": {
+              "example.txt": {
+                "expected": {
+                  "bytes": 5242880,
+                  "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+                },
+                "actual": {
+                  "bytes": 5242880,
+                  "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+                },
+                "byte_exact": true
+              }
+            },
+            "unexpected_files": [],
+            "byte_exact": true,
+            "outcome_matches": true,
+            "correct": true
+          },
+          {
+            "read_ms": 12.694095000000061,
+            "mutation_ms": 37.30503800000008,
+            "tool_ms": 49.99913300000014,
+            "tool_calls": 2,
+            "argument_bytes": 292,
+            "result_bytes": 10744575,
+            "tool_bytes": 10744867,
+            "bridge": {
+              "requests": 0,
+              "request_bytes": 0,
+              "response_bytes": 0,
+              "total_bytes": 0,
+              "actions": {}
+            },
+            "calls": [
+              {
+                "phase": "read",
+                "name": "read",
+                "elapsed_ms": 12.694095000000061,
+                "argument_bytes": 122,
+                "result_bytes": 175492,
+                "is_error": false,
+                "error_code": null
+              },
+              {
+                "phase": "mutation",
+                "name": "edit",
+                "elapsed_ms": 37.30503800000008,
+                "argument_bytes": 170,
+                "result_bytes": 10569083,
+                "is_error": false,
+                "error_code": null
+              }
+            ],
+            "outcomes": {
+              "example.txt": {
+                "expected": {
+                  "bytes": 5242880,
+                  "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+                },
+                "actual": {
+                  "bytes": 5242880,
+                  "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+                },
+                "byte_exact": true
+              }
+            },
+            "unexpected_files": [],
+            "byte_exact": true,
+            "outcome_matches": true,
+            "correct": true
+          },
+          {
+            "read_ms": 10.341108000000077,
+            "mutation_ms": 32.43174499999998,
+            "tool_ms": 42.772853000000055,
+            "tool_calls": 2,
+            "argument_bytes": 292,
+            "result_bytes": 10744575,
+            "tool_bytes": 10744867,
+            "bridge": {
+              "requests": 0,
+              "request_bytes": 0,
+              "response_bytes": 0,
+              "total_bytes": 0,
+              "actions": {}
+            },
+            "calls": [
+              {
+                "phase": "read",
+                "name": "read",
+                "elapsed_ms": 10.341108000000077,
+                "argument_bytes": 122,
+                "result_bytes": 175492,
+                "is_error": false,
+                "error_code": null
+              },
+              {
+                "phase": "mutation",
+                "name": "edit",
+                "elapsed_ms": 32.43174499999998,
+                "argument_bytes": 170,
+                "result_bytes": 10569083,
+                "is_error": false,
+                "error_code": null
+              }
+            ],
+            "outcomes": {
+              "example.txt": {
+                "expected": {
+                  "bytes": 5242880,
+                  "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+                },
+                "actual": {
+                  "bytes": 5242880,
+                  "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+                },
+                "byte_exact": true
+              }
+            },
+            "unexpected_files": [],
+            "byte_exact": true,
+            "outcome_matches": true,
+            "correct": true
+          }
+        ]
+      },
+      {
+        "host_version": "0.2.1-rc.2",
+        "provider": "xnip-native",
+        "mode": "workspace-write",
+        "scenario": "large-1048576",
+        "cohort": "provider-extension",
+        "summary": {
+          "read_ms": {
+            "runs": 3,
+            "min": 7.674825999999939,
+            "median": 9.879010999999991,
+            "p95": 10.992083999999977,
+            "max": 10.992083999999977
+          },
+          "mutation_ms": {
+            "runs": 3,
+            "min": 533.6903770000001,
+            "median": 537.4110409999998,
+            "p95": 554.1619929999997,
+            "max": 554.1619929999997
+          },
+          "tool_ms": {
+            "runs": 3,
+            "min": 543.5693880000001,
+            "median": 548.4031249999998,
+            "p95": 561.8368189999997,
+            "max": 561.8368189999997
+          },
+          "tool_calls": {
+            "runs": 3,
+            "min": 2,
+            "median": 2,
+            "p95": 2,
+            "max": 2
+          },
+          "argument_bytes": {
+            "runs": 3,
+            "min": 292,
+            "median": 292,
+            "p95": 292,
+            "max": 292
+          },
+          "result_bytes": {
+            "runs": 3,
+            "min": 2290429,
+            "median": 2290429,
+            "p95": 2290429,
+            "max": 2290429
+          },
+          "tool_bytes": {
+            "runs": 3,
+            "min": 2290721,
+            "median": 2290721,
+            "p95": 2290721,
+            "max": 2290721
+          },
+          "bridge": {
+            "requests": {
+              "runs": 3,
+              "min": 3,
+              "median": 3,
+              "p95": 3,
+              "max": 3
+            },
+            "request_bytes": {
+              "runs": 3,
+              "min": 625,
+              "median": 626,
+              "p95": 628,
+              "max": 628
+            },
+            "response_bytes": {
+              "runs": 3,
+              "min": 20931839,
+              "median": 20931840,
+              "p95": 20931842,
+              "max": 20931842
+            },
+            "total_bytes": {
+              "runs": 3,
+              "min": 20932464,
+              "median": 20932466,
+              "p95": 20932470,
+              "max": 20932470
+            }
+          }
+        },
+        "byte_exact_runs": 3,
+        "outcome_matches_runs": 3,
+        "correct_runs": 3,
+        "samples": [
+          {
+            "read_ms": 10.992083999999977,
+            "mutation_ms": 537.4110409999998,
+            "tool_ms": 548.4031249999998,
+            "tool_calls": 2,
+            "argument_bytes": 292,
+            "result_bytes": 2290429,
+            "tool_bytes": 2290721,
+            "bridge": {
+              "requests": 3,
+              "request_bytes": 625,
+              "response_bytes": 20931839,
+              "total_bytes": 20932464,
+              "actions": {
+                "read": 1,
+                "plan": 1,
+                "commit": 1
+              }
+            },
+            "calls": [
+              {
+                "phase": "read",
+                "name": "read",
+                "elapsed_ms": 10.992083999999977,
+                "argument_bytes": 122,
+                "result_bytes": 175490,
+                "is_error": false,
+                "error_code": null
+              },
+              {
+                "phase": "mutation",
+                "name": "edit",
+                "elapsed_ms": 537.4110409999998,
+                "argument_bytes": 170,
+                "result_bytes": 2114939,
+                "is_error": false,
+                "error_code": null
+              }
+            ],
+            "outcomes": {
+              "example.txt": {
+                "expected": {
+                  "bytes": 1048576,
+                  "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+                },
+                "actual": {
+                  "bytes": 1048576,
+                  "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+                },
+                "byte_exact": true
+              }
+            },
+            "unexpected_files": [],
+            "byte_exact": true,
+            "outcome_matches": true,
+            "correct": true
+          },
+          {
+            "read_ms": 9.879010999999991,
+            "mutation_ms": 533.6903770000001,
+            "tool_ms": 543.5693880000001,
+            "tool_calls": 2,
+            "argument_bytes": 292,
+            "result_bytes": 2290429,
+            "tool_bytes": 2290721,
+            "bridge": {
+              "requests": 3,
+              "request_bytes": 626,
+              "response_bytes": 20931840,
+              "total_bytes": 20932466,
+              "actions": {
+                "read": 1,
+                "plan": 1,
+                "commit": 1
+              }
+            },
+            "calls": [
+              {
+                "phase": "read",
+                "name": "read",
+                "elapsed_ms": 9.879010999999991,
+                "argument_bytes": 122,
+                "result_bytes": 175490,
+                "is_error": false,
+                "error_code": null
+              },
+              {
+                "phase": "mutation",
+                "name": "edit",
+                "elapsed_ms": 533.6903770000001,
+                "argument_bytes": 170,
+                "result_bytes": 2114939,
+                "is_error": false,
+                "error_code": null
+              }
+            ],
+            "outcomes": {
+              "example.txt": {
+                "expected": {
+                  "bytes": 1048576,
+                  "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+                },
+                "actual": {
+                  "bytes": 1048576,
+                  "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+                },
+                "byte_exact": true
+              }
+            },
+            "unexpected_files": [],
+            "byte_exact": true,
+            "outcome_matches": true,
+            "correct": true
+          },
+          {
+            "read_ms": 7.674825999999939,
+            "mutation_ms": 554.1619929999997,
+            "tool_ms": 561.8368189999997,
+            "tool_calls": 2,
+            "argument_bytes": 292,
+            "result_bytes": 2290429,
+            "tool_bytes": 2290721,
+            "bridge": {
+              "requests": 3,
+              "request_bytes": 628,
+              "response_bytes": 20931842,
+              "total_bytes": 20932470,
+              "actions": {
+                "read": 1,
+                "plan": 1,
+                "commit": 1
+              }
+            },
+            "calls": [
+              {
+                "phase": "read",
+                "name": "read",
+                "elapsed_ms": 7.674825999999939,
+                "argument_bytes": 122,
+                "result_bytes": 175490,
+                "is_error": false,
+                "error_code": null
+              },
+              {
+                "phase": "mutation",
+                "name": "edit",
+                "elapsed_ms": 554.1619929999997,
+                "argument_bytes": 170,
+                "result_bytes": 2114939,
+                "is_error": false,
+                "error_code": null
+              }
+            ],
+            "outcomes": {
+              "example.txt": {
+                "expected": {
+                  "bytes": 1048576,
+                  "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+                },
+                "actual": {
+                  "bytes": 1048576,
+                  "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+                },
+                "byte_exact": true
+              }
+            },
+            "unexpected_files": [],
+            "byte_exact": true,
+            "outcome_matches": true,
+            "correct": true
+          }
+        ]
+      },
+      {
+        "host_version": "0.2.1-rc.2",
+        "provider": "xnip-native",
+        "mode": "workspace-write",
+        "scenario": "large-5242880",
+        "cohort": "provider-extension",
+        "summary": {
+          "read_ms": {
+            "runs": 3,
+            "min": 10.315539000001081,
+            "median": 10.950151999999434,
+            "p95": 12.269733999999517,
+            "max": 12.269733999999517
+          },
+          "mutation_ms": {
+            "runs": 3,
+            "min": 2735.645393999999,
+            "median": 2839.9391969999997,
+            "p95": 2930.0438190000004,
+            "max": 2930.0438190000004
+          },
+          "tool_ms": {
+            "runs": 3,
+            "min": 2745.9609330000003,
+            "median": 2850.889348999999,
+            "p95": 2942.313553,
+            "max": 2942.313553
+          },
+          "tool_calls": {
+            "runs": 3,
+            "min": 2,
+            "median": 2,
+            "p95": 2,
+            "max": 2
+          },
+          "argument_bytes": {
+            "runs": 3,
+            "min": 292,
+            "median": 292,
+            "p95": 292,
+            "max": 292
+          },
+          "result_bytes": {
+            "runs": 3,
+            "min": 10744575,
+            "median": 10744575,
+            "p95": 10744575,
+            "max": 10744575
+          },
+          "tool_bytes": {
+            "runs": 3,
+            "min": 10744867,
+            "median": 10744867,
+            "p95": 10744867,
+            "max": 10744867
+          },
+          "bridge": {
+            "requests": {
+              "runs": 3,
+              "min": 3,
+              "median": 3,
+              "p95": 3,
+              "max": 3
+            },
+            "request_bytes": {
+              "runs": 3,
+              "min": 628,
+              "median": 628,
+              "p95": 628,
+              "max": 628
+            },
+            "response_bytes": {
+              "runs": 3,
+              "min": 104654084,
+              "median": 104654084,
+              "p95": 104654084,
+              "max": 104654084
+            },
+            "total_bytes": {
+              "runs": 3,
+              "min": 104654712,
+              "median": 104654712,
+              "p95": 104654712,
+              "max": 104654712
+            }
+          }
+        },
+        "byte_exact_runs": 3,
+        "outcome_matches_runs": 3,
+        "correct_runs": 3,
+        "samples": [
+          {
+            "read_ms": 12.269733999999517,
+            "mutation_ms": 2930.0438190000004,
+            "tool_ms": 2942.313553,
+            "tool_calls": 2,
+            "argument_bytes": 292,
+            "result_bytes": 10744575,
+            "tool_bytes": 10744867,
+            "bridge": {
+              "requests": 3,
+              "request_bytes": 628,
+              "response_bytes": 104654084,
+              "total_bytes": 104654712,
+              "actions": {
+                "read": 1,
+                "plan": 1,
+                "commit": 1
+              }
+            },
+            "calls": [
+              {
+                "phase": "read",
+                "name": "read",
+                "elapsed_ms": 12.269733999999517,
+                "argument_bytes": 122,
+                "result_bytes": 175492,
+                "is_error": false,
+                "error_code": null
+              },
+              {
+                "phase": "mutation",
+                "name": "edit",
+                "elapsed_ms": 2930.0438190000004,
+                "argument_bytes": 170,
+                "result_bytes": 10569083,
+                "is_error": false,
+                "error_code": null
+              }
+            ],
+            "outcomes": {
+              "example.txt": {
+                "expected": {
+                  "bytes": 5242880,
+                  "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+                },
+                "actual": {
+                  "bytes": 5242880,
+                  "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+                },
+                "byte_exact": true
+              }
+            },
+            "unexpected_files": [],
+            "byte_exact": true,
+            "outcome_matches": true,
+            "correct": true
+          },
+          {
+            "read_ms": 10.315539000001081,
+            "mutation_ms": 2735.645393999999,
+            "tool_ms": 2745.9609330000003,
+            "tool_calls": 2,
+            "argument_bytes": 292,
+            "result_bytes": 10744575,
+            "tool_bytes": 10744867,
+            "bridge": {
+              "requests": 3,
+              "request_bytes": 628,
+              "response_bytes": 104654084,
+              "total_bytes": 104654712,
+              "actions": {
+                "read": 1,
+                "plan": 1,
+                "commit": 1
+              }
+            },
+            "calls": [
+              {
+                "phase": "read",
+                "name": "read",
+                "elapsed_ms": 10.315539000001081,
+                "argument_bytes": 122,
+                "result_bytes": 175492,
+                "is_error": false,
+                "error_code": null
+              },
+              {
+                "phase": "mutation",
+                "name": "edit",
+                "elapsed_ms": 2735.645393999999,
+                "argument_bytes": 170,
+                "result_bytes": 10569083,
+                "is_error": false,
+                "error_code": null
+              }
+            ],
+            "outcomes": {
+              "example.txt": {
+                "expected": {
+                  "bytes": 5242880,
+                  "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+                },
+                "actual": {
+                  "bytes": 5242880,
+                  "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+                },
+                "byte_exact": true
+              }
+            },
+            "unexpected_files": [],
+            "byte_exact": true,
+            "outcome_matches": true,
+            "correct": true
+          },
+          {
+            "read_ms": 10.950151999999434,
+            "mutation_ms": 2839.9391969999997,
+            "tool_ms": 2850.889348999999,
+            "tool_calls": 2,
+            "argument_bytes": 292,
+            "result_bytes": 10744575,
+            "tool_bytes": 10744867,
+            "bridge": {
+              "requests": 3,
+              "request_bytes": 628,
+              "response_bytes": 104654084,
+              "total_bytes": 104654712,
+              "actions": {
+                "read": 1,
+                "plan": 1,
+                "commit": 1
+              }
+            },
+            "calls": [
+              {
+                "phase": "read",
+                "name": "read",
+                "elapsed_ms": 10.950151999999434,
+                "argument_bytes": 122,
+                "result_bytes": 175492,
+                "is_error": false,
+                "error_code": null
+              },
+              {
+                "phase": "mutation",
+                "name": "edit",
+                "elapsed_ms": 2839.9391969999997,
+                "argument_bytes": 170,
+                "result_bytes": 10569083,
+                "is_error": false,
+                "error_code": null
+              }
+            ],
+            "outcomes": {
+              "example.txt": {
+                "expected": {
+                  "bytes": 5242880,
+                  "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+                },
+                "actual": {
+                  "bytes": 5242880,
+                  "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+                },
+                "byte_exact": true
+              }
+            },
+            "unexpected_files": [],
+            "byte_exact": true,
+            "outcome_matches": true,
+            "correct": true
+          }
+        ]
+      },
+      {
+        "host_version": "0.2.1-rc.5",
+        "provider": "dsh-original",
+        "mode": "workspace-write",
+        "scenario": "large-1048576",
+        "cohort": "provider-extension",
+        "summary": {
+          "read_ms": {
+            "runs": 3,
+            "min": 8.067268000000695,
+            "median": 10.319775999998456,
+            "p95": 10.966897000000245,
+            "max": 10.966897000000245
+          },
+          "mutation_ms": {
+            "runs": 3,
+            "min": 8.472470999999132,
+            "median": 10.946896999999808,
+            "p95": 13.637636000001294,
+            "max": 13.637636000001294
+          },
+          "tool_ms": {
+            "runs": 3,
+            "min": 16.539738999999827,
+            "median": 21.913794000000053,
+            "p95": 23.95741199999975,
+            "max": 23.95741199999975
+          },
+          "tool_calls": {
+            "runs": 3,
+            "min": 2,
+            "median": 2,
+            "p95": 2,
+            "max": 2
+          },
+          "argument_bytes": {
+            "runs": 3,
+            "min": 292,
+            "median": 292,
+            "p95": 292,
+            "max": 292
+          },
+          "result_bytes": {
+            "runs": 3,
+            "min": 2290429,
+            "median": 2290429,
+            "p95": 2290429,
+            "max": 2290429
+          },
+          "tool_bytes": {
+            "runs": 3,
+            "min": 2290721,
+            "median": 2290721,
+            "p95": 2290721,
+            "max": 2290721
+          },
+          "bridge": {
+            "requests": {
+              "runs": 3,
+              "min": 0,
+              "median": 0,
+              "p95": 0,
+              "max": 0
+            },
+            "request_bytes": {
+              "runs": 3,
+              "min": 0,
+              "median": 0,
+              "p95": 0,
+              "max": 0
+            },
+            "response_bytes": {
+              "runs": 3,
+              "min": 0,
+              "median": 0,
+              "p95": 0,
+              "max": 0
+            },
+            "total_bytes": {
+              "runs": 3,
+              "min": 0,
+              "median": 0,
+              "p95": 0,
+              "max": 0
+            }
+          }
+        },
+        "byte_exact_runs": 3,
+        "outcome_matches_runs": 3,
+        "correct_runs": 3,
+        "samples": [
+          {
+            "read_ms": 10.319775999998456,
+            "mutation_ms": 13.637636000001294,
+            "tool_ms": 23.95741199999975,
+            "tool_calls": 2,
+            "argument_bytes": 292,
+            "result_bytes": 2290429,
+            "tool_bytes": 2290721,
+            "bridge": {
+              "requests": 0,
+              "request_bytes": 0,
+              "response_bytes": 0,
+              "total_bytes": 0,
+              "actions": {}
+            },
+            "calls": [
+              {
+                "phase": "read",
+                "name": "read",
+                "elapsed_ms": 10.319775999998456,
+                "argument_bytes": 122,
+                "result_bytes": 175490,
+                "is_error": false,
+                "error_code": null
+              },
+              {
+                "phase": "mutation",
+                "name": "edit",
+                "elapsed_ms": 13.637636000001294,
+                "argument_bytes": 170,
+                "result_bytes": 2114939,
+                "is_error": false,
+                "error_code": null
+              }
+            ],
+            "outcomes": {
+              "example.txt": {
+                "expected": {
+                  "bytes": 1048576,
+                  "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+                },
+                "actual": {
+                  "bytes": 1048576,
+                  "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+                },
+                "byte_exact": true
+              }
+            },
+            "unexpected_files": [],
+            "byte_exact": true,
+            "outcome_matches": true,
+            "correct": true
+          },
+          {
+            "read_ms": 10.966897000000245,
+            "mutation_ms": 10.946896999999808,
+            "tool_ms": 21.913794000000053,
+            "tool_calls": 2,
+            "argument_bytes": 292,
+            "result_bytes": 2290429,
+            "tool_bytes": 2290721,
+            "bridge": {
+              "requests": 0,
+              "request_bytes": 0,
+              "response_bytes": 0,
+              "total_bytes": 0,
+              "actions": {}
+            },
+            "calls": [
+              {
+                "phase": "read",
+                "name": "read",
+                "elapsed_ms": 10.966897000000245,
+                "argument_bytes": 122,
+                "result_bytes": 175490,
+                "is_error": false,
+                "error_code": null
+              },
+              {
+                "phase": "mutation",
+                "name": "edit",
+                "elapsed_ms": 10.946896999999808,
+                "argument_bytes": 170,
+                "result_bytes": 2114939,
+                "is_error": false,
+                "error_code": null
+              }
+            ],
+            "outcomes": {
+              "example.txt": {
+                "expected": {
+                  "bytes": 1048576,
+                  "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+                },
+                "actual": {
+                  "bytes": 1048576,
+                  "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+                },
+                "byte_exact": true
+              }
+            },
+            "unexpected_files": [],
+            "byte_exact": true,
+            "outcome_matches": true,
+            "correct": true
+          },
+          {
+            "read_ms": 8.067268000000695,
+            "mutation_ms": 8.472470999999132,
+            "tool_ms": 16.539738999999827,
+            "tool_calls": 2,
+            "argument_bytes": 292,
+            "result_bytes": 2290429,
+            "tool_bytes": 2290721,
+            "bridge": {
+              "requests": 0,
+              "request_bytes": 0,
+              "response_bytes": 0,
+              "total_bytes": 0,
+              "actions": {}
+            },
+            "calls": [
+              {
+                "phase": "read",
+                "name": "read",
+                "elapsed_ms": 8.067268000000695,
+                "argument_bytes": 122,
+                "result_bytes": 175490,
+                "is_error": false,
+                "error_code": null
+              },
+              {
+                "phase": "mutation",
+                "name": "edit",
+                "elapsed_ms": 8.472470999999132,
+                "argument_bytes": 170,
+                "result_bytes": 2114939,
+                "is_error": false,
+                "error_code": null
+              }
+            ],
+            "outcomes": {
+              "example.txt": {
+                "expected": {
+                  "bytes": 1048576,
+                  "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+                },
+                "actual": {
+                  "bytes": 1048576,
+                  "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+                },
+                "byte_exact": true
+              }
+            },
+            "unexpected_files": [],
+            "byte_exact": true,
+            "outcome_matches": true,
+            "correct": true
+          }
+        ]
+      },
+      {
+        "host_version": "0.2.1-rc.5",
+        "provider": "dsh-original",
+        "mode": "workspace-write",
+        "scenario": "large-5242880",
+        "cohort": "provider-extension",
+        "summary": {
+          "read_ms": {
+            "runs": 3,
+            "min": 9.966510999998718,
+            "median": 11.86348899999939,
+            "p95": 12.680142999999589,
+            "max": 12.680142999999589
+          },
+          "mutation_ms": {
+            "runs": 3,
+            "min": 34.965369000001374,
+            "median": 88.7425549999989,
+            "p95": 97.87372399999913,
+            "max": 97.87372399999913
+          },
+          "tool_ms": {
+            "runs": 3,
+            "min": 44.93188000000009,
+            "median": 101.42269799999849,
+            "p95": 109.73721299999852,
+            "max": 109.73721299999852
+          },
+          "tool_calls": {
+            "runs": 3,
+            "min": 2,
+            "median": 2,
+            "p95": 2,
+            "max": 2
+          },
+          "argument_bytes": {
+            "runs": 3,
+            "min": 292,
+            "median": 292,
+            "p95": 292,
+            "max": 292
+          },
+          "result_bytes": {
+            "runs": 3,
+            "min": 10744575,
+            "median": 10744575,
+            "p95": 10744575,
+            "max": 10744575
+          },
+          "tool_bytes": {
+            "runs": 3,
+            "min": 10744867,
+            "median": 10744867,
+            "p95": 10744867,
+            "max": 10744867
+          },
+          "bridge": {
+            "requests": {
+              "runs": 3,
+              "min": 0,
+              "median": 0,
+              "p95": 0,
+              "max": 0
+            },
+            "request_bytes": {
+              "runs": 3,
+              "min": 0,
+              "median": 0,
+              "p95": 0,
+              "max": 0
+            },
+            "response_bytes": {
+              "runs": 3,
+              "min": 0,
+              "median": 0,
+              "p95": 0,
+              "max": 0
+            },
+            "total_bytes": {
+              "runs": 3,
+              "min": 0,
+              "median": 0,
+              "p95": 0,
+              "max": 0
+            }
+          }
+        },
+        "byte_exact_runs": 3,
+        "outcome_matches_runs": 3,
+        "correct_runs": 3,
+        "samples": [
+          {
+            "read_ms": 11.86348899999939,
+            "mutation_ms": 97.87372399999913,
+            "tool_ms": 109.73721299999852,
+            "tool_calls": 2,
+            "argument_bytes": 292,
+            "result_bytes": 10744575,
+            "tool_bytes": 10744867,
+            "bridge": {
+              "requests": 0,
+              "request_bytes": 0,
+              "response_bytes": 0,
+              "total_bytes": 0,
+              "actions": {}
+            },
+            "calls": [
+              {
+                "phase": "read",
+                "name": "read",
+                "elapsed_ms": 11.86348899999939,
+                "argument_bytes": 122,
+                "result_bytes": 175492,
+                "is_error": false,
+                "error_code": null
+              },
+              {
+                "phase": "mutation",
+                "name": "edit",
+                "elapsed_ms": 97.87372399999913,
+                "argument_bytes": 170,
+                "result_bytes": 10569083,
+                "is_error": false,
+                "error_code": null
+              }
+            ],
+            "outcomes": {
+              "example.txt": {
+                "expected": {
+                  "bytes": 5242880,
+                  "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+                },
+                "actual": {
+                  "bytes": 5242880,
+                  "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+                },
+                "byte_exact": true
+              }
+            },
+            "unexpected_files": [],
+            "byte_exact": true,
+            "outcome_matches": true,
+            "correct": true
+          },
+          {
+            "read_ms": 12.680142999999589,
+            "mutation_ms": 88.7425549999989,
+            "tool_ms": 101.42269799999849,
+            "tool_calls": 2,
+            "argument_bytes": 292,
+            "result_bytes": 10744575,
+            "tool_bytes": 10744867,
+            "bridge": {
+              "requests": 0,
+              "request_bytes": 0,
+              "response_bytes": 0,
+              "total_bytes": 0,
+              "actions": {}
+            },
+            "calls": [
+              {
+                "phase": "read",
+                "name": "read",
+                "elapsed_ms": 12.680142999999589,
+                "argument_bytes": 122,
+                "result_bytes": 175492,
+                "is_error": false,
+                "error_code": null
+              },
+              {
+                "phase": "mutation",
+                "name": "edit",
+                "elapsed_ms": 88.7425549999989,
+                "argument_bytes": 170,
+                "result_bytes": 10569083,
+                "is_error": false,
+                "error_code": null
+              }
+            ],
+            "outcomes": {
+              "example.txt": {
+                "expected": {
+                  "bytes": 5242880,
+                  "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+                },
+                "actual": {
+                  "bytes": 5242880,
+                  "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+                },
+                "byte_exact": true
+              }
+            },
+            "unexpected_files": [],
+            "byte_exact": true,
+            "outcome_matches": true,
+            "correct": true
+          },
+          {
+            "read_ms": 9.966510999998718,
+            "mutation_ms": 34.965369000001374,
+            "tool_ms": 44.93188000000009,
+            "tool_calls": 2,
+            "argument_bytes": 292,
+            "result_bytes": 10744575,
+            "tool_bytes": 10744867,
+            "bridge": {
+              "requests": 0,
+              "request_bytes": 0,
+              "response_bytes": 0,
+              "total_bytes": 0,
+              "actions": {}
+            },
+            "calls": [
+              {
+                "phase": "read",
+                "name": "read",
+                "elapsed_ms": 9.966510999998718,
+                "argument_bytes": 122,
+                "result_bytes": 175492,
+                "is_error": false,
+                "error_code": null
+              },
+              {
+                "phase": "mutation",
+                "name": "edit",
+                "elapsed_ms": 34.965369000001374,
+                "argument_bytes": 170,
+                "result_bytes": 10569083,
+                "is_error": false,
+                "error_code": null
+              }
+            ],
+            "outcomes": {
+              "example.txt": {
+                "expected": {
+                  "bytes": 5242880,
+                  "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+                },
+                "actual": {
+                  "bytes": 5242880,
+                  "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+                },
+                "byte_exact": true
+              }
+            },
+            "unexpected_files": [],
+            "byte_exact": true,
+            "outcome_matches": true,
+            "correct": true
+          }
+        ]
+      },
+      {
+        "host_version": "0.2.1-rc.5",
+        "provider": "xnip-native",
+        "mode": "workspace-write",
+        "scenario": "large-1048576",
+        "cohort": "provider-extension",
+        "summary": {
+          "read_ms": {
+            "runs": 3,
+            "min": 7.74839399999837,
+            "median": 7.8668109999998705,
+            "p95": 8.099696000001131,
+            "max": 8.099696000001131
+          },
+          "mutation_ms": {
+            "runs": 3,
+            "min": 499.4285460000028,
+            "median": 510.22250300000087,
+            "p95": 520.989840000002,
+            "max": 520.989840000002
+          },
+          "tool_ms": {
+            "runs": 3,
+            "min": 507.2953570000027,
+            "median": 517.9708969999992,
+            "p95": 529.0895360000031,
+            "max": 529.0895360000031
+          },
+          "tool_calls": {
+            "runs": 3,
+            "min": 2,
+            "median": 2,
+            "p95": 2,
+            "max": 2
+          },
+          "argument_bytes": {
+            "runs": 3,
+            "min": 292,
+            "median": 292,
+            "p95": 292,
+            "max": 292
+          },
+          "result_bytes": {
+            "runs": 3,
+            "min": 2290429,
+            "median": 2290429,
+            "p95": 2290429,
+            "max": 2290429
+          },
+          "tool_bytes": {
+            "runs": 3,
+            "min": 2290721,
+            "median": 2290721,
+            "p95": 2290721,
+            "max": 2290721
+          },
+          "bridge": {
+            "requests": {
+              "runs": 3,
+              "min": 3,
+              "median": 3,
+              "p95": 3,
+              "max": 3
+            },
+            "request_bytes": {
+              "runs": 3,
+              "min": 625,
+              "median": 626,
+              "p95": 628,
+              "max": 628
+            },
+            "response_bytes": {
+              "runs": 3,
+              "min": 20931839,
+              "median": 20931840,
+              "p95": 20931842,
+              "max": 20931842
+            },
+            "total_bytes": {
+              "runs": 3,
+              "min": 20932464,
+              "median": 20932466,
+              "p95": 20932470,
+              "max": 20932470
+            }
+          }
+        },
+        "byte_exact_runs": 3,
+        "outcome_matches_runs": 3,
+        "correct_runs": 3,
+        "samples": [
+          {
+            "read_ms": 8.099696000001131,
+            "mutation_ms": 520.989840000002,
+            "tool_ms": 529.0895360000031,
+            "tool_calls": 2,
+            "argument_bytes": 292,
+            "result_bytes": 2290429,
+            "tool_bytes": 2290721,
+            "bridge": {
+              "requests": 3,
+              "request_bytes": 625,
+              "response_bytes": 20931839,
+              "total_bytes": 20932464,
+              "actions": {
+                "read": 1,
+                "plan": 1,
+                "commit": 1
+              }
+            },
+            "calls": [
+              {
+                "phase": "read",
+                "name": "read",
+                "elapsed_ms": 8.099696000001131,
+                "argument_bytes": 122,
+                "result_bytes": 175490,
+                "is_error": false,
+                "error_code": null
+              },
+              {
+                "phase": "mutation",
+                "name": "edit",
+                "elapsed_ms": 520.989840000002,
+                "argument_bytes": 170,
+                "result_bytes": 2114939,
+                "is_error": false,
+                "error_code": null
+              }
+            ],
+            "outcomes": {
+              "example.txt": {
+                "expected": {
+                  "bytes": 1048576,
+                  "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+                },
+                "actual": {
+                  "bytes": 1048576,
+                  "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+                },
+                "byte_exact": true
+              }
+            },
+            "unexpected_files": [],
+            "byte_exact": true,
+            "outcome_matches": true,
+            "correct": true
+          },
+          {
+            "read_ms": 7.8668109999998705,
+            "mutation_ms": 499.4285460000028,
+            "tool_ms": 507.2953570000027,
+            "tool_calls": 2,
+            "argument_bytes": 292,
+            "result_bytes": 2290429,
+            "tool_bytes": 2290721,
+            "bridge": {
+              "requests": 3,
+              "request_bytes": 626,
+              "response_bytes": 20931840,
+              "total_bytes": 20932466,
+              "actions": {
+                "read": 1,
+                "plan": 1,
+                "commit": 1
+              }
+            },
+            "calls": [
+              {
+                "phase": "read",
+                "name": "read",
+                "elapsed_ms": 7.8668109999998705,
+                "argument_bytes": 122,
+                "result_bytes": 175490,
+                "is_error": false,
+                "error_code": null
+              },
+              {
+                "phase": "mutation",
+                "name": "edit",
+                "elapsed_ms": 499.4285460000028,
+                "argument_bytes": 170,
+                "result_bytes": 2114939,
+                "is_error": false,
+                "error_code": null
+              }
+            ],
+            "outcomes": {
+              "example.txt": {
+                "expected": {
+                  "bytes": 1048576,
+                  "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+                },
+                "actual": {
+                  "bytes": 1048576,
+                  "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+                },
+                "byte_exact": true
+              }
+            },
+            "unexpected_files": [],
+            "byte_exact": true,
+            "outcome_matches": true,
+            "correct": true
+          },
+          {
+            "read_ms": 7.74839399999837,
+            "mutation_ms": 510.22250300000087,
+            "tool_ms": 517.9708969999992,
+            "tool_calls": 2,
+            "argument_bytes": 292,
+            "result_bytes": 2290429,
+            "tool_bytes": 2290721,
+            "bridge": {
+              "requests": 3,
+              "request_bytes": 628,
+              "response_bytes": 20931842,
+              "total_bytes": 20932470,
+              "actions": {
+                "read": 1,
+                "plan": 1,
+                "commit": 1
+              }
+            },
+            "calls": [
+              {
+                "phase": "read",
+                "name": "read",
+                "elapsed_ms": 7.74839399999837,
+                "argument_bytes": 122,
+                "result_bytes": 175490,
+                "is_error": false,
+                "error_code": null
+              },
+              {
+                "phase": "mutation",
+                "name": "edit",
+                "elapsed_ms": 510.22250300000087,
+                "argument_bytes": 170,
+                "result_bytes": 2114939,
+                "is_error": false,
+                "error_code": null
+              }
+            ],
+            "outcomes": {
+              "example.txt": {
+                "expected": {
+                  "bytes": 1048576,
+                  "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+                },
+                "actual": {
+                  "bytes": 1048576,
+                  "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+                },
+                "byte_exact": true
+              }
+            },
+            "unexpected_files": [],
+            "byte_exact": true,
+            "outcome_matches": true,
+            "correct": true
+          }
+        ]
+      },
+      {
+        "host_version": "0.2.1-rc.5",
+        "provider": "xnip-native",
+        "mode": "workspace-write",
+        "scenario": "large-5242880",
+        "cohort": "provider-extension",
+        "summary": {
+          "read_ms": {
+            "runs": 3,
+            "min": 9.631322000001092,
+            "median": 9.66172799999913,
+            "p95": 9.8447079999969,
+            "max": 9.8447079999969
+          },
+          "mutation_ms": {
+            "runs": 3,
+            "min": 2667.783127999999,
+            "median": 2692.9242950000007,
+            "p95": 3310.362928999999,
+            "max": 3310.362928999999
+          },
+          "tool_ms": {
+            "runs": 3,
+            "min": 2677.41445,
+            "median": 2702.7690029999976,
+            "p95": 3320.024656999998,
+            "max": 3320.024656999998
+          },
+          "tool_calls": {
+            "runs": 3,
+            "min": 2,
+            "median": 2,
+            "p95": 2,
+            "max": 2
+          },
+          "argument_bytes": {
+            "runs": 3,
+            "min": 292,
+            "median": 292,
+            "p95": 292,
+            "max": 292
+          },
+          "result_bytes": {
+            "runs": 3,
+            "min": 10744575,
+            "median": 10744575,
+            "p95": 10744575,
+            "max": 10744575
+          },
+          "tool_bytes": {
+            "runs": 3,
+            "min": 10744867,
+            "median": 10744867,
+            "p95": 10744867,
+            "max": 10744867
+          },
+          "bridge": {
+            "requests": {
+              "runs": 3,
+              "min": 3,
+              "median": 3,
+              "p95": 3,
+              "max": 3
+            },
+            "request_bytes": {
+              "runs": 3,
+              "min": 628,
+              "median": 628,
+              "p95": 628,
+              "max": 628
+            },
+            "response_bytes": {
+              "runs": 3,
+              "min": 104654084,
+              "median": 104654084,
+              "p95": 104654084,
+              "max": 104654084
+            },
+            "total_bytes": {
+              "runs": 3,
+              "min": 104654712,
+              "median": 104654712,
+              "p95": 104654712,
+              "max": 104654712
+            }
+          }
+        },
+        "byte_exact_runs": 3,
+        "outcome_matches_runs": 3,
+        "correct_runs": 3,
+        "samples": [
+          {
+            "read_ms": 9.8447079999969,
+            "mutation_ms": 2692.9242950000007,
+            "tool_ms": 2702.7690029999976,
+            "tool_calls": 2,
+            "argument_bytes": 292,
+            "result_bytes": 10744575,
+            "tool_bytes": 10744867,
+            "bridge": {
+              "requests": 3,
+              "request_bytes": 628,
+              "response_bytes": 104654084,
+              "total_bytes": 104654712,
+              "actions": {
+                "read": 1,
+                "plan": 1,
+                "commit": 1
+              }
+            },
+            "calls": [
+              {
+                "phase": "read",
+                "name": "read",
+                "elapsed_ms": 9.8447079999969,
+                "argument_bytes": 122,
+                "result_bytes": 175492,
+                "is_error": false,
+                "error_code": null
+              },
+              {
+                "phase": "mutation",
+                "name": "edit",
+                "elapsed_ms": 2692.9242950000007,
+                "argument_bytes": 170,
+                "result_bytes": 10569083,
+                "is_error": false,
+                "error_code": null
+              }
+            ],
+            "outcomes": {
+              "example.txt": {
+                "expected": {
+                  "bytes": 5242880,
+                  "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+                },
+                "actual": {
+                  "bytes": 5242880,
+                  "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+                },
+                "byte_exact": true
+              }
+            },
+            "unexpected_files": [],
+            "byte_exact": true,
+            "outcome_matches": true,
+            "correct": true
+          },
+          {
+            "read_ms": 9.631322000001092,
+            "mutation_ms": 2667.783127999999,
+            "tool_ms": 2677.41445,
+            "tool_calls": 2,
+            "argument_bytes": 292,
+            "result_bytes": 10744575,
+            "tool_bytes": 10744867,
+            "bridge": {
+              "requests": 3,
+              "request_bytes": 628,
+              "response_bytes": 104654084,
+              "total_bytes": 104654712,
+              "actions": {
+                "read": 1,
+                "plan": 1,
+                "commit": 1
+              }
+            },
+            "calls": [
+              {
+                "phase": "read",
+                "name": "read",
+                "elapsed_ms": 9.631322000001092,
+                "argument_bytes": 122,
+                "result_bytes": 175492,
+                "is_error": false,
+                "error_code": null
+              },
+              {
+                "phase": "mutation",
+                "name": "edit",
+                "elapsed_ms": 2667.783127999999,
+                "argument_bytes": 170,
+                "result_bytes": 10569083,
+                "is_error": false,
+                "error_code": null
+              }
+            ],
+            "outcomes": {
+              "example.txt": {
+                "expected": {
+                  "bytes": 5242880,
+                  "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+                },
+                "actual": {
+                  "bytes": 5242880,
+                  "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+                },
+                "byte_exact": true
+              }
+            },
+            "unexpected_files": [],
+            "byte_exact": true,
+            "outcome_matches": true,
+            "correct": true
+          },
+          {
+            "read_ms": 9.66172799999913,
+            "mutation_ms": 3310.362928999999,
+            "tool_ms": 3320.024656999998,
+            "tool_calls": 2,
+            "argument_bytes": 292,
+            "result_bytes": 10744575,
+            "tool_bytes": 10744867,
+            "bridge": {
+              "requests": 3,
+              "request_bytes": 628,
+              "response_bytes": 104654084,
+              "total_bytes": 104654712,
+              "actions": {
+                "read": 1,
+                "plan": 1,
+                "commit": 1
+              }
+            },
+            "calls": [
+              {
+                "phase": "read",
+                "name": "read",
+                "elapsed_ms": 9.66172799999913,
+                "argument_bytes": 122,
+                "result_bytes": 175492,
+                "is_error": false,
+                "error_code": null
+              },
+              {
+                "phase": "mutation",
+                "name": "edit",
+                "elapsed_ms": 3310.362928999999,
+                "argument_bytes": 170,
+                "result_bytes": 10569083,
+                "is_error": false,
+                "error_code": null
+              }
+            ],
+            "outcomes": {
+              "example.txt": {
+                "expected": {
+                  "bytes": 5242880,
+                  "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+                },
+                "actual": {
+                  "bytes": 5242880,
+                  "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+                },
+                "byte_exact": true
+              }
+            },
+            "unexpected_files": [],
+            "byte_exact": true,
+            "outcome_matches": true,
+            "correct": true
+          }
+        ]
+      }
+    ]
+  },
+  "utf8": {
+    "schema_version": 1,
+    "created_at": "2026-11-05T22:42:52.543Z",
+    "methodology": {
+      "host_tools": [
+        "read",
+        "write",
+        "edit"
+      ],
+      "model_calls": 0,
+      "policy": "official observation and sandbox services; prerequisite reads through the official read tool",
+      "known_inputs": "fixtures supply replacement text; prerequisite reads retain the official default bounded output window",
+      "clock": "performance.now monotonic milliseconds",
+      "p95": "nearest rank",
+      "setup": "one persistent provider per host/version/policy, including native process handshake; first host module import is cold",
+      "warmup_runs_per_scenario": 1,
+      "measured_runs_per_scenario": 3,
+      "timed_region": "sum of actual tool execution durations; fixture reset, external updates and byte verification are outside",
+      "tool_bytes": "UTF-8 JSON.stringify arguments and complete ToolRuntime result at the local tool boundary",
+      "bridge_bytes": "actual native child stdin/stdout bytes during warm tool calls; handshake and process startup belong to setup",
+      "native_content_encoding": "provider selects UTF-8 when advertised, otherwise legacy byte arrays",
+      "correctness": "independent expected storage bytes, complete workspace file set and expected host error code/message; identical edit is rejected by official argument parser, identical write succeeds",
+      "ordering": "host versions in supplied order; original then native per policy; scenarios in fixture order; persistent process warmed per scenario",
+      "batch_fixtures": "historical batch fixture names are retained; each requested edit executes one official edit tool call",
+      "scope": "local deterministic host/tool execution; model generation, billing and interactive approval latency are outside this measurement"
+    },
+    "provenance": {
+      "node": "v24.22.1",
+      "node_executable": "node",
+      "platform": "linux",
+      "arch": "x64",
+      "kernel": "6.18.57",
+      "cpus": 5,
+      "cpu_model": "AMD EPYC 9V74 80-Core Processor",
+      "binary": {
+        "filename": "xnip",
+        "build_profile": "release",
+        "version": "xnip 0.5.7",
+        "bytes": 8479512,
+        "sha256": "5504d4f5ce31d9b04852bc61bba1d9bc7341e0bbd5fcf0fc6c24ab12d3e87ab1"
+      },
+      "source": {
+        "git_head": "4e1189f36a11f73b7a35816508e46f7e6b718057",
+        "working_tree_files_sha256": {
+          "Cargo.lock": "609663d9888ec244b3f64a59ce0d33d3fe9fcd2e32b581dd3c158f659b0c72d8",
+          "Cargo.toml": "4d94a292f8023da53d6bf5c606d368be2a73a017325cff2fae7d3f6af0cd8cae",
+          "benches/edit_cost.py": "f97eee6b6feab701ae61a12a9d5ef0bc1f6c74118aaed73919d0e7393ac4974e",
+          "benches/native_provider.mjs": "63150e4dfc5505039f5859de0286fbd5edcdd16c583e7dc885f785435f1b6bd3",
+          "integrations/dsh-native/editor-client.mjs": "9f469cc3b703ece19e4526dc8b38d0570f59f1aae32e0d4627e23417c45a7c3d",
+          "integrations/dsh-native/index.mjs": "e0388f003fc013dc4b4c192f221a4cefce3a00fbf8eb0868947386760b65d9bb",
+          "integrations/dsh-native/lifecycle.mjs": "d2969b0cb64dc5395551d1d92f7ad5d87df06c124172af115fdb3f6cca2753c8",
+          "integrations/dsh-native/package.json": "21ace4b6658183a3ff7960d40e6f3eeb8f1ec946ecfa99c954d2264aca83d1d4",
+          "integrations/dsh-native/rewind-validation.mjs": "67021d46592a0a1187af8c61b8e9acd6a3d6e7980300b442173ab296eee693b2",
+          "integrations/dsh-native/runtime.mjs": "f8d2ca3dbbc69197c8ed5dd6855193a2baca7238108a5c9a4c8f457d490ba3bd",
+          "integrations/native/editor-client.mjs": "ff0bd3c69b3c07e980658de5ea529b5fea398af92d113b27264739fec713836b",
+          "src/apply/commit.rs": "1dbb0f5e5d967238224991073bf2370fe286dcc9db7ab9a038fb6ec138b5afd1",
+          "src/apply/compact.rs": "568492a7b1b3fe0934db76bab2c5df1c4210f5492efa7b4ccdf0dce60ec8a896",
+          "src/apply/contract_tests.rs": "18568870a4b425cb01b867f7abf493172b18ef20beb1bfeae2471178593ea600",
+          "src/apply/detect.rs": "944b2dfc67ce7b294316ce5d417da1f68151f4aae67159e1e91e5668754ba649",
+          "src/apply/mod.rs": "9c0c7a620f5989ac4a1ee82412ecf884b2615c97b310234753109db4e8b19add",
+          "src/apply/parse_json.rs": "7d1491008b03fdd9620db2ff751e22477013af261254a91908029f4215026f0c",
+          "src/apply/parse_native.rs": "6d30b10799a90dbb3b209f3b9b57336df1beecde6e1dc2e17c8c48a689288440",
+          "src/apply/parse_yaml.rs": "585c91815038e266298b4f75bf19d406d003f2c0c14a4156e1457e0eab167ba5",
+          "src/apply/patch.rs": "7b10cebd6bb339e8328e93fc7e6f645001982355fac7832d934c3a16c53978e8",
+          "src/cli/apply.rs": "b933c5b693a9a14fca6593a7473ec1c81820362fcedc064214e081ab98d6e002",
+          "src/cli/common.rs": "6b705045c8a847ab82fb69b4ba0e2f8c03c25ef93f2c2fca0c5981b17dfeca46",
+          "src/cli/edit.rs": "88a9e21b4b58b8c30b571079b5889e19cdc9f64edd8c12234defcb9047573834",
+          "src/cli/find.rs": "a208cefd1bc55f8a51adcd5b446de81e0b43bd2aab374c1c7b63808ed65ea2bf",
+          "src/cli/indent.rs": "a55506736594c61286e840beeb52426409935b1b7e2307943d2ae99b698581d3",
+          "src/cli/insert.rs": "338d01c6032e615aed077226fe4c25db26e22b63035880d11c891468134c1fa9",
+          "src/cli/mcp.rs": "f9a1d411ff6ad327b1415fb1b34e9ff7a18a6753f4bd08d3dd1a4ad75fe70abe",
+          "src/cli/mod.rs": "3d8d051024959af2766ccd9bdc54877ceb380d89c1d063156dec56734ddec1a9",
+          "src/cli/move_op.rs": "9ffa51e38c2fe3ede5bb406b911eb3a001738e4bc7848fb5a96f558f619af047",
+          "src/cli/native.rs": "9ffc09a212564959a4f164302cf7ed4858156e9e7a834c261d356ab8d570dad2",
+          "src/cli/native_backend.rs": "912dc19caa10c54eff877cb0a7d0385a6d0edb9759576b3abf2c4fd415642346",
+          "src/cli/peek.rs": "30196796dcc924559a762688d29a9840b0fceeacba349867564e8eaa10ee5e05",
+          "src/cli/recover.rs": "9659858ca5ba624744976e4cd1b38d885eabd9217c546ff58347a57dc48d6175",
+          "src/cli/replace.rs": "48e38e3e98cfbf3840aae1a850c9d7fa2888cc90e1fbf2a83cb0d9d9c2e1bda3",
+          "src/core/atomic.rs": "cfc54d3272f440b006a79f9de2bcd32b196e4984a5e7fea7be69f082a12662ff",
+          "src/core/content.rs": "75bb45e1217965b7d75f1e5d0b554e9cdc7117bb2b25d7210c1aef8fe5fb3e66",
+          "src/core/contract_tests.rs": "b3ec28cd6f1350f44189d095f74306a52d84884005d6215e006b971271128cac",
+          "src/core/diff.rs": "8a55702b4b62ea194a3ec4859ad6a82c1cac9cefc03541a2d5dfdfcff0a8f40c",
+          "src/core/edit.rs": "1518a5c1b875c6c4cec8cb6dc44feeef38bcab880687f9e7c7e3cf6714a505ee",
+          "src/core/location.rs": "c22fd0c47ce4ce4934103dbbef8966d0c0e37f7d5ccaef075ca203ce4ab7dc52",
+          "src/core/mod.rs": "e1c84eeb6746635d255f7695fa659dca72257a0cd816309fcc32511b88211b61",
+          "src/core/ops/find.rs": "8e0c16ec990848ca8c8b7f299e017daef72f545645bfa777d79cedd8b7d32c57",
+          "src/core/ops/indent.rs": "1d8f909ea59032c0203049c6c5fe349c674b0081bc83d6faa7c7d7bd1bce7704",
+          "src/core/ops/insert.rs": "7781a42a8abbd1b18576e615dd01201df07879701ab1243adb1dd9b8932940ac",
+          "src/core/ops/mod.rs": "a98cce97d731c5357d38db543586f27a7a13bd9dc06d61b9ed4a5017957af26b",
+          "src/core/ops/move_op.rs": "016996b0ac07a4f7484f93fe90a88c0aef3aae937deb73a2127e7ade5df7a458",
+          "src/core/ops/peek.rs": "15a80bc3594279549d33880755ebfbc0980c2cd008d5cac7754a915003617ae3",
+          "src/core/ops/replace.rs": "94233af96625dcee0c4d299a1c7271b3a5a2dff59a5dc5f0213b97c71546f65c",
+          "src/core/read.rs": "eb253b39b7400cd143e7f41608d849f76c08602f3147a744c417f8ac100f1edd",
+          "src/core/revert.rs": "3576a34e5e2fd9b6e13beb993cfbf2541f1579a5c207c412f4620ec9240f7ebe",
+          "src/core/transaction.rs": "6100b83c75202d77ff58a0144960f1ef890fd81d38002cb3fbc5518f4c6b732a",
+          "src/doctor.rs": "a61a4a05b4a193c46ffd279490d1938a699861ca1c5592c28919c6d1679c83bb",
+          "src/lib.rs": "05818e42676437a6adbe6071f16e8d1363153423dfa296c58bd41f18ffda5ddd",
+          "src/main.rs": "5e9a4eac9a63b2756a9b901fcc2aff4312d1fbe2ac36b0a8a62a611ed002f4bf",
+          "src/mcp/mod.rs": "685ddf5a0b9ee6955a75de6251de230408e41f2bd93f9af9e5ad055a88e9db52",
+          "src/mcp/server.rs": "7faac2b99049164c61bb4395a0a18beab106099569ea710fe432129affd3a312",
+          "src/mcp/tools/apply.rs": "d20f369c74bd3cb46069992f112fbe23b4a3c93c57886f77040dc8d86d72456b",
+          "src/mcp/tools/common.rs": "bba1a27f1cc660e3eba2bf8e0485025f44ce57adf980a781e27bc8843b0de72c",
+          "src/mcp/tools/doctor.rs": "ffbcb9fb4d58ada96661cbbcf2e87806b898ca66f6ae1bb489cfecc135fc20dc",
+          "src/mcp/tools/edit.rs": "45d44800b62c523e939a74c35d181a89bc387a1e116b25dd42faf6596e3c5652",
+          "src/mcp/tools/find.rs": "4acd594cbd188852d407f3e1d7642db162afe8d4a7d7574e283cf9bcb1ab99b1",
+          "src/mcp/tools/indent.rs": "5de206220f62bfebdc27d877c6e929391a0ec555184a9e6e3379ed9c8335f33f",
+          "src/mcp/tools/insert.rs": "62176d4bee0b1ead832dd2f25af1110cdf42d02969f077e9e3d74b14844f70de",
+          "src/mcp/tools/mod.rs": "0d8ef3c7a42cbb90b94db69f51f6a0465b25b4a5432d0984124376cf9a439c64",
+          "src/mcp/tools/move_op.rs": "c84480b185994137b199f065f7571e1812b72ac034cb39c010c678bbde20e8e8",
+          "src/mcp/tools/peek.rs": "0bf76f4b37b165bdd00d4b78ef62d849b31d477f421ad80823af5e2744da8797",
+          "src/mcp/tools/recover.rs": "7e5ac5b51906926a559752a162b8218708e83aa40901e34f07213b54379669bc",
+          "src/mcp/tools/replace.rs": "e053bc440f07dd7a1fe7007bd0115c2bc6b12f85f7c462bff265ed98ea3351fc",
+          "src/native/mod.rs": "0630e9c4a6a42b76b6a16ae84393281f1b4612c6d845661b4f2302e674deddf4",
+          "src/native/operations.rs": "0867c3b6b1b92b9c577b4648eb5f80579c4df500b1c8e804304fb13096107ec9",
+          "src/native/snapshot.rs": "74357ef929198f702dc7215ccc8c7cfbfad03fb86e63dfc52fa79156b46d2526",
+          "src/output/budget.rs": "01d9e5c42430d77876e3ddcd465e909deb4f353ddd9be1102f5a600f17e2620f",
+          "src/output/exit.rs": "cae0eac0f2d360b2de5c4ff0b659848650a59dd1344b1104a03b889333de9a98",
+          "src/output/globals.rs": "5582585e836ee96c4c59c4b7f5d34df84aac03625dc799c7ace01c680a59737a",
+          "src/output/human.rs": "3ef54b8e3a3d138d7b31133d28ffb0865fa475fa0b1deefca236543a8acec142",
+          "src/output/json.rs": "a1c679e4a428dc7fb65499093927c10f7367cfd847cab3e91171a4f63170ba82",
+          "src/output/mod.rs": "d6a3184db03c6877f5a2b4c2a03c061852a637b313c7da31cb7de41de3bdb75f",
+          "src/update/contract_tests.rs": "211edb6a96c19bf532ad70fc51a52c373d6c07175e4f26ec8428a67f49a313cf",
+          "src/update/delivery.rs": "16a9e310d85aa18b2d1e6ecd60e25d2404ece5c3e2caa5f6220397750afb3d0b",
+          "src/update/mod.rs": "ed12819424f09fcafd204797c7a31b5754350d178235cd23422a455aefbcb23d",
+          "src/update/policy.rs": "faeb72c58f1f9497d60b7e4d1eea97ed7f36eb90c9ef4b0b333aedc75764847e"
+        },
+        "working_tree_sha256": "945eb2cf93b09832b8a09e0520eefc69034fa9f8784d4a438bbeae7c3684e935"
+      },
+      "hosts": {
+        "0.2.1-rc.2": {
+          "@deepseek-ai/dsh": {
+            "version": "0.2.1-rc.2",
+            "package_sha256": "bea4288aa88eb54efe829686553100a75fdf09d11c5e3bf6b329badb9a0368dd",
+            "entrypoint_sha256": "80112efe368efb1a39720c7ada0af00442e5131fb2744edaaff8a3e8bb499e6f"
+          },
+          "@deepseek-ai/dsh-fs-sandbox": {
+            "version": "0.2.1-rc.2",
+            "package_sha256": "fffd05f8833107d3b08e30f1a36afa67beda0aa73f904ed6620b85846ee64776",
+            "entrypoint_sha256": "cac65e21a0f0895b073cb9a447196ac265f2a171cc7f67c7434a6b3b7782caf5"
+          },
+          "@deepseek-ai/dsh-fs-local": {
+            "version": "0.2.1-rc.2",
+            "package_sha256": "080eaa7f613682f8ebaacf2eb508c3c7fdcf92b59d19ed0b6cd6303009d35714",
+            "entrypoint_sha256": "63fbb41d2c33e07111884b798be507e68c2752acab8249c821c20ade436e894f"
+          },
+          "@deepseek-ai/dsh-fs-observation-policy": {
+            "version": "0.2.1-rc.2",
+            "package_sha256": "34573075389e2044f13105f1748997ad542f4e02b23b163b0c6250f8c16617c2",
+            "entrypoint_sha256": "e36b54cdb5c6fa01ccfa29f0433753e810ec1ac29a6a22be349d66b77eb64b03"
+          },
+          "@deepseek-ai/dsh-tool-fs": {
+            "version": "0.2.1-rc.2",
+            "package_sha256": "1dad2787176889ab5ccceae94d0e7c4af6cdeb81c85368f6cf4377a41bde179b",
+            "entrypoint_sha256": "b11d3fa50b9042019a91cc38a6abe35d74ed651374278f95e60b42734e079df1"
+          },
+          "@deepseek-ai/dsh-tools": {
+            "version": "0.2.1-rc.2",
+            "package_sha256": "13adfd07328b98cd248054efb17be7895ba9db0e01ab87f4adca3d4c6385d636",
+            "entrypoint_sha256": "1e53932e7c4213ea24a7d87f06960b7a7702cb21f8a5741c97242b4a470a442a"
+          },
+          "@deepseek-ai/dsh-sandbox-policy": {
+            "version": "0.2.1-rc.2",
+            "package_sha256": "d899d95090af68360bde5a45bd6f942c18db83dd613b31eb78b791fc4675e579",
+            "entrypoint_sha256": "772ca58f0f786d6cb4d839deb621634c31097c13228d81b14e3f3153d0524924"
+          }
+        },
+        "0.2.1-rc.5": {
+          "@deepseek-ai/dsh": {
+            "version": "0.2.1-rc.5",
+            "package_sha256": "b10673ea6c4e20cc10da6ef20130b6ece3142cba8003b50e0d5ded25fc388b5b",
+            "entrypoint_sha256": "80112efe368efb1a39720c7ada0af00442e5131fb2744edaaff8a3e8bb499e6f"
+          },
+          "@deepseek-ai/dsh-fs-sandbox": {
+            "version": "0.2.1-rc.5",
+            "package_sha256": "1af11eff6d19e81e2e1e74e569ca546015b08c9d352774207b770990ec073d13",
+            "entrypoint_sha256": "cac65e21a0f0895b073cb9a447196ac265f2a171cc7f67c7434a6b3b7782caf5"
+          },
+          "@deepseek-ai/dsh-fs-local": {
+            "version": "0.2.1-rc.5",
+            "package_sha256": "5941249f520d7f2fe8dfd71db707303723d197431da88eb837a5e00ddb718574",
+            "entrypoint_sha256": "63fbb41d2c33e07111884b798be507e68c2752acab8249c821c20ade436e894f"
+          },
+          "@deepseek-ai/dsh-fs-observation-policy": {
+            "version": "0.2.1-rc.5",
+            "package_sha256": "13809ad6aafaedb5816daf20ca181ec0dbb6e31b141d6d12ab2fd7c5f7099c47",
+            "entrypoint_sha256": "e36b54cdb5c6fa01ccfa29f0433753e810ec1ac29a6a22be349d66b77eb64b03"
+          },
+          "@deepseek-ai/dsh-tool-fs": {
+            "version": "0.2.1-rc.5",
+            "package_sha256": "a39ea894b8104d29c7039352851bfddedb42a104da87667d3783ad3adc640900",
+            "entrypoint_sha256": "b11d3fa50b9042019a91cc38a6abe35d74ed651374278f95e60b42734e079df1"
+          },
+          "@deepseek-ai/dsh-tools": {
+            "version": "0.2.1-rc.5",
+            "package_sha256": "5ebfb49032068284f7ac422d01dc31833fea778b80fcf433d54c4866a32fb8b5",
+            "entrypoint_sha256": "1e53932e7c4213ea24a7d87f06960b7a7702cb21f8a5741c97242b4a470a442a"
+          },
+          "@deepseek-ai/dsh-sandbox-policy": {
+            "version": "0.2.1-rc.5",
+            "package_sha256": "881d1eccb566ae076d5b328d36b8b4daf0b5394f866994825330441bf2d75adb",
+            "entrypoint_sha256": "772ca58f0f786d6cb4d839deb621634c31097c13228d81b14e3f3153d0524924"
+          }
+        }
+      }
+    },
+    "scenarios": [
+      {
+        "name": "large-1048576",
+        "cohort": "provider-extension",
+        "purpose": "one small edit in exactly 1048576 bytes",
+        "mode": "workspace-write",
+        "expected_error": null,
+        "expected_error_message": null,
+        "files": {
+          "example.txt": {
+            "bytes": 1048576,
+            "sha256": "949243ddad0f3f35a0f066b28b67689364fec2dbaf886e55bb71ed5f64125b02"
+          }
+        },
+        "expected": {
+          "example.txt": {
+            "bytes": 1048576,
+            "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+          }
+        },
+        "edit_calls": 1,
+        "write_calls": 0
+      },
+      {
+        "name": "large-5242880",
+        "cohort": "provider-extension",
+        "purpose": "one small edit in exactly 5242880 bytes",
+        "mode": "workspace-write",
+        "expected_error": null,
+        "expected_error_message": null,
+        "files": {
+          "example.txt": {
+            "bytes": 5242880,
+            "sha256": "6aa0bfa7fb4bc1b6502c1f84e6313c10aba163656e6867b04580402f28cd2ff2"
+          }
+        },
+        "expected": {
+          "example.txt": {
+            "bytes": 5242880,
+            "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+          }
+        },
+        "edit_calls": 1,
+        "write_calls": 0
+      }
+    ],
+    "setup": [
+      {
+        "host_version": "0.2.1-rc.2",
+        "provider": "dsh-original",
+        "mode": "workspace-write",
+        "setup_ms": 9.296285000000353,
+        "native_content_encoding": null,
+        "tool_schema_sha256": "3fa49111bfa50170bc2485d89386252887a0e7de19b4563c69e3090985543025",
+        "prompt_sha256": "b2f96f81c0f6e3d4fe15af1d5a39c4d5a0b220838e924a2772b32dc0bf81a870"
+      },
+      {
+        "host_version": "0.2.1-rc.2",
+        "provider": "xnip-native",
+        "mode": "workspace-write",
+        "setup_ms": 12.300028000001475,
+        "native_content_encoding": "utf8",
+        "tool_schema_sha256": "3fa49111bfa50170bc2485d89386252887a0e7de19b4563c69e3090985543025",
+        "prompt_sha256": "b2f96f81c0f6e3d4fe15af1d5a39c4d5a0b220838e924a2772b32dc0bf81a870"
+      },
+      {
+        "host_version": "0.2.1-rc.5",
+        "provider": "dsh-original",
+        "mode": "workspace-write",
+        "setup_ms": 8.96137699999963,
+        "native_content_encoding": null,
+        "tool_schema_sha256": "3fa49111bfa50170bc2485d89386252887a0e7de19b4563c69e3090985543025",
+        "prompt_sha256": "b2f96f81c0f6e3d4fe15af1d5a39c4d5a0b220838e924a2772b32dc0bf81a870"
+      },
+      {
+        "host_version": "0.2.1-rc.5",
+        "provider": "xnip-native",
+        "mode": "workspace-write",
+        "setup_ms": 13.23199300000124,
+        "native_content_encoding": "utf8",
+        "tool_schema_sha256": "3fa49111bfa50170bc2485d89386252887a0e7de19b4563c69e3090985543025",
+        "prompt_sha256": "b2f96f81c0f6e3d4fe15af1d5a39c4d5a0b220838e924a2772b32dc0bf81a870"
+      }
+    ],
+    "results": [
+      {
+        "host_version": "0.2.1-rc.2",
+        "provider": "dsh-original",
+        "mode": "workspace-write",
+        "scenario": "large-1048576",
+        "cohort": "provider-extension",
+        "summary": {
+          "read_ms": {
+            "runs": 3,
+            "min": 7.70020199999999,
+            "median": 7.829604000002291,
+            "p95": 9.73444599999857,
+            "max": 9.73444599999857
+          },
+          "mutation_ms": {
+            "runs": 3,
+            "min": 12.34823999999935,
+            "median": 12.934509999999136,
+            "p95": 14.544733999999153,
+            "max": 14.544733999999153
+          },
+          "tool_ms": {
+            "runs": 3,
+            "min": 20.17784400000164,
+            "median": 22.244935999999143,
+            "p95": 22.668955999997706,
+            "max": 22.668955999997706
+          },
+          "tool_calls": {
+            "runs": 3,
+            "min": 2,
+            "median": 2,
+            "p95": 2,
+            "max": 2
+          },
+          "argument_bytes": {
+            "runs": 3,
+            "min": 292,
+            "median": 292,
+            "p95": 292,
+            "max": 292
+          },
+          "result_bytes": {
+            "runs": 3,
+            "min": 2290429,
+            "median": 2290429,
+            "p95": 2290429,
+            "max": 2290429
+          },
+          "tool_bytes": {
+            "runs": 3,
+            "min": 2290721,
+            "median": 2290721,
+            "p95": 2290721,
+            "max": 2290721
+          },
+          "bridge": {
+            "requests": {
+              "runs": 3,
+              "min": 0,
+              "median": 0,
+              "p95": 0,
+              "max": 0
+            },
+            "request_bytes": {
+              "runs": 3,
+              "min": 0,
+              "median": 0,
+              "p95": 0,
+              "max": 0
+            },
+            "response_bytes": {
+              "runs": 3,
+              "min": 0,
+              "median": 0,
+              "p95": 0,
+              "max": 0
+            },
+            "total_bytes": {
+              "runs": 3,
+              "min": 0,
+              "median": 0,
+              "p95": 0,
+              "max": 0
+            }
+          }
+        },
+        "byte_exact_runs": 3,
+        "outcome_matches_runs": 3,
+        "correct_runs": 3,
+        "samples": [
+          {
+            "read_ms": 9.73444599999857,
+            "mutation_ms": 12.934509999999136,
+            "tool_ms": 22.668955999997706,
+            "tool_calls": 2,
+            "argument_bytes": 292,
+            "result_bytes": 2290429,
+            "tool_bytes": 2290721,
+            "bridge": {
+              "requests": 0,
+              "request_bytes": 0,
+              "response_bytes": 0,
+              "total_bytes": 0,
+              "actions": {}
+            },
+            "calls": [
+              {
+                "phase": "read",
+                "name": "read",
+                "elapsed_ms": 9.73444599999857,
+                "argument_bytes": 122,
+                "result_bytes": 175490,
+                "is_error": false,
+                "error_code": null
+              },
+              {
+                "phase": "mutation",
+                "name": "edit",
+                "elapsed_ms": 12.934509999999136,
+                "argument_bytes": 170,
+                "result_bytes": 2114939,
+                "is_error": false,
+                "error_code": null
+              }
+            ],
+            "outcomes": {
+              "example.txt": {
+                "expected": {
+                  "bytes": 1048576,
+                  "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+                },
+                "actual": {
+                  "bytes": 1048576,
+                  "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+                },
+                "byte_exact": true
+              }
+            },
+            "unexpected_files": [],
+            "byte_exact": true,
+            "outcome_matches": true,
+            "correct": true
+          },
+          {
+            "read_ms": 7.829604000002291,
+            "mutation_ms": 12.34823999999935,
+            "tool_ms": 20.17784400000164,
+            "tool_calls": 2,
+            "argument_bytes": 292,
+            "result_bytes": 2290429,
+            "tool_bytes": 2290721,
+            "bridge": {
+              "requests": 0,
+              "request_bytes": 0,
+              "response_bytes": 0,
+              "total_bytes": 0,
+              "actions": {}
+            },
+            "calls": [
+              {
+                "phase": "read",
+                "name": "read",
+                "elapsed_ms": 7.829604000002291,
+                "argument_bytes": 122,
+                "result_bytes": 175490,
+                "is_error": false,
+                "error_code": null
+              },
+              {
+                "phase": "mutation",
+                "name": "edit",
+                "elapsed_ms": 12.34823999999935,
+                "argument_bytes": 170,
+                "result_bytes": 2114939,
+                "is_error": false,
+                "error_code": null
+              }
+            ],
+            "outcomes": {
+              "example.txt": {
+                "expected": {
+                  "bytes": 1048576,
+                  "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+                },
+                "actual": {
+                  "bytes": 1048576,
+                  "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+                },
+                "byte_exact": true
+              }
+            },
+            "unexpected_files": [],
+            "byte_exact": true,
+            "outcome_matches": true,
+            "correct": true
+          },
+          {
+            "read_ms": 7.70020199999999,
+            "mutation_ms": 14.544733999999153,
+            "tool_ms": 22.244935999999143,
+            "tool_calls": 2,
+            "argument_bytes": 292,
+            "result_bytes": 2290429,
+            "tool_bytes": 2290721,
+            "bridge": {
+              "requests": 0,
+              "request_bytes": 0,
+              "response_bytes": 0,
+              "total_bytes": 0,
+              "actions": {}
+            },
+            "calls": [
+              {
+                "phase": "read",
+                "name": "read",
+                "elapsed_ms": 7.70020199999999,
+                "argument_bytes": 122,
+                "result_bytes": 175490,
+                "is_error": false,
+                "error_code": null
+              },
+              {
+                "phase": "mutation",
+                "name": "edit",
+                "elapsed_ms": 14.544733999999153,
+                "argument_bytes": 170,
+                "result_bytes": 2114939,
+                "is_error": false,
+                "error_code": null
+              }
+            ],
+            "outcomes": {
+              "example.txt": {
+                "expected": {
+                  "bytes": 1048576,
+                  "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+                },
+                "actual": {
+                  "bytes": 1048576,
+                  "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+                },
+                "byte_exact": true
+              }
+            },
+            "unexpected_files": [],
+            "byte_exact": true,
+            "outcome_matches": true,
+            "correct": true
+          }
+        ]
+      },
+      {
+        "host_version": "0.2.1-rc.2",
+        "provider": "dsh-original",
+        "mode": "workspace-write",
+        "scenario": "large-5242880",
+        "cohort": "provider-extension",
+        "summary": {
+          "read_ms": {
+            "runs": 3,
+            "min": 9.62304000000222,
+            "median": 10.554603999997198,
+            "p95": 11.445337999997719,
+            "max": 11.445337999997719
+          },
+          "mutation_ms": {
+            "runs": 3,
+            "min": 46.23559699999896,
+            "median": 51.42066200000045,
+            "p95": 52.19012600000133,
+            "max": 52.19012600000133
+          },
+          "tool_ms": {
+            "runs": 3,
+            "min": 56.79020099999616,
+            "median": 61.04370200000267,
+            "p95": 63.63546399999905,
+            "max": 63.63546399999905
+          },
+          "tool_calls": {
+            "runs": 3,
+            "min": 2,
+            "median": 2,
+            "p95": 2,
+            "max": 2
+          },
+          "argument_bytes": {
+            "runs": 3,
+            "min": 292,
+            "median": 292,
+            "p95": 292,
+            "max": 292
+          },
+          "result_bytes": {
+            "runs": 3,
+            "min": 10744575,
+            "median": 10744575,
+            "p95": 10744575,
+            "max": 10744575
+          },
+          "tool_bytes": {
+            "runs": 3,
+            "min": 10744867,
+            "median": 10744867,
+            "p95": 10744867,
+            "max": 10744867
+          },
+          "bridge": {
+            "requests": {
+              "runs": 3,
+              "min": 0,
+              "median": 0,
+              "p95": 0,
+              "max": 0
+            },
+            "request_bytes": {
+              "runs": 3,
+              "min": 0,
+              "median": 0,
+              "p95": 0,
+              "max": 0
+            },
+            "response_bytes": {
+              "runs": 3,
+              "min": 0,
+              "median": 0,
+              "p95": 0,
+              "max": 0
+            },
+            "total_bytes": {
+              "runs": 3,
+              "min": 0,
+              "median": 0,
+              "p95": 0,
+              "max": 0
+            }
+          }
+        },
+        "byte_exact_runs": 3,
+        "outcome_matches_runs": 3,
+        "correct_runs": 3,
+        "samples": [
+          {
+            "read_ms": 11.445337999997719,
+            "mutation_ms": 52.19012600000133,
+            "tool_ms": 63.63546399999905,
+            "tool_calls": 2,
+            "argument_bytes": 292,
+            "result_bytes": 10744575,
+            "tool_bytes": 10744867,
+            "bridge": {
+              "requests": 0,
+              "request_bytes": 0,
+              "response_bytes": 0,
+              "total_bytes": 0,
+              "actions": {}
+            },
+            "calls": [
+              {
+                "phase": "read",
+                "name": "read",
+                "elapsed_ms": 11.445337999997719,
+                "argument_bytes": 122,
+                "result_bytes": 175492,
+                "is_error": false,
+                "error_code": null
+              },
+              {
+                "phase": "mutation",
+                "name": "edit",
+                "elapsed_ms": 52.19012600000133,
+                "argument_bytes": 170,
+                "result_bytes": 10569083,
+                "is_error": false,
+                "error_code": null
+              }
+            ],
+            "outcomes": {
+              "example.txt": {
+                "expected": {
+                  "bytes": 5242880,
+                  "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+                },
+                "actual": {
+                  "bytes": 5242880,
+                  "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+                },
+                "byte_exact": true
+              }
+            },
+            "unexpected_files": [],
+            "byte_exact": true,
+            "outcome_matches": true,
+            "correct": true
+          },
+          {
+            "read_ms": 9.62304000000222,
+            "mutation_ms": 51.42066200000045,
+            "tool_ms": 61.04370200000267,
+            "tool_calls": 2,
+            "argument_bytes": 292,
+            "result_bytes": 10744575,
+            "tool_bytes": 10744867,
+            "bridge": {
+              "requests": 0,
+              "request_bytes": 0,
+              "response_bytes": 0,
+              "total_bytes": 0,
+              "actions": {}
+            },
+            "calls": [
+              {
+                "phase": "read",
+                "name": "read",
+                "elapsed_ms": 9.62304000000222,
+                "argument_bytes": 122,
+                "result_bytes": 175492,
+                "is_error": false,
+                "error_code": null
+              },
+              {
+                "phase": "mutation",
+                "name": "edit",
+                "elapsed_ms": 51.42066200000045,
+                "argument_bytes": 170,
+                "result_bytes": 10569083,
+                "is_error": false,
+                "error_code": null
+              }
+            ],
+            "outcomes": {
+              "example.txt": {
+                "expected": {
+                  "bytes": 5242880,
+                  "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+                },
+                "actual": {
+                  "bytes": 5242880,
+                  "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+                },
+                "byte_exact": true
+              }
+            },
+            "unexpected_files": [],
+            "byte_exact": true,
+            "outcome_matches": true,
+            "correct": true
+          },
+          {
+            "read_ms": 10.554603999997198,
+            "mutation_ms": 46.23559699999896,
+            "tool_ms": 56.79020099999616,
+            "tool_calls": 2,
+            "argument_bytes": 292,
+            "result_bytes": 10744575,
+            "tool_bytes": 10744867,
+            "bridge": {
+              "requests": 0,
+              "request_bytes": 0,
+              "response_bytes": 0,
+              "total_bytes": 0,
+              "actions": {}
+            },
+            "calls": [
+              {
+                "phase": "read",
+                "name": "read",
+                "elapsed_ms": 10.554603999997198,
+                "argument_bytes": 122,
+                "result_bytes": 175492,
+                "is_error": false,
+                "error_code": null
+              },
+              {
+                "phase": "mutation",
+                "name": "edit",
+                "elapsed_ms": 46.23559699999896,
+                "argument_bytes": 170,
+                "result_bytes": 10569083,
+                "is_error": false,
+                "error_code": null
+              }
+            ],
+            "outcomes": {
+              "example.txt": {
+                "expected": {
+                  "bytes": 5242880,
+                  "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+                },
+                "actual": {
+                  "bytes": 5242880,
+                  "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+                },
+                "byte_exact": true
+              }
+            },
+            "unexpected_files": [],
+            "byte_exact": true,
+            "outcome_matches": true,
+            "correct": true
+          }
+        ]
+      },
+      {
+        "host_version": "0.2.1-rc.2",
+        "provider": "xnip-native",
+        "mode": "workspace-write",
+        "scenario": "large-1048576",
+        "cohort": "provider-extension",
+        "summary": {
+          "read_ms": {
+            "runs": 3,
+            "min": 7.8948529999979655,
+            "median": 8.13817299999937,
+            "p95": 8.378641999999672,
+            "max": 8.378641999999672
+          },
+          "mutation_ms": {
+            "runs": 3,
+            "min": 33.900346999998874,
+            "median": 34.440770000001066,
+            "p95": 34.99159900000086,
+            "max": 34.99159900000086
+          },
+          "tool_ms": {
+            "runs": 3,
+            "min": 42.278988999998546,
+            "median": 42.33562299999903,
+            "p95": 43.12977200000023,
+            "max": 43.12977200000023
+          },
+          "tool_calls": {
+            "runs": 3,
+            "min": 2,
+            "median": 2,
+            "p95": 2,
+            "max": 2
+          },
+          "argument_bytes": {
+            "runs": 3,
+            "min": 292,
+            "median": 292,
+            "p95": 292,
+            "max": 292
+          },
+          "result_bytes": {
+            "runs": 3,
+            "min": 2290429,
+            "median": 2290429,
+            "p95": 2290429,
+            "max": 2290429
+          },
+          "tool_bytes": {
+            "runs": 3,
+            "min": 2290721,
+            "median": 2290721,
+            "p95": 2290721,
+            "max": 2290721
+          },
+          "bridge": {
+            "requests": {
+              "runs": 3,
+              "min": 3,
+              "median": 3,
+              "p95": 3,
+              "max": 3
+            },
+            "request_bytes": {
+              "runs": 3,
+              "min": 633,
+              "median": 634,
+              "p95": 636,
+              "max": 636
+            },
+            "response_bytes": {
+              "runs": 3,
+              "min": 5285138,
+              "median": 5285139,
+              "p95": 5285141,
+              "max": 5285141
+            },
+            "total_bytes": {
+              "runs": 3,
+              "min": 5285771,
+              "median": 5285773,
+              "p95": 5285777,
+              "max": 5285777
+            }
+          }
+        },
+        "byte_exact_runs": 3,
+        "outcome_matches_runs": 3,
+        "correct_runs": 3,
+        "samples": [
+          {
+            "read_ms": 8.378641999999672,
+            "mutation_ms": 33.900346999998874,
+            "tool_ms": 42.278988999998546,
+            "tool_calls": 2,
+            "argument_bytes": 292,
+            "result_bytes": 2290429,
+            "tool_bytes": 2290721,
+            "bridge": {
+              "requests": 3,
+              "request_bytes": 633,
+              "response_bytes": 5285138,
+              "total_bytes": 5285771,
+              "actions": {
+                "read": 1,
+                "plan": 1,
+                "commit": 1
+              }
+            },
+            "calls": [
+              {
+                "phase": "read",
+                "name": "read",
+                "elapsed_ms": 8.378641999999672,
+                "argument_bytes": 122,
+                "result_bytes": 175490,
+                "is_error": false,
+                "error_code": null
+              },
+              {
+                "phase": "mutation",
+                "name": "edit",
+                "elapsed_ms": 33.900346999998874,
+                "argument_bytes": 170,
+                "result_bytes": 2114939,
+                "is_error": false,
+                "error_code": null
+              }
+            ],
+            "outcomes": {
+              "example.txt": {
+                "expected": {
+                  "bytes": 1048576,
+                  "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+                },
+                "actual": {
+                  "bytes": 1048576,
+                  "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+                },
+                "byte_exact": true
+              }
+            },
+            "unexpected_files": [],
+            "byte_exact": true,
+            "outcome_matches": true,
+            "correct": true
+          },
+          {
+            "read_ms": 8.13817299999937,
+            "mutation_ms": 34.99159900000086,
+            "tool_ms": 43.12977200000023,
+            "tool_calls": 2,
+            "argument_bytes": 292,
+            "result_bytes": 2290429,
+            "tool_bytes": 2290721,
+            "bridge": {
+              "requests": 3,
+              "request_bytes": 634,
+              "response_bytes": 5285139,
+              "total_bytes": 5285773,
+              "actions": {
+                "read": 1,
+                "plan": 1,
+                "commit": 1
+              }
+            },
+            "calls": [
+              {
+                "phase": "read",
+                "name": "read",
+                "elapsed_ms": 8.13817299999937,
+                "argument_bytes": 122,
+                "result_bytes": 175490,
+                "is_error": false,
+                "error_code": null
+              },
+              {
+                "phase": "mutation",
+                "name": "edit",
+                "elapsed_ms": 34.99159900000086,
+                "argument_bytes": 170,
+                "result_bytes": 2114939,
+                "is_error": false,
+                "error_code": null
+              }
+            ],
+            "outcomes": {
+              "example.txt": {
+                "expected": {
+                  "bytes": 1048576,
+                  "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+                },
+                "actual": {
+                  "bytes": 1048576,
+                  "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+                },
+                "byte_exact": true
+              }
+            },
+            "unexpected_files": [],
+            "byte_exact": true,
+            "outcome_matches": true,
+            "correct": true
+          },
+          {
+            "read_ms": 7.8948529999979655,
+            "mutation_ms": 34.440770000001066,
+            "tool_ms": 42.33562299999903,
+            "tool_calls": 2,
+            "argument_bytes": 292,
+            "result_bytes": 2290429,
+            "tool_bytes": 2290721,
+            "bridge": {
+              "requests": 3,
+              "request_bytes": 636,
+              "response_bytes": 5285141,
+              "total_bytes": 5285777,
+              "actions": {
+                "read": 1,
+                "plan": 1,
+                "commit": 1
+              }
+            },
+            "calls": [
+              {
+                "phase": "read",
+                "name": "read",
+                "elapsed_ms": 7.8948529999979655,
+                "argument_bytes": 122,
+                "result_bytes": 175490,
+                "is_error": false,
+                "error_code": null
+              },
+              {
+                "phase": "mutation",
+                "name": "edit",
+                "elapsed_ms": 34.440770000001066,
+                "argument_bytes": 170,
+                "result_bytes": 2114939,
+                "is_error": false,
+                "error_code": null
+              }
+            ],
+            "outcomes": {
+              "example.txt": {
+                "expected": {
+                  "bytes": 1048576,
+                  "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+                },
+                "actual": {
+                  "bytes": 1048576,
+                  "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+                },
+                "byte_exact": true
+              }
+            },
+            "unexpected_files": [],
+            "byte_exact": true,
+            "outcome_matches": true,
+            "correct": true
+          }
+        ]
+      },
+      {
+        "host_version": "0.2.1-rc.2",
+        "provider": "xnip-native",
+        "mode": "workspace-write",
+        "scenario": "large-5242880",
+        "cohort": "provider-extension",
+        "summary": {
+          "read_ms": {
+            "runs": 3,
+            "min": 9.41377900000225,
+            "median": 10.199226000000635,
+            "p95": 10.394346999997651,
+            "max": 10.394346999997651
+          },
+          "mutation_ms": {
+            "runs": 3,
+            "min": 157.23492500000066,
+            "median": 157.67161299999862,
+            "p95": 167.2212639999998,
+            "max": 167.2212639999998
+          },
+          "tool_ms": {
+            "runs": 3,
+            "min": 167.08539200000087,
+            "median": 167.4341510000013,
+            "p95": 177.61561099999744,
+            "max": 177.61561099999744
+          },
+          "tool_calls": {
+            "runs": 3,
+            "min": 2,
+            "median": 2,
+            "p95": 2,
+            "max": 2
+          },
+          "argument_bytes": {
+            "runs": 3,
+            "min": 292,
+            "median": 292,
+            "p95": 292,
+            "max": 292
+          },
+          "result_bytes": {
+            "runs": 3,
+            "min": 10744575,
+            "median": 10744575,
+            "p95": 10744575,
+            "max": 10744575
+          },
+          "tool_bytes": {
+            "runs": 3,
+            "min": 10744867,
+            "median": 10744867,
+            "p95": 10744867,
+            "max": 10744867
+          },
+          "bridge": {
+            "requests": {
+              "runs": 3,
+              "min": 3,
+              "median": 3,
+              "p95": 3,
+              "max": 3
+            },
+            "request_bytes": {
+              "runs": 3,
+              "min": 636,
+              "median": 636,
+              "p95": 636,
+              "max": 636
+            },
+            "response_bytes": {
+              "runs": 3,
+              "min": 26420503,
+              "median": 26420503,
+              "p95": 26420503,
+              "max": 26420503
+            },
+            "total_bytes": {
+              "runs": 3,
+              "min": 26421139,
+              "median": 26421139,
+              "p95": 26421139,
+              "max": 26421139
+            }
+          }
+        },
+        "byte_exact_runs": 3,
+        "outcome_matches_runs": 3,
+        "correct_runs": 3,
+        "samples": [
+          {
+            "read_ms": 10.394346999997651,
+            "mutation_ms": 167.2212639999998,
+            "tool_ms": 177.61561099999744,
+            "tool_calls": 2,
+            "argument_bytes": 292,
+            "result_bytes": 10744575,
+            "tool_bytes": 10744867,
+            "bridge": {
+              "requests": 3,
+              "request_bytes": 636,
+              "response_bytes": 26420503,
+              "total_bytes": 26421139,
+              "actions": {
+                "read": 1,
+                "plan": 1,
+                "commit": 1
+              }
+            },
+            "calls": [
+              {
+                "phase": "read",
+                "name": "read",
+                "elapsed_ms": 10.394346999997651,
+                "argument_bytes": 122,
+                "result_bytes": 175492,
+                "is_error": false,
+                "error_code": null
+              },
+              {
+                "phase": "mutation",
+                "name": "edit",
+                "elapsed_ms": 167.2212639999998,
+                "argument_bytes": 170,
+                "result_bytes": 10569083,
+                "is_error": false,
+                "error_code": null
+              }
+            ],
+            "outcomes": {
+              "example.txt": {
+                "expected": {
+                  "bytes": 5242880,
+                  "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+                },
+                "actual": {
+                  "bytes": 5242880,
+                  "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+                },
+                "byte_exact": true
+              }
+            },
+            "unexpected_files": [],
+            "byte_exact": true,
+            "outcome_matches": true,
+            "correct": true
+          },
+          {
+            "read_ms": 10.199226000000635,
+            "mutation_ms": 157.23492500000066,
+            "tool_ms": 167.4341510000013,
+            "tool_calls": 2,
+            "argument_bytes": 292,
+            "result_bytes": 10744575,
+            "tool_bytes": 10744867,
+            "bridge": {
+              "requests": 3,
+              "request_bytes": 636,
+              "response_bytes": 26420503,
+              "total_bytes": 26421139,
+              "actions": {
+                "read": 1,
+                "plan": 1,
+                "commit": 1
+              }
+            },
+            "calls": [
+              {
+                "phase": "read",
+                "name": "read",
+                "elapsed_ms": 10.199226000000635,
+                "argument_bytes": 122,
+                "result_bytes": 175492,
+                "is_error": false,
+                "error_code": null
+              },
+              {
+                "phase": "mutation",
+                "name": "edit",
+                "elapsed_ms": 157.23492500000066,
+                "argument_bytes": 170,
+                "result_bytes": 10569083,
+                "is_error": false,
+                "error_code": null
+              }
+            ],
+            "outcomes": {
+              "example.txt": {
+                "expected": {
+                  "bytes": 5242880,
+                  "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+                },
+                "actual": {
+                  "bytes": 5242880,
+                  "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+                },
+                "byte_exact": true
+              }
+            },
+            "unexpected_files": [],
+            "byte_exact": true,
+            "outcome_matches": true,
+            "correct": true
+          },
+          {
+            "read_ms": 9.41377900000225,
+            "mutation_ms": 157.67161299999862,
+            "tool_ms": 167.08539200000087,
+            "tool_calls": 2,
+            "argument_bytes": 292,
+            "result_bytes": 10744575,
+            "tool_bytes": 10744867,
+            "bridge": {
+              "requests": 3,
+              "request_bytes": 636,
+              "response_bytes": 26420503,
+              "total_bytes": 26421139,
+              "actions": {
+                "read": 1,
+                "plan": 1,
+                "commit": 1
+              }
+            },
+            "calls": [
+              {
+                "phase": "read",
+                "name": "read",
+                "elapsed_ms": 9.41377900000225,
+                "argument_bytes": 122,
+                "result_bytes": 175492,
+                "is_error": false,
+                "error_code": null
+              },
+              {
+                "phase": "mutation",
+                "name": "edit",
+                "elapsed_ms": 157.67161299999862,
+                "argument_bytes": 170,
+                "result_bytes": 10569083,
+                "is_error": false,
+                "error_code": null
+              }
+            ],
+            "outcomes": {
+              "example.txt": {
+                "expected": {
+                  "bytes": 5242880,
+                  "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+                },
+                "actual": {
+                  "bytes": 5242880,
+                  "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+                },
+                "byte_exact": true
+              }
+            },
+            "unexpected_files": [],
+            "byte_exact": true,
+            "outcome_matches": true,
+            "correct": true
+          }
+        ]
+      },
+      {
+        "host_version": "0.2.1-rc.5",
+        "provider": "dsh-original",
+        "mode": "workspace-write",
+        "scenario": "large-1048576",
+        "cohort": "provider-extension",
+        "summary": {
+          "read_ms": {
+            "runs": 3,
+            "min": 7.784127999999328,
+            "median": 7.820180999999138,
+            "p95": 8.13749199999802,
+            "max": 8.13749199999802
+          },
+          "mutation_ms": {
+            "runs": 3,
+            "min": 6.950878999999986,
+            "median": 7.319386999999551,
+            "p95": 7.476329999997688,
+            "max": 7.476329999997688
+          },
+          "tool_ms": {
+            "runs": 3,
+            "min": 15.088370999998006,
+            "median": 15.103514999998879,
+            "p95": 15.296510999996826,
+            "max": 15.296510999996826
+          },
+          "tool_calls": {
+            "runs": 3,
+            "min": 2,
+            "median": 2,
+            "p95": 2,
+            "max": 2
+          },
+          "argument_bytes": {
+            "runs": 3,
+            "min": 292,
+            "median": 292,
+            "p95": 292,
+            "max": 292
+          },
+          "result_bytes": {
+            "runs": 3,
+            "min": 2290429,
+            "median": 2290429,
+            "p95": 2290429,
+            "max": 2290429
+          },
+          "tool_bytes": {
+            "runs": 3,
+            "min": 2290721,
+            "median": 2290721,
+            "p95": 2290721,
+            "max": 2290721
+          },
+          "bridge": {
+            "requests": {
+              "runs": 3,
+              "min": 0,
+              "median": 0,
+              "p95": 0,
+              "max": 0
+            },
+            "request_bytes": {
+              "runs": 3,
+              "min": 0,
+              "median": 0,
+              "p95": 0,
+              "max": 0
+            },
+            "response_bytes": {
+              "runs": 3,
+              "min": 0,
+              "median": 0,
+              "p95": 0,
+              "max": 0
+            },
+            "total_bytes": {
+              "runs": 3,
+              "min": 0,
+              "median": 0,
+              "p95": 0,
+              "max": 0
+            }
+          }
+        },
+        "byte_exact_runs": 3,
+        "outcome_matches_runs": 3,
+        "correct_runs": 3,
+        "samples": [
+          {
+            "read_ms": 7.820180999999138,
+            "mutation_ms": 7.476329999997688,
+            "tool_ms": 15.296510999996826,
+            "tool_calls": 2,
+            "argument_bytes": 292,
+            "result_bytes": 2290429,
+            "tool_bytes": 2290721,
+            "bridge": {
+              "requests": 0,
+              "request_bytes": 0,
+              "response_bytes": 0,
+              "total_bytes": 0,
+              "actions": {}
+            },
+            "calls": [
+              {
+                "phase": "read",
+                "name": "read",
+                "elapsed_ms": 7.820180999999138,
+                "argument_bytes": 122,
+                "result_bytes": 175490,
+                "is_error": false,
+                "error_code": null
+              },
+              {
+                "phase": "mutation",
+                "name": "edit",
+                "elapsed_ms": 7.476329999997688,
+                "argument_bytes": 170,
+                "result_bytes": 2114939,
+                "is_error": false,
+                "error_code": null
+              }
+            ],
+            "outcomes": {
+              "example.txt": {
+                "expected": {
+                  "bytes": 1048576,
+                  "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+                },
+                "actual": {
+                  "bytes": 1048576,
+                  "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+                },
+                "byte_exact": true
+              }
+            },
+            "unexpected_files": [],
+            "byte_exact": true,
+            "outcome_matches": true,
+            "correct": true
+          },
+          {
+            "read_ms": 8.13749199999802,
+            "mutation_ms": 6.950878999999986,
+            "tool_ms": 15.088370999998006,
+            "tool_calls": 2,
+            "argument_bytes": 292,
+            "result_bytes": 2290429,
+            "tool_bytes": 2290721,
+            "bridge": {
+              "requests": 0,
+              "request_bytes": 0,
+              "response_bytes": 0,
+              "total_bytes": 0,
+              "actions": {}
+            },
+            "calls": [
+              {
+                "phase": "read",
+                "name": "read",
+                "elapsed_ms": 8.13749199999802,
+                "argument_bytes": 122,
+                "result_bytes": 175490,
+                "is_error": false,
+                "error_code": null
+              },
+              {
+                "phase": "mutation",
+                "name": "edit",
+                "elapsed_ms": 6.950878999999986,
+                "argument_bytes": 170,
+                "result_bytes": 2114939,
+                "is_error": false,
+                "error_code": null
+              }
+            ],
+            "outcomes": {
+              "example.txt": {
+                "expected": {
+                  "bytes": 1048576,
+                  "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+                },
+                "actual": {
+                  "bytes": 1048576,
+                  "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+                },
+                "byte_exact": true
+              }
+            },
+            "unexpected_files": [],
+            "byte_exact": true,
+            "outcome_matches": true,
+            "correct": true
+          },
+          {
+            "read_ms": 7.784127999999328,
+            "mutation_ms": 7.319386999999551,
+            "tool_ms": 15.103514999998879,
+            "tool_calls": 2,
+            "argument_bytes": 292,
+            "result_bytes": 2290429,
+            "tool_bytes": 2290721,
+            "bridge": {
+              "requests": 0,
+              "request_bytes": 0,
+              "response_bytes": 0,
+              "total_bytes": 0,
+              "actions": {}
+            },
+            "calls": [
+              {
+                "phase": "read",
+                "name": "read",
+                "elapsed_ms": 7.784127999999328,
+                "argument_bytes": 122,
+                "result_bytes": 175490,
+                "is_error": false,
+                "error_code": null
+              },
+              {
+                "phase": "mutation",
+                "name": "edit",
+                "elapsed_ms": 7.319386999999551,
+                "argument_bytes": 170,
+                "result_bytes": 2114939,
+                "is_error": false,
+                "error_code": null
+              }
+            ],
+            "outcomes": {
+              "example.txt": {
+                "expected": {
+                  "bytes": 1048576,
+                  "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+                },
+                "actual": {
+                  "bytes": 1048576,
+                  "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+                },
+                "byte_exact": true
+              }
+            },
+            "unexpected_files": [],
+            "byte_exact": true,
+            "outcome_matches": true,
+            "correct": true
+          }
+        ]
+      },
+      {
+        "host_version": "0.2.1-rc.5",
+        "provider": "dsh-original",
+        "mode": "workspace-write",
+        "scenario": "large-5242880",
+        "cohort": "provider-extension",
+        "summary": {
+          "read_ms": {
+            "runs": 3,
+            "min": 9.548778999997012,
+            "median": 9.61656099999891,
+            "p95": 9.968944000000192,
+            "max": 9.968944000000192
+          },
+          "mutation_ms": {
+            "runs": 3,
+            "min": 25.35688999999911,
+            "median": 25.70136300000013,
+            "p95": 40.18164099999922,
+            "max": 40.18164099999922
+          },
+          "tool_ms": {
+            "runs": 3,
+            "min": 35.31792399999904,
+            "median": 35.325833999999304,
+            "p95": 49.73041999999623,
+            "max": 49.73041999999623
+          },
+          "tool_calls": {
+            "runs": 3,
+            "min": 2,
+            "median": 2,
+            "p95": 2,
+            "max": 2
+          },
+          "argument_bytes": {
+            "runs": 3,
+            "min": 292,
+            "median": 292,
+            "p95": 292,
+            "max": 292
+          },
+          "result_bytes": {
+            "runs": 3,
+            "min": 10744575,
+            "median": 10744575,
+            "p95": 10744575,
+            "max": 10744575
+          },
+          "tool_bytes": {
+            "runs": 3,
+            "min": 10744867,
+            "median": 10744867,
+            "p95": 10744867,
+            "max": 10744867
+          },
+          "bridge": {
+            "requests": {
+              "runs": 3,
+              "min": 0,
+              "median": 0,
+              "p95": 0,
+              "max": 0
+            },
+            "request_bytes": {
+              "runs": 3,
+              "min": 0,
+              "median": 0,
+              "p95": 0,
+              "max": 0
+            },
+            "response_bytes": {
+              "runs": 3,
+              "min": 0,
+              "median": 0,
+              "p95": 0,
+              "max": 0
+            },
+            "total_bytes": {
+              "runs": 3,
+              "min": 0,
+              "median": 0,
+              "p95": 0,
+              "max": 0
+            }
+          }
+        },
+        "byte_exact_runs": 3,
+        "outcome_matches_runs": 3,
+        "correct_runs": 3,
+        "samples": [
+          {
+            "read_ms": 9.548778999997012,
+            "mutation_ms": 40.18164099999922,
+            "tool_ms": 49.73041999999623,
+            "tool_calls": 2,
+            "argument_bytes": 292,
+            "result_bytes": 10744575,
+            "tool_bytes": 10744867,
+            "bridge": {
+              "requests": 0,
+              "request_bytes": 0,
+              "response_bytes": 0,
+              "total_bytes": 0,
+              "actions": {}
+            },
+            "calls": [
+              {
+                "phase": "read",
+                "name": "read",
+                "elapsed_ms": 9.548778999997012,
+                "argument_bytes": 122,
+                "result_bytes": 175492,
+                "is_error": false,
+                "error_code": null
+              },
+              {
+                "phase": "mutation",
+                "name": "edit",
+                "elapsed_ms": 40.18164099999922,
+                "argument_bytes": 170,
+                "result_bytes": 10569083,
+                "is_error": false,
+                "error_code": null
+              }
+            ],
+            "outcomes": {
+              "example.txt": {
+                "expected": {
+                  "bytes": 5242880,
+                  "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+                },
+                "actual": {
+                  "bytes": 5242880,
+                  "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+                },
+                "byte_exact": true
+              }
+            },
+            "unexpected_files": [],
+            "byte_exact": true,
+            "outcome_matches": true,
+            "correct": true
+          },
+          {
+            "read_ms": 9.968944000000192,
+            "mutation_ms": 25.35688999999911,
+            "tool_ms": 35.325833999999304,
+            "tool_calls": 2,
+            "argument_bytes": 292,
+            "result_bytes": 10744575,
+            "tool_bytes": 10744867,
+            "bridge": {
+              "requests": 0,
+              "request_bytes": 0,
+              "response_bytes": 0,
+              "total_bytes": 0,
+              "actions": {}
+            },
+            "calls": [
+              {
+                "phase": "read",
+                "name": "read",
+                "elapsed_ms": 9.968944000000192,
+                "argument_bytes": 122,
+                "result_bytes": 175492,
+                "is_error": false,
+                "error_code": null
+              },
+              {
+                "phase": "mutation",
+                "name": "edit",
+                "elapsed_ms": 25.35688999999911,
+                "argument_bytes": 170,
+                "result_bytes": 10569083,
+                "is_error": false,
+                "error_code": null
+              }
+            ],
+            "outcomes": {
+              "example.txt": {
+                "expected": {
+                  "bytes": 5242880,
+                  "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+                },
+                "actual": {
+                  "bytes": 5242880,
+                  "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+                },
+                "byte_exact": true
+              }
+            },
+            "unexpected_files": [],
+            "byte_exact": true,
+            "outcome_matches": true,
+            "correct": true
+          },
+          {
+            "read_ms": 9.61656099999891,
+            "mutation_ms": 25.70136300000013,
+            "tool_ms": 35.31792399999904,
+            "tool_calls": 2,
+            "argument_bytes": 292,
+            "result_bytes": 10744575,
+            "tool_bytes": 10744867,
+            "bridge": {
+              "requests": 0,
+              "request_bytes": 0,
+              "response_bytes": 0,
+              "total_bytes": 0,
+              "actions": {}
+            },
+            "calls": [
+              {
+                "phase": "read",
+                "name": "read",
+                "elapsed_ms": 9.61656099999891,
+                "argument_bytes": 122,
+                "result_bytes": 175492,
+                "is_error": false,
+                "error_code": null
+              },
+              {
+                "phase": "mutation",
+                "name": "edit",
+                "elapsed_ms": 25.70136300000013,
+                "argument_bytes": 170,
+                "result_bytes": 10569083,
+                "is_error": false,
+                "error_code": null
+              }
+            ],
+            "outcomes": {
+              "example.txt": {
+                "expected": {
+                  "bytes": 5242880,
+                  "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+                },
+                "actual": {
+                  "bytes": 5242880,
+                  "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+                },
+                "byte_exact": true
+              }
+            },
+            "unexpected_files": [],
+            "byte_exact": true,
+            "outcome_matches": true,
+            "correct": true
+          }
+        ]
+      },
+      {
+        "host_version": "0.2.1-rc.5",
+        "provider": "xnip-native",
+        "mode": "workspace-write",
+        "scenario": "large-1048576",
+        "cohort": "provider-extension",
+        "summary": {
+          "read_ms": {
+            "runs": 3,
+            "min": 7.591781999999512,
+            "median": 8.029211999997642,
+            "p95": 8.131924999997864,
+            "max": 8.131924999997864
+          },
+          "mutation_ms": {
+            "runs": 3,
+            "min": 31.903869999998278,
+            "median": 32.771638999998686,
+            "p95": 32.90521799999988,
+            "max": 32.90521799999988
+          },
+          "tool_ms": {
+            "runs": 3,
+            "min": 39.93308199999592,
+            "median": 40.3634209999982,
+            "p95": 41.03714299999774,
+            "max": 41.03714299999774
+          },
+          "tool_calls": {
+            "runs": 3,
+            "min": 2,
+            "median": 2,
+            "p95": 2,
+            "max": 2
+          },
+          "argument_bytes": {
+            "runs": 3,
+            "min": 292,
+            "median": 292,
+            "p95": 292,
+            "max": 292
+          },
+          "result_bytes": {
+            "runs": 3,
+            "min": 2290429,
+            "median": 2290429,
+            "p95": 2290429,
+            "max": 2290429
+          },
+          "tool_bytes": {
+            "runs": 3,
+            "min": 2290721,
+            "median": 2290721,
+            "p95": 2290721,
+            "max": 2290721
+          },
+          "bridge": {
+            "requests": {
+              "runs": 3,
+              "min": 3,
+              "median": 3,
+              "p95": 3,
+              "max": 3
+            },
+            "request_bytes": {
+              "runs": 3,
+              "min": 633,
+              "median": 634,
+              "p95": 636,
+              "max": 636
+            },
+            "response_bytes": {
+              "runs": 3,
+              "min": 5285138,
+              "median": 5285139,
+              "p95": 5285141,
+              "max": 5285141
+            },
+            "total_bytes": {
+              "runs": 3,
+              "min": 5285771,
+              "median": 5285773,
+              "p95": 5285777,
+              "max": 5285777
+            }
+          }
+        },
+        "byte_exact_runs": 3,
+        "outcome_matches_runs": 3,
+        "correct_runs": 3,
+        "samples": [
+          {
+            "read_ms": 8.131924999997864,
+            "mutation_ms": 32.90521799999988,
+            "tool_ms": 41.03714299999774,
+            "tool_calls": 2,
+            "argument_bytes": 292,
+            "result_bytes": 2290429,
+            "tool_bytes": 2290721,
+            "bridge": {
+              "requests": 3,
+              "request_bytes": 633,
+              "response_bytes": 5285138,
+              "total_bytes": 5285771,
+              "actions": {
+                "read": 1,
+                "plan": 1,
+                "commit": 1
+              }
+            },
+            "calls": [
+              {
+                "phase": "read",
+                "name": "read",
+                "elapsed_ms": 8.131924999997864,
+                "argument_bytes": 122,
+                "result_bytes": 175490,
+                "is_error": false,
+                "error_code": null
+              },
+              {
+                "phase": "mutation",
+                "name": "edit",
+                "elapsed_ms": 32.90521799999988,
+                "argument_bytes": 170,
+                "result_bytes": 2114939,
+                "is_error": false,
+                "error_code": null
+              }
+            ],
+            "outcomes": {
+              "example.txt": {
+                "expected": {
+                  "bytes": 1048576,
+                  "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+                },
+                "actual": {
+                  "bytes": 1048576,
+                  "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+                },
+                "byte_exact": true
+              }
+            },
+            "unexpected_files": [],
+            "byte_exact": true,
+            "outcome_matches": true,
+            "correct": true
+          },
+          {
+            "read_ms": 8.029211999997642,
+            "mutation_ms": 31.903869999998278,
+            "tool_ms": 39.93308199999592,
+            "tool_calls": 2,
+            "argument_bytes": 292,
+            "result_bytes": 2290429,
+            "tool_bytes": 2290721,
+            "bridge": {
+              "requests": 3,
+              "request_bytes": 634,
+              "response_bytes": 5285139,
+              "total_bytes": 5285773,
+              "actions": {
+                "read": 1,
+                "plan": 1,
+                "commit": 1
+              }
+            },
+            "calls": [
+              {
+                "phase": "read",
+                "name": "read",
+                "elapsed_ms": 8.029211999997642,
+                "argument_bytes": 122,
+                "result_bytes": 175490,
+                "is_error": false,
+                "error_code": null
+              },
+              {
+                "phase": "mutation",
+                "name": "edit",
+                "elapsed_ms": 31.903869999998278,
+                "argument_bytes": 170,
+                "result_bytes": 2114939,
+                "is_error": false,
+                "error_code": null
+              }
+            ],
+            "outcomes": {
+              "example.txt": {
+                "expected": {
+                  "bytes": 1048576,
+                  "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+                },
+                "actual": {
+                  "bytes": 1048576,
+                  "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+                },
+                "byte_exact": true
+              }
+            },
+            "unexpected_files": [],
+            "byte_exact": true,
+            "outcome_matches": true,
+            "correct": true
+          },
+          {
+            "read_ms": 7.591781999999512,
+            "mutation_ms": 32.771638999998686,
+            "tool_ms": 40.3634209999982,
+            "tool_calls": 2,
+            "argument_bytes": 292,
+            "result_bytes": 2290429,
+            "tool_bytes": 2290721,
+            "bridge": {
+              "requests": 3,
+              "request_bytes": 636,
+              "response_bytes": 5285141,
+              "total_bytes": 5285777,
+              "actions": {
+                "read": 1,
+                "plan": 1,
+                "commit": 1
+              }
+            },
+            "calls": [
+              {
+                "phase": "read",
+                "name": "read",
+                "elapsed_ms": 7.591781999999512,
+                "argument_bytes": 122,
+                "result_bytes": 175490,
+                "is_error": false,
+                "error_code": null
+              },
+              {
+                "phase": "mutation",
+                "name": "edit",
+                "elapsed_ms": 32.771638999998686,
+                "argument_bytes": 170,
+                "result_bytes": 2114939,
+                "is_error": false,
+                "error_code": null
+              }
+            ],
+            "outcomes": {
+              "example.txt": {
+                "expected": {
+                  "bytes": 1048576,
+                  "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+                },
+                "actual": {
+                  "bytes": 1048576,
+                  "sha256": "283a6b6928da5d6605ec06072019848d0961a2289c1660b5b2968d4db3ea7b76"
+                },
+                "byte_exact": true
+              }
+            },
+            "unexpected_files": [],
+            "byte_exact": true,
+            "outcome_matches": true,
+            "correct": true
+          }
+        ]
+      },
+      {
+        "host_version": "0.2.1-rc.5",
+        "provider": "xnip-native",
+        "mode": "workspace-write",
+        "scenario": "large-5242880",
+        "cohort": "provider-extension",
+        "summary": {
+          "read_ms": {
+            "runs": 3,
+            "min": 8.915018000003329,
+            "median": 9.013284000000567,
+            "p95": 9.192770999998174,
+            "max": 9.192770999998174
+          },
+          "mutation_ms": {
+            "runs": 3,
+            "min": 153.15952800000014,
+            "median": 154.0196369999976,
+            "p95": 156.9293809999981,
+            "max": 156.9293809999981
+          },
+          "tool_ms": {
+            "runs": 3,
+            "min": 162.07454600000347,
+            "median": 163.03292099999817,
+            "p95": 166.12215199999628,
+            "max": 166.12215199999628
+          },
+          "tool_calls": {
+            "runs": 3,
+            "min": 2,
+            "median": 2,
+            "p95": 2,
+            "max": 2
+          },
+          "argument_bytes": {
+            "runs": 3,
+            "min": 292,
+            "median": 292,
+            "p95": 292,
+            "max": 292
+          },
+          "result_bytes": {
+            "runs": 3,
+            "min": 10744575,
+            "median": 10744575,
+            "p95": 10744575,
+            "max": 10744575
+          },
+          "tool_bytes": {
+            "runs": 3,
+            "min": 10744867,
+            "median": 10744867,
+            "p95": 10744867,
+            "max": 10744867
+          },
+          "bridge": {
+            "requests": {
+              "runs": 3,
+              "min": 3,
+              "median": 3,
+              "p95": 3,
+              "max": 3
+            },
+            "request_bytes": {
+              "runs": 3,
+              "min": 636,
+              "median": 636,
+              "p95": 636,
+              "max": 636
+            },
+            "response_bytes": {
+              "runs": 3,
+              "min": 26420503,
+              "median": 26420503,
+              "p95": 26420503,
+              "max": 26420503
+            },
+            "total_bytes": {
+              "runs": 3,
+              "min": 26421139,
+              "median": 26421139,
+              "p95": 26421139,
+              "max": 26421139
+            }
+          }
+        },
+        "byte_exact_runs": 3,
+        "outcome_matches_runs": 3,
+        "correct_runs": 3,
+        "samples": [
+          {
+            "read_ms": 9.192770999998174,
+            "mutation_ms": 156.9293809999981,
+            "tool_ms": 166.12215199999628,
+            "tool_calls": 2,
+            "argument_bytes": 292,
+            "result_bytes": 10744575,
+            "tool_bytes": 10744867,
+            "bridge": {
+              "requests": 3,
+              "request_bytes": 636,
+              "response_bytes": 26420503,
+              "total_bytes": 26421139,
+              "actions": {
+                "read": 1,
+                "plan": 1,
+                "commit": 1
+              }
+            },
+            "calls": [
+              {
+                "phase": "read",
+                "name": "read",
+                "elapsed_ms": 9.192770999998174,
+                "argument_bytes": 122,
+                "result_bytes": 175492,
+                "is_error": false,
+                "error_code": null
+              },
+              {
+                "phase": "mutation",
+                "name": "edit",
+                "elapsed_ms": 156.9293809999981,
+                "argument_bytes": 170,
+                "result_bytes": 10569083,
+                "is_error": false,
+                "error_code": null
+              }
+            ],
+            "outcomes": {
+              "example.txt": {
+                "expected": {
+                  "bytes": 5242880,
+                  "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+                },
+                "actual": {
+                  "bytes": 5242880,
+                  "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+                },
+                "byte_exact": true
+              }
+            },
+            "unexpected_files": [],
+            "byte_exact": true,
+            "outcome_matches": true,
+            "correct": true
+          },
+          {
+            "read_ms": 9.013284000000567,
+            "mutation_ms": 154.0196369999976,
+            "tool_ms": 163.03292099999817,
+            "tool_calls": 2,
+            "argument_bytes": 292,
+            "result_bytes": 10744575,
+            "tool_bytes": 10744867,
+            "bridge": {
+              "requests": 3,
+              "request_bytes": 636,
+              "response_bytes": 26420503,
+              "total_bytes": 26421139,
+              "actions": {
+                "read": 1,
+                "plan": 1,
+                "commit": 1
+              }
+            },
+            "calls": [
+              {
+                "phase": "read",
+                "name": "read",
+                "elapsed_ms": 9.013284000000567,
+                "argument_bytes": 122,
+                "result_bytes": 175492,
+                "is_error": false,
+                "error_code": null
+              },
+              {
+                "phase": "mutation",
+                "name": "edit",
+                "elapsed_ms": 154.0196369999976,
+                "argument_bytes": 170,
+                "result_bytes": 10569083,
+                "is_error": false,
+                "error_code": null
+              }
+            ],
+            "outcomes": {
+              "example.txt": {
+                "expected": {
+                  "bytes": 5242880,
+                  "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+                },
+                "actual": {
+                  "bytes": 5242880,
+                  "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+                },
+                "byte_exact": true
+              }
+            },
+            "unexpected_files": [],
+            "byte_exact": true,
+            "outcome_matches": true,
+            "correct": true
+          },
+          {
+            "read_ms": 8.915018000003329,
+            "mutation_ms": 153.15952800000014,
+            "tool_ms": 162.07454600000347,
+            "tool_calls": 2,
+            "argument_bytes": 292,
+            "result_bytes": 10744575,
+            "tool_bytes": 10744867,
+            "bridge": {
+              "requests": 3,
+              "request_bytes": 636,
+              "response_bytes": 26420503,
+              "total_bytes": 26421139,
+              "actions": {
+                "read": 1,
+                "plan": 1,
+                "commit": 1
+              }
+            },
+            "calls": [
+              {
+                "phase": "read",
+                "name": "read",
+                "elapsed_ms": 8.915018000003329,
+                "argument_bytes": 122,
+                "result_bytes": 175492,
+                "is_error": false,
+                "error_code": null
+              },
+              {
+                "phase": "mutation",
+                "name": "edit",
+                "elapsed_ms": 153.15952800000014,
+                "argument_bytes": 170,
+                "result_bytes": 10569083,
+                "is_error": false,
+                "error_code": null
+              }
+            ],
+            "outcomes": {
+              "example.txt": {
+                "expected": {
+                  "bytes": 5242880,
+                  "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+                },
+                "actual": {
+                  "bytes": 5242880,
+                  "sha256": "019d11d1884d024b13e0fcc82702f3c5d7fba10ec61a9ad32e9ecb3f48b6c62b"
+                },
+                "byte_exact": true
+              }
+            },
+            "unexpected_files": [],
+            "byte_exact": true,
+            "outcome_matches": true,
+            "correct": true
+          }
+        ]
+      }
+    ]
+  }
+}

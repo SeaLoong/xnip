@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "sources": [
+    {
+      "host": "vscode",
+      "repository": "https://github.com/microsoft/vscode",
+      "ref": "40bd490c9b81659dd167510d3aeee9148d463b79",
+      "path": "src/vs/workbench/contrib/mcp/common/mcpConfiguration.ts",
+      "url": "https://raw.githubusercontent.com/microsoft/vscode/40bd490c9b81659dd167510d3aeee9148d463b79/src/vs/workbench/contrib/mcp/common/mcpConfiguration.ts",
+      "sha256": "8409b96acb10a18b83dbd668fed863ef45d02a5967ef3128e33ae3f606847406"
+    },
+    {
+      "host": "roo-code",
+      "repository": "https://github.com/RooCodeInc/Roo-Code",
+      "ref": "b867ec9145750d0ae1ff7f02d35406e9bf2a0b16",
+      "path": "src/services/mcp/McpHub.ts",
+      "url": "https://raw.githubusercontent.com/RooCodeInc/Roo-Code/b867ec9145750d0ae1ff7f02d35406e9bf2a0b16/src/services/mcp/McpHub.ts",
+      "sha256": "322dfa749a97441f3f4cc92676355c130bfa38f6a0b1a7fef2c845e9fa89a951"
+    },
+    {
+      "host": "cline-gui",
+      "repository": "https://github.com/cline/cline",
+      "ref": "ea16751d6ae3ae1e443681994906bf29cbc45039",
+      "path": "apps/vscode/src/services/mcp/schemas.ts",
+      "url": "https://raw.githubusercontent.com/cline/cline/ea16751d6ae3ae1e443681994906bf29cbc45039/apps/vscode/src/services/mcp/schemas.ts",
+      "sha256": "d676a218854d6c136c43a216c74f44d14b0fa50d09a34dc496d1e50136263257"
+    },
+    {
+      "host": "continue",
+      "repository": "https://github.com/continuedev/continue",
+      "ref": "5522c6f44ca0ac3528b37244818fbfa39b5af470",
+      "path": "packages/config-yaml/src/schemas/mcp/index.ts",
+      "url": "https://raw.githubusercontent.com/continuedev/continue/5522c6f44ca0ac3528b37244818fbfa39b5af470/packages/config-yaml/src/schemas/mcp/index.ts",
+      "sha256": "93f3d5ff84ed8cb789d7570ba9f9a69b6ea8b7816da03485fe79ec127f3a48e4"
+    },
+    {
+      "host": "zed",
+      "repository": "https://github.com/zed-industries/zed",
+      "ref": "4a6121bb0f10c6e8037b741b7dc0a4cd639ae289",
+      "path": "docs/src/ai/mcp.md",
+      "url": "https://raw.githubusercontent.com/zed-industries/zed/4a6121bb0f10c6e8037b741b7dc0a4cd639ae289/docs/src/ai/mcp.md",
+      "sha256": "464a780b78252933b7ec4868303d1e5b7f0924d8d0241a82d60cc09ebb4d8e62"
+    },
+    {
+      "host": "qwen-code",
+      "repository": "https://github.com/QwenLM/qwen-code",
+      "ref": "1bac51b7d9e28d5c0f7d9a0a6fcd3add14443ebb",
+      "path": "packages/core/src/config/storage.ts",
+      "url": "https://raw.githubusercontent.com/QwenLM/qwen-code/1bac51b7d9e28d5c0f7d9a0a6fcd3add14443ebb/packages/core/src/config/storage.ts",
+      "sha256": "21bcd472463f36f7a7083df19c446e0d9a59c66c6e41c48422c05ebfaf7e8ad8"
+    },
+    {
+      "host": "gemini-cli",
+      "repository": "https://github.com/google-gemini/gemini-cli",
+      "ref": "v0.27.2",
+      "path": "packages/cli/src/config/settingsSchema.ts",
+      "url": "https://raw.githubusercontent.com/google-gemini/gemini-cli/v0.27.2/packages/cli/src/config/settingsSchema.ts",
+      "sha256": "a1669e82f3d2f1bcdcfc55e0798c50a5ba737f3bf0c91f355dcf0f97032b70eb"
+    }
+  ],
+  "references": [
+    {
+      "host": "cursor",
+      "url": "https://cursor.com/docs/context/mcp",
+      "scope": "documented configuration format; actual configured stdio launch is tested"
+    },
+    {
+      "host": "windsurf",
+      "url": "https://docs.windsurf.com/windsurf/cascade/mcp",
+      "scope": "documented configuration format; actual configured stdio launch is tested"
+    }
+  ]
+}

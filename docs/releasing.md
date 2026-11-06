@@ -22,8 +22,12 @@ The integration archive names are `xnip-agents-md.tar.gz`,
 `xnip-aider-conventions.tar.gz`, `xnip-claude-code-skill.tar.gz`,
 `xnip-codex-instructions.tar.gz`, `xnip-copilot-prompt.tar.gz`,
 `xnip-cursor-rule.tar.gz` and `xnip-generic-skill.tar.gz`.
-DSH/Pi entries live in the local npm package; Goose uses source configuration
-examples. They are not additional GitHub release attachments.
+The npm parent includes DSH/Pi MCP entries, Pi/Gemini/Cline native adapters,
+OpenCode plugin tools, their shared JavaScript client, the integration catalog
+and client-profile generator. Python adapters are local source packages;
+Goose also has source configuration examples. The [support matrix](support.md)
+identifies each activation path. These routes share the existing release
+inventory above.
 
 Manual `workflow_dispatch` runs the same six builds, prepares all 21 GitHub
 attachments and seven npm tarballs, then installs the parent and matching native
@@ -41,7 +45,7 @@ The [release planner](../.github/scripts/release.py) compares every path in the 
 | Cargo manifests/lockfile, build script, Rust toolchain, Cross and `.cargo/` configuration | Yes |
 | Installers, licenses and third-party notices | Yes |
 | The seven shipped integration directories with `package.sh`, editing guide and its six packaged references, `xtask` generator | Yes |
-| npm package inputs and DSH/Pi plugin entries | Yes; these are shipped through the npm distribution |
+| npm package inputs, bundled JavaScript adapters, integration catalog and client-profile generator | Yes; these are shipped through the npm distribution |
 | Goose source configuration/hints and native benchmark fixtures | No; not shipped as additional release assets |
 | Release planning/publication scripts and release/artifact workflows | Yes |
 | General README/docs, tests, benchmarks, CI-check-only changes | No; README content is included with the next qualifying release |
@@ -131,18 +135,19 @@ Six exact-version optional packages provide the Rust executable:
 | `xnip-win32-x64` | Windows x64 |
 | `xnip-win32-arm64` | Windows ARM64 |
 
-The parent contains CLI/MCP and DSH/Pi integration; it does not bundle every
-platform executable. npm installs the matching optional dependency. A separate
-`dsh-xnip` package is unnecessary. Private host-only tarballs bundle one local
-payload for offline development and cannot enter public publication.
+The parent contains the CLI/MCP launcher, bundled JavaScript integrations,
+catalog and client-profile generator. npm installs its matching platform
+executable through the exact-version optional dependency. Private host-only
+tarballs bundle one local payload for offline development; public preparation
+uses the complete six-platform artifact set.
 
 ### Local npm validation
 
 Local package preparation is a contributor workflow; the
 [npm package homepage](../npm/README.md) documents installation and use.
 Preparation needs Node 22.14+, Python 3.11+ and a binary built from the current
-Cargo version. DSH/Pi host dependencies have their own requirements; the harness
-checks use Node 24.
+Cargo version. The [host/SDK test matrix](testing.md#native-host-e2e) has separate
+frozen dependencies, using Node 24, Python 3.13 and pnpm 11.25.0.
 
 Build and prepare a private package for the current host:
 

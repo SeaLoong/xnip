@@ -1,0 +1,40 @@
+{
+  "inputs": {
+    "package.json": "15c976c718552e3359b24bc6bad85d507fd599a2345d3f4a5904f9719e5b8651",
+    "package-lock.json": "f3fbbeb60a51d9efc48ffe51bcb488ee9759f11cb44967f29ffa67e901ce0ce9"
+  },
+  "host": {
+    "version": "1.19.3",
+    "commit": "e3c4eb242585dcd77be1a867391b7c25fd47ce52",
+    "packages": {
+      "opencode-ai": "5be8a944b51ab4d2b457885d278765595e1f7e8d68ba070c30649775f5814d53",
+      "opencode-linux-x64": "533d162be9234370e31664f876c4e9a983dbb2fcc9139b105031e9092d8da83a",
+      "@opencode-ai/plugin": "15e416a49a7ffd17188eac8a00f81beff6131967f555a5eb361dd04b987df2d6",
+      "@opencode-ai/sdk": "f197f64f437911e6622b35f57e250d0bb60c2bb856da3159ca97bb5bd66fff24"
+    },
+    "binary_sha256": "179ca421d61eefeadfa0c50e084a6e79c1623734732f0f4593f81ccfd3ab7ee9",
+    "plugin_tool_sha256": "a01230d42fa1055ddb4b378e0128f156e2db07f6f6eadbf2da174eb634380b16"
+  },
+  "official_sources": {
+    "packages/plugin/src/tool.ts": {
+      "url": "https://raw.githubusercontent.com/anomalyco/opencode/e3c4eb242585dcd77be1a867391b7c25fd47ce52/packages/plugin/src/tool.ts",
+      "sha256": "f7914ce59e6598c75b1a7f14133246902681c681478d5a6c8466e1b555d52afd"
+    },
+    "packages/plugin/src/index.ts": {
+      "url": "https://raw.githubusercontent.com/anomalyco/opencode/e3c4eb242585dcd77be1a867391b7c25fd47ce52/packages/plugin/src/index.ts",
+      "sha256": "7ce98ddab759903e6618b40a1c8beb1b621f0691f8f508ad2c07dba2041744e1"
+    },
+    "packages/opencode/src/cli/cmd/debug/agent.handler.ts": {
+      "url": "https://raw.githubusercontent.com/anomalyco/opencode/e3c4eb242585dcd77be1a867391b7c25fd47ce52/packages/opencode/src/cli/cmd/debug/agent.handler.ts",
+      "sha256": "cf0aaa2190a395f689ba7f7fb2b7efe05d99e0293538ba9e78184095f8a72fb4"
+    },
+    "packages/opencode/src/tool/registry.ts": {
+      "url": "https://raw.githubusercontent.com/anomalyco/opencode/e3c4eb242585dcd77be1a867391b7c25fd47ce52/packages/opencode/src/tool/registry.ts",
+      "sha256": "a8b24a6d58a80c42307e251905dbaa4f25ca0724569b1e531e412da934ab00fe"
+    },
+    "packages/core/src/flag/flag.ts": {
+      "url": "https://raw.githubusercontent.com/anomalyco/opencode/e3c4eb242585dcd77be1a867391b7c25fd47ce52/packages/core/src/flag/flag.ts",
+      "sha256": "f387ba5da5b24bb8fa316c8bc32aac778552c7bb199b42ed17adef03714ce6c5"
+    }
+  }
+}

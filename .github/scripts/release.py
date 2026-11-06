@@ -30,12 +30,15 @@ EXACT_RELEASE_PATHS = {
     ".github/scripts/release.py", ".github/scripts/publish_release.py", ".github/scripts/publish_npm.py",
     ".github/workflows/build-release.yml",
     ".github/workflows/publish.yml",
+    "integrations/catalog.json",
 }
 RELEASE_PREFIXES = (
     ".cargo/", ".github/skills/xnip-editing/", "xtask/src/",
     "integrations/agents-md/", "integrations/aider/", "integrations/claude-code/",
     "integrations/codex/", "integrations/copilot/", "integrations/cursor/", "integrations/generic/",
-    "integrations/dsh/", "integrations/pi/", "npm/",
+    "integrations/dsh/", "integrations/pi/", "integrations/native/",
+    "integrations/pi-native/", "integrations/gemini-native/", "integrations/cline-native/",
+    "integrations/opencode/", "integrations/host-profiles/", "npm/",
 )
 VERSION_LINE = re.compile(
     r"""(?m)^[ \t]*version[ \t]*=[ \t]*(?P<quote>["'])(?P<value>[^"'\r\n]*)(?P=quote)[ \t]*(?:#[^\r\n]*)?\r?$"""
@@ -89,7 +92,7 @@ def package_version(raw: bytes) -> str:
 
 
 def release_relevant(path: str) -> bool:
-    # The public parent pack ships npm sources and the DSH/Pi entry points.
+    # The public parent pack ships npm sources and its selected host integrations.
     # Generated output lives outside npm/, so local tarballs are never inputs.
     if path.startswith("src/"):
         return not path.endswith("/contract_tests.rs")

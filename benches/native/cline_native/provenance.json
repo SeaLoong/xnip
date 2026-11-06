@@ -1,0 +1,35 @@
+{
+  "sdk_version": "0.2.0",
+  "registry": "https://registry.npmjs.org",
+  "inputs": {
+    "package.json": "f9f240d9ab4e8edc0f5dd83f1520c7d2eba1bd6702703936358655e390c85c18",
+    "package-lock.json": "bbea369582effef2d0178ecddf9097066b2dc2db6a547dc80701c8cf99fe1c65"
+  },
+  "packages": {
+    "@cline/sdk": {
+      "version": "0.2.0",
+      "package_sha256": "b49286198a628c62dbbb8f908aa2b8750ae6598d3ed8f6c043dd390f4f966637",
+      "entry_sha256": "d40dca371d9ad5928e3c352871f3f907152fcb5562bff2108f18be0e64276761"
+    },
+    "@cline/core": {
+      "version": "0.2.0",
+      "package_sha256": "1a80d74221ed21ed4b97ac993376c56715209de5831ef555bf778d3c295d815f",
+      "entry_sha256": "53a0d4e48b96fe296fe00d9313408d45411a59970162691a05e89b937cfbef25"
+    },
+    "@cline/agents": {
+      "version": "0.2.0",
+      "package_sha256": "ef328c1d05fa2e5a2f58d1c6e45a1085bfb76290ecef3d013dd98a20c705f2c3",
+      "entry_sha256": "afbe9836e66c509bf779586abcb15692894d47ab634f466b30d678e87c8bb5cd"
+    },
+    "@cline/shared": {
+      "version": "0.2.0",
+      "package_sha256": "c293a2b20c387c37d32a97ae7ff519a1377c002a2d9c0dc676d422aca78c6a20",
+      "entry_sha256": "c853e7cdaa334bcf5c607b5c8515921b7ffe57b71688b5f41aae0c4fe18f5023"
+    },
+    "@cline/llms": {
+      "version": "0.2.0",
+      "package_sha256": "b07a5a66290c0360ddb8fbf5792381225d9b04aa91cdd30c8181343d7255e2af",
+      "entry_sha256": "3fa4bde537a701e8dfeb165ddd6a73421658ee72ca5aaf837e6af4580c5ee976"
+    }
+  }
+}

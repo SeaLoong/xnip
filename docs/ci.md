@@ -22,14 +22,22 @@ Configure branch protection to require the single check named **`ci`**. Individu
 | `docs/cli.md`, `docs/mcp.md`, `docs/apply-format.md`, `docs/examples.md` | Rust checks too: CLI contracts execute examples embedded from these files |
 | `docs/SKILL.md`, its six packaged references, `integrations/`, GitHub skills or `xtask/` | Regenerate integrations and require a clean diff; `xtask/` also enables Rust checks |
 | `npm/` or npm preparation/process contracts | Local private pack/install/process checks on Linux, macOS and Windows; shipped npm inputs also qualify for development releases |
-| DSH/Pi executable integration entries and manifests | npm matrix checks plus the real Ubuntu harness checks; pure Markdown and hint changes retain the cheap integration-generation scope |
-| Goose executable configuration, native DSH/Pi/Goose adapters/locks, their contracts or the paired harness runner/report modules | Real Ubuntu editor/MCP/installed-package checks and a small paired runner smoke |
+| Packaged DSH/Pi/Gemini/Cline/OpenCode entries, shared JavaScript client and manifests | npm matrix checks plus the real Ubuntu harness checks; pure Markdown and hint changes retain the cheap integration-generation scope |
+| Integration catalog, host/SDK/framework adapters and locks, MCP profiles, their contracts, shared fixtures or benchmark runners | Catalog validation, real Ubuntu tool/SDK/stdio checks and measured-runner contracts; the embedded catalog also selects Rust checks |
 | Rust-selected changes | npm matrix and Ubuntu harness checks also run against the new CLI |
 | Any workflow, the scope selector or the release-verification helper (including their tests) | Full verification |
 | General README/docs, benchmark reports/Python helpers, or ordinary Python contract tests | Cheap automation/installer contracts; Rust is skipped unless another input requires it |
 | Default-branch push requiring Rust checks | Full verification, including integration consistency, so the exact commit can be reused for a tagged release |
 | Default-branch push eligible for a development release | Full verification before any artifact build, even for a release-script-only change |
 | Tag/manual reusable verification or `force_all: true` | Full verification regardless of changed paths |
+
+The Ubuntu harness job prepares the current catalog's Node and Python execution
+routes from frozen dependencies, then runs tool/SDK/profile contracts, shared
+byte fixtures, setup checks and benchmark contracts. The Python framework
+families use separate virtual environments for their MCP dependency versions.
+Current host dependencies live under `target/native-hosts`; historical
+source-adapter fixtures retain `target/native-bench`. The same scope classifier
+selects these checks for adapters, shared clients, profiles and benchmark code.
 
 The six packaged reference documents are `apply-format.md`, `error-codes.md`, `examples.md`, `patch.md`, `recovery.md` and `edit.md`. The selector constants are authoritative; update their boundary contracts when adding a generated input or a document consumed by Rust tests. Release eligibility remains a separate policy in [releasing](releasing.md).
 
@@ -38,17 +46,17 @@ The six packaged reference documents are `apply-format.md`, `error-codes.md`, `e
 | Job | Required work |
 |---|---|
 | `scope` | Determine changed inputs and default-branch release eligibility once |
-| `quality` | On Rust inputs: rustfmt, Clippy with all targets, rustdoc with warnings denied, and verified crate packaging. On integration inputs: regenerate and compare the four generated integration trees |
+| `quality` | On Rust inputs: rustfmt, Clippy with all targets, rustdoc with warnings denied, and verified crate packaging. On integration inputs: regenerate and compare generated integration files |
 | `test` | One `cargo test --workspace --locked` per OS when Rust is selected; packaging-only changes build the CLI once per OS. Selected npm checks prepare/install private host tarballs offline and test actual process/cache behavior. The Windows Rust leg also runs offline PowerShell installer contracts |
-| `harnesses` | Ubuntu only: Node 24.13.0, pinned official DSH/Pi/Goose runtimes, native editors, real xnip stdio bridges, actual installed private-package entries and a four-profile runner/report smoke. Dependencies are prepared explicitly; installed-package checks reject skipped tests |
+| `harnesses` | Ubuntu: Node 24.13.0, Python 3.13, pnpm 11.25.0; frozen catalog routes, isolated Python SDK families, real plugin/SDK/stdio calls, private-package entries, setup and measured-runner contracts |
 | `compatibility` | Rust 1.89 check for all workspace targets, then cargo-deny |
 | `contracts` | actionlint plus offline scope, release-verification, release-planner, publisher, native-benchmark plumbing and POSIX installer contracts; shell syntax check |
 | `ci` | Require every selected job to pass; emit the expanded full-verification marker only after all checks in full mode pass |
 | `prerelease` | After the gate, delegate an eligible default-branch development release to the artifact workflow |
 
-`cargo test` already includes doctests ([Cargo reference](https://doc.rust-lang.org/cargo/commands/cargo-test.html)); do not run a second `--doc` pass in CI. Clippy and the MSRV check compile-check core benchmark targets. The Ubuntu harness job runs one repetition of 13 paired fixtures through xnip and one DSH/Pi/Goose native edit profile, without tokenizer downloads, legacy editor setup, model calls or performance thresholds. Full cost investigations and optimized `cargo bench --no-run` remain local/manual work. See [benchmark instructions](benchmarks/README.md). Cheap benchmark-plumbing contracts also remain required.
+`cargo test` already includes doctests ([Cargo reference](https://doc.rust-lang.org/cargo/commands/cargo-test.html)); do not run a second `--doc` pass in CI. Clippy and the MSRV check compile-check core benchmark targets. The Ubuntu harness job retains the historical 13-fixture smoke, then runs the current host/framework matrix and focused benchmark contracts. Tests identify the actual plugin, SDK, CLI or shared-stdio boundary, with model generation idle. Full timing studies and optimized `cargo bench --no-run` remain local/manual work. See the [benchmark index](benchmarks/README.md) and [support matrix](support.md).
 
-Rust checks keep `--locked` and warnings denied. Installer tests use local fixtures. Automatic updates are disabled throughout CI and release builds. The verification npm paths only run local pack/install/tests; dependency acquisition uses public pinned DSH host packages with lifecycle scripts disabled. The gated artifact publisher alone runs npm publication, with platform-first ordering, registry integrity checks and explicit stable/development tags. Manual rehearsals do not publish. The expanded verification marker prevents an older three-scope gate from claiming npm/harness coverage.
+Rust checks keep `--locked` and warnings denied. Installer tests use local fixtures. Automatic updates are disabled throughout CI and release builds. Verification runs local pack/install/tests; Node hosts use frozen npm dependencies with lifecycle scripts disabled. Python environments use hashed requirements, including separate MCP 2.3 and 1.30 families; aider uses Python 3.13 and OpenHands supports 3.12+. The gated artifact publisher alone runs npm publication, with platform-first ordering, registry integrity checks and explicit stable/development tags. Manual rehearsals do not publish. The expanded verification marker prevents an older three-scope gate from claiming npm/harness coverage.
 
 ## Release verification and publication
 
@@ -60,7 +68,7 @@ An atomic default-branch/code/version/tag push receives full branch verification
 
 PR updates cancel superseded runs. Default-branch commits and releases are not cancelled by later commits. Publishing the same version stays serialized; published assets remain immutable and incomplete drafts can resume. Keep all six supported target archives and the existing checksum/draft validation.
 
-Job timeouts bound stalled work: scope/contracts 5 minutes, quality/compatibility 15, platform tests 20, Ubuntu harnesses 25, gate 2, release identity/prior-check lookup 35, artifact builds 45 and publication 45. These are ceilings rather than expected durations.
+Job timeouts bound stalled work: scope/contracts 5 minutes, quality/compatibility 15, platform tests 20, Ubuntu harnesses 60, gate 2, release identity/prior-check lookup 35, artifact builds 45 and publication 45. These are ceilings rather than expected durations.
 
 ## Changing CI
 

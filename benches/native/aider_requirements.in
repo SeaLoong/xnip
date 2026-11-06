@@ -1,0 +1,4 @@
+-r aider_native/upstream-requirements.txt
+setuptools==80.9.0
+setuptools-scm==9.2.2
+wheel==0.45.1

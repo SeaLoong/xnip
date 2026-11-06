@@ -1,0 +1,11 @@
+{
+  "name": "xnip-host-profile-clis",
+  "version": "0.0.0",
+  "private": true,
+  "dependencies": {
+    "@anthropic-ai/claude-code": "2.1.318",
+    "@continuedev/config-yaml": "1.23.0",
+    "@github/copilot": "1.0.106",
+    "@openai/codex": "0.167.0"
+  }
+}

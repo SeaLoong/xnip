@@ -4,6 +4,23 @@ User-visible changes are recorded here. Versions follow Semantic Versioning; com
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-06
+
+- Add a single integration catalog and support matrix for host backends, plugin tools, SDK toolsets and client MCP profiles; expose the same entries through `doctor --native`.
+- Add four xnip tools through OpenCode's official plugin API and aider's IO backend for eight pinned Coder formats.
+- Add DeepAgents backends, LangGraph tools and official PydanticAI, OpenAI Agents, AutoGen, smolagents, Google ADK and CrewAI MCP toolsets with isolated dependency environments.
+- Add fourteen client MCP profiles and `xnip mcp --cwd` for an explicit project directory across GUI and CLI launchers.
+- Share the standard-library Python native client across Python IO adapters; preserve benchmark snapshots in a historical evidence index.
+- Add native SDK adapters for Gemini's local filesystem service, Cline's `apply_patch` executor and OpenHands' `file_editor` IO, with the host's public tool definitions and governance.
+- Extend real-tool E2E and local package loading to these SDK integrations; document setup, execution scope and restoration.
+- Add Pi 1.3.0 native `read`/`edit`/`write` overrides through its official tool factories, preserving hooks, matching, rendering and extension reload behavior.
+- Add negotiated UTF-8 native transport alongside byte arrays, with exact binary fallback and shared client packaging across JavaScript host adapters.
+- Expand benchmarks across host providers, OpenCode plugins, aider formats, Python frameworks and MCP SDK/client routes; retain earlier provider and encoding snapshots in the historical index. Wire frozen setup and real-tool E2E into CI.
+- Add a local DSH filesystem-provider integration that preserves native tool names, observation guards, approvals, diff presentation and compatible rewind behavior. Exercise official DSH `0.2.1-rc.2` and `0.2.1-rc.5`.
+- Add explicit native install, verify, uninstall, recover, doctor and cleanup commands with profile snapshots and restoration checks.
+- Expose nonwriting batch preparation and controlled commit through the existing core transaction API; native adapters use the same byte operations and recovery engine.
+- Verify the existing DSH MCP bridge on rc.5 and declare both tested peer versions, supporting profile-scoped native/MCP selection.
+
 ## [0.5.7] - 2026-10-22
 
 User-focused documentation and stricter, retry-safe release publication.

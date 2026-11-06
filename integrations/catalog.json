@@ -1,0 +1,473 @@
+{
+  "schema_version": 1,
+  "hosts": [
+    {
+      "id": "dsh",
+      "name": "DeepSeek Harness",
+      "mode": "provider",
+      "scope": "Official filesystem tools, observations, approvals and rewind",
+      "guide": "docs/native.md",
+      "entrypoints": [
+        "integrations/dsh-native",
+        "integrations/dsh"
+      ],
+      "tests": [
+        "tests/dsh_native_contract.mjs",
+        "tests/dsh_native_lifecycle_contract.rs"
+      ],
+      "benchmarks": [
+        "docs/benchmarks/native-provider-results.json"
+      ]
+    },
+    {
+      "id": "pi",
+      "name": "Pi",
+      "mode": "native-extension",
+      "scope": "Original SDK file tools through the public IO extension points",
+      "guide": "docs/pi-native.md",
+      "entrypoints": [
+        "integrations/pi-native",
+        "integrations/pi"
+      ],
+      "tests": [
+        "tests/pi_native_contract.mjs"
+      ],
+      "benchmarks": [
+        "docs/benchmarks/pi-provider-results.json"
+      ]
+    },
+    {
+      "id": "gemini-sdk",
+      "name": "Gemini SDK",
+      "mode": "sdk-provider",
+      "scope": "Local Config filesystem service with per-invocation read snapshots",
+      "guide": "docs/gemini-native.md",
+      "entrypoints": [
+        "integrations/gemini-native"
+      ],
+      "tests": [
+        "tests/gemini_native_contract.mjs"
+      ],
+      "benchmarks": [
+        "docs/benchmarks/gemini-provider-results.json"
+      ]
+    },
+    {
+      "id": "cline-sdk",
+      "name": "Cline SDK",
+      "mode": "sdk-executor",
+      "scope": "Official apply_patch parsing, tool policies and hooks",
+      "guide": "docs/cline-native.md",
+      "entrypoints": [
+        "integrations/cline-native"
+      ],
+      "tests": [
+        "tests/cline_native_contract.mjs"
+      ],
+      "benchmarks": [
+        "docs/benchmarks/cline-provider-results.json"
+      ]
+    },
+    {
+      "id": "openhands",
+      "name": "OpenHands SDK",
+      "mode": "sdk-executor",
+      "scope": "Original file_editor matching, encoding, history and confirmation",
+      "guide": "docs/openhands-native.md",
+      "entrypoints": [
+        "integrations/openhands-native"
+      ],
+      "tests": [
+        "tests/openhands_native_contract.py"
+      ],
+      "benchmarks": [
+        "docs/benchmarks/openhands-provider-results.json"
+      ]
+    },
+    {
+      "id": "opencode",
+      "name": "OpenCode",
+      "mode": "plugin-tools",
+      "scope": "Official xnip tools with host permissions, cancellation and lifecycle",
+      "guide": "docs/opencode.md",
+      "entrypoints": [
+        "integrations/opencode"
+      ],
+      "tests": [
+        "tests/opencode_native_contract.mjs"
+      ],
+      "benchmarks": [
+        "docs/benchmarks/opencode-provider-results.json"
+      ]
+    },
+    {
+      "id": "aider",
+      "name": "aider",
+      "mode": "sdk-io",
+      "scope": "Official Coder formats and authorization through an IO adapter",
+      "guide": "docs/aider-native.md",
+      "entrypoints": [
+        "integrations/aider-native",
+        "integrations/aider"
+      ],
+      "tests": [
+        "tests/aider_native_contract.py"
+      ],
+      "benchmarks": [
+        "docs/benchmarks/aider-provider-results.json"
+      ]
+    },
+    {
+      "id": "deepagents",
+      "name": "DeepAgents",
+      "mode": "sdk-backend",
+      "scope": "FilesystemMiddleware tools through a BackendProtocol implementation",
+      "guide": "docs/deepagents.md",
+      "entrypoints": [
+        "integrations/python-agents"
+      ],
+      "tests": [
+        "tests/python_agents_contract.py"
+      ],
+      "benchmarks": [
+        "docs/benchmarks/python-agents-provider-results.json"
+      ]
+    },
+    {
+      "id": "langgraph",
+      "name": "LangGraph",
+      "mode": "sdk-tools",
+      "scope": "Registered StructuredTools through the actual ToolNode execution pipeline",
+      "guide": "docs/langgraph.md",
+      "entrypoints": [
+        "integrations/python-agents"
+      ],
+      "tests": [
+        "tests/python_agents_contract.py"
+      ],
+      "benchmarks": [
+        "docs/benchmarks/python-agents-provider-results.json"
+      ]
+    },
+    {
+      "id": "pydantic-ai",
+      "name": "PydanticAI",
+      "mode": "mcp-toolset",
+      "scope": "Official MCPToolset and stdio transport with the xnip tools",
+      "guide": "docs/pydantic-ai.md",
+      "entrypoints": [
+        "integrations/python-agents"
+      ],
+      "tests": [
+        "tests/python_agents_contract.py"
+      ],
+      "benchmarks": [
+        "docs/benchmarks/python-agents-provider-results.json"
+      ]
+    },
+    {
+      "id": "openai-agents",
+      "name": "OpenAI Agents SDK",
+      "mode": "mcp-toolset",
+      "scope": "Official SDK tool discovery, invocation and stdio session lifecycle",
+      "guide": "docs/agents-sdk.md",
+      "entrypoints": [
+        "integrations/agents-sdk"
+      ],
+      "tests": [
+        "tests/agents_sdk_contract.py"
+      ],
+      "benchmarks": [
+        "docs/benchmarks/agents-sdk-provider-results.json"
+      ]
+    },
+    {
+      "id": "autogen",
+      "name": "AutoGen AgentChat",
+      "mode": "mcp-toolset",
+      "scope": "Official SDK tool discovery, invocation and stdio session lifecycle",
+      "guide": "docs/autogen.md",
+      "entrypoints": [
+        "integrations/autogen"
+      ],
+      "tests": [
+        "tests/autogen_contract.py"
+      ],
+      "benchmarks": [
+        "docs/benchmarks/autogen-provider-results.json"
+      ]
+    },
+    {
+      "id": "smolagents",
+      "name": "smolagents",
+      "mode": "mcp-toolset",
+      "scope": "Official SDK tool discovery, invocation and stdio session lifecycle",
+      "guide": "docs/smolagents.md",
+      "entrypoints": [
+        "integrations/smolagents"
+      ],
+      "tests": [
+        "tests/smolagents_contract.py"
+      ],
+      "benchmarks": [
+        "docs/benchmarks/smolagents-provider-results.json"
+      ]
+    },
+    {
+      "id": "google-adk",
+      "name": "Google ADK",
+      "mode": "mcp-toolset",
+      "scope": "Official McpToolset, ToolContext, filtering, confirmation and owned stdio sessions",
+      "guide": "docs/google-adk.md",
+      "entrypoints": [
+        "integrations/google-adk"
+      ],
+      "tests": [
+        "tests/google_adk_contract.py"
+      ],
+      "benchmarks": [
+        "docs/benchmarks/google-adk-provider-results.json"
+      ]
+    },
+    {
+      "id": "crewai",
+      "name": "CrewAI",
+      "mode": "mcp-toolset",
+      "scope": "Official MCP resolver and BaseTools with fresh file-tool invocations",
+      "guide": "docs/crewai.md",
+      "entrypoints": [
+        "integrations/crewai"
+      ],
+      "tests": [
+        "tests/crewai_contract.py"
+      ],
+      "benchmarks": [
+        "docs/benchmarks/crewai-provider-results.json"
+      ]
+    },
+    {
+      "id": "codex",
+      "name": "Codex",
+      "mode": "mcp-profile",
+      "scope": "Official client configuration; real stdio tools; evidence distinguishes CLI and GUI surfaces",
+      "guide": "docs/host-profiles.md#codex",
+      "entrypoints": [
+        "integrations/host-profiles"
+      ],
+      "tests": [
+        "tests/host_profiles_contract.py"
+      ],
+      "benchmarks": [
+        "docs/benchmarks/host-profiles-results.json"
+      ]
+    },
+    {
+      "id": "claude-code",
+      "name": "Claude Code",
+      "mode": "mcp-profile",
+      "scope": "Official client configuration; real stdio tools; evidence distinguishes CLI and GUI surfaces",
+      "guide": "docs/host-profiles.md#claude-code",
+      "entrypoints": [
+        "integrations/host-profiles"
+      ],
+      "tests": [
+        "tests/host_profiles_contract.py"
+      ],
+      "benchmarks": [
+        "docs/benchmarks/host-profiles-results.json"
+      ]
+    },
+    {
+      "id": "cursor",
+      "name": "Cursor",
+      "mode": "mcp-profile",
+      "scope": "Official client configuration; real stdio tools; evidence distinguishes CLI and GUI surfaces",
+      "guide": "docs/host-profiles.md#cursor",
+      "entrypoints": [
+        "integrations/host-profiles"
+      ],
+      "tests": [
+        "tests/host_profiles_contract.py"
+      ],
+      "benchmarks": [
+        "docs/benchmarks/host-profiles-results.json"
+      ]
+    },
+    {
+      "id": "vscode",
+      "name": "VS Code",
+      "mode": "mcp-profile",
+      "scope": "Official client configuration; real stdio tools; evidence distinguishes CLI and GUI surfaces",
+      "guide": "docs/host-profiles.md#vscode",
+      "entrypoints": [
+        "integrations/host-profiles"
+      ],
+      "tests": [
+        "tests/host_profiles_contract.py"
+      ],
+      "benchmarks": [
+        "docs/benchmarks/host-profiles-results.json"
+      ]
+    },
+    {
+      "id": "copilot",
+      "name": "GitHub Copilot",
+      "mode": "mcp-profile",
+      "scope": "Official client configuration; real stdio tools; evidence distinguishes CLI and GUI surfaces",
+      "guide": "docs/host-profiles.md#copilot",
+      "entrypoints": [
+        "integrations/host-profiles"
+      ],
+      "tests": [
+        "tests/host_profiles_contract.py"
+      ],
+      "benchmarks": [
+        "docs/benchmarks/host-profiles-results.json"
+      ]
+    },
+    {
+      "id": "copilot-cli",
+      "name": "GitHub Copilot CLI",
+      "mode": "mcp-profile",
+      "scope": "Official client configuration; real stdio tools; evidence distinguishes CLI and GUI surfaces",
+      "guide": "docs/host-profiles.md#copilot-cli",
+      "entrypoints": [
+        "integrations/host-profiles"
+      ],
+      "tests": [
+        "tests/host_profiles_contract.py"
+      ],
+      "benchmarks": [
+        "docs/benchmarks/host-profiles-results.json"
+      ]
+    },
+    {
+      "id": "roo-code",
+      "name": "Roo Code",
+      "mode": "mcp-profile",
+      "scope": "Official client configuration; real stdio tools; evidence distinguishes CLI and GUI surfaces",
+      "guide": "docs/host-profiles.md#roo-code",
+      "entrypoints": [
+        "integrations/host-profiles"
+      ],
+      "tests": [
+        "tests/host_profiles_contract.py"
+      ],
+      "benchmarks": [
+        "docs/benchmarks/host-profiles-results.json"
+      ]
+    },
+    {
+      "id": "cline-gui",
+      "name": "Cline GUI",
+      "mode": "mcp-profile",
+      "scope": "Official client configuration; real stdio tools; evidence distinguishes CLI and GUI surfaces",
+      "guide": "docs/host-profiles.md#cline-gui",
+      "entrypoints": [
+        "integrations/host-profiles"
+      ],
+      "tests": [
+        "tests/host_profiles_contract.py"
+      ],
+      "benchmarks": [
+        "docs/benchmarks/host-profiles-results.json"
+      ]
+    },
+    {
+      "id": "windsurf",
+      "name": "Windsurf",
+      "mode": "mcp-profile",
+      "scope": "Official client configuration; real stdio tools; evidence distinguishes CLI and GUI surfaces",
+      "guide": "docs/host-profiles.md#windsurf",
+      "entrypoints": [
+        "integrations/host-profiles"
+      ],
+      "tests": [
+        "tests/host_profiles_contract.py"
+      ],
+      "benchmarks": [
+        "docs/benchmarks/host-profiles-results.json"
+      ]
+    },
+    {
+      "id": "goose",
+      "name": "Goose",
+      "mode": "mcp-profile",
+      "scope": "Official client configuration; real stdio tools; evidence distinguishes CLI and GUI surfaces",
+      "guide": "docs/host-profiles.md#goose",
+      "entrypoints": [
+        "integrations/host-profiles"
+      ],
+      "tests": [
+        "tests/host_profiles_contract.py"
+      ],
+      "benchmarks": [
+        "docs/benchmarks/host-profiles-results.json"
+      ]
+    },
+    {
+      "id": "continue",
+      "name": "Continue",
+      "mode": "mcp-profile",
+      "scope": "Official client configuration; real stdio tools; evidence distinguishes CLI and GUI surfaces",
+      "guide": "docs/host-profiles.md#continue",
+      "entrypoints": [
+        "integrations/host-profiles"
+      ],
+      "tests": [
+        "tests/host_profiles_contract.py"
+      ],
+      "benchmarks": [
+        "docs/benchmarks/host-profiles-results.json"
+      ]
+    },
+    {
+      "id": "zed",
+      "name": "Zed",
+      "mode": "mcp-profile",
+      "scope": "Official client configuration; real stdio tools; evidence distinguishes CLI and GUI surfaces",
+      "guide": "docs/host-profiles.md#zed",
+      "entrypoints": [
+        "integrations/host-profiles"
+      ],
+      "tests": [
+        "tests/host_profiles_contract.py"
+      ],
+      "benchmarks": [
+        "docs/benchmarks/host-profiles-results.json"
+      ]
+    },
+    {
+      "id": "gemini-cli",
+      "name": "Gemini CLI",
+      "mode": "mcp-profile",
+      "scope": "Official client configuration; real stdio tools; evidence distinguishes CLI and GUI surfaces",
+      "guide": "docs/host-profiles.md#gemini-cli",
+      "entrypoints": [
+        "integrations/host-profiles"
+      ],
+      "tests": [
+        "tests/host_profiles_contract.py"
+      ],
+      "benchmarks": [
+        "docs/benchmarks/host-profiles-results.json"
+      ]
+    },
+    {
+      "id": "qwen-code",
+      "name": "Qwen Code",
+      "mode": "mcp-profile",
+      "scope": "Official client configuration; real stdio tools; evidence distinguishes CLI and GUI surfaces",
+      "guide": "docs/host-profiles.md#qwen-code",
+      "entrypoints": [
+        "integrations/host-profiles"
+      ],
+      "tests": [
+        "tests/host_profiles_contract.py"
+      ],
+      "benchmarks": [
+        "docs/benchmarks/host-profiles-results.json"
+      ]
+    }
+  ]
+}

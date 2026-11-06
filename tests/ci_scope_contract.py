@@ -106,7 +106,7 @@ class GroupBoundaryContracts(unittest.TestCase):
             "GLOSSARY.md", "THIRD_PARTY_LICENSES.md", "LICENSE", "LICENSE-MIT",
             "COPYING", "NOTICE", "notes/guide.md", "docs/architecture.md",
             "docs/testing.md", "docs/benchmarks/results.json",
-            "docs/benchmarks/charts/overview.svg", "benches/edit_cost.py",
+            "docs/benchmarks/charts/overview.svg",
             "benches/native/codex_adapter.py", "tests/release_contract.py",
             "tests/publish_release_contract.py", ".github/scripts/release.py",
             ".github/scripts/publish_release.py", ".github/scripts/publish_npm.py",
@@ -164,6 +164,35 @@ class GroupBoundaryContracts(unittest.TestCase):
             with self.subTest(path=path):
                 self.assert_scope(path, integrations=True, npm=True, harnesses=True)
         self.assert_scope("integrations/goose/config.windows.yaml", integrations=True, harnesses=True)
+
+    def test_native_adapter_and_measurement_inputs_select_their_real_host_checks(self):
+        for path in ["integrations/pi-native/index.mjs", "integrations/native/editor-client.mjs",
+                     "integrations/gemini-native/index.mjs", "integrations/cline-native/extension.mjs",
+                     "integrations/opencode/index.mjs", "integrations/host-profiles/xnip_profiles.py"]:
+            with self.subTest(path=path):
+                self.assert_scope(path, integrations=True, npm=True, harnesses=True)
+        self.assert_scope("integrations/dsh-native/index.mjs", integrations=True, harnesses=True)
+        self.assert_scope("integrations/openhands-native/xnip_openhands.py", integrations=True, harnesses=True)
+        for path in ["tests/native_e2e.py", "tests/native_e2e_contract.py", "tests/native_byte_contract.py",
+                     "tests/pi_native_runtime.mjs", "tests/pi_native_packaged.mjs",
+                     "tests/native_provider_bench_contract.mjs", "tests/pi_provider_bench_contract.mjs",
+                     "benches/edit_cost.py", "benches/native_provider.mjs", "benches/pi_provider.mjs",
+                     "benches/gemini_provider.mjs", "benches/cline_provider.mjs",
+                     "benches/native/openhands_setup.py", "benches/native/openhands_requirements.txt",
+                     "tests/gemini_native_contract.mjs", "tests/cline_native_packaged.mjs",
+                     "tests/openhands_native_contract.py",
+                     "benches/native/dsh_native/0.2.1-rc.5/package-lock.json"]:
+            with self.subTest(path=path):
+                self.assert_scope(path, harnesses=True)
+
+    def test_sdk_shared_fixtures_and_individual_runners_select_real_host_checks(self):
+        for path in ["benches/agents_sdk_provider.py", "benches/autogen_provider.py",
+                     "benches/smolagents_provider.py", "benches/agent_sdk_bridge.py",
+                     "tests/agent_sdks_contract_common.py", "tests/python_agents_runtime.py",
+                     "tests/host_profiles_bench_contract.py"]:
+            with self.subTest(path=path):
+                self.assert_scope(path, harnesses=True)
+        self.assert_scope("integrations/catalog.json", rust=True, integrations=True)
 
     def test_pure_harness_documentation_and_hints_do_not_rebuild_platform_packages(self):
         for path in ["integrations/dsh/README.md", "integrations/pi/README.md",

@@ -1,0 +1,664 @@
+{
+  "schema_version": 1,
+  "scope": "Early debug-profile observations with distinct executable hashes. The release encoding control compares the same source and executable.",
+  "model_calls": 0,
+  "provenance_boundary": "These early captures identify binaries and host labels; the release cohorts additionally capture full maintained source and host package fingerprints.",
+  "before": {
+    "created_at": "2026-11-05T22:20:58.125Z",
+    "node": "v24.22.1",
+    "binary_sha256": "fb28b655153d2e23b2a00bffa03e66c4ef4d3c17623444d8e9fff0c4412aee01",
+    "binary_bytes": 38159208,
+    "build_profile": "debug",
+    "results": [
+      {
+        "version": "0.2.1-rc.2",
+        "provider": "dsh-original",
+        "file_bytes": 1048576,
+        "setup_ms": 131.75931200000002,
+        "samples": [
+          {
+            "warmup": true,
+            "read_ms": 6.93467000000004,
+            "edit_ms": 16.589439000000027,
+            "bridge_request_bytes": 0,
+            "bridge_response_bytes": 0,
+            "bridge_requests": 0
+          },
+          {
+            "warmup": false,
+            "read_ms": 2.768292000000031,
+            "edit_ms": 10.103192999999976,
+            "bridge_request_bytes": 0,
+            "bridge_response_bytes": 0,
+            "bridge_requests": 0
+          },
+          {
+            "warmup": false,
+            "read_ms": 2.3562479999999937,
+            "edit_ms": 10.922042000000033,
+            "bridge_request_bytes": 0,
+            "bridge_response_bytes": 0,
+            "bridge_requests": 0
+          },
+          {
+            "warmup": false,
+            "read_ms": 2.6464500000000157,
+            "edit_ms": 11.546731000000023,
+            "bridge_request_bytes": 0,
+            "bridge_response_bytes": 0,
+            "bridge_requests": 0
+          }
+        ]
+      },
+      {
+        "version": "0.2.1-rc.2",
+        "provider": "dsh-original",
+        "file_bytes": 5242880,
+        "setup_ms": 131.75931200000002,
+        "samples": [
+          {
+            "warmup": true,
+            "read_ms": 7.212333000000001,
+            "edit_ms": 46.57944100000003,
+            "bridge_request_bytes": 0,
+            "bridge_response_bytes": 0,
+            "bridge_requests": 0
+          },
+          {
+            "warmup": false,
+            "read_ms": 6.6995750000000385,
+            "edit_ms": 43.737288999999976,
+            "bridge_request_bytes": 0,
+            "bridge_response_bytes": 0,
+            "bridge_requests": 0
+          },
+          {
+            "warmup": false,
+            "read_ms": 3.7424419999999827,
+            "edit_ms": 45.247307000000035,
+            "bridge_request_bytes": 0,
+            "bridge_response_bytes": 0,
+            "bridge_requests": 0
+          },
+          {
+            "warmup": false,
+            "read_ms": 3.7314660000000686,
+            "edit_ms": 34.83083799999997,
+            "bridge_request_bytes": 0,
+            "bridge_response_bytes": 0,
+            "bridge_requests": 0
+          }
+        ]
+      },
+      {
+        "version": "0.2.1-rc.2",
+        "provider": "xnip-native",
+        "file_bytes": 1048576,
+        "setup_ms": 18.396881000000008,
+        "samples": [
+          {
+            "warmup": true,
+            "read_ms": 2.1994439999999713,
+            "edit_ms": 1062.22335,
+            "bridge_request_bytes": 486,
+            "bridge_response_bytes": 22020731,
+            "bridge_requests": 3
+          },
+          {
+            "warmup": false,
+            "read_ms": 1.925512000000026,
+            "edit_ms": 1088.0509970000003,
+            "bridge_request_bytes": 486,
+            "bridge_response_bytes": 22020731,
+            "bridge_requests": 3
+          },
+          {
+            "warmup": false,
+            "read_ms": 2.655055000000175,
+            "edit_ms": 1074.9914900000003,
+            "bridge_request_bytes": 487,
+            "bridge_response_bytes": 22020732,
+            "bridge_requests": 3
+          },
+          {
+            "warmup": false,
+            "read_ms": 2.6035189999997783,
+            "edit_ms": 1130.308696,
+            "bridge_request_bytes": 489,
+            "bridge_response_bytes": 22020734,
+            "bridge_requests": 3
+          }
+        ]
+      },
+      {
+        "version": "0.2.1-rc.2",
+        "provider": "xnip-native",
+        "file_bytes": 5242880,
+        "setup_ms": 18.396881000000008,
+        "samples": [
+          {
+            "warmup": true,
+            "read_ms": 3.1671660000001793,
+            "edit_ms": 6213.269869999999,
+            "bridge_request_bytes": 489,
+            "bridge_response_bytes": 110101118,
+            "bridge_requests": 3
+          },
+          {
+            "warmup": false,
+            "read_ms": 4.098419999998441,
+            "edit_ms": 5353.086471999999,
+            "bridge_request_bytes": 489,
+            "bridge_response_bytes": 110101118,
+            "bridge_requests": 3
+          },
+          {
+            "warmup": false,
+            "read_ms": 3.4727789999997185,
+            "edit_ms": 4974.863428000001,
+            "bridge_request_bytes": 489,
+            "bridge_response_bytes": 110101118,
+            "bridge_requests": 3
+          },
+          {
+            "warmup": false,
+            "read_ms": 5.0440249999992375,
+            "edit_ms": 5235.178042,
+            "bridge_request_bytes": 489,
+            "bridge_response_bytes": 110101118,
+            "bridge_requests": 3
+          }
+        ]
+      },
+      {
+        "version": "0.2.1-rc.5",
+        "provider": "dsh-original",
+        "file_bytes": 1048576,
+        "setup_ms": 122.02779499999815,
+        "samples": [
+          {
+            "warmup": true,
+            "read_ms": 6.039883999997983,
+            "edit_ms": 8.906663999998273,
+            "bridge_request_bytes": 0,
+            "bridge_response_bytes": 0,
+            "bridge_requests": 0
+          },
+          {
+            "warmup": false,
+            "read_ms": 2.340237000000343,
+            "edit_ms": 6.754666000000725,
+            "bridge_request_bytes": 0,
+            "bridge_response_bytes": 0,
+            "bridge_requests": 0
+          },
+          {
+            "warmup": false,
+            "read_ms": 1.7872950000019046,
+            "edit_ms": 6.687376000001677,
+            "bridge_request_bytes": 0,
+            "bridge_response_bytes": 0,
+            "bridge_requests": 0
+          },
+          {
+            "warmup": false,
+            "read_ms": 2.345884999998816,
+            "edit_ms": 6.4343709999993735,
+            "bridge_request_bytes": 0,
+            "bridge_response_bytes": 0,
+            "bridge_requests": 0
+          }
+        ]
+      },
+      {
+        "version": "0.2.1-rc.5",
+        "provider": "dsh-original",
+        "file_bytes": 5242880,
+        "setup_ms": 122.02779499999815,
+        "samples": [
+          {
+            "warmup": true,
+            "read_ms": 3.301084999999148,
+            "edit_ms": 31.90790200000265,
+            "bridge_request_bytes": 0,
+            "bridge_response_bytes": 0,
+            "bridge_requests": 0
+          },
+          {
+            "warmup": false,
+            "read_ms": 5.48661699999866,
+            "edit_ms": 25.439236999998684,
+            "bridge_request_bytes": 0,
+            "bridge_response_bytes": 0,
+            "bridge_requests": 0
+          },
+          {
+            "warmup": false,
+            "read_ms": 18.901530999999522,
+            "edit_ms": 20.277030000001105,
+            "bridge_request_bytes": 0,
+            "bridge_response_bytes": 0,
+            "bridge_requests": 0
+          },
+          {
+            "warmup": false,
+            "read_ms": 2.7357949999968696,
+            "edit_ms": 19.139078999996855,
+            "bridge_request_bytes": 0,
+            "bridge_response_bytes": 0,
+            "bridge_requests": 0
+          }
+        ]
+      },
+      {
+        "version": "0.2.1-rc.5",
+        "provider": "xnip-native",
+        "file_bytes": 1048576,
+        "setup_ms": 16.660917000001064,
+        "samples": [
+          {
+            "warmup": true,
+            "read_ms": 2.4755479999985255,
+            "edit_ms": 1004.397815999997,
+            "bridge_request_bytes": 486,
+            "bridge_response_bytes": 22020731,
+            "bridge_requests": 3
+          },
+          {
+            "warmup": false,
+            "read_ms": 7.447846999999456,
+            "edit_ms": 1007.4652139999998,
+            "bridge_request_bytes": 486,
+            "bridge_response_bytes": 22020731,
+            "bridge_requests": 3
+          },
+          {
+            "warmup": false,
+            "read_ms": 1.8183719999979076,
+            "edit_ms": 1075.6471270000002,
+            "bridge_request_bytes": 487,
+            "bridge_response_bytes": 22020732,
+            "bridge_requests": 3
+          },
+          {
+            "warmup": false,
+            "read_ms": 1.9543540000013309,
+            "edit_ms": 1123.9230420000022,
+            "bridge_request_bytes": 489,
+            "bridge_response_bytes": 22020734,
+            "bridge_requests": 3
+          }
+        ]
+      },
+      {
+        "version": "0.2.1-rc.5",
+        "provider": "xnip-native",
+        "file_bytes": 5242880,
+        "setup_ms": 16.660917000001064,
+        "samples": [
+          {
+            "warmup": true,
+            "read_ms": 5.48047299999962,
+            "edit_ms": 5170.6978549999985,
+            "bridge_request_bytes": 489,
+            "bridge_response_bytes": 110101118,
+            "bridge_requests": 3
+          },
+          {
+            "warmup": false,
+            "read_ms": 4.104609000001801,
+            "edit_ms": 5245.717597000003,
+            "bridge_request_bytes": 489,
+            "bridge_response_bytes": 110101118,
+            "bridge_requests": 3
+          },
+          {
+            "warmup": false,
+            "read_ms": 3.202980000001844,
+            "edit_ms": 5165.030595000004,
+            "bridge_request_bytes": 489,
+            "bridge_response_bytes": 110101118,
+            "bridge_requests": 3
+          },
+          {
+            "warmup": false,
+            "read_ms": 3.1367210000025807,
+            "edit_ms": 5345.254612999997,
+            "bridge_request_bytes": 489,
+            "bridge_response_bytes": 110101118,
+            "bridge_requests": 3
+          }
+        ]
+      }
+    ]
+  },
+  "after": {
+    "created_at": "2026-11-05T22:34:44.630Z",
+    "node": "v24.22.1",
+    "binary_sha256": "0c7e1b85ee14bd1a2df32a34e651b820f30e1cf57469657bad936731013f879d",
+    "binary_bytes": 38309504,
+    "build_profile": "debug",
+    "results": [
+      {
+        "version": "0.2.1-rc.2",
+        "provider": "dsh-original",
+        "file_bytes": 1048576,
+        "setup_ms": 119.900352,
+        "samples": [
+          {
+            "warmup": true,
+            "read_ms": 7.243414000000001,
+            "edit_ms": 12.099630999999988,
+            "bridge_request_bytes": 0,
+            "bridge_response_bytes": 0,
+            "bridge_requests": 0
+          },
+          {
+            "warmup": false,
+            "read_ms": 3.8504429999999843,
+            "edit_ms": 9.973806999999994,
+            "bridge_request_bytes": 0,
+            "bridge_response_bytes": 0,
+            "bridge_requests": 0
+          },
+          {
+            "warmup": false,
+            "read_ms": 1.9294670000000167,
+            "edit_ms": 6.716600999999997,
+            "bridge_request_bytes": 0,
+            "bridge_response_bytes": 0,
+            "bridge_requests": 0
+          },
+          {
+            "warmup": false,
+            "read_ms": 2.1775759999999877,
+            "edit_ms": 7.739321999999987,
+            "bridge_request_bytes": 0,
+            "bridge_response_bytes": 0,
+            "bridge_requests": 0
+          }
+        ]
+      },
+      {
+        "version": "0.2.1-rc.2",
+        "provider": "dsh-original",
+        "file_bytes": 5242880,
+        "setup_ms": 119.900352,
+        "samples": [
+          {
+            "warmup": true,
+            "read_ms": 5.789833999999985,
+            "edit_ms": 27.803296999999986,
+            "bridge_request_bytes": 0,
+            "bridge_response_bytes": 0,
+            "bridge_requests": 0
+          },
+          {
+            "warmup": false,
+            "read_ms": 5.8827119999999695,
+            "edit_ms": 24.42241299999995,
+            "bridge_request_bytes": 0,
+            "bridge_response_bytes": 0,
+            "bridge_requests": 0
+          },
+          {
+            "warmup": false,
+            "read_ms": 2.7752849999999967,
+            "edit_ms": 28.371221000000048,
+            "bridge_request_bytes": 0,
+            "bridge_response_bytes": 0,
+            "bridge_requests": 0
+          },
+          {
+            "warmup": false,
+            "read_ms": 3.1384029999999825,
+            "edit_ms": 27.658893999999975,
+            "bridge_request_bytes": 0,
+            "bridge_response_bytes": 0,
+            "bridge_requests": 0
+          }
+        ]
+      },
+      {
+        "version": "0.2.1-rc.2",
+        "provider": "xnip-native",
+        "file_bytes": 1048576,
+        "setup_ms": 13.558709999999962,
+        "samples": [
+          {
+            "warmup": true,
+            "read_ms": 2.0020250000000033,
+            "edit_ms": 306.609969,
+            "bridge_request_bytes": 494,
+            "bridge_response_bytes": 6292120,
+            "bridge_requests": 3
+          },
+          {
+            "warmup": false,
+            "read_ms": 2.7001330000000507,
+            "edit_ms": 313.1253220000001,
+            "bridge_request_bytes": 494,
+            "bridge_response_bytes": 6292120,
+            "bridge_requests": 3
+          },
+          {
+            "warmup": false,
+            "read_ms": 2.0936009999998078,
+            "edit_ms": 304.59981300000004,
+            "bridge_request_bytes": 495,
+            "bridge_response_bytes": 6292121,
+            "bridge_requests": 3
+          },
+          {
+            "warmup": false,
+            "read_ms": 1.8026389999999992,
+            "edit_ms": 306.00911599999995,
+            "bridge_request_bytes": 497,
+            "bridge_response_bytes": 6292123,
+            "bridge_requests": 3
+          }
+        ]
+      },
+      {
+        "version": "0.2.1-rc.2",
+        "provider": "xnip-native",
+        "file_bytes": 5242880,
+        "setup_ms": 13.558709999999962,
+        "samples": [
+          {
+            "warmup": true,
+            "read_ms": 5.492121999999881,
+            "edit_ms": 1510.129147,
+            "bridge_request_bytes": 497,
+            "bridge_response_bytes": 31457947,
+            "bridge_requests": 3
+          },
+          {
+            "warmup": false,
+            "read_ms": 3.1466960000002473,
+            "edit_ms": 1505.8553149999998,
+            "bridge_request_bytes": 497,
+            "bridge_response_bytes": 31457947,
+            "bridge_requests": 3
+          },
+          {
+            "warmup": false,
+            "read_ms": 3.388867000000573,
+            "edit_ms": 1473.1317669999999,
+            "bridge_request_bytes": 497,
+            "bridge_response_bytes": 31457947,
+            "bridge_requests": 3
+          },
+          {
+            "warmup": false,
+            "read_ms": 4.210557000000335,
+            "edit_ms": 1536.9424930000005,
+            "bridge_request_bytes": 497,
+            "bridge_response_bytes": 31457947,
+            "bridge_requests": 3
+          }
+        ]
+      },
+      {
+        "version": "0.2.1-rc.5",
+        "provider": "dsh-original",
+        "file_bytes": 1048576,
+        "setup_ms": 102.41560500000014,
+        "samples": [
+          {
+            "warmup": true,
+            "read_ms": 5.876653999999689,
+            "edit_ms": 9.838018999999804,
+            "bridge_request_bytes": 0,
+            "bridge_response_bytes": 0,
+            "bridge_requests": 0
+          },
+          {
+            "warmup": false,
+            "read_ms": 1.809718999999859,
+            "edit_ms": 7.341551000000436,
+            "bridge_request_bytes": 0,
+            "bridge_response_bytes": 0,
+            "bridge_requests": 0
+          },
+          {
+            "warmup": false,
+            "read_ms": 1.7458540000006906,
+            "edit_ms": 6.170654999999897,
+            "bridge_request_bytes": 0,
+            "bridge_response_bytes": 0,
+            "bridge_requests": 0
+          },
+          {
+            "warmup": false,
+            "read_ms": 2.389820999999756,
+            "edit_ms": 7.159313000000111,
+            "bridge_request_bytes": 0,
+            "bridge_response_bytes": 0,
+            "bridge_requests": 0
+          }
+        ]
+      },
+      {
+        "version": "0.2.1-rc.5",
+        "provider": "dsh-original",
+        "file_bytes": 5242880,
+        "setup_ms": 102.41560500000014,
+        "samples": [
+          {
+            "warmup": true,
+            "read_ms": 4.993691000000581,
+            "edit_ms": 30.963574000000335,
+            "bridge_request_bytes": 0,
+            "bridge_response_bytes": 0,
+            "bridge_requests": 0
+          },
+          {
+            "warmup": false,
+            "read_ms": 3.2779209999998784,
+            "edit_ms": 21.98655299999973,
+            "bridge_request_bytes": 0,
+            "bridge_response_bytes": 0,
+            "bridge_requests": 0
+          },
+          {
+            "warmup": false,
+            "read_ms": 3.1346679999996923,
+            "edit_ms": 22.964206999999988,
+            "bridge_request_bytes": 0,
+            "bridge_response_bytes": 0,
+            "bridge_requests": 0
+          },
+          {
+            "warmup": false,
+            "read_ms": 3.1575819999998203,
+            "edit_ms": 19.315742999999202,
+            "bridge_request_bytes": 0,
+            "bridge_response_bytes": 0,
+            "bridge_requests": 0
+          }
+        ]
+      },
+      {
+        "version": "0.2.1-rc.5",
+        "provider": "xnip-native",
+        "file_bytes": 1048576,
+        "setup_ms": 15.275371000000632,
+        "samples": [
+          {
+            "warmup": true,
+            "read_ms": 2.302110999999968,
+            "edit_ms": 304.09654500000033,
+            "bridge_request_bytes": 494,
+            "bridge_response_bytes": 6292120,
+            "bridge_requests": 3
+          },
+          {
+            "warmup": false,
+            "read_ms": 2.1892229999994015,
+            "edit_ms": 306.34002899999905,
+            "bridge_request_bytes": 494,
+            "bridge_response_bytes": 6292120,
+            "bridge_requests": 3
+          },
+          {
+            "warmup": false,
+            "read_ms": 1.8106299999999464,
+            "edit_ms": 298.3316080000004,
+            "bridge_request_bytes": 495,
+            "bridge_response_bytes": 6292121,
+            "bridge_requests": 3
+          },
+          {
+            "warmup": false,
+            "read_ms": 1.8452719999986584,
+            "edit_ms": 300.3886849999999,
+            "bridge_request_bytes": 497,
+            "bridge_response_bytes": 6292123,
+            "bridge_requests": 3
+          }
+        ]
+      },
+      {
+        "version": "0.2.1-rc.5",
+        "provider": "xnip-native",
+        "file_bytes": 5242880,
+        "setup_ms": 15.275371000000632,
+        "samples": [
+          {
+            "warmup": true,
+            "read_ms": 4.72140600000057,
+            "edit_ms": 1489.369775000001,
+            "bridge_request_bytes": 497,
+            "bridge_response_bytes": 31457947,
+            "bridge_requests": 3
+          },
+          {
+            "warmup": false,
+            "read_ms": 4.154123000000254,
+            "edit_ms": 1481.1693880000003,
+            "bridge_request_bytes": 497,
+            "bridge_response_bytes": 31457947,
+            "bridge_requests": 3
+          },
+          {
+            "warmup": false,
+            "read_ms": 4.09334299999864,
+            "edit_ms": 1489.2256500000003,
+            "bridge_request_bytes": 497,
+            "bridge_response_bytes": 31457947,
+            "bridge_requests": 3
+          },
+          {
+            "warmup": false,
+            "read_ms": 3.73205599999892,
+            "edit_ms": 1485.5699019999993,
+            "bridge_request_bytes": 497,
+            "bridge_response_bytes": 31457947,
+            "bridge_requests": 3
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,6 +1,6 @@
 {
   "name": "xnip-cli",
-  "version": "0.5.7",
+  "version": "0.6.0",
   "private": true,
   "description": "Byte-preserving editing CLI and MCP server for coding agents",
   "license": "MIT",
@@ -15,6 +15,10 @@
     "./native": "./lib/native.cjs",
     "./dsh": "./integrations/dsh/index.mjs",
     "./pi": "./integrations/pi/index.mjs",
+    "./pi-native": "./integrations/pi-native/index.mjs",
+    "./gemini-native": "./integrations/gemini-native/index.mjs",
+    "./cline-native": "./integrations/cline-native/index.mjs",
+    "./opencode": "./integrations/opencode/index.mjs",
     "./package.json": "./package.json"
   },
   "files": [
@@ -37,7 +41,7 @@
     }
   },
   "peerDependencies": {
-    "@deepseek-ai/dsh-mcp-client": "0.2.1-rc.2"
+    "@deepseek-ai/dsh-mcp-client": "0.2.1-rc.2 || 0.2.1-rc.5"
   },
   "peerDependenciesMeta": {
     "@deepseek-ai/dsh-mcp-client": {

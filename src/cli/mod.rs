@@ -19,6 +19,8 @@ mod indent;
 mod insert;
 mod mcp;
 mod move_op;
+mod native;
+mod native_backend;
 mod peek;
 mod recover;
 mod replace;
@@ -75,8 +77,10 @@ pub enum Command {
     Apply(apply::Args),
     /// Run as a Model Context Protocol (MCP) server over stdio.
     Mcp(mcp::Args),
+    /// Install, remove or inspect an explicitly selected native host adapter.
+    Native(native::Args),
     /// Self-diagnose environment and version.
-    Doctor,
+    Doctor(native::DoctorArgs),
     /// Restore a failed or interrupted transaction from its recovery journal.
     Recover(recover::Args),
 }
@@ -126,7 +130,7 @@ where
         return Ok(ExitCode::SUCCESS);
     };
 
-    let _usage = if matches!(command, Command::Doctor) {
+    let _usage = if matches!(command, Command::Doctor(_) | Command::Native(_)) {
         None
     } else {
         crate::update::begin_usage(matches!(command, Command::Mcp(_)))
@@ -141,13 +145,9 @@ where
         Command::Indent(a) => indent::run(a)?,
         Command::Apply(a) => apply::run(a)?,
         Command::Mcp(a) => mcp::run(&a),
+        Command::Native(a) => native::run(a)?,
         Command::Recover(a) => recover::run(&a)?,
-        Command::Doctor => {
-            let stdout = std::io::stdout();
-            let mut out = stdout.lock();
-            crate::doctor::report(&mut out).map_err(|e| anyhow::anyhow!("doctor: {e}"))?;
-            exit::SUCCESS
-        }
+        Command::Doctor(a) => native::doctor(&a)?,
     };
 
     Ok(ExitCode::from(code))

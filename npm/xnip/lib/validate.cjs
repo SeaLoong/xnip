@@ -154,7 +154,10 @@ if (native) {
   if (metadata.localOnly && JSON.stringify(pkg.bundledDependencies) !== JSON.stringify(Object.keys(expectedDependencies))) fail("private host-local package must bundle its one payload");
   const required = {
     "./native": "./lib/native.cjs", "./dsh": "./integrations/dsh/index.mjs",
-    "./pi": "./integrations/pi/index.mjs", "./package.json": "./package.json",
+    "./pi": "./integrations/pi/index.mjs", "./pi-native": "./integrations/pi-native/index.mjs",
+    "./gemini-native": "./integrations/gemini-native/index.mjs", "./cline-native": "./integrations/cline-native/index.mjs",
+    "./opencode": "./integrations/opencode/index.mjs",
+    "./package.json": "./package.json",
   };
   if (pkg.bin?.xnip !== "./bin/xnip.cjs" || !exactKeys(pkg.exports, Object.keys(required))
       || Object.entries(required).some(([key, value]) => pkg.exports[key] !== value)

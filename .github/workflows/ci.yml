@@ -152,7 +152,7 @@ jobs:
     needs: scope
     if: needs.scope.outputs.harnesses == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -162,6 +162,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "24.13.0"
+      - uses: pnpm/action-setup@v4
+        with:
+          version: "11.25.0"
       - name: Build the actual xnip MCP server
         run: cargo build --locked
       - name: Prepare pinned official runtimes in the isolated benchmark directory
@@ -214,6 +217,54 @@ jobs:
       - name: Paired four-profile runner and report smoke
         run: |
           python benches/native_tools.py --xnip target/debug/xnip --harnesses dsh,pi,goose --skip-host-exchange --only-profiles xnip-edit,dsh-fs-bare-edit,pi-native-edit,goose-native-edit --repeats 1 --json target/native-bench/ci/results.json --markdown target/native-bench/ci/results.md
+      - name: Prepare frozen hosts and SDK integration environments
+        run: |
+          cargo test --locked --test dsh_native_lifecycle_contract --no-run
+          node benches/native/dsh_native_setup.mjs
+          node benches/native/dsh_native_setup.mjs --check
+          node benches/native/gemini_native_setup.mjs
+          node benches/native/gemini_native_setup.mjs --check
+          node benches/native/cline_native_setup.mjs
+          node benches/native/cline_native_setup.mjs --check
+          python benches/native/openhands_setup.py
+          python benches/native/openhands_setup.py --check
+          node benches/native/opencode_native_setup.mjs
+          node benches/native/opencode_native_setup.mjs --check
+          python benches/native/aider_native_setup.py
+          python benches/native/aider_native_setup.py --check
+          python benches/native/python_agents_setup.py
+          python benches/native/python_agents_setup.py --check
+          python benches/native/agent_sdks_setup.py
+          python benches/native/agent_sdks_setup.py --check
+          python benches/native/smolagents_setup.py
+          python benches/native/smolagents_setup.py --check
+          python benches/native/host_profiles_setup.py
+          python benches/native/host_profiles_setup.py --check
+          python benches/native/google_adk_setup.py
+          python benches/native/google_adk_setup.py --check
+          python benches/native/crewai_setup.py
+          python benches/native/crewai_setup.py --check
+      - name: Host and SDK E2E and measured-runner contracts
+        run: |
+          python tests/native_e2e_contract.py
+          python tests/native_e2e.py
+          python tests/native_byte_contract.py
+          node --test-reporter=tap tests/dsh_native_setup.mjs
+          node --test-reporter=tap tests/native_provider_bench_contract.mjs
+          node --test-reporter=tap tests/pi_provider_bench_contract.mjs
+          node --test-reporter=tap tests/gemini_provider_bench_contract.mjs
+          node --test-reporter=tap tests/cline_provider_bench_contract.mjs
+          node --test-reporter=tap tests/opencode_provider_bench_contract.mjs
+          target/native-hosts/openhands-1.60.1/.venv/bin/python tests/openhands_provider_bench_contract.py
+          target/native-hosts/aider-5dc9490/aider-venv/bin/python tests/aider_provider_bench_contract.py
+          target/native-hosts/python-agents/.venv/bin/python tests/python_agents_bench_contract.py
+          target/native-hosts/agent-sdks-openai-0.24.0-autogen-0.7.5/.venv/bin/python tests/agent_sdk_bench_contract.py
+          XNIP_AGENT_SDK_HOST=autogen target/native-hosts/agent-sdks-openai-0.24.0-autogen-0.7.5/.venv/bin/python tests/agent_sdk_bench_contract.py
+          XNIP_AGENT_SDK_HOST=smolagents target/native-hosts/smolagents-1.26.0/.venv/bin/python tests/agent_sdk_bench_contract.py
+          python tests/host_profiles_bench_contract.py
+          target/native-hosts/google-adk-2.13.0/.venv/bin/python tests/google_adk_bench_contract.py
+          target/native-hosts/crewai-1.15.36/.venv/bin/python tests/crewai_provider_bench_contract.py
+          python tests/integration_catalog_contract.py
 
   compatibility:
     name: minimum Rust and dependency policy

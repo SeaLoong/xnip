@@ -1,22 +1,36 @@
 # DeepSeek Harness integration
 
-The `xnip-cli/dsh` entry is an explicit [Cordis plugin](https://github.com/deepseek-ai/deepseek-harness) for DeepSeek Harness (DSH). It registers the native xnip executable through the official `@deepseek-ai/dsh-mcp-client` stdio bridge.
+DSH has two local integration paths:
 
-This integration is included in the **xnip-cli** npm package. The parent selects the matching xnip native platform payload; see the [installation guide](installation.md). The standard DSH 0.2.1-rc.2 host already carries the compatible `@deepseek-ai/dsh-mcp-client` package. Its official profile resolver makes that host dependency available inside profile plugins, including this entry's dynamic import. Loading this integration does not install or launch the complete DSH application.
+| Integration | Tools and behavior | Setup |
+|---|---|---|
+| Native filesystem provider | Host `read`, `write`, `edit`, observations, sandbox, approval, diff and optional rewind | [Profile installer](native.md#dsh-profile-setup) |
+| MCP bundle | Five namespaced xnip tools through the official DSH MCP bridge | The `xnip-cli/dsh` plugin below |
+
+Both paths have real-host coverage for DSH `0.2.1-rc.2` and `0.2.1-rc.5`. The
+native bundle selects its provider and suspends an existing `xnip-mcp` entry for
+that profile; removing it restores the earlier composition. Restart running
+profile sessions after changing their installed bundles.
+
+The `xnip-cli/dsh` entry is an explicit [Cordis plugin](https://github.com/deepseek-ai/deepseek-harness).
+It registers xnip through the official `@deepseek-ai/dsh-mcp-client` stdio bridge.
+The **xnip-cli** npm package selects the matching xnip platform payload; see
+[installation](installation.md). Standard hosts at both verified versions carry
+the bridge. DSH's official profile resolver makes that host dependency available
+inside profile plugins, including this entry's dynamic import.
 
 ## Register the plugin
 
-After `xnip-cli` has been published, explicitly install it into a DSH-managed
-profile through DSH's plugin manager. Replace `my-profile` with the intended profile:
+For a source build, prepare a private host-only tarball using the
+[local npm validation guide](releasing.md#local-npm-validation), then add its
+absolute path to the intended DSH-managed profile:
 
 ```sh
-dsh plugin --profile my-profile add xnip-cli
+dsh plugin --profile my-profile add /absolute/path/to/xnip-cli-VERSION.tgz
 ```
 
-For offline validation or unpublished development builds, prepare the private
-host-only tarball using the repository's [local npm validation guide](releasing.md#local-npm-validation).
-It bundles one matching host executable; pass its absolute path to the same
-`dsh plugin ... add` command instead of the registry package name.
+The tarball contains the executable for the selected local platform. A published
+package can be selected by passing `xnip-cli` to the same command.
 
 The package declares its bundled `integrations/dsh/cordis.patch.yml`, which inserts the `xnip-mcp` plugin. DSH resolves its relative `./index.mjs` beside that patch. This explicit command updates the selected profile; installing the npm package alone does not enable the plugin or rewrite a profile.
 
@@ -66,7 +80,11 @@ Relative xnip file paths resolve from this subprocess's configured `cwd`. Changi
 
 ## Filesystem behavior
 
-This is an external MCP integration. xnip performs the file operations, and no synthetic `ctx.fs` implementation or `fs/observed` event is installed. DSH's existing native file tools remain available; their observation policy is separate. When returning to a native tool that requires an observed file version, read that file through the native read tool to refresh its observation.
+The MCP plugin sends file operations to the xnip subprocess. DSH's original
+filesystem provider and observation policy continue to serve its native tools.
+Read an MCP-modified file through the native read tool before a native mutation
+that requires an observed file version. The [native provider](native.md)
+integrates writes with that host observation policy directly.
 
 Use the [xnip operation guide](SKILL.md) for exact replacements, guarded whole-file writes, insertion, batching, previews, checks and recovery. Text receipt mode keeps previews and recovery-journal details visible; select structured receipts when a consumer needs the machine fields.
 
@@ -91,7 +109,18 @@ await ctx.plugin(Xnip, { cwd: '/absolute/path/to/project' });
 
 ## Verification
 
-The integration's source compatibility is based on official DSH [commit 687f282e8625c6b8d11ff58211a90524be2e4317](https://github.com/deepseek-ai/deepseek-harness/tree/687f282e8625c6b8d11ff58211a90524be2e4317). Its tool naming, stdio configuration and disposal follow the [official MCP client](https://github.com/deepseek-ai/deepseek-harness/blob/687f282e8625c6b8d11ff58211a90524be2e4317/packages/mcp/mcp-client/README.md).
+For the full native-provider lifecycle and MCP selection/restoration matrix,
+follow [native host E2E setup](testing.md#native-host-e2e). It starts the actual
+official hosts at both verified versions, checks registered tools and schemas,
+executes edits and retains zero-model-generation evidence. The unified matrix
+covers native hosts and SDK integrations; `python3 tests/native_e2e.py --host dsh`
+selects the DSH checks. Setup includes Node 24, Python 3, Rust and the official
+plugin manager's pnpm 11.25.0 CLI.
+
+The historical benchmark and worker contracts below pin official DSH
+[commit 687f282e8625c6b8d11ff58211a90524be2e4317](https://github.com/deepseek-ai/deepseek-harness/tree/687f282e8625c6b8d11ff58211a90524be2e4317)
+/ `0.2.1-rc.2`. Tool naming, stdio configuration and disposal follow its
+[official MCP client](https://github.com/deepseek-ai/deepseek-harness/blob/687f282e8625c6b8d11ff58211a90524be2e4317/packages/mcp/mcp-client/README.md).
 
 From a source checkout, use Node 22.19+ or 24+ to prepare the isolated official DSH runtime explicitly, then verify its recorded source, dependency and bundle hashes:
 
@@ -100,7 +129,10 @@ node benches/native/dsh_setup.mjs
 node benches/native/dsh_setup.mjs --check
 ```
 
-Preparation fetches the pinned official source and locked dependencies with dependency lifecycle scripts disabled. The check command verifies the existing cache; it does not prepare dependencies or invoke an editor. The default runtime is `target/native-bench/dsh-0.2.1-rc.2/runtime.mjs`.
+This historical adapter preparation fetches pinned official source and locked
+dependencies with dependency lifecycle scripts disabled. `--check` verifies its
+cache. Its runtime is `target/native-bench/dsh-0.2.1-rc.2/runtime.mjs`; native host
+E2E uses separately prepared official npm hosts through `dsh_native_setup.mjs`.
 
 Run the configuration contracts independently:
 
@@ -128,4 +160,4 @@ The independent native-tool worker contracts use the same prepared runtime:
 python tests/dsh_adapter_contract.py
 ```
 
-Set `XNIP_DSH_TEST_BINARY` to the locally built 0.5.5 executable when running the source bridge checks, including the `.exe` suffix on Windows. The packaged test uses the installed tarball's verified executable instead. The worker contracts cover all 13 benchmark fixtures through both filesystem and string-editor tools, with real reads/views in observed modes; bare modes explicitly omit those observation guards. These commands exercise local tools and captured protocol behavior without model calls or a DSH UI session.
+Set `XNIP_DSH_TEST_BINARY` to the locally built executable when running the source bridge checks, including the `.exe` suffix on Windows. The packaged test uses the installed tarball's verified executable instead. The worker contracts cover all 13 benchmark fixtures through both filesystem and string-editor tools, with real reads/views in observed modes; bare modes explicitly omit those observation guards. These commands exercise local tools and captured protocol behavior without model calls or a DSH UI session.

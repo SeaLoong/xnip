@@ -1,0 +1,11 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "xnip": {
+      "type": "local",
+      "command": ["xnip", "mcp", "--receipts", "text"],
+      "enabled": true,
+      "environment": {"XNIP_AUTO_UPDATE": "0"}
+    }
+  }
+}

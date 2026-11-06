@@ -20,9 +20,20 @@ Install the minimum toolchain with `rustup toolchain install 1.89.0 --profile mi
 
 Run `python3 tests/install_sh.py` on Linux/macOS. On Windows, build the debug executable and run `./tests/install_ps1.ps1`. Installer tests use local fixtures and preserve the user's installed binary. Run `python3 tests/native_benchmark_contract.py` for offline benchmark plumbing. Release changes also require `python3 tests/release_contract.py` and `python3 tests/publish_release_contract.py`; both are offline and never publish. The full suite map and platform limits are in [testing](docs/testing.md); updater cases have a separate [map](docs/update-testing.md).
 
+Host adapters and client profiles have a separate [369-check real-tool
+matrix](docs/testing.md#native-host-e2e). Prepare its Node 24, Python 3.13 and
+pnpm dependencies explicitly; each Python SDK family uses its own locked
+environment. Run the affected routes through `tests/native_e2e.py --host ...`
+when changing their integration contracts.
+
 ## Make a change
 
 Keep byte transformations in `src/core/ops`, guarded exact edits in `src/core/edit.rs`, shared read behavior in `src/core/read.rs`, persistence/recovery in `src/core/atomic.rs` and `transaction.rs`, and batch planning in `src/apply`. CLI and MCP adapt these contracts. See [architecture](docs/architecture.md).
+
+Native adapters reuse `core::transaction::Plan` and `apply::commit::prepare`.
+Keep host names, approval policy and result presentation in adapters; byte
+transformations, snapshots and controlled commit belong to the existing core.
+Extend these existing boundaries as host requirements evolve.
 
 Verify changed semantics through the relevant public interface, including preserved bytes, CRLF/EOF, ambiguous targets, preconditions, nonwriting modes and failure boundaries. Use child-process working directories rather than changing the process-wide cwd in parallel tests. Test background updates with copied binaries and isolated offline fixtures. Keep install-test candidates newer than the crate version (the fixtures use `999.0.0`), and test older/equal SemVer rejection separately so a release bump cannot invalidate installation coverage.
 
@@ -40,7 +51,12 @@ cargo run --locked -p xtask -- sync-integrations
 
 Commit generated files with their canonical source. Short project instruction templates under `integrations/` are maintained separately. Load detailed rules through operation-specific pointers; keep always-loaded instructions small.
 
-The [native benchmark](docs/benchmarks/README.md) compares actual editor implementations. Report paired relative costs together with byte correctness and captured-response limits; representation-only measurements are supplementary.
+The [benchmark index](docs/benchmarks/README.md) covers actual editors, registered
+framework tools and MCP SDK/client pipelines. Record each execution boundary,
+actual arguments/results, host-compatible outcomes and independent file-byte
+goals. Preserve captured reports with their original source and binary
+fingerprints; new measurements belong in a separate run. Representation-only
+measurements are supplementary.
 
 ## Review and release
 
