@@ -100,3 +100,18 @@ jobs:
               detail = detail.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
               print(f"::error title=Packed npm smoke {os.environ['XNIP_EXPECT_PLATFORM']}::{detail}", flush=True)
           raise SystemExit(result.returncode)
+      - name: Verify the real Windows short-path regression fixture
+        if: startsWith(matrix.platform, 'win32')
+        shell: python
+        run: |
+          import subprocess
+          import sys
+
+          result = subprocess.run([sys.executable, "tests/npm_prepare_contract.py"],
+              stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+              text=True, encoding="utf-8", errors="replace")
+          print(result.stdout, end="", flush=True)
+          if result.returncode:
+              detail = result.stdout[-12000:].replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+              print("::error title=Windows short-path regression::" + detail)
+          raise SystemExit(result.returncode)

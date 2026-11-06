@@ -310,14 +310,31 @@ class NpmPreparationContract(unittest.TestCase):
         from npm_release_smoke import installed_dsh_module_graph
         self.fixture_dist()
         prepare.prepare(self.base,self.base/"public",public=True)
-        consumer=self.base/"consumer"
-        package=consumer/"node_modules"/prepare.PARENT_NAME
-        shutil.copytree(self.base/"public/packages/xnip",package)
-        # The format-fixture binaries are kept on disk and never executed here.
-        self.assertEqual(set(path.name for path in (consumer/"node_modules").iterdir()),{prepare.PARENT_NAME})
-        proof=installed_dsh_module_graph(shutil.which("node"),consumer,os.environ)
-        self.assertEqual(proof,{"provider":"xnip-native-fs","runtime":"loaded","rewind":"loaded",
-                                "client":"shared","lifecycle":"resolved"})
+        with tempfile.TemporaryDirectory(prefix="xnip graph 空格 ") as temporary:
+            consumer=Path(temporary)/"consumer"
+            self.assertFalse(consumer.resolve().is_relative_to(ROOT))
+            package=consumer/"node_modules"/prepare.PARENT_NAME
+            shutil.copytree(self.base/"public/packages/xnip",package)
+            # The format-fixture binaries are kept on disk and never executed here.
+            self.assertEqual(set(path.name for path in (consumer/"node_modules").iterdir()),{prepare.PARENT_NAME})
+            if os.name=="nt":
+                import ctypes
+                short_path=ctypes.WinDLL("kernel32",use_last_error=True).GetShortPathNameW
+                short_path.argtypes=[ctypes.c_wchar_p,ctypes.c_wchar_p,ctypes.c_uint32]
+                short_path.restype=ctypes.c_uint32
+                size=short_path(str(consumer),None,0)
+                if not size:raise ctypes.WinError(ctypes.get_last_error())
+                buffer=ctypes.create_unicode_buffer(size)
+                written=short_path(str(consumer),buffer,size)
+                if not written:raise ctypes.WinError(ctypes.get_last_error())
+                self.assertLess(written,size)
+                alias=Path(buffer.value)
+                self.assertNotEqual(str(alias),str(consumer),"The Windows graph contract must exercise a real 8.3 alias")
+                self.assertEqual(alias.resolve(),consumer.resolve())
+                consumer=alias
+            proof=installed_dsh_module_graph(shutil.which("node"),consumer,os.environ)
+            self.assertEqual(proof,{"provider":"xnip-native-fs","runtime":"loaded","rewind":"loaded",
+                                    "client":"shared","lifecycle":"resolved"})
 
     @unittest.skipUnless(shutil.which("node"),"Node required for the installed module graph")
     def test_release_smoke_rejects_the_installed_graph_with_its_shared_client_missing(self):

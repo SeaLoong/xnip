@@ -184,6 +184,9 @@ def main():
     try:
         result = smoke(args.prepared,args.source_commit,args.expected_platform)
     except (OSError,ValueError,subprocess.SubprocessError,KeyError) as error:
+        if os.environ.get("GITHUB_ACTIONS") == "true":
+            detail = str(error).replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+            print("::error::npm release smoke failed: " + detail, flush=True)
         parser.exit(1,"npm release smoke failed: "+str(error)+"\n")
     print(json.dumps(result))
     return 0
