@@ -1,0 +1,100 @@
+name: verify existing release candidate
+
+on:
+  push:
+    branches: [verify/release-smoke-0.6.3]
+
+# Cross-run artifact download uses the job's read-only token.
+permissions:
+  contents: read
+  actions: read
+
+env:
+  XNIP_AUTO_UPDATE: "0"
+  XNIP_CANDIDATE_SOURCE_COMMIT: 05ee754068251652df80743aa135b44dfc345045
+
+jobs:
+  npm-install:
+    name: existing candidate npm install (${{ matrix.platform }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux-x64
+            os: ubuntu-latest
+          - platform: linux-arm64
+            os: ubuntu-24.04-arm
+          - platform: darwin-x64
+            os: macos-15-intel
+          - platform: darwin-arm64
+            os: macos-latest
+          - platform: win32-x64
+            os: windows-latest
+          - platform: win32-arm64
+            os: windows-11-arm
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      # The diagnostic branch contains the corrected acceptance test.
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.13.0"
+          architecture: ${{ endsWith(matrix.platform, '-arm64') && 'arm64' || 'x64' }}
+      - name: Download the completed 0.6.3 candidate from its original release run
+        uses: actions/download-artifact@v4
+        with:
+          name: delivery-0.6.3
+          path: candidate
+          repository: SeaLoong/xnip
+          run-id: 42232526682
+          github-token: ${{ github.token }}
+      - name: Record the original Windows assertion on the same candidate
+        if: startsWith(matrix.platform, 'win32')
+        env:
+          XNIP_EXPECT_PLATFORM: ${{ matrix.platform }}
+        shell: python
+        run: |
+          import os
+          from pathlib import Path
+          import subprocess
+          import sys
+
+          original = Path("tests/npm_release_smoke_original.py")
+          original.write_bytes(subprocess.check_output([
+              "git", "show", os.environ["XNIP_CANDIDATE_SOURCE_COMMIT"] + ":tests/npm_release_smoke.py",
+          ]))
+          result = subprocess.run([
+              sys.executable, str(original), "--prepared", "candidate/dist-npm",
+              "--source-commit", os.environ["XNIP_CANDIDATE_SOURCE_COMMIT"],
+          ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+             text=True, encoding="utf-8", errors="replace")
+          detail = f"Original acceptance exit={result.returncode}\n" + result.stdout[-10000:]
+          detail = detail.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+          print("::notice title=Original Windows acceptance::" + detail)
+      - name: Verify the original candidate on the actual target architecture
+        env:
+          XNIP_EXPECT_PLATFORM: ${{ matrix.platform }}
+        shell: python
+        run: |
+          import os
+          import subprocess
+          import sys
+
+          result = subprocess.run([
+              sys.executable, "tests/npm_release_smoke.py",
+              "--prepared", "candidate/dist-npm",
+              "--source-commit", os.environ["XNIP_CANDIDATE_SOURCE_COMMIT"],
+          ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+             text=True, encoding="utf-8", errors="replace")
+          print(result.stdout, end="", flush=True)
+          if result.returncode:
+              detail = result.stdout[-12000:] or f"smoke exited {result.returncode} without output"
+              detail = detail.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+              print(f"::error title=Packed npm smoke {os.environ['XNIP_EXPECT_PLATFORM']}::{detail}", flush=True)
+          raise SystemExit(result.returncode)

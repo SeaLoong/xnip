@@ -31,6 +31,7 @@ def require(condition, message):
 
 def installed_dsh_module_graph(node, consumer, environment):
     """Load the installed provider graph without an official DSH host dependency."""
+    consumer = consumer.resolve()
     script = r'''
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
