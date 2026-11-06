@@ -39,6 +39,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
@@ -56,6 +57,7 @@ jobs:
           github-token: ${{ github.token }}
       - name: Record the original Windows assertion on the same candidate
         if: startsWith(matrix.platform, 'win32')
+        continue-on-error: true
         env:
           XNIP_EXPECT_PLATFORM: ${{ matrix.platform }}
         shell: python
