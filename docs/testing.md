@@ -218,7 +218,7 @@ The [profile session suite](../tests/dsh_native_sessions.mjs) boots isolated
 official profiles and creates and reopens persisted sessions through the host's
 session controller. It loads compact tools from the installed bundle through
 the real preset loader, checks actual tool calls and file bytes with model
-generation idle, and exercises reinstalling an affected 0.6.7 bundle while
+generation idle, and exercises reinstalling a historical affected bundle while
 retaining the old installation state and sessions.
 
 These product journeys execute on Linux. Their per-version logs and
@@ -260,7 +260,7 @@ includes native adapters, shared transport, suites and measured runners.
 | [DSH native host preparation](../tests/dsh_native_setup.mjs) | Frozen full-host dependency installs; exact versions and hashes; actual original tool execution; drift detection and repeatable restoration |
 | [DSH provider](../tests/dsh_native_contract.mjs) / [official host contracts](../tests/dsh_host_governance.mjs) | Official filesystem tools, observations, sandbox, stale versions, approval audit, diff projection and zero model calls |
 | [native E2E matrix](../tests/native_e2e.py) | 514 checks across catalog backends, plugins, framework SDKs and client profiles; one pinned executable and capability probe; actual registries, processes, file results, restoration and lifecycle phases; exact completed-count and zero-skip gates |
-| [DSH upgrades](../tests/dsh_native_upgrade.mjs) | Profile-owned bundle revalidation, original 0.6.4 adapter adoption, user-plugin isolation and preserved user state across verification, recovery and removal |
+| [DSH upgrades](../tests/dsh_native_upgrade.mjs) | Profile-owned bundle revalidation, historical adapter adoption, user-plugin isolation and preserved user state across verification, recovery and removal |
 | [installed-npm DSH journey](../tests/npm_dsh_lifecycle.py) | Three profile layouts per DSH version on Linux; installed command shim, packaged adapter discovery, actual host edits and official contracts, full restoration/cleanup and empty-state reentry outside the checkout |
 | [E2E result gates](../tests/native_e2e_contract.py) | Ten stdlib contracts require complete TAP/unittest summaries and exact counts; exercise CRLF, duplicate/truncated summaries, failures, skips/cancellations/TODOs, application `OK` diagnostics and unittest expected-failure/unexpected-success outcomes; counted separately from SDK E2E |
 | [Pi native extension](../tests/pi_native_contract.mjs) / [byte fixtures](../tests/pi_native_bytes.mjs) / [installed package](../tests/pi_native_packaged.mjs) | Actual official loader/session/runner and default private-tarball entry; same-name host tools; hooks, matching, queue, cancellation, rendering, binary reads, original byte scenarios and reload restoration |

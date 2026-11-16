@@ -92,7 +92,7 @@ the same core transactions as CLI and MCP. Its profile installer verifies real
 file bytes and these official host contracts, and retains snapshots for
 restoration. The host manages user plugins; xnip's lifecycle does not load or
 validate them.
-`xnip-cli` 0.6.8 bundles its DSH adapter for the
+`xnip-cli` bundles its DSH adapter for the
 [installed-command lifecycle](docs/native.md#dsh-profile-setup).
 DSH host-lifecycle evidence is on Linux;
 the CLI and MCP have their own cross-platform verification.

@@ -35,7 +35,7 @@ The [support matrix](support.md) lists official SDK toolsets and the
 [14 client profiles](host-profiles.md), with client-specific configuration,
 CLI and stdio evidence. Generated profiles include `--cwd` in their arguments.
 
-Use `xnip mcp --toolset full` when a client needs specialized replace/insert/move/indent or doctor tools. xnip 0.5.0+ supports modern `server/discover` negotiation and legacy `initialize`, followed by `tools/list` / `tools/call` over stdio. This resolves the pinned Goose client's default negotiation; 0.4 releases use the older SDK. See [DSH](dsh.md), [Pi](pi.md), [Goose](goose.md) and [npm installation](../npm/README.md) for host-specific setup. Restart an existing server to discover a changed toolset.
+Use `xnip mcp --toolset full` when a client needs specialized replace/insert/move/indent or doctor tools. xnip supports modern `server/discover` negotiation and legacy `initialize`, followed by `tools/list` / `tools/call` over stdio. See [DSH](dsh.md), [Pi](pi.md), [Goose](goose.md) and [npm installation](../npm/README.md) for host-specific setup. Restart an existing server to discover a changed toolset.
 
 ## Tool list
 

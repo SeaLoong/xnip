@@ -5,7 +5,7 @@ the `read`, `write` and `edit` tools, permission checks, observations, diff
 presentation and approval events. The provider calls xnip's existing core through
 the local `xnip native serve` JSON-lines process.
 
-`xnip-cli` 0.6.8 bundles this adapter. Install it and use its `xnip` launcher with
+`xnip-cli` bundles this adapter. Install it and use its `xnip` launcher with
 an initialized DSH profile and the intended DSH executable:
 
 ```sh
@@ -27,16 +27,15 @@ and [compact tool setup](../../docs/native.md#compact-tools).
 The lifecycle revalidates profile-owned installations after host upgrades before
 verify or uninstall, preserving current user package fields and lockfiles.
 
-If an existing compact profile fails to start `tool-fs` while loading
-`./compact-tools.mjs`, first run `native uninstall` with its original profile
-and state directory to restore official tools. Keep that installation snapshot,
-upgrade to `xnip-cli@0.6.8`, then install with `--compact-tools` and a new, unused
-`--state-dir`. Use the new state directory for later lifecycle commands and
-restart the DSH host for that profile before opening or resuming sessions.
-Updating npm alone does not replace the
-profile's private bundle. Follow the [repair commands](../../docs/native.md#repair-an-affected-compact-profile);
-preserve the old manifests and hashes without editing them, and retain session
-data.
+Updating npm does not replace the profile's private bundle. To update or
+reinstall it, update the CLI with `npm install --global xnip-cli@latest`, then
+uninstall and verify restoration with the original profile and state. Back up
+the state if needed, clean the retained installation data, and reinstall using
+the same state directory. Keep `--compact-tools` when you want compact presentation.
+Restart the DSH host for that profile before opening or resuming sessions.
+Follow the [reinstallation commands](../../docs/native.md#update-or-reinstall-a-profile-bundle).
+Cleanup removes xnip's installation backups and manifest; DSH sessions remain
+intact. Do not edit retained manifests or hashes by hand.
 
 Fresh installations stage the adapter in
 `PROFILE/.xnip-native-package` and select the relative bundle
@@ -44,7 +43,7 @@ Fresh installations stage the adapter in
 current xnip executable's absolute path. The profile's user patch, dependency
 contents, lockfile and existing `node_modules` root symlink stay intact.
 Installation snapshots cover the manifest and private adapter directory.
-Retained name-based 0.6.1 installations keep their original restoration path.
+Retained name-based installations keep their original restoration path.
 
 Use the same host arguments with `native verify`, `native uninstall` and
 `native verify --restored`; the [lifecycle guide](../../docs/native.md) covers
