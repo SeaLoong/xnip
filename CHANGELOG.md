@@ -4,6 +4,11 @@ User-visible changes are recorded here. Versions follow Semantic Versioning; com
 
 ## [Unreleased]
 
+## [0.6.8] - 2026-11-17
+
+- Fix compact DSH sessions failing to start when a preset loaded `./compact-tools.mjs` relative to the host loader. Installed patches now use the final profile bundle's absolute file URL, including nested preset plugins.
+- Cover compact tool loading through the official preset/session path instead of relying only on composed configuration and injected tool factories. Document reinstalling affected profile bundles while retaining their original installation snapshots and sessions.
+
 ## [0.6.7] - 2026-11-16
 
 - Remove the third-party `dsh-rewind-plugin` runtime, frozen-host and test dependencies. DSH lifecycle verification always checks the official provider's byte edits, observations, sandbox, approvals and diff presentation; user plugins remain under the host's management.

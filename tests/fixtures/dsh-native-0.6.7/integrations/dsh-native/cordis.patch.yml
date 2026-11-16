@@ -1,0 +1,9 @@
+# Package-owned layer: removing the bundle restores the original provider.
+- id: xnip-mcp
+  disabled: true
+- id: fs-sandbox
+  disabled: true
+- insert:
+    - id: xnip-native-fs
+      name: ./index.mjs
+      config: {}

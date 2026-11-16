@@ -138,11 +138,14 @@ async function main() {
       const { default: yaml } = await import(pathToFileURL(require.resolve('js-yaml')).href);
       const { entryListSchema } = await import(pathToFileURL(require.resolve('@deepseek-ai/cordis-plugin-include')).href);
       const { entries } = await fixtureOptions(profile);
+      // Preset plugins inherit the declaring host loader's base URL. Anchor
+      // this module to the installed bundle before it enters a nested config.
+      const compactModule = pathToFileURL(path.join(bundleRoot, 'compact-tools.mjs')).href;
       let count = 0;
       const replace = rows => rows.map(row => {
         if (row.name === '@deepseek-ai/dsh-tool-fs') {
           count++;
-          return { ...row, name: './compact-tools.mjs' };
+          return { ...row, name: compactModule };
         }
         if (Array.isArray(row.config?.plugins)) return { ...row, config: { ...row.config, plugins: replace(row.config.plugins) } };
         if (row.group && Array.isArray(row.config)) return { ...row, config: replace(row.config) };
@@ -152,7 +155,7 @@ async function main() {
       for (const row of entries) {
         if (row.name === '@deepseek-ai/dsh-tool-fs' && row.disabled !== true) {
           count++;
-          patches.push({ id: row.id, disabled: true }, { insert: [{ ...row, id: 'xnip-compact-tools', name: './compact-tools.mjs' }] });
+          patches.push({ id: row.id, disabled: true }, { insert: [{ ...row, id: 'xnip-compact-tools', name: compactModule }] });
         } else if (Array.isArray(row.config?.plugins) || (row.group && Array.isArray(row.config))) {
           const before = count;
           const updated = replace([row])[0];

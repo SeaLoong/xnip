@@ -5,7 +5,7 @@ the `read`, `write` and `edit` tools, permission checks, observations, diff
 presentation and approval events. The provider calls xnip's existing core through
 the local `xnip native serve` JSON-lines process.
 
-`xnip-cli` 0.6.7 bundles this adapter. Install it and use its `xnip` launcher with
+`xnip-cli` 0.6.8 bundles this adapter. Install it and use its `xnip` launcher with
 an initialized DSH profile and the intended DSH executable:
 
 ```sh
@@ -26,6 +26,17 @@ tool execution, validation, approval and diff metadata. See the
 and [compact tool setup](../../docs/native.md#compact-tools).
 The lifecycle revalidates profile-owned installations after host upgrades before
 verify or uninstall, preserving current user package fields and lockfiles.
+
+If an existing compact profile fails to start `tool-fs` while loading
+`./compact-tools.mjs`, first run `native uninstall` with its original profile
+and state directory to restore official tools. Keep that installation snapshot,
+upgrade to `xnip-cli@0.6.8`, then install with `--compact-tools` and a new, unused
+`--state-dir`. Use the new state directory for later lifecycle commands and
+restart the DSH host for that profile before opening or resuming sessions.
+Updating npm alone does not replace the
+profile's private bundle. Follow the [repair commands](../../docs/native.md#repair-an-affected-compact-profile);
+preserve the old manifests and hashes without editing them, and retain session
+data.
 
 Fresh installations stage the adapter in
 `PROFILE/.xnip-native-package` and select the relative bundle

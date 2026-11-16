@@ -23,6 +23,7 @@ SUITES = (
     ("bytes", "tests/dsh_native_bytes.mjs", 13),
     ("host-governance", "tests/dsh_host_governance.mjs", 2),
     ("packaged", "tests/dsh_native_packaged.mjs", 3),
+    ("profile-sessions", "tests/dsh_native_sessions.mjs", 1),
 )
 PI_SUITES = (
     ("registry-and-tools", "tests/pi_native_contract.mjs", 10),

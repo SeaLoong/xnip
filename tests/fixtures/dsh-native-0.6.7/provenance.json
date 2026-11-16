@@ -1,0 +1,19 @@
+{
+  "repository": "https://github.com/SeaLoong/xnip",
+  "commit": "45978217a9482da16f447399adb2840179d98ec0",
+  "version": "0.6.7",
+  "npm_tarball": "https://registry.npmjs.org/xnip-cli/-/xnip-cli-0.6.7.tgz",
+  "npm_tarball_sha256": "a968a1cf55fbcc19573acea6098d69ec728a3e7d8712f0b828d7760454154e96",
+  "files_sha256": {
+    "integrations/dsh-native/README.md": "63222640f0135de4830e2e0e65e788c00bbf107c705602cb11c651adeae7391f",
+    "integrations/dsh-native/compact-tools.mjs": "9cfe28106debb718ff7ab1f9962b9e2b180f4d35a416c32ec23731d996e239e0",
+    "integrations/dsh-native/cordis.patch.yml": "499b53542c1fbfc9982125f35ec29b608c037c3927238d35df39e5085ca86028",
+    "integrations/dsh-native/editor-client.mjs": "9f469cc3b703ece19e4526dc8b38d0570f59f1aae32e0d4627e23417c45a7c3d",
+    "integrations/dsh-native/host-governance.mjs": "72177da07fbe9c7ae1caa7db8ca11561667620e49ad2e312c1b4afa7fa98ffcd",
+    "integrations/dsh-native/index.mjs": "e0388f003fc013dc4b4c192f221a4cefce3a00fbf8eb0868947386760b65d9bb",
+    "integrations/dsh-native/lifecycle.mjs": "58adc307f120b6343fb9d8f94075b1ef621771c3a6084d775079aaf8f67fc945",
+    "integrations/dsh-native/package.json": "04878f440e413daaefe7c913028605db1b88693f7c605bffd3909c553c658085",
+    "integrations/dsh-native/runtime.mjs": "eccc65261a8e6b28acf4a2c296db312028273e158291fd961b974035340a2069",
+    "integrations/native/editor-client.mjs": "d0242e291bfb2ef3e2d807552f215fecf9c55d89ab05d3a5d68d67e3ae6524f8"
+  }
+}

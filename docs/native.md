@@ -61,7 +61,7 @@ separate Linux, macOS and Windows executable support.
 The [historical validation record](dsh-validation.md) retains its original
 host versions, selected checks, artifact identities and upgrade boundaries.
 
-`xnip-cli` 0.6.7 bundles the DSH native adapter. Use Node 24 with npm, an existing
+`xnip-cli` 0.6.8 bundles the DSH native adapter. Use Node 24 with npm, an existing
 DSH profile directory and the installed DSH executable:
 
 ```sh
@@ -118,11 +118,11 @@ uninstall and recovery commands.
 
 ### Compact tools
 
-With xnip-cli 0.6.7, add `--compact-tools` to `native install` to
+With xnip-cli 0.6.8, add `--compact-tools` to `native install` to
 select concise model descriptions and mutation receipts:
 
 ```sh
-npm install --global xnip-cli@0.6.7
+npm install --global xnip-cli@0.6.8
 xnip native install --compact-tools \
   --profile /home/me/.dsh/profiles/dev \
   --dsh /path/to/dsh
@@ -145,6 +145,37 @@ DSH 0.2.2's optional `apply_patch` keeps its official schema and implementation;
 the xnip byte-editing backend and compact projections described here cover
 `read`, `write` and `edit`. The host patch tool retains its own matching and
 mutation guarantees.
+
+### Repair an affected compact profile
+
+An older compact installation can fail to start `tool-fs` because DSH resolves
+`./compact-tools.mjs` from the preset's host loader. Version 0.6.8 anchors the
+module to the installed profile bundle. Updating the npm package alone does not
+replace a profile's private bundle.
+
+First uninstall with the existing CLI and the original state directory to
+restore official tools. Keep that state as the installation snapshot, then use
+0.6.8 to install into a new, unused state directory:
+
+```sh
+xnip native uninstall --host dsh --profile /home/me/.dsh/profiles/dev \
+  --dsh /path/to/dsh --state-dir /home/me/.dsh/profiles/dev/.xnip-native
+xnip native verify --restored --host dsh --profile /home/me/.dsh/profiles/dev \
+  --dsh /path/to/dsh --state-dir /home/me/.dsh/profiles/dev/.xnip-native
+npm install --global xnip-cli@0.6.8
+xnip native install --compact-tools --host dsh \
+  --profile /home/me/.dsh/profiles/dev --dsh /path/to/dsh \
+  --state-dir /home/me/.dsh/profiles/dev/.xnip-native-0.6.8
+xnip native verify --host dsh --profile /home/me/.dsh/profiles/dev \
+  --dsh /path/to/dsh --state-dir /home/me/.dsh/profiles/dev/.xnip-native-0.6.8
+```
+
+Substitute the original state path if the affected installation used
+`--state-dir`. Keep using the new state directory for subsequent lifecycle
+commands, and restart the DSH host for that profile after reinstalling before
+opening or resuming sessions.
+Retain the old snapshots without editing their manifests or hashes; session
+data does not need to be removed.
 
 ## Restoration and retained state
 
