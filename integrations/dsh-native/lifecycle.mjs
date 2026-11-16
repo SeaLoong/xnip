@@ -8,10 +8,9 @@ import { promisify } from 'node:util';
 import { pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
 import { createHash } from 'node:crypto';
-import { setEnvironmentData } from 'node:worker_threads';
 import { createFixture } from './runtime.mjs';
 import { clientSource } from './editor-client.mjs';
-import { validateRewind } from './rewind-validation.mjs';
+import { validateHostGovernance } from './host-governance.mjs';
 
 const [verb, ...args] = process.argv.slice(2);
 const option = name => { const i = args.indexOf(name); return i < 0 ? undefined : args[i + 1]; };
@@ -24,7 +23,7 @@ const bundleDirectory = '.xnip-native-package';
 const bundleEntry = './' + bundleDirectory;
 const bundleRoot = path.join(profile, bundleDirectory);
 const bundleFiles = ['package.json', 'index.mjs', 'lifecycle.mjs', 'runtime.mjs', 'compact-tools.mjs',
-  'rewind-validation.mjs', 'editor-client.mjs', 'cordis.patch.yml'];
+  'host-governance.mjs', 'editor-client.mjs', 'cordis.patch.yml'];
 const stage = option('--stage');
 const installed = args.includes('--installed');
 const compact = args.includes('--compact-tools');
@@ -67,7 +66,8 @@ async function main() {
     const require = createRequire(path.join(hostRoot, 'package.json'));
     const boot = await import(pathToFileURL(require.resolve('@deepseek-ai/dsh-app-boot')).href);
     const loaded = boot.loadProfileDirectory('xnip-native-verify', profile, path.join(hostRoot, 'package.json'));
-    if (loaded.skippedBundles.length) throw new Error('Profile has skipped bundles: ' + JSON.stringify(loaded.skippedBundles));
+    const skippedNative = loaded.skippedBundles.filter(bundle => [name, bundleEntry].includes(bundle.packageName));
+    if (skippedNative.length) throw new Error('Native bundle was skipped: ' + JSON.stringify(skippedNative));
     const patches = boot.readProfilePatches('xnip-native-verify', {
       name: path.basename(profile), dir: profile, patchPath: path.join(profile, 'cordis.patch.yml'),
       installAnchor: path.join(hostRoot, 'package.json'), cwd, home, startedBundles: bundles,
@@ -87,7 +87,6 @@ async function main() {
       if (metadata.name !== name) throw new Error('Installed native package identity mismatch');
       plugin = await import(pathToFileURL(path.join(packageRoot, 'index.mjs')).href);
     }
-    const rewind = selectedEntries(entries).some(entry => entry.name === 'dsh-rewind-plugin' || entry.id === 'dsh-rewind-plugin');
     const isFileTools = entry => entry.disabled !== true &&
       (entry.name === '@deepseek-ai/dsh-tool-fs' || entry.name?.endsWith('/compact-tools.mjs'));
     const defaultPreset = entries.find(entry => entry.id === 'agent-preset-registry')?.config?.default;
@@ -99,7 +98,7 @@ async function main() {
       ? providerEntries.find(entry => entry.id === 'xnip-native-fs' && !entry.disabled)?.config?.executable
         ?? process.env.XNIP_EDITOR_EXECUTABLE ?? 'xnip'
       : executable;
-    return { hostRoot, cwd, executable: selectedExecutable, native: active, plugin, providerEntries, rewind,
+    return { hostRoot, cwd, executable: selectedExecutable, native: active, plugin, providerEntries,
       compact: compactTools, toolConfig: toolEntry.config, entries };
   };
   const fixture = async cwd => createFixture(await fixtureOptions(cwd));
@@ -114,13 +113,13 @@ async function main() {
       gaps: ['native operation requests are limited to 32 MiB', 'existing host sessions need restart to load a changed provider'] };
   }
   if (verb === 'observe') {
-    const config = await dump();
+    await dump();
     const temp = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'xnip-dsh-observe-')));
     let runtime;
     try {
       runtime = await fixture(temp);
       const description = await runtime.describe();
-      return { catalog: JSON.stringify({ tools: description.tools, composed_profile: config }), prompt: description.prompt };
+      return { catalog: JSON.stringify({ tools: description.tools }), prompt: description.prompt };
     } finally { if (runtime) await runtime.close(); await fs.rm(temp, { recursive: true, force: true }); }
   }
   if (verb === 'stage') {
@@ -230,30 +229,11 @@ async function main() {
       if (installed && actual !== 'keep\r\nnew\r\n尾巴') throw new Error('Native edit did not preserve byte contract');
       await runtime.close();
       runtime = undefined;
-      let governance;
-      if (installed) {
-        const options = await fixtureOptions(temp);
-        if (options.rewind) {
-          const profileRequire = createRequire(path.join(profile, 'package.json'));
-          const hostRequire = createRequire(path.join(hostRoot, 'package.json'));
-          const boot = await import(pathToFileURL(hostRequire.resolve('@deepseek-ai/dsh-app-boot')).href);
-          const loaded = boot.loadProfileDirectory('xnip-native-verify', profile, path.join(hostRoot, 'package.json'));
-          const resolution = await boot.createRuntimeResolution({ installAnchor: path.join(hostRoot, 'package.json'), profile: loaded, home });
-          // Use the host's exported inherited-resolution bootstrap so a profile
-          // outside the host installation resolves its declared official peers.
-          setEnvironmentData('@deepseek-ai/dsh-app-boot/profile-resolution', { resolution });
-          await import(pathToFileURL(hostRequire.resolve('@deepseek-ai/dsh-app-boot/worker/profile-resolution-bootstrap')).href);
-          const resolve = name => { try { return profileRequire.resolve(name); } catch { return hostRequire.resolve(name); } };
-          options.rewindPlugin = await import(pathToFileURL(resolve('dsh-rewind-plugin')).href);
-          options.rewindVersion = JSON.parse(await fs.readFile(resolve('dsh-rewind-plugin/package.json'), 'utf8')).version;
-        }
-        governance = await validateRewind(options);
-      }
+      const governance = await validateHostGovernance(await fixtureOptions(temp));
       return { functional_edit: true, checks: [
         { name: 'official-profile-composition', status: 'passed', detail: 'Official dsh --dump-config completed' },
         { name: 'real-native-edit', status: 'passed', detail: installed ? 'Installed provider edited bytes through official tools' : 'Original provider edited bytes through official tools' },
-        ...(installed ? [{ name: 'profile-governance', status: 'passed', detail:
-          `${governance.rewind.enabled ? `${governance.plugin}@${governance.version}` : 'rewind inactive in selected profile'}: ${governance.assertions.join('; ')}` }] : []),
+        { name: 'host-governance', status: 'passed', detail: governance.assertions.join('; ') },
       ] };
     } finally { if (runtime) await runtime.close(); await fs.rm(temp, { recursive: true, force: true }); }
   }

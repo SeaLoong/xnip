@@ -193,7 +193,7 @@ identity and tampering, concurrent first starts, stdin/EOF forwarding, exit
 behavior and an active MCP session surviving package removal. They never publish.
 
 Each of the six native npm acceptance runners also resolves the installed DSH
-native exports and loads the packaged provider, runtime, rewind helper and shared
+native exports and loads the packaged provider, runtime, official host checks and shared
 client. The Linux harness separately exercises the official DSH profile lifecycle.
 
 The launcher copies a verified executable into an immutable

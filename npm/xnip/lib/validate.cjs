@@ -168,6 +168,6 @@ if (native) {
       || JSON.stringify(pkg.pi?.extensions) !== '["./integrations/pi/index.mjs"]') fail("invalid CLI or harness entry points");
   for (const relative of [pkg.bin.xnip, ...Object.values(required), pkg.dsh.bundle.patch]) ordinary(relative);
   for (const relative of ["integrations/dsh-native/editor-client.mjs", "integrations/dsh-native/runtime.mjs",
-      "integrations/dsh-native/rewind-validation.mjs", "integrations/dsh-native/cordis.patch.yml",
+      "integrations/dsh-native/host-governance.mjs", "integrations/dsh-native/cordis.patch.yml",
       "integrations/native/editor-client.mjs"]) ordinary(relative);
 }

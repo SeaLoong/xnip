@@ -1,5 +1,5 @@
 //! Transaction engine contracts using a local filesystem lifecycle fixture.
-//! These do not claim that DSH's UI, approval or rewind integration was exercised.
+//! These do not claim that DSH's UI or approval flow was exercised.
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -13,6 +13,76 @@ use xnip::native::{
 
 const ORIGINAL_PACKAGE: &[u8] = b"{\r\n  \"name\": \"user-profile\"\r\n}\r\n";
 const INSTALLED_PACKAGE: &[u8] = b"{\"name\":\"user-profile\",\"native\":true}\n";
+
+#[test]
+fn dsh_observation_comparison_preserves_tool_and_prompt_contracts_across_legacy_profiles() {
+    let lifecycle = native::CommandLifecycle {
+        compact_tools: false,
+        node: "unused-node".into(),
+        driver: "unused-driver".into(),
+        profile: PathBuf::new(),
+        dsh: "unused-host".into(),
+        plugin: PathBuf::new(),
+        executable: "unused-xnip".into(),
+    };
+    let catalog = serde_json::json!({"tools": [{
+        "name": "read", "parameters": {
+            "type": "object", "properties": {"file_path": {"type": "string"}},
+            "required": ["file_path"],
+        },
+    }]});
+    let observe = |value: serde_json::Value, prompt: &str| Observation {
+        catalog: value.to_string(),
+        prompt: prompt.into(),
+    };
+    let current = observe(catalog.clone(), "Follow official host guards.");
+    let mut legacy_catalog = catalog.clone();
+    legacy_catalog["composed_profile"] = "unrelated user plugin settings".into();
+    let legacy = Observation {
+        catalog: serde_json::to_string_pretty(&legacy_catalog).unwrap(),
+        prompt: current.prompt.clone(),
+    };
+    assert!(lifecycle.observations_match(&current, &legacy));
+    assert!(lifecycle.observations_match(&legacy, &current));
+
+    let mut renamed = catalog.clone();
+    renamed["tools"][0]["name"] = "edit".into();
+    let mut changed_schema = catalog.clone();
+    changed_schema["tools"][0]["parameters"]["properties"]["file_path"]["type"] = "integer".into();
+    let mut added_tool = catalog.clone();
+    added_tool["tools"]
+        .as_array_mut()
+        .unwrap()
+        .push(serde_json::json!({"name": "write", "parameters": {"type": "object"}}));
+    let mut unknown_contract = catalog.clone();
+    unknown_contract["future_contract_revision"] = 2.into();
+    for (boundary, changed) in [
+        ("tool identity", renamed),
+        ("argument schema", changed_schema),
+        ("newly advertised tool", added_tool),
+        ("additional contract field", unknown_contract),
+    ] {
+        assert!(
+            !lifecycle.observations_match(&observe(changed, &current.prompt), &legacy),
+            "{boundary} must remain part of the contract"
+        );
+    }
+    assert!(!lifecycle.observations_match(
+        &observe(catalog, "Changed official host guidance."),
+        &legacy,
+    ));
+
+    let raw = Observation {
+        catalog: "legacy non-JSON tool catalog".into(),
+        prompt: current.prompt,
+    };
+    assert!(lifecycle.observations_match(&raw, &raw));
+    let different_raw = Observation {
+        catalog: "different non-JSON tool catalog".into(),
+        ..raw.clone()
+    };
+    assert!(!lifecycle.observations_match(&raw, &different_raw));
+}
 
 // Independent fault switches exercise each host boundary without coupling the
 // installation under test to a fake host state machine.

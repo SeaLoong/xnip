@@ -44,20 +44,24 @@ setup and restoration lifecycle. The profile installer below applies to DSH.
 
 The [`integrations/dsh-native`](../integrations/dsh-native/) adapter keeps
 DSH's `read`, `write` and `edit` tools. It delegates writes to `xnip native serve`
-and retains host path resolution, observations, sandbox, approval, diff and
-rewind services. The same provider has been verified with official DSH
-0.2.1 rc.1–rc.5 and 0.2.2 rc.1/rc.3. Profiles that select rewind use
-`dsh-rewind-plugin@0.19.2` on 0.2.1 and `0.21.2` on 0.2.2. Selection checks
-filesystem and tool-executor capabilities; the peer ranges cover these release
-families, including their prereleases.
+and retains host path resolution, observations, sandbox, approval and diff
+presentation. The same provider has been verified with official DSH
+0.2.1 rc.1–rc.5 and 0.2.2 rc.1/rc.3. Selection checks filesystem and
+tool-executor capabilities; the peer ranges cover these release families,
+including their prereleases.
+
+Lifecycle checks cover provider bytes plus the official host's observation,
+sandbox, approval and diff contracts. Third-party plugins
+remain under the user's host configuration; xnip's lifecycle does not load or
+validate them.
 
 Recorded DSH host-lifecycle evidence is on Linux. macOS and Windows DSH
 host journeys await dedicated validation. The CLI and MCP retain their
 separate Linux, macOS and Windows executable support.
-The [pre-release validation record](dsh-validation.md) lists the seven
-host versions, 176 selected checks, artifact identities and upgrade boundaries.
+The [historical validation record](dsh-validation.md) retains its original
+host versions, selected checks, artifact identities and upgrade boundaries.
 
-`xnip-cli` 0.6.6 bundles the DSH native adapter. Use Node 24 with npm, an existing
+`xnip-cli` 0.6.7 bundles the DSH native adapter. Use Node 24 with npm, an existing
 DSH profile directory and the installed DSH executable:
 
 ```sh
@@ -114,18 +118,18 @@ uninstall and recovery commands.
 
 ### Compact tools
 
-With xnip-cli 0.6.6, add `--compact-tools` to `native install` to
+With xnip-cli 0.6.7, add `--compact-tools` to `native install` to
 select concise model descriptions and mutation receipts:
 
 ```sh
-npm install --global xnip-cli@0.6.6
+npm install --global xnip-cli@0.6.7
 xnip native install --compact-tools \
   --profile /home/me/.dsh/profiles/dev \
   --dsh /path/to/dsh
 ```
 
 Compact mode keeps the same tool names, argument keys, validation,
-read content, canonical values, approval events, diff cards and rewind. Successful
+read content, canonical values, approval events and diff cards. Successful
 edits return `edited`; writes return their operation. The current call's arguments
 identify the file; the host retains full paths and diffs for presentation.
 Ordinary provider mode retains the host schemas and receipts. Byte correctness
@@ -166,8 +170,9 @@ Fresh installations snapshot `package.json` and the private adapter
 directory, hash stored blobs, observe user configuration and lock the profile
 and state directory. Profile lockfiles and dependency-root symlinks remain
 read-only observations. Failed phases restore the baseline; interrupted
-operations retain a recovery manifest. Version 0.6.6 revalidates host
-and profile upgrades with real editing/governance checks during verify or uninstall.
+operations retain a recovery manifest. The lifecycle revalidates host
+and profile upgrades with real editing and official host checks during verify
+or uninstall.
 The rollback target retains current package fields, lockfiles and dependency links
 and removes only the native bundle membership. Changes inside the private adapter
 receive a conflict report with retained snapshots. Successful restoration keeps those
@@ -214,9 +219,7 @@ inspection of that retained evidence.
 The DSH provider uses the host's per-target lock and observed version, then
 rechecks storage during core commit. It returns the host's exact
 `dev:ino:size:mtimeNs:ctimeNs` version from the committed file. Tool-owned
-observation, approval and rewind events continue through their existing host
-services. The lifecycle verifier exercises rewind when the selected profile
-enables it.
+observation and approval events continue through their existing host services.
 
 Storage preserves BOM, CRLF and EOF bytes. Host-normalized multiline matches are
 translated to guarded raw byte spans. Global replacements spanning mixed newline

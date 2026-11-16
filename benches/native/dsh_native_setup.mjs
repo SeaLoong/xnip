@@ -42,7 +42,7 @@ async function inventory(directory, relative = '') {
   return files.sort((a, b) => a.file.localeCompare(b.file, 'en'));
 }
 
-/** Start the official registry, execute its filesystem tools, and load profile/rewind exports. */
+/** Start the official registry, execute its filesystem tools, and load host governance exports. */
 export async function validateHost(directory, version) {
   const requireHost = createRequire(path.join(directory, 'package.json'));
   const load = name => import(pathToFileURL(requireHost.resolve(name)).href);
@@ -53,14 +53,16 @@ export async function validateHost(directory, version) {
     assert.equal(manifest.version, expectedVersion, name + ' version');
     packages[name] = manifest.version;
   }
-  const [boot, profile, environment, rewind] = await Promise.all([
+  const [boot, profile, environment, loop, approval] = await Promise.all([
     '@deepseek-ai/dsh-app-boot', '@deepseek-ai/dsh/profile-boot',
-    '@deepseek-ai/dsh-launch-environment', 'dsh-rewind-plugin',
+    '@deepseek-ai/dsh-launch-environment', '@deepseek-ai/dsh-agent-loop',
+    '@deepseek-ai/dsh-user-approval',
   ].map(load));
   assert.equal(typeof boot.loadProfileDirectory, 'function');
   assert.equal(typeof profile.runProfile, 'function');
   assert.equal(typeof environment.createLaunchEnvironmentSnapshot, 'function');
-  assert.equal(typeof rewind.apply, 'function');
+  assert.equal(typeof loop.default, 'function');
+  assert.equal(typeof approval.default, 'function');
   const cwd = await fs.mkdtemp(path.join(directory, '.host-check-'));
   let fixture;
   try {
@@ -77,7 +79,7 @@ export async function validateHost(directory, version) {
     assert.equal(edit.isError, false, JSON.stringify(edit));
     assert.equal(await fs.readFile(file, 'utf8'), 'new\r\n尾巴');
     assert.equal(modelCalls, 0);
-    return { packages, tools, model_calls: modelCalls, profile_exports: true, rewind_exports: true };
+    return { packages, tools, model_calls: modelCalls, profile_exports: true, host_governance_exports: true };
   } finally {
     if (fixture) await fixture.close();
     await fs.rm(cwd, { recursive: true, force: true });
@@ -141,7 +143,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
         const directory = path.resolve(values.destination ?? hostDirectory(version));
         const result = await (values.check ? verifyPrepared : prepare)({ version, directory });
         console.log(JSON.stringify({ status: 'available', version, directory,
-          tools: result.validation.tools, rewind: result.validation.packages['dsh-rewind-plugin'],
+          tools: result.validation.tools,
           dependency_tree_sha256: result.dependency_tree_sha256 }));
       }
     }

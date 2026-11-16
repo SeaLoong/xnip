@@ -2,9 +2,8 @@
   "version": "0.2.2-rc.1",
   "registry": "https://registry.npmjs.org",
   "source_repository": "https://github.com/deepseek-ai/deepseek-harness",
-  "rewind_version": "0.21.2",
-  "manifest_sha256": "ba9eabb4bd5a27743cd812c800ded1240b2c606d69cf7497d9636491737fbed1",
-  "lock_sha256": "11be670ea4b36171ef59a588d93a7867878088225e844f60aa0f389fb22ff066",
+  "manifest_sha256": "e60adf8013be204c5c9ff8834031128fd793b4ded091bcfd03dc76b299d3d35e",
+  "lock_sha256": "80916afba5284a094e37674e83db4240ab8b49426b68902ed1303f7599002b41",
   "npm_lockfile_version": 3,
   "lock_generator": {
     "node": "v24.22.1",
@@ -131,11 +130,6 @@
       "resolved": "https://registry.npmjs.org/@deepseek-ai/dsh-workflow/-/dsh-workflow-0.2.2-rc.1.tgz",
       "integrity": "sha512-i/zShfrLd9R8Q9zeMlOuoNV98v9Y78ameo+hkMq+ikIlIH4YnOth6S8lkfK2wRJUPbAMBQqaGVlzblM8EZkwrg=="
     },
-    "dsh-rewind-plugin": {
-      "version": "0.21.2",
-      "resolved": "https://registry.npmjs.org/dsh-rewind-plugin/-/dsh-rewind-plugin-0.21.2.tgz",
-      "integrity": "sha512-VT9RVo8hDdvrPoFK2QgSlFKtiYHK1VfCOS1YDMRsK5g2ap7iSDjJbpJr5I7Qi/VSETo8GNZqm2M/Ll5rKj8BpQ=="
-    },
     "@deepseek-ai/dsh-llm": {
       "version": "0.2.2-rc.1",
       "resolved": "https://registry.npmjs.org/@deepseek-ai/dsh-llm/-/dsh-llm-0.2.2-rc.1.tgz",
@@ -171,11 +165,6 @@
       "resolved": "https://registry.npmjs.org/@deepseek-ai/dsh-client-locale/-/dsh-client-locale-0.2.2-rc.1.tgz",
       "integrity": "sha512-ng+uJSp7xNZiFZQaT3FC0GbYgLTMaZHIIxAzY14Fcn3nV8Dcrevl+IXryeSPElITUyxT+X7av2t16NvFGpvMMA=="
     },
-    "@deepseek-ai/dsh-client-ui-slots": {
-      "version": "0.2.2-rc.1",
-      "resolved": "https://registry.npmjs.org/@deepseek-ai/dsh-client-ui-slots/-/dsh-client-ui-slots-0.2.2-rc.1.tgz",
-      "integrity": "sha512-asUGj3a5vSvUht/mBhFalFcad/YBwF9HWdY1XuIDZ7+Dx1mVrPPVG8JlIKnLZX51BnCNGr52VsjsJoErRaD3bg=="
-    },
     "@deepseek-ai/dsh-client-connection": {
       "version": "0.2.2-rc.1",
       "resolved": "https://registry.npmjs.org/@deepseek-ai/dsh-client-connection/-/dsh-client-connection-0.2.2-rc.1.tgz",
@@ -196,16 +185,11 @@
       "resolved": "https://registry.npmjs.org/@deepseek-ai/dsh-client-ui-settings/-/dsh-client-ui-settings-0.2.2-rc.1.tgz",
       "integrity": "sha512-GyFmfYY08ls7uaQwVn7VWs4fJXiRTttI90sLLoGnOfime/RsoNtvFfjV6P9I2zqd+kyhm162/PlZOwxzkkLhLA=="
     },
-    "@deepseek-ai/dsh-client-ui-primitives": {
-      "version": "0.2.2-rc.1",
-      "resolved": "https://registry.npmjs.org/@deepseek-ai/dsh-client-ui-primitives/-/dsh-client-ui-primitives-0.2.2-rc.1.tgz",
-      "integrity": "sha512-6ZUYgZ6XYmh/twuwGzKPA4XH3RSODl4b1W4p1pqoFJ7xLn1EroEmA+E/sqa5Z2+JvFWxfPttsHTHkOyH8uK8Tg=="
-    },
     "@deepseek-ai/dsh-client-ui-plugin-manager": {
       "version": "0.2.2-rc.1",
       "resolved": "https://registry.npmjs.org/@deepseek-ai/dsh-client-ui-plugin-manager/-/dsh-client-ui-plugin-manager-0.2.2-rc.1.tgz",
       "integrity": "sha512-7BK/GjW28g8eU2dY8AHx/mD2Hv+wZXAJ6XU/3j2D1Pef2eOyZyiO4o71rMPaQUBzMawujpoIQj/MgOvu3hHcIw=="
     }
   },
-  "dependency_selection": "Official DSH host with matching optional service peers and rewind for real lifecycle validation."
+  "dependency_selection": "Official full DSH host with required optional service peers pinned explicitly; validation uses official filesystem tools and host governance services."
 }

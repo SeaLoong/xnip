@@ -214,7 +214,7 @@ class NpmPreparationContract(unittest.TestCase):
         prepare.prepare(self.base,self.base/"public",public=True)
         directory=self.base/"public/packages/xnip"
         required=["dsh-native/"+name for name in ["package.json","index.mjs","editor-client.mjs",
-            "lifecycle.mjs","runtime.mjs","rewind-validation.mjs","cordis.patch.yml"]]
+            "lifecycle.mjs","runtime.mjs","host-governance.mjs","cordis.patch.yml"]]
         required.append("native/editor-client.mjs")
         for relative in required:
             with self.subTest(file=relative):
@@ -333,7 +333,7 @@ class NpmPreparationContract(unittest.TestCase):
                 self.assertEqual(alias.resolve(),consumer.resolve())
                 consumer=alias
             proof=installed_dsh_module_graph(shutil.which("node"),consumer,os.environ)
-            self.assertEqual(proof,{"provider":"xnip-native-fs","runtime":"loaded","rewind":"loaded",
+            self.assertEqual(proof,{"provider":"xnip-native-fs","runtime":"loaded","host_governance":"loaded",
                                     "client":"shared","lifecycle":"resolved"})
 
     @unittest.skipUnless(shutil.which("node"),"Node required for the installed module graph")

@@ -21,7 +21,7 @@ VERSIONS = ("0.2.1-rc.1", "0.2.1-rc.2", "0.2.1-rc.3", "0.2.1-rc.4", "0.2.1-rc.5"
 SUITES = (
     ("provider", "tests/dsh_native_contract.mjs", 2),
     ("bytes", "tests/dsh_native_bytes.mjs", 13),
-    ("rewind", "tests/dsh_native_rewind.mjs", 2),
+    ("host-governance", "tests/dsh_host_governance.mjs", 2),
     ("packaged", "tests/dsh_native_packaged.mjs", 3),
 )
 PI_SUITES = (
@@ -169,7 +169,8 @@ def main():
     if "dsh" in hosts:
         compact_environment = {**environment, "XNIP_DSH_NATIVE_VERSIONS": json.dumps(versions),
                                "XNIP_DSH_NATIVE_HOSTS_DIR": str(args.hosts_dir.resolve())}
-        expected = len(versions) + 2 * int("0.2.1-rc.5" in versions and "0.2.2-rc.1" in versions)
+        expected = (len(versions) + 2 * int("0.2.1-rc.5" in versions and "0.2.2-rc.1" in versions)
+                    + int("0.2.2-rc.3" in versions))
         output = execute([node, "--test-reporter=tap", "tests/dsh_native_upgrade.mjs"],
                          compact_environment, evidence / "dsh-upgrade-and-compact.log")
         report["dsh-upgrade-and-compact"] = require_tap(output, expected)

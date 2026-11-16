@@ -122,10 +122,9 @@ class InstalledNpmDshLifecycle(unittest.TestCase):
         self.assertIn("official-profile-composition", checks)
         self.assertIn("real-native-edit", checks)
         if installed:
-            detail = checks["profile-governance"]
-            rewind = "0.21.2" if report["host_version"].startswith("0.2.2-") else "0.19.2"
-            for assertion in [f"dsh-rewind-plugin@{rewind}", "real approval rejection and audit pair",
-                              "real /rewind command", "byte-exact restore", "observation refresh", "zero model calls"]:
+            detail = checks["host-governance"]
+            for assertion in ["real approval rejection and audit pair", "host observation guards",
+                              "host observation refresh", "host sandbox write denial", "zero model calls"]:
                 self.assertIn(assertion, detail)
 
     def scenario(self, host, shared=False, ordinary=False):
@@ -146,10 +145,6 @@ class InstalledNpmDshLifecycle(unittest.TestCase):
         initialized = self.command([dsh, "--profile", "web", "--dump-config"], project, env)
         self.assertIn("id: fs-sandbox", initialized.stdout)
         profile = home/"profiles/web"
-        manifest = profile/"package.json"
-        metadata = json.loads(manifest.read_text(encoding="utf-8"))
-        metadata["dsh"]["profile"]["bundles"].append("dsh-rewind-plugin")
-        manifest.write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
         with (profile/"cordis.patch.yml").open("a", encoding="utf-8") as stream:
             stream.write("\n# user-owned profile patch: 标题\n")
         (home/"cordis.patch.yml").write_text("# user-owned home patch\n[]\n", encoding="utf-8")
@@ -195,7 +190,7 @@ class InstalledNpmDshLifecycle(unittest.TestCase):
             self.assertLess(snapshot_bytes, (profile/"node_modules/retained-user-package/sentinel.bin").stat().st_size // 4)
         bundle = profile/".xnip-native-package"
         installed_sources = {}
-        for filename in ["index.mjs", "runtime.mjs", "compact-tools.mjs", "rewind-validation.mjs", "lifecycle.mjs", "editor-client.mjs"]:
+        for filename in ["index.mjs", "runtime.mjs", "compact-tools.mjs", "host-governance.mjs", "lifecycle.mjs", "editor-client.mjs"]:
             source = self.package/"integrations"/("native" if filename == "editor-client.mjs" else "dsh-native")/filename
             self.assertEqual(digest(bundle/filename), digest(source), filename)
             installed_sources[filename] = {"installed_source": str(source), "sha256": digest(source)}

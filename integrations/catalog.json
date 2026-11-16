@@ -5,7 +5,7 @@
       "id": "dsh",
       "name": "DeepSeek Harness",
       "mode": "provider",
-      "scope": "Official filesystem tools, observations, approvals and rewind",
+      "scope": "Official filesystem tools, observations, sandbox, approvals and diff",
       "guide": "docs/native.md",
       "entrypoints": [
         "integrations/dsh-native",

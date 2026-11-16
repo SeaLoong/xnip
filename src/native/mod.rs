@@ -104,6 +104,10 @@ pub trait Lifecycle {
     }
     fn preflight(&mut self) -> Result<Capabilities>;
     fn observe(&mut self) -> Result<Observation>;
+    /// Compare only the host contracts owned by this lifecycle.
+    fn observations_match(&self, current: &Observation, expected: &Observation) -> bool {
+        current == expected
+    }
     fn stage(&mut self, directory: &Path) -> Result<()>;
     fn apply(&mut self, directory: &Path) -> Result<()>;
     fn activate(&mut self, installed: bool) -> Result<()>;
@@ -580,14 +584,18 @@ fn rollback(state: &Path, manifest: &mut Manifest, lifecycle: &mut dyn Lifecycle
     lifecycle.activate(false)?;
     let verification = lifecycle.verify(false)?;
     verification.require_pass()?;
+    let observation = lifecycle.observe()?;
     ensure!(
-        lifecycle.observe()? == manifest.baseline_observation,
+        manifest.rebased
+            || lifecycle.observations_match(&observation, &manifest.baseline_observation),
         "restored catalog or prompt differs from preflight"
     );
     ensure!(
         manifest.baseline.differences(state)?.is_empty(),
         "rollback left managed path differences"
     );
+    manifest.baseline_observation = observation;
+    manifest.rebased = false;
     manifest.phase = Phase::Restored;
     manifest.verification = Some(verification);
     save(state, manifest)?;
@@ -618,19 +626,25 @@ fn revalidate_upgrade(
         .as_ref()
         .context("missing installed snapshot")?;
     let differences = installed.differences(state)?;
+    ensure!(
+        differences.iter().all(|path| path == &package),
+        "installed native bundle changed; retain installation evidence for inspection: {differences:?}"
+    );
+    let installed_observation = manifest
+        .installed_observation
+        .as_ref()
+        .context("missing installed observation")?;
+    let current_observation = lifecycle.observe()?;
     if capabilities.version == manifest.host_version
         && manifest.observed.differences(state)?.is_empty()
         && differences.is_empty()
+        && lifecycle.observations_match(&current_observation, installed_observation)
     {
         return Ok(());
     }
     ensure!(
         manifest.host == "dsh" && installed.roots == [package.clone(), bundle],
         "upgrade revalidation requires a profile-owned native bundle"
-    );
-    ensure!(
-        differences.iter().all(|path| path == &package),
-        "installed native bundle changed; retain installation evidence for inspection: {differences:?}"
     );
     installed.verify_blobs(state)?;
     manifest.baseline.verify_blobs(state)?;
@@ -663,7 +677,9 @@ fn revalidate_upgrade(
     verification.require_pass()?;
     let observation = lifecycle.observe()?;
     ensure!(
-        current.differences(state)?.is_empty() && observed.differences(state)?.is_empty(),
+        current.differences(state)?.is_empty()
+            && observed.differences(state)?.is_empty()
+            && lifecycle.observations_match(&observation, &current_observation),
         "profile changed during upgrade revalidation; retry with the current configuration"
     );
     manifest.baseline = baseline;
@@ -719,7 +735,8 @@ pub fn uninstall(state: &Path, lifecycle: &mut dyn Lifecycle) -> Result<NativeRe
         verification.require_pass()?;
         let observation = lifecycle.observe()?;
         ensure!(
-            manifest.rebased || observation == manifest.baseline_observation,
+            manifest.rebased
+                || lifecycle.observations_match(&observation, &manifest.baseline_observation),
             "restored catalog or prompt differs from preflight"
         );
         manifest.baseline_observation = observation;
@@ -801,7 +818,7 @@ pub fn verify(state: &Path, lifecycle: &mut dyn Lifecycle, restored: bool) -> Re
             .context("missing installed observation")?
     };
     ensure!(
-        &observation == expected_observation,
+        lifecycle.observations_match(&observation, expected_observation),
         "host tools or prompt changed"
     );
     manifest.verification = Some(verification);
@@ -1025,6 +1042,24 @@ impl Lifecycle for CommandLifecycle {
     }
     fn observe(&mut self) -> Result<Observation> {
         self.call("observe", None, false)
+    }
+    fn observations_match(&self, current: &Observation, expected: &Observation) -> bool {
+        fn contract(observation: &Observation) -> Option<serde_json::Value> {
+            let mut catalog: serde_json::Value = serde_json::from_str(&observation.catalog).ok()?;
+            let fields = catalog.as_object_mut()?;
+            if !fields.get("tools")?.is_array() {
+                return None;
+            }
+            // Older DSH manifests included the entire profile dump. User
+            // plugins in that dump are outside xnip's tool/prompt contract.
+            fields.remove("composed_profile");
+            Some(catalog)
+        }
+        current.prompt == expected.prompt
+            && match (contract(current), contract(expected)) {
+                (Some(current), Some(expected)) => current == expected,
+                _ => current.catalog == expected.catalog,
+            }
     }
     fn stage(&mut self, directory: &Path) -> Result<()> {
         let _: serde_json::Value = self.call("stage", Some(directory), false)?;

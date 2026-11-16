@@ -58,7 +58,7 @@ HARNESS_TESTS = {
     "tests/native_e2e_contract.py",
     "tests/native_provider_bench_contract.mjs", "tests/pi_provider_bench_contract.mjs",
     "tests/dsh_native_contract.mjs", "tests/dsh_native_bytes.mjs", "tests/dsh_native_packaged.mjs",
-    "tests/dsh_native_rewind.mjs", "tests/dsh_native_setup.mjs",
+    "tests/dsh_host_governance.mjs", "tests/dsh_native_setup.mjs",
     "tests/pi_native_contract.mjs", "tests/pi_native_bytes.mjs", "tests/pi_native_packaged.mjs",
     "tests/pi_native_runtime.mjs",
     "tests/gemini_native_contract.mjs", "tests/gemini_native_bytes.mjs", "tests/gemini_native_packaged.mjs",

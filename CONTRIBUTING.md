@@ -34,6 +34,9 @@ Native adapters reuse `core::transaction::Plan` and `apply::commit::prepare`.
 Keep host names, approval policy and result presentation in adapters; byte
 transformations, snapshots and controlled commit belong to the existing core.
 Extend these existing boundaries as host requirements evolve.
+DSH lifecycle validation covers provider bytes and official observation,
+sandbox, approval and diff contracts. User plugins belong to the host's
+configuration and are not loaded or validated by xnip's lifecycle.
 
 Verify changed semantics through the relevant public interface, including preserved bytes, CRLF/EOF, ambiguous targets, preconditions, nonwriting modes and failure boundaries. Use child-process working directories rather than changing the process-wide cwd in parallel tests. Test background updates with copied binaries and isolated offline fixtures. Keep install-test versions newer than the crate version (the fixtures use `999.0.0`), and test older/equal SemVer rejection separately so a release bump cannot invalidate installation coverage.
 

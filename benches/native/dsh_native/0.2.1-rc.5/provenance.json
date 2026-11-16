@@ -2,9 +2,8 @@
   "version": "0.2.1-rc.5",
   "registry": "https://registry.npmjs.org",
   "source_repository": "https://github.com/deepseek-ai/deepseek-harness",
-  "rewind_version": "0.19.2",
-  "manifest_sha256": "ec65ba90b299985aec045a80a6f42c9bb0f1de46ec1d880c5842781734269914",
-  "lock_sha256": "f728cf6e8bfde7cb589d370aed0d9706a62495a888b0790c9bcf522bd7e52d14",
+  "manifest_sha256": "88af0eb194214ffc0feb50e1c3aa9835897e2de06e40f07052f994ac66c9ba0b",
+  "lock_sha256": "37b9d6791e3a061eeb94b2fe6bafd55b35ba501bdedcd6a97f67852f2e0bab86",
   "npm_lockfile_version": 3,
   "lock_generator": {
     "node": "v24.22.1",
@@ -130,12 +129,7 @@
       "version": "0.2.1-rc.5",
       "resolved": "https://registry.npmjs.org/@deepseek-ai/dsh-workflow/-/dsh-workflow-0.2.1-rc.5.tgz",
       "integrity": "sha512-m8SBCq1ruyMFwqTqTJLZFOwjHKIdZxnnpcoVKM53F+hGTC/C+7GrA4QLYJK3RCJNjOvc4Yb0I97rNR/O+7QfBA=="
-    },
-    "dsh-rewind-plugin": {
-      "version": "0.19.2",
-      "resolved": "https://registry.npmjs.org/dsh-rewind-plugin/-/dsh-rewind-plugin-0.19.2.tgz",
-      "integrity": "sha512-bOn5359wkX6bs+pkXp8O+xexJilx1/RHJ5B5ciRnR130LoiUxPUWt9+qE/FVjsRJ9/eV69GBud++himnJl1c0A=="
     }
   },
-  "dependency_selection": "Official full DSH host with default-profile optional service peers pinned explicitly; rewind is installed for its dedicated E2E suite."
+  "dependency_selection": "Official full DSH host with required optional service peers pinned explicitly; validation uses official filesystem tools and host governance services."
 }

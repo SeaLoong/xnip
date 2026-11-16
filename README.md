@@ -87,15 +87,17 @@ Replace `/absolute/project` with the intended project directory. The five defaul
 The [support matrix](docs/support.md) covers current catalog entries, their tool names and evidence. Project guidance remains available for [Codex](docs/codex.md), [Claude Code](integrations/claude-code/SKILL.md), [Cursor](integrations/cursor/xnip.mdc), [Copilot](integrations/copilot/xnip.md) and [aider](integrations/aider/CONVENTIONS.md). Use the [AGENTS snippet](integrations/agents-md/AGENTS.md) or [operation guide](docs/SKILL.md) for concise editing instructions.
 
 The [native DSH provider](docs/native.md) keeps the host's `read`, `write` and
-`edit` tools, approval, sandbox and optional rewind while calling the same core
-transactions as CLI and MCP. Its profile installer verifies a real edit and
-retains snapshots for restoration.
-`xnip-cli` 0.6.6 bundles its DSH adapter for the
+`edit` tools, observations, approval, sandbox and diff presentation while calling
+the same core transactions as CLI and MCP. Its profile installer verifies real
+file bytes and these official host contracts, and retains snapshots for
+restoration. The host manages user plugins; xnip's lifecycle does not load or
+validate them.
+`xnip-cli` 0.6.7 bundles its DSH adapter for the
 [installed-command lifecycle](docs/native.md#dsh-profile-setup).
 DSH host-lifecycle evidence is on Linux;
 the CLI and MCP have their own cross-platform verification.
 
-Version 0.6.6 adds DSH upgrade revalidation and opt-in `--compact-tools`. See [DSH setup and measured token costs](docs/native.md#compact-tools).
+The DSH integration provides upgrade revalidation and opt-in `--compact-tools`. See [DSH setup and measured token costs](docs/native.md#compact-tools).
 
 The [Pi native extension](docs/pi-native.md) preserves Pi `1.3.0` tool schemas,
 matching, rendering and hooks through its official extension API.

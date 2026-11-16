@@ -43,6 +43,9 @@ The Ubuntu job also runs the installed-npm DSH journey on 0.2.1 rc.1–rc.5 and
 0.2.2 rc.1/rc.3: three profile layouts per version exercise the installed command
 shim, bundled adapter discovery and the complete install/verify/restore/clean
 lifecycle.
+DSH checks cover provider bytes and official observation, sandbox, approval and
+diff contracts. The host manages user plugins; lifecycle verification does not
+load or validate them.
 Shared symlinks and ordinary dependency trees retain their baseline state.
 This DSH host gate records Linux evidence. The Linux/macOS/Windows npm matrix
 separately verifies the CLI/MCP launcher, payload and execution-cache contracts.

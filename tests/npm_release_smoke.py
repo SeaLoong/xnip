@@ -49,14 +49,14 @@ assert.equal(typeof provider.createXnipPlugin,'function');
 assert.equal(typeof provider.default.apply,'function');
 const load=name=>import(pathToFileURL(path.join(pluginRoot,name)));
 assert.equal(typeof (await load('runtime.mjs')).createFixture,'function');
-assert.equal(typeof (await load('rewind-validation.mjs')).validateRewind,'function');
+assert.equal(typeof (await load('host-governance.mjs')).validateHostGovernance,'function');
 const {EditorClient,clientSource}=await load('editor-client.mjs');
 const shared=path.join(packageRoot,'integrations','native','editor-client.mjs');
 assert.equal(await fs.realpath(fileURLToPath(clientSource)),await fs.realpath(shared));
 assert.equal(EditorClient,(await import(pathToFileURL(shared))).EditorClient);
 assert.equal(require.resolve('xnip-cli/dsh-native/lifecycle'),path.join(pluginRoot,'lifecycle.mjs'));
 await fs.access(path.join(pluginRoot,'cordis.patch.yml'));
-console.log(JSON.stringify({provider:provider.default.name,runtime:'loaded',rewind:'loaded',client:'shared',lifecycle:'resolved'}));
+console.log(JSON.stringify({provider:provider.default.name,runtime:'loaded',host_governance:'loaded',client:'shared',lifecycle:'resolved'}));
 '''
     env = dict(environment)
     env.pop("NODE_PATH", None)
@@ -64,7 +64,7 @@ console.log(JSON.stringify({provider:provider.default.name,runtime:'loaded',rewi
                             cwd=consumer, env=env, capture_output=True, text=True, timeout=20)
     require(result.returncode == 0, "installed DSH module graph failed: " + result.stderr[-4000:])
     proof = json.loads(result.stdout)
-    require(proof == {"provider": "xnip-native-fs", "runtime": "loaded", "rewind": "loaded",
+    require(proof == {"provider": "xnip-native-fs", "runtime": "loaded", "host_governance": "loaded",
                       "client": "shared", "lifecycle": "resolved"},
             "installed DSH module graph returned incomplete evidence")
     return proof

@@ -24,14 +24,13 @@ for (const version of VERSIONS) {
     const prepared = run();
     assert.equal(prepared.status, 'available');
     assert.equal(prepared.version, version);
-    assert.equal(prepared.rewind, version.startsWith('0.2.2-') ? '0.21.2' : '0.19.2');
     assert.deepEqual(prepared.tools, ['read', 'write', 'edit']);
     assert.deepEqual(run('--check'), prepared);
     const receipt = JSON.parse(await fs.readFile(path.join(directory, 'native-host.json'), 'utf8'));
     assert.equal(receipt.install.scripts_executed, false);
     assert.equal(receipt.validation.model_calls, 0);
     assert.equal(receipt.validation.profile_exports, true);
-    assert.equal(receipt.validation.rewind_exports, true);
+    assert.equal(receipt.validation.host_governance_exports, true);
     assert.equal(receipt.validation.packages['@deepseek-ai/cordis-plugin-group'], version.startsWith('0.2.2-') ? '1.1.0' : '1.0.5');
     assert.equal(receipt.validation.packages['@deepseek-ai/dsh-compaction'], version);
     assert.ok(receipt.dependency_files.length > 1000);

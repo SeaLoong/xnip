@@ -2,10 +2,10 @@
 
 This optional package replaces DSH's filesystem provider. DSH continues to own
 the `read`, `write` and `edit` tools, permission checks, observations, diff
-presentation and rewind events. The provider calls xnip's existing core through
+presentation and approval events. The provider calls xnip's existing core through
 the local `xnip native serve` JSON-lines process.
 
-`xnip-cli` 0.6.6 bundles this adapter. Install it and use its `xnip` launcher with
+`xnip-cli` 0.6.7 bundles this adapter. Install it and use its `xnip` launcher with
 an initialized DSH profile and the intended DSH executable:
 
 ```sh
@@ -19,12 +19,12 @@ The npm launcher selects this bundled adapter. Standalone/source builds select
 the package directory with `--plugin DIRECTORY`; an explicit option takes
 precedence over the npm selection.
 
-Version 0.6.6 also accepts `native install --compact-tools`, selecting
+Use `native install --compact-tools` to select
 concise model schemas and successful mutation receipts while keeping official
-tool execution, validation, approval, diff metadata and rewind. See the
+tool execution, validation, approval and diff metadata. See the
 [measured token report](../../docs/benchmarks/dsh-compact-results.md) for costs
 and [compact tool setup](../../docs/native.md#compact-tools).
-Version 0.6.6 revalidates profile-owned installations after host upgrades before
+The lifecycle revalidates profile-owned installations after host upgrades before
 verify or uninstall, preserving current user package fields and lockfiles.
 
 Fresh installations stage the adapter in
@@ -46,11 +46,11 @@ Enable this bundle when choosing the native provider; its bundle patch disables
 `xnip-native-fs` entry. Removing it restores the earlier bundle composition.
 
 Recorded host-lifecycle evidence covers Linux with DSH 0.2.1 rc.1–rc.5 and
-0.2.2 rc.1/rc.3. Profiles that enable rewind use `dsh-rewind-plugin@0.19.2`
-on 0.2.1 and `0.21.2` on 0.2.2. Validation uses the real official
-Loader, tools, idle AgentLoop, approval service, Session, diff presentation and
-rewind plugin, without model calls. The lifecycle verifier exercises rewind when
-it is selected by the profile. Other host versions are checked for the required
+0.2.2 rc.1/rc.3. Validation uses the real official Loader, tools, idle AgentLoop,
+approval service, Session, sandbox and diff presentation, without model calls.
+The lifecycle verifies provider bytes and these official host contracts.
+Third-party plugins remain under the user's host configuration; xnip's lifecycle
+does not load or validate them. Other host versions are checked for the required
 filesystem APIs before installation.
 
 macOS and Windows DSH host journeys await dedicated validation. The CLI and MCP
@@ -68,7 +68,7 @@ From a checkout with the official hosts prepared under
 python3 tests/native_e2e.py --host dsh --version 0.2.1-rc.5
 node tests/dsh_native_contract.mjs
 node tests/dsh_native_bytes.mjs
-node tests/dsh_native_rewind.mjs
+node tests/dsh_host_governance.mjs
 node tests/dsh_native_packaged.mjs
 cargo test --locked --test dsh_native_lifecycle_contract -- --ignored --nocapture
 ```

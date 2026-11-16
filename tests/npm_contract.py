@@ -143,14 +143,14 @@ const pluginRoot = path.dirname(require.resolve('xnip-cli/dsh-native/package.jso
 assert.equal(pluginRoot, path.join(packageRoot, 'integrations', 'dsh-native'));
 assert.deepEqual((await fs.readdir(pluginRoot)).sort(), [
   'README.md', 'compact-tools.mjs', 'cordis.patch.yml', 'editor-client.mjs', 'index.mjs', 'lifecycle.mjs',
-  'package.json', 'rewind-validation.mjs', 'runtime.mjs',
+  'package.json', 'host-governance.mjs', 'runtime.mjs',
 ].sort());
 const provider = await import(pathToFileURL(require.resolve('xnip-cli/dsh-native')));
 assert.equal(provider.default.name, 'xnip-native-fs');
 assert.equal(typeof provider.createXnipPlugin, 'function');
 const load = relative => import(pathToFileURL(path.join(pluginRoot, relative)));
 assert.equal(typeof (await load('runtime.mjs')).createFixture, 'function');
-assert.equal(typeof (await load('rewind-validation.mjs')).validateRewind, 'function');
+assert.equal(typeof (await load('host-governance.mjs')).validateHostGovernance, 'function');
 const { EditorClient, clientSource } = await load('editor-client.mjs');
 const sharedClient = path.join(packageRoot, 'integrations', 'native', 'editor-client.mjs');
 assert.equal(await fs.realpath(fileURLToPath(clientSource)), await fs.realpath(sharedClient));

@@ -4,6 +4,12 @@ User-visible changes are recorded here. Versions follow Semantic Versioning; com
 
 ## [Unreleased]
 
+## [0.6.7] - 2026-11-16
+
+- Remove the third-party `dsh-rewind-plugin` runtime, frozen-host and test dependencies. DSH lifecycle verification always checks the official provider's byte edits, observations, sandbox, approvals and diff presentation; user plugins remain under the host's management.
+- Compare real tool and prompt contracts during recovery and verification while keeping third-party profile metadata outside those equality checks. Preserve retained installation manifests and use the validated host baseline when recovering an interrupted upgrade.
+- Package the official host-governance helper with npm and verify its installed module graph. Preserve historical validation and benchmark records with their original scope.
+
 ## [0.6.6] - 2026-11-16
 
 - Upgrade rmcp/rmcp-macros to 3.9.0 for RUSTSEC-2026-0457, RUSTSEC-2026-0461 and RUSTSEC-2026-0462, and rustix to 1.1.6 for RUSTSEC-2026-0486. Retain the Rust 1.89 minimum and complete verification policy.

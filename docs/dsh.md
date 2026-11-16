@@ -4,7 +4,7 @@ DSH has two local integration paths:
 
 | Integration | Tools and behavior | Setup |
 |---|---|---|
-| Native filesystem provider | Host `read`, `write`, `edit`, observations, sandbox, approval, diff and optional rewind | [Profile installer](native.md#dsh-profile-setup) |
+| Native filesystem provider | Host `read`, `write`, `edit`, observations, sandbox, approval and diff | [Profile installer](native.md#dsh-profile-setup) |
 | MCP bundle | Five namespaced xnip tools through the official DSH MCP bridge | The `xnip-cli/dsh` plugin below |
 
 Both paths have real-host coverage for DSH `0.2.1-rc.2` and `0.2.1-rc.5`. The
