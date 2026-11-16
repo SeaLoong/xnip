@@ -20,7 +20,7 @@ Install the minimum toolchain with `rustup toolchain install 1.89.0 --profile mi
 
 Run `python3 tests/install_sh.py` on Linux/macOS. On Windows, build the debug executable and run `./tests/install_ps1.ps1`. Installer tests use local fixtures and preserve the user's installed binary. Run `python3 tests/native_benchmark_contract.py` for offline benchmark plumbing. Release changes also require `python3 tests/release_contract.py` and `python3 tests/publish_release_contract.py`; both are offline and never publish. The full suite map and platform limits are in [testing](docs/testing.md); updater cases have a separate [map](docs/update-testing.md).
 
-Host adapters and client profiles have a separate [375-check real-tool
+Host adapters and client profiles have a separate [real-tool
 matrix](docs/testing.md#native-host-e2e). Prepare its Node 24, Python 3.13 and
 pnpm dependencies explicitly; each Python SDK family uses its own locked
 environment. Run the affected routes through `tests/native_e2e.py --host ...`

@@ -2,6 +2,8 @@
 
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const { readFileSync } = require("node:fs");
+const path = require("node:path");
 const verifiedCi = require("../.github/scripts/verified_ci.cjs");
 
 const SHA = "a".repeat(40);
@@ -42,7 +44,7 @@ function harness({
   runs = [workflowRun()],
   jobSnapshots = [[gate()]],
   runSnapshots = [workflowRun()],
-  attempts = 3,
+  attempts,
   sha = SHA,
   context = CONTEXT,
 } = {}) {
@@ -53,7 +55,8 @@ function harness({
   let jobIndex = 0;
   let runIndex = 0;
   const sample = (snapshots, index) => {
-    const value = snapshots[Math.min(index, snapshots.length - 1)];
+    const value = typeof snapshots === "function" ? snapshots(index)
+      : snapshots[Math.min(index, snapshots.length - 1)];
     if (value instanceof Error) throw value;
     return value;
   };
@@ -303,6 +306,37 @@ test("a gate that never completes times out without claiming verification", asyn
   await assert.rejects(fixture.run(), /Timed out/);
   assert.deepEqual(fixture.waits, [15000]);
   assert.deepEqual(fixture.outputs, [["reused", "false"]]);
+});
+
+test("default CI wait covers the configured verification path inside the release job budget", async () => {
+  const timeout = (workflow, job) => {
+    const source = readFileSync(path.join(__dirname, "../.github/workflows", workflow), "utf8").split("\n");
+    const start = source.indexOf(`  ${job}:`);
+    assert.notEqual(start, -1, `Missing ${workflow} job ${job}`);
+    const next = source.findIndex((line, index) => index > start && /^  [\w-]+:/.test(line));
+    const body = source.slice(start, next === -1 ? undefined : next);
+    const setting = body.find((line) => /^    timeout-minutes: \d+\s*$/.test(line));
+    assert.ok(setting, `${workflow} job ${job} needs an explicit timeout`);
+    return Number(setting.match(/timeout-minutes: (\d+)/)[1]);
+  };
+  const selected = ["quality", "test", "harnesses", "compatibility", "contracts"];
+  const verificationMs = (timeout("ci.yml", "scope")
+    + Math.max(...selected.map((job) => timeout("ci.yml", job)))
+    + timeout("ci.yml", "ci")) * 60000;
+  const releaseJobMs = timeout("publish.yml", "version") * 60000;
+  const elapsed = (fixture) => fixture.waits.reduce((total, wait) => total + wait, 0);
+
+  let completing;
+  completing = harness({ jobSnapshots: () => [elapsed(completing) >= verificationMs
+    ? gate() : gate({ status: "in_progress", conclusion: null })] });
+  assert.equal(await completing.run(), true, "Release must wait for the configured CI path");
+  assert.ok(elapsed(completing) >= verificationMs);
+
+  const stalled = harness({ jobSnapshots: [[gate({ status: "queued", conclusion: null })]] });
+  await assert.rejects(stalled.run(), /Timed out/);
+  assert.ok(elapsed(stalled) >= verificationMs, "Default polling budget must cover CI's configured path");
+  assert.ok(elapsed(stalled) < releaseJobMs, "The release job needs time beyond the polling budget");
+  assert.deepEqual(stalled.outputs, [["reused", "false"]]);
 });
 
 test("run metadata must retain the exact trusted commit and attempt identity", async () => {

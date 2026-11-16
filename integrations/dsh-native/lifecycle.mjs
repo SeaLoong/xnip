@@ -23,10 +23,11 @@ const name = 'xnip-dsh-native';
 const bundleDirectory = '.xnip-native-package';
 const bundleEntry = './' + bundleDirectory;
 const bundleRoot = path.join(profile, bundleDirectory);
-const bundleFiles = ['package.json', 'index.mjs', 'lifecycle.mjs', 'runtime.mjs',
+const bundleFiles = ['package.json', 'index.mjs', 'lifecycle.mjs', 'runtime.mjs', 'compact-tools.mjs',
   'rewind-validation.mjs', 'editor-client.mjs', 'cordis.patch.yml'];
 const stage = option('--stage');
 const installed = args.includes('--installed');
+const compact = args.includes('--compact-tools');
 const execute = promisify(execFile);
 function selectedEntries(entries) {
   return entries.flatMap(entry => entry.disabled === true ? [] : [entry,
@@ -87,7 +88,19 @@ async function main() {
       plugin = await import(pathToFileURL(path.join(packageRoot, 'index.mjs')).href);
     }
     const rewind = selectedEntries(entries).some(entry => entry.name === 'dsh-rewind-plugin' || entry.id === 'dsh-rewind-plugin');
-    return { hostRoot, cwd, executable, native: active, plugin, providerEntries, rewind };
+    const isFileTools = entry => entry.disabled !== true &&
+      (entry.name === '@deepseek-ai/dsh-tool-fs' || entry.name?.endsWith('/compact-tools.mjs'));
+    const defaultPreset = entries.find(entry => entry.id === 'agent-preset-registry')?.config?.default;
+    const preset = entries.find(entry => entry.config?.id === defaultPreset && Array.isArray(entry.config?.plugins));
+    const toolEntry = entries.find(isFileTools) ?? selectedEntries(preset?.config?.plugins ?? []).find(isFileTools);
+    if (!toolEntry) throw new Error('Selected profile requires an active official filesystem tool suite');
+    const compactTools = toolEntry.name.endsWith('/compact-tools.mjs');
+    const selectedExecutable = active
+      ? providerEntries.find(entry => entry.id === 'xnip-native-fs' && !entry.disabled)?.config?.executable
+        ?? process.env.XNIP_EDITOR_EXECUTABLE ?? 'xnip'
+      : executable;
+    return { hostRoot, cwd, executable: selectedExecutable, native: active, plugin, providerEntries, rewind,
+      compact: compactTools, toolConfig: toolEntry.config, entries };
   };
   const fixture = async cwd => createFixture(await fixtureOptions(cwd));
   if (verb === 'preflight') {
@@ -102,7 +115,7 @@ async function main() {
   }
   if (verb === 'observe') {
     const config = await dump();
-    const temp = await fs.mkdtemp(path.join(os.tmpdir(), 'xnip-dsh-observe-'));
+    const temp = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'xnip-dsh-observe-')));
     let runtime;
     try {
       runtime = await fixture(temp);
@@ -120,8 +133,37 @@ async function main() {
     await fs.copyFile(clientSource, path.join(packaged, 'editor-client.mjs'));
     // This configuration belongs to the installed package. The profile user's
     // patch remains untouched, and runtime and verification use the same binary.
-    await fs.writeFile(path.join(packaged, 'cordis.patch.yml'),
-      `- id: xnip-mcp\n  disabled: true\n- id: fs-sandbox\n  disabled: true\n- insert:\n    - id: xnip-native-fs\n      name: ./index.mjs\n      config:\n        executable: ${JSON.stringify(executable)}\n`);
+    let patch = `- id: xnip-mcp\n  disabled: true\n- id: fs-sandbox\n  disabled: true\n- insert:\n    - id: xnip-native-fs\n      name: ./index.mjs\n      config:\n        executable: ${JSON.stringify(executable)}\n`;
+    if (compact) {
+      const require = createRequire(path.join(hostRoot, 'package.json'));
+      const { default: yaml } = await import(pathToFileURL(require.resolve('js-yaml')).href);
+      const { entryListSchema } = await import(pathToFileURL(require.resolve('@deepseek-ai/cordis-plugin-include')).href);
+      const { entries } = await fixtureOptions(profile);
+      let count = 0;
+      const replace = rows => rows.map(row => {
+        if (row.name === '@deepseek-ai/dsh-tool-fs') {
+          count++;
+          return { ...row, name: './compact-tools.mjs' };
+        }
+        if (Array.isArray(row.config?.plugins)) return { ...row, config: { ...row.config, plugins: replace(row.config.plugins) } };
+        if (row.group && Array.isArray(row.config)) return { ...row, config: replace(row.config) };
+        return row;
+      });
+      const patches = [];
+      for (const row of entries) {
+        if (row.name === '@deepseek-ai/dsh-tool-fs' && row.disabled !== true) {
+          count++;
+          patches.push({ id: row.id, disabled: true }, { insert: [{ ...row, id: 'xnip-compact-tools', name: './compact-tools.mjs' }] });
+        } else if (Array.isArray(row.config?.plugins) || (row.group && Array.isArray(row.config))) {
+          const before = count;
+          const updated = replace([row])[0];
+          if (count > before) patches.push({ id: row.id, config: updated.config });
+        }
+      }
+      if (!count) throw new Error('Compact mode requires official filesystem tool rows in the selected profile');
+      patch += yaml.dump(patches, { schema: entryListSchema, noRefs: true });
+    }
+    await fs.writeFile(path.join(packaged, 'cordis.patch.yml'), patch);
     const files = await Promise.all(bundleFiles.map(async file => ({
       path: file,
       sha256: createHash('sha256').update(await fs.readFile(path.join(packaged, file))).digest('hex'),
@@ -173,7 +215,7 @@ async function main() {
     if (active !== installed) throw new Error('Profile native bundle membership does not match requested state');
     const config = await dump();
     if (installed && (!config.includes('id: xnip-native-fs') || !config.includes('id: fs-sandbox'))) throw new Error('Native provider patch did not compose');
-    const temp = await fs.mkdtemp(path.join(os.tmpdir(), 'xnip-dsh-verify-'));
+    const temp = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'xnip-dsh-verify-')));
     let runtime;
     try {
       runtime = await fixture(temp);

@@ -4,6 +4,13 @@ User-visible changes are recorded here. Versions follow Semantic Versioning; com
 
 ## [Unreleased]
 
+## [0.6.5] - 2026-11-16
+
+- Revalidate DSH profile-owned installations after host and dependency upgrades, preserving current user package fields, lockfiles and dependency links during removal. Verify installed adapter integrity before adopting a new baseline.
+- Support the official single-call and batch tool executors; expand frozen host fixtures to all five 0.2.1 release candidates and 0.2.2 rc.1/rc.3 with real approval and rewind checks. Resolve temporary-directory aliases before host verification.
+- Verify the executable bound to the installed profile, including retained 0.6.4 adapters, so a missing old binary is reported before adopting an upgraded baseline. Preserve focused testing with a custom prepared-host directory.
+- Add opt-in `native install --compact-tools` with concise schemas and successful mutation receipts, retaining official execution, policy, UI metadata and tool names. Include the module in npm artifact inventory and build fingerprints, with reproducible token measurements.
+
 ## [0.6.4] - 2026-11-06
 
 - Include the complete DSH native provider in `xnip-cli`; the npm launcher selects its bundled adapter for `native install`, with `--plugin` available as an explicit override.

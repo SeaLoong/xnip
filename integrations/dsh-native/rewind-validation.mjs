@@ -3,16 +3,16 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
-import { createFixture } from './runtime.mjs';
+import { createFixture, callTool } from './runtime.mjs';
 
 /** Real official AgentLoop, approval, Session and tool presentation validation.
  * Optional rewind is validated only when requested by the composed profile.
  * No model calls or synthetic filesystem, snapshot or undo implementation.
  */
-export async function validateRewind({ hostRoot, cwd, executable, plugin, native = true, providerEntries, rewind = true, rewindPlugin, rewindVersion }) {
+export async function validateRewind({ hostRoot, cwd, executable, plugin, native = true, providerEntries, rewind = true, rewindPlugin, rewindVersion, compact = false, toolConfig }) {
   const require = createRequire(path.join(path.resolve(hostRoot), 'package.json'));
   const load = name => import(pathToFileURL(require.resolve(name)).href);
-  const fixture = await createFixture({ hostRoot, cwd, executable, plugin, native, providerEntries });
+  const fixture = await createFixture({ hostRoot, cwd, executable, plugin, native, providerEntries, compact, toolConfig });
   const { ctx } = fixture;
   let handle;
   try {
@@ -59,9 +59,7 @@ export async function validateRewind({ hostRoot, cwd, executable, plugin, native
     const before = Buffer.from('keep\r\nold\r\n尾巴');
     await fs.writeFile(target, before);
     let callId = 0;
-    const call = (name, args) => ctx.tools.execute({
-      signal: new AbortController().signal, callId: `rewind-${++callId}`, name, arguments: args, agent,
-    });
+    const call = (name, args) => callTool(ctx, name, args, { callId: `rewind-${++callId}`, agent });
     assert.equal((await call('read', { file_path: target })).isError, false);
     const rejected = await call('edit', {
       file_path: target, old_string: 'old', new_string: 'denied',

@@ -1,0 +1,355 @@
+{
+  "status": "passed",
+  "platform": "linux-x86_64",
+  "scope": "DSH host lane",
+  "checks": 176,
+  "versions": [
+    {
+      "host": "0.2.1-rc.1",
+      "checks": [
+        {
+          "suite": "provider",
+          "tests": 2,
+          "pass": 2,
+          "fail": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "bytes",
+          "tests": 13,
+          "pass": 13,
+          "fail": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "rewind",
+          "tests": 2,
+          "pass": 2,
+          "fail": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "packaged",
+          "tests": 3,
+          "pass": 3,
+          "fail": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "lifecycle",
+          "tests": 1,
+          "pass": 1,
+          "phases": 5
+        },
+        {
+          "suite": "npm-installed-lifecycle",
+          "tests": 3,
+          "pass": 3,
+          "fail": 0,
+          "skipped": 0
+        }
+      ]
+    },
+    {
+      "host": "0.2.1-rc.2",
+      "checks": [
+        {
+          "suite": "provider",
+          "tests": 2,
+          "pass": 2,
+          "fail": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "bytes",
+          "tests": 13,
+          "pass": 13,
+          "fail": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "rewind",
+          "tests": 2,
+          "pass": 2,
+          "fail": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "packaged",
+          "tests": 3,
+          "pass": 3,
+          "fail": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "lifecycle",
+          "tests": 1,
+          "pass": 1,
+          "phases": 5
+        },
+        {
+          "suite": "npm-installed-lifecycle",
+          "tests": 3,
+          "pass": 3,
+          "fail": 0,
+          "skipped": 0
+        }
+      ]
+    },
+    {
+      "host": "0.2.1-rc.3",
+      "checks": [
+        {
+          "suite": "provider",
+          "tests": 2,
+          "pass": 2,
+          "fail": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "bytes",
+          "tests": 13,
+          "pass": 13,
+          "fail": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "rewind",
+          "tests": 2,
+          "pass": 2,
+          "fail": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "packaged",
+          "tests": 3,
+          "pass": 3,
+          "fail": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "lifecycle",
+          "tests": 1,
+          "pass": 1,
+          "phases": 5
+        },
+        {
+          "suite": "npm-installed-lifecycle",
+          "tests": 3,
+          "pass": 3,
+          "fail": 0,
+          "skipped": 0
+        }
+      ]
+    },
+    {
+      "host": "0.2.1-rc.4",
+      "checks": [
+        {
+          "suite": "provider",
+          "tests": 2,
+          "pass": 2,
+          "fail": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "bytes",
+          "tests": 13,
+          "pass": 13,
+          "fail": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "rewind",
+          "tests": 2,
+          "pass": 2,
+          "fail": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "packaged",
+          "tests": 3,
+          "pass": 3,
+          "fail": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "lifecycle",
+          "tests": 1,
+          "pass": 1,
+          "phases": 5
+        },
+        {
+          "suite": "npm-installed-lifecycle",
+          "tests": 3,
+          "pass": 3,
+          "fail": 0,
+          "skipped": 0
+        }
+      ]
+    },
+    {
+      "host": "0.2.1-rc.5",
+      "checks": [
+        {
+          "suite": "provider",
+          "tests": 2,
+          "pass": 2,
+          "fail": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "bytes",
+          "tests": 13,
+          "pass": 13,
+          "fail": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "rewind",
+          "tests": 2,
+          "pass": 2,
+          "fail": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "packaged",
+          "tests": 3,
+          "pass": 3,
+          "fail": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "lifecycle",
+          "tests": 1,
+          "pass": 1,
+          "phases": 5
+        },
+        {
+          "suite": "npm-installed-lifecycle",
+          "tests": 3,
+          "pass": 3,
+          "fail": 0,
+          "skipped": 0
+        }
+      ]
+    },
+    {
+      "host": "0.2.2-rc.1",
+      "checks": [
+        {
+          "suite": "provider",
+          "tests": 2,
+          "pass": 2,
+          "fail": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "bytes",
+          "tests": 13,
+          "pass": 13,
+          "fail": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "rewind",
+          "tests": 2,
+          "pass": 2,
+          "fail": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "packaged",
+          "tests": 3,
+          "pass": 3,
+          "fail": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "lifecycle",
+          "tests": 1,
+          "pass": 1,
+          "phases": 5
+        },
+        {
+          "suite": "npm-installed-lifecycle",
+          "tests": 3,
+          "pass": 3,
+          "fail": 0,
+          "skipped": 0
+        }
+      ]
+    },
+    {
+      "host": "0.2.2-rc.3",
+      "checks": [
+        {
+          "suite": "provider",
+          "tests": 2,
+          "pass": 2,
+          "fail": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "bytes",
+          "tests": 13,
+          "pass": 13,
+          "fail": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "rewind",
+          "tests": 2,
+          "pass": 2,
+          "fail": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "packaged",
+          "tests": 3,
+          "pass": 3,
+          "fail": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "lifecycle",
+          "tests": 1,
+          "pass": 1,
+          "phases": 5
+        },
+        {
+          "suite": "npm-installed-lifecycle",
+          "tests": 3,
+          "pass": 3,
+          "fail": 0,
+          "skipped": 0
+        }
+      ]
+    }
+  ],
+  "upgrade_and_compact": {
+    "tests": 8,
+    "pass": 8,
+    "fail": 0,
+    "skipped": 0
+  },
+  "matrix_binary_sha256": "dc7d3f8d1cc180d17766671e47e92f5f7494a0b98ae174d9067c7ef6302992fc",
+  "final_binary_sha256": "d53f779a3bf0ccf93ea1400fac35d5b79dc1bb16e609a44fa4ba12ad67bed107",
+  "final_artifact_followups": [
+    "8 real-host upgrade/compact checks",
+    "permission-only revalidation and removal preserved mode 0640",
+    "focused version selection: 1 passed, 0 skipped"
+  ],
+  "other_host_lanes": "separate prior baselines; not rerun in this task",
+  "release_065_followup": {
+    "version": "0.6.5",
+    "upgrade_compact_passed": 9,
+    "upgrade_compact_skipped": 0,
+    "selected_dsh_gate": 177,
+    "catalog_gate": 506,
+    "actual_064_binary_sha256": "d8aa3db890938c20c998c8c770cd4209ee32889d6ecc6fe3531dec666171a02b",
+    "actual_064_upgrade_case": "passed",
+    "custom_hosts_parent": "empty parent failed; selected-host-only parent passed 1 case",
+    "remote_publication": "pending"
+  }
+}

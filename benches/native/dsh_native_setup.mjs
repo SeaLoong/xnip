@@ -11,7 +11,7 @@ import { parseArgs } from 'node:util';
 import { resolveNpmCli } from './node_runtime.mjs';
 import { createFixture } from '../../integrations/dsh-native/runtime.mjs';
 
-export const VERSIONS = ['0.2.1-rc.2', '0.2.1-rc.5'];
+export const VERSIONS = ['0.2.1-rc.1', '0.2.1-rc.2', '0.2.1-rc.3', '0.2.1-rc.4', '0.2.1-rc.5', '0.2.2-rc.1', '0.2.2-rc.3'];
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '../..');
 const REGISTRY = 'https://registry.npmjs.org';
@@ -133,7 +133,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
       check: { type: 'boolean', default: false }, help: { type: 'boolean', default: false },
     } });
     if (values.help) {
-      console.log('Usage: node benches/native/dsh_native_setup.mjs [--version <version>] [--check] [--destination <directory>]\nVersions: ' + VERSIONS.join(', ') + '\nDefault: prepare both hosts under target/native-hosts/dsh-<version>. --destination selects a directory for one --version.');
+      console.log('Usage: node benches/native/dsh_native_setup.mjs [--version <version>] [--check] [--destination <directory>]\nVersions: ' + VERSIONS.join(', ') + '\nDefault: prepare all pinned hosts under target/native-hosts/dsh-<version>. --destination selects a directory for one --version.');
     } else {
       const versions = [...new Set(values.version ?? VERSIONS)];
       assert.ok(values.destination === undefined || versions.length === 1, '--destination requires one --version');

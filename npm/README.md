@@ -156,14 +156,21 @@ Select native entries explicitly when loading a Pi extension or constructing
 an SDK session. The JavaScript adapters resolve the installed xnip executable;
 the native setup and test matrix use Node 24.
 
-`xnip-cli` 0.6.4 bundles the DSH native adapter. The
+`xnip-cli` 0.6.5 bundles the DSH native adapter. The
 [DSH lifecycle guide](https://github.com/SeaLoong/xnip/blob/master/docs/native.md#dsh-profile-setup)
 covers installation, verification, restoration and cleanup through the installed
 command.
 
+Version 0.6.5 adds DSH upgrade revalidation and opt-in
+[`native install --compact-tools`](https://github.com/SeaLoong/xnip/blob/master/docs/native.md#compact-tools).
+Compact mode shortens model schemas and successful mutation receipts while
+retaining official tool execution, approval, diff metadata and rewind.
+The [token measurements](https://github.com/SeaLoong/xnip/blob/master/docs/benchmarks/dsh-compact-results.md)
+record the measured components and tokenizer assumptions.
+
 | Entry | Host seam and verified version |
 |---|---|
-| `xnip native install --profile ... --dsh ...` | [DSH rc.2 / rc.5 Linux host journey](https://github.com/SeaLoong/xnip/blob/master/docs/native.md#dsh-profile-setup), using the package's bundled adapter |
+| `xnip native install --profile ... --dsh ...` | [DSH 0.2.1 rc.1–rc.5 / 0.2.2 rc.1, rc.3 Linux host journey](https://github.com/SeaLoong/xnip/blob/master/docs/native.md#dsh-profile-setup), using the package's bundled adapter |
 | `xnip-cli/pi-native` | [Pi 1.3.0 same-name tools](https://github.com/SeaLoong/xnip/blob/master/docs/pi-native.md) through its extension loader |
 | `xnip-cli/gemini-native` | [Gemini core 0.27.2](https://github.com/SeaLoong/xnip/blob/master/docs/gemini-native.md) local `Config` filesystem service and per-tool scope |
 | `xnip-cli/cline-native` | [Cline SDK/core 0.2.0](https://github.com/SeaLoong/xnip/blob/master/docs/cline-native.md) public `apply_patch` tool executor |

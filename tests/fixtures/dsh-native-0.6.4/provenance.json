@@ -1,0 +1,16 @@
+{
+  "repository": "https://github.com/SeaLoong/xnip",
+  "commit": "45230e595efaf9c449ef7dd3a55f2776c127ef99",
+  "version": "0.6.4",
+  "files_sha256": {
+    "integrations/dsh-native/package.json": "6e6ebef1dfd29868e9c6d78b8247318bdabedb394a65bd0cba0981a99a3a824e",
+    "integrations/dsh-native/index.mjs": "e0388f003fc013dc4b4c192f221a4cefce3a00fbf8eb0868947386760b65d9bb",
+    "integrations/dsh-native/lifecycle.mjs": "7f5fea6f869e4f73232f35a1637d67f286b5dfcbe8d2b4e44f55e06c2b1fb65c",
+    "integrations/dsh-native/runtime.mjs": "f8d2ca3dbbc69197c8ed5dd6855193a2baca7238108a5c9a4c8f457d490ba3bd",
+    "integrations/dsh-native/rewind-validation.mjs": "67021d46592a0a1187af8c61b8e9acd6a3d6e7980300b442173ab296eee693b2",
+    "integrations/dsh-native/editor-client.mjs": "9f469cc3b703ece19e4526dc8b38d0570f59f1aae32e0d4627e23417c45a7c3d",
+    "integrations/dsh-native/cordis.patch.yml": "499b53542c1fbfc9982125f35ec29b608c037c3927238d35df39e5085ca86028",
+    "integrations/dsh-native/README.md": "265dcf56484d4f2ddd8da890394a0a399050a6a97a30ccd0e5340e0fb061c8f6",
+    "integrations/native/editor-client.mjs": "d0242e291bfb2ef3e2d807552f215fecf9c55d89ab05d3a5d68d67e3ae6524f8"
+  }
+}

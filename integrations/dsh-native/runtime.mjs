@@ -2,6 +2,7 @@ import path from 'node:path';
 import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
 import { createXnipPlugin } from './index.mjs';
+import { createCompactToolsPlugin } from './compact-tools.mjs';
 
 /** Resolve only official, installed host modules; no editor or policy substitutes. */
 export async function loadRuntime(hostRoot) {
@@ -16,12 +17,26 @@ export async function loadRuntime(hostRoot) {
   return { ...Object.fromEntries(names.map((name, i) => [name.replace('@deepseek-ai/', ''), modules[i]])), load };
 }
 
-export async function createFixture({ hostRoot, cwd, executable, native = true, mode = 'workspace-write', plugin, providerEntries }) {
+/** Both official dispatch APIs retain the host's policy and event pipeline. */
+export async function callTool(ctx, name, args, { signal = new AbortController().signal, callId, agent } = {}) {
+  if (typeof ctx.tools.setExecutor === 'function') {
+    const batch = await ctx.tools.execute({ signal, agent,
+      calls: [{ type: 'tool-call', id: callId, name, arguments: JSON.stringify(args) }],
+      ...(agent ? { log: { turn: 1, step: 1 } } : {}),
+    });
+    return batch.results[0].result;
+  }
+  return ctx.tools.execute({ signal, callId, name, arguments: args, agent });
+}
+
+export async function createFixture({ hostRoot, cwd, executable, native = true, mode = 'workspace-write', plugin, providerEntries, compact = false, toolConfig = {} }) {
   const host = await loadRuntime(hostRoot);
   const ctx = new host.cordis.Context();
   try {
     await ctx.plugin(host['dsh-system-prompt'].default);
-    await ctx.plugin(host['dsh-tools'].default, { mode: 'native' });
+    const batch = typeof host['dsh-tools'].default.prototype.setExecutor === 'function';
+    await ctx.plugin(host['dsh-tools'].default, batch ? {} : { mode: 'native' });
+    if (batch) await ctx.plugin(await host.load('@deepseek-ai/dsh-tool-executor-native'));
     await ctx.plugin(host['dsh-session-projection'].default);
     await ctx.plugin(host['dsh-sandbox-policy'].default, { mode, workspaceRoot: cwd });
     const nativePlugin = (plugin?.createXnipPlugin ?? createXnipPlugin)({ executable, loadHost: async () => ({
@@ -44,7 +59,7 @@ export async function createFixture({ hostRoot, cwd, executable, native = true, 
     else await ctx.plugin(host['dsh-fs-sandbox'].default, { cwd });
     await ctx.plugin(host['dsh-fs-observation-policy']);
     await ctx.plugin(host['dsh-working-directory'].default, { defaultDirectory: cwd });
-    await ctx.plugin(host['dsh-tool-fs'], { readImage: false });
+    await ctx.plugin(compact ? createCompactToolsPlugin(async () => host['dsh-tool-fs']) : host['dsh-tool-fs'], { ...toolConfig, readImage: false });
     const { Session, SESSION_FORMAT_VERSION } = host['dsh-session'];
     const id = 'xnip-native-validation';
     const session = Session.create(id, [], { version: SESSION_FORMAT_VERSION, id, createdAt: 0, cwd, isSeeded: false });
@@ -57,7 +72,7 @@ export async function createFixture({ hostRoot, cwd, executable, native = true, 
         return { tools: ctx.tools.schemas(agent), prompt: host['dsh-system-prompt'].renderPrompt(assembly) };
       },
       call(name, args, signal = new AbortController().signal) {
-        return ctx.tools.execute({ signal, callId: `native-${++nextCall}`, name, arguments: args, agent });
+        return callTool(ctx, name, args, { signal, callId: `native-${++nextCall}`, agent });
       },
       close: () => ctx.fiber.dispose(),
     };

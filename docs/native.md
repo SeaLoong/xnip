@@ -9,7 +9,7 @@ CLI, MCP and skills remain available.
 
 | Host | Native adapter | Verified versions |
 |---|---|---|
-| DSH | L3 filesystem provider; transactional profile installer below | `0.2.1-rc.2`, `0.2.1-rc.5`; Linux host journey |
+| DSH | L3 filesystem provider; transactional profile installer below | 0.2.1 rc.1–rc.5; 0.2.2 rc.1/rc.3; Linux host journey |
 | Pi | L2′ native tool override; explicit [extension setup](pi-native.md) | `1.3.0` |
 | Gemini SDK | Local `Config` filesystem service; [per-tool execution scope](gemini-native.md) | `@google/gemini-cli-core` `0.27.2` |
 | Cline SDK | `apply_patch` executor with official parsing and tools; [SDK setup](cline-native.md) | `@cline/sdk` `0.2.0` |
@@ -46,14 +46,18 @@ The [`integrations/dsh-native`](../integrations/dsh-native/) adapter keeps
 DSH's `read`, `write` and `edit` tools. It delegates writes to `xnip native serve`
 and retains host path resolution, observations, sandbox, approval, diff and
 rewind services. The same provider has been verified with official DSH
-`0.2.1-rc.2` and `0.2.1-rc.5`; profiles that select rewind use
-`dsh-rewind-plugin@0.19.2`.
+0.2.1 rc.1–rc.5 and 0.2.2 rc.1/rc.3. Profiles that select rewind use
+`dsh-rewind-plugin@0.19.2` on 0.2.1 and `0.21.2` on 0.2.2. Selection checks
+filesystem and tool-executor capabilities; the peer ranges cover these release
+families, including their prereleases.
 
 Recorded DSH host-lifecycle evidence is on Linux. macOS and Windows DSH
 host journeys await dedicated validation. The CLI and MCP retain their
 separate Linux, macOS and Windows executable support.
+The [pre-release validation record](dsh-validation.md) lists the seven
+host versions, 176 selected checks, artifact identities and upgrade boundaries.
 
-`xnip-cli` 0.6.4 bundles the DSH native adapter. Use Node 24 with npm, an existing
+`xnip-cli` 0.6.5 bundles the DSH native adapter. Use Node 24 with npm, an existing
 DSH profile directory and the installed DSH executable:
 
 ```sh
@@ -108,6 +112,36 @@ target/debug/xnip native install --host dsh \
 Keep the same explicit adapter selection for the corresponding verify,
 uninstall and recovery commands.
 
+### Compact tools
+
+With xnip-cli 0.6.5, add `--compact-tools` to `native install` to
+select concise model descriptions and mutation receipts:
+
+```sh
+npm install --global xnip-cli@0.6.5
+xnip native install --compact-tools \
+  --profile /home/me/.dsh/profiles/dev \
+  --dsh /path/to/dsh
+```
+
+Compact mode keeps the same tool names, argument keys, validation,
+read content, canonical values, approval events, diff cards and rewind. Successful
+edits return `edited`; writes return their operation. The current call's arguments
+identify the file; the host retains full paths and diffs for presentation.
+Ordinary provider mode retains the host schemas and receipts. Byte correctness
+and model token costs are separate capabilities.
+
+The [measured report](benchmarks/dsh-compact-results.md) records about 16–17%
+fewer schema tokens and 69–70% fewer tokens for the sampled edit receipt.
+Read-heavy exchanges have smaller overall savings. Counts use two explicit
+tokenizers as proxies; model billing and task-level savings require model runs.
+Preset tool configurations are captured when installing compact mode; reinstall
+the bundle to refresh those configurations after changing host presets.
+DSH 0.2.2's optional `apply_patch` keeps its official schema and implementation;
+the xnip byte-editing backend and compact projections described here cover
+`read`, `write` and `edit`. The host patch tool retains its own matching and
+mutation guarantees.
+
 ## Restoration and retained state
 
 Use the same host arguments for removal and restoration verification:
@@ -132,8 +166,11 @@ Fresh installations snapshot `package.json` and the private adapter
 directory, hash stored blobs, observe user configuration and lock the profile
 and state directory. Profile lockfiles and dependency-root symlinks remain
 read-only observations. Failed phases restore the baseline; interrupted
-operations retain a recovery manifest. Post-installation user changes receive
-a conflict report with retained snapshots. Successful restoration keeps those
+operations retain a recovery manifest. Version 0.6.5 revalidates host
+and profile upgrades with real editing/governance checks during verify or uninstall.
+The rollback target retains current package fields, lockfiles and dependency links
+and removes only the native bundle membership. Changes inside the private adapter
+receive a conflict report with retained snapshots. Successful restoration keeps those
 snapshots until `native clean --purge-user-data` removes this installation's
 `blobs`, `stage` and manifest after checking the restored baseline.
 

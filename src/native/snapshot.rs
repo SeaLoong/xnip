@@ -224,6 +224,46 @@ impl Snapshot {
             .collect())
     }
 
+    pub fn file_bytes(&self, path: &Path, state: &Path) -> Result<Vec<u8>> {
+        let Some(Entry::File { sha256, .. }) = self.entries.get(path) else {
+            bail!("snapshot requires a regular file: {}", path.display());
+        };
+        let bytes = fs::read(state.join("blobs").join(sha256))?;
+        ensure!(digest(&bytes) == *sha256, "snapshot blob checksum mismatch");
+        Ok(bytes)
+    }
+
+    pub fn replace_file(
+        &mut self,
+        path: &Path,
+        bytes: &[u8],
+        state: &Path,
+        current: &Self,
+    ) -> Result<()> {
+        let Some(Entry::File { mode, .. }) = current.entries.get(path) else {
+            bail!("snapshot requires a regular file: {}", path.display());
+        };
+        let saved_mode = *mode;
+        let sha256 = digest(bytes);
+        let blobs = state.join("blobs");
+        let mut temporary = tempfile::NamedTempFile::new_in(&blobs)?;
+        temporary.write_all(bytes)?;
+        temporary.as_file().sync_all()?;
+        temporary
+            .persist(blobs.join(&sha256))
+            .map_err(|error| error.error)?;
+        sync_directory(&blobs)?;
+        self.entries.insert(
+            path.to_path_buf(),
+            Entry::File {
+                sha256,
+                bytes: bytes.len() as u64,
+                mode: saved_mode,
+            },
+        );
+        Ok(())
+    }
+
     /// A crashed restoration may contain entries from either retained tree.
     /// Compare each entry before resuming so later user bytes remain intact.
     pub fn validate_restoration_source(&self, current: &Self, previous: &[&Self]) -> Result<()> {

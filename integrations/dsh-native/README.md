@@ -5,7 +5,7 @@ the `read`, `write` and `edit` tools, permission checks, observations, diff
 presentation and rewind events. The provider calls xnip's existing core through
 the local `xnip native serve` JSON-lines process.
 
-`xnip-cli` 0.6.4 bundles this adapter. Install it and use its `xnip` launcher with
+`xnip-cli` 0.6.5 bundles this adapter. Install it and use its `xnip` launcher with
 an initialized DSH profile and the intended DSH executable:
 
 ```sh
@@ -18,6 +18,14 @@ xnip native install --host dsh \
 The npm launcher selects this bundled adapter. Standalone/source builds select
 the package directory with `--plugin DIRECTORY`; an explicit option takes
 precedence over the npm selection.
+
+Version 0.6.5 also accepts `native install --compact-tools`, selecting
+concise model schemas and successful mutation receipts while keeping official
+tool execution, validation, approval, diff metadata and rewind. See the
+[measured token report](../../docs/benchmarks/dsh-compact-results.md) for costs
+and [compact tool setup](../../docs/native.md#compact-tools).
+Version 0.6.5 revalidates profile-owned installations after host upgrades before
+verify or uninstall, preserving current user package fields and lockfiles.
 
 Fresh installations stage the adapter in
 `PROFILE/.xnip-native-package` and select the relative bundle
@@ -37,8 +45,9 @@ Enable this bundle when choosing the native provider; its bundle patch disables
 `fs-sandbox` and the existing `xnip-mcp` bridge, then inserts exactly one
 `xnip-native-fs` entry. Removing it restores the earlier bundle composition.
 
-Recorded host-lifecycle evidence is Linux with DSH `0.2.1-rc.2` and `0.2.1-rc.5`, with
-`dsh-rewind-plugin@0.19.2` for profiles that enable rewind. Validation uses the real official
+Recorded host-lifecycle evidence covers Linux with DSH 0.2.1 rc.1–rc.5 and
+0.2.2 rc.1/rc.3. Profiles that enable rewind use `dsh-rewind-plugin@0.19.2`
+on 0.2.1 and `0.21.2` on 0.2.2. Validation uses the real official
 Loader, tools, idle AgentLoop, approval service, Session, diff presentation and
 rewind plugin, without model calls. The lifecycle verifier exercises rewind when
 it is selected by the profile. Other host versions are checked for the required

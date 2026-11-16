@@ -125,9 +125,10 @@ Continue schema. Goose's official client lane uses its separately prepared
 Rust worker; both its setup and check appear above.
 
 The DSH setup installs locked local dependencies under
-`target/native-hosts/dsh-0.2.1-rc.2` and `dsh-0.2.1-rc.5`, including
-`dsh-rewind-plugin@0.19.2` for profiles that select rewind. `--version
-0.2.1-rc.2` or `--version 0.2.1-rc.5` selects one DSH version for setup and E2E.
+versioned directories under `target/native-hosts`, including
+`dsh-rewind-plugin@0.19.2` on 0.2.1 and `0.21.2` on 0.2.2 for profiles that
+select rewind. `--version <version>` selects one DSH version for setup and E2E. The pinned
+set covers 0.2.1 rc.1–rc.5 and 0.2.2 rc.1/rc.3.
 The setup's `--destination /absolute/directory` selects an isolated destination
 with one `--version`; `native-host.json` records its checked dependency/input
 hashes and Node/npm versions. Its preparation contracts run actual fresh npm
@@ -144,12 +145,14 @@ Each preparation uses its own cache root: historical workers under
 The E2E runner's `--hosts-dir /absolute/host-parent` selects another parent
 containing the versioned `dsh-<version>` directories.
 
-The full matrix completes 375 checks across the [support catalog](support.md),
-including six npm-installed DSH journeys, with zero failed or skipped cases:
+The full matrix defines 506 checks across the [support catalog](support.md),
+including three npm-installed profile layouts per DSH version. The expanded
+DSH lane selects 177 checks; other host rows retain their separately recorded
+baselines and run independently:
 
 | Runtime group | Checks | Tool and lifecycle boundary |
 |---|---:|---|
-| DSH rc.2 and rc.5 | 46 | Official provider/tools, approval/diff/rewind, profile composition, failure phases and installed-npm lifecycle on Linux |
+| DSH 0.2.1 rc.1–rc.5; 0.2.2 rc.1/rc.3 | 177 | Official provider/tools, approval/diff/rewind, profile composition, failure phases and installed-npm lifecycle on Linux |
 | Pi | 24 | SDK loader, original tool factories, hooks, packaged coexistence and builtin restoration |
 | Gemini SDK | 24 | Local `Config`, original registry, per-invocation snapshots, approval and service restoration |
 | Cline SDK | 24 | Official patch parsing/executor wrapper, actual agent policies/hooks and original-tool restoration |
@@ -245,7 +248,7 @@ includes native adapters, shared transport, suites and measured runners.
 | [native installer](../tests/native_installer_contract.rs) | Phase rollback, snapshots, user-change preservation, interrupted recovery, profile locking and restoration |
 | [DSH native host preparation](../tests/dsh_native_setup.mjs) | Frozen full-host dependency installs; exact versions and hashes; actual original tool execution; drift detection and repeatable restoration |
 | [DSH provider](../tests/dsh_native_contract.mjs) / [rewind](../tests/dsh_native_rewind.mjs) | Official filesystem tools, observations, sandbox, stale versions, approval audit, diff projection and compatible rewind plugin |
-| [native E2E matrix](../tests/native_e2e.py) | 375 checks across catalog backends, plugins, framework SDKs and client profiles; one pinned executable and capability probe; actual registries, processes, file results, restoration and lifecycle phases; exact completed-count and zero-skip gates |
+| [native E2E matrix](../tests/native_e2e.py) | 505 checks across catalog backends, plugins, framework SDKs and client profiles; one pinned executable and capability probe; actual registries, processes, file results, restoration and lifecycle phases; exact completed-count and zero-skip gates |
 | [installed-npm DSH journey](../tests/npm_dsh_lifecycle.py) | Three profile layouts per rc.2/rc.5 on Linux; installed command shim, packaged adapter discovery, actual host edits/governance/rewind, full restoration/cleanup and empty-state reentry outside the checkout |
 | [E2E result gates](../tests/native_e2e_contract.py) | Ten stdlib contracts require complete TAP/unittest summaries and exact counts; exercise CRLF, duplicate/truncated summaries, failures, skips/cancellations/TODOs, application `OK` diagnostics and unittest expected-failure/unexpected-success outcomes; counted separately from SDK E2E |
 | [Pi native extension](../tests/pi_native_contract.mjs) / [byte fixtures](../tests/pi_native_bytes.mjs) / [installed package](../tests/pi_native_packaged.mjs) | Actual official loader/session/runner and default private-tarball entry; same-name host tools; hooks, matching, queue, cancellation, rendering, binary reads, original byte scenarios and reload restoration |

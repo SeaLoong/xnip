@@ -17,12 +17,12 @@ import sys
 
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSIONS = ("0.2.1-rc.2", "0.2.1-rc.5")
+VERSIONS = ("0.2.1-rc.1", "0.2.1-rc.2", "0.2.1-rc.3", "0.2.1-rc.4", "0.2.1-rc.5", "0.2.2-rc.1", "0.2.2-rc.3")
 SUITES = (
     ("provider", "tests/dsh_native_contract.mjs", 2),
     ("bytes", "tests/dsh_native_bytes.mjs", 13),
     ("rewind", "tests/dsh_native_rewind.mjs", 2),
-    ("packaged", "tests/dsh_native_packaged.mjs", 2),
+    ("packaged", "tests/dsh_native_packaged.mjs", 3),
 )
 PI_SUITES = (
     ("registry-and-tools", "tests/pi_native_contract.mjs", 10),
@@ -166,6 +166,14 @@ def main():
         print(f"DSH {version}: npm-installed-lifecycle 3/3", flush=True)
         report["versions"].append({"host": version, "checks": checks})
         print(f"DSH {version}: lifecycle 5/5 phases", flush=True)
+    if "dsh" in hosts:
+        compact_environment = {**environment, "XNIP_DSH_NATIVE_VERSIONS": json.dumps(versions),
+                               "XNIP_DSH_NATIVE_HOSTS_DIR": str(args.hosts_dir.resolve())}
+        expected = len(versions) + 2 * int("0.2.1-rc.5" in versions and "0.2.2-rc.1" in versions)
+        output = execute([node, "--test-reporter=tap", "tests/dsh_native_upgrade.mjs"],
+                         compact_environment, evidence / "dsh-upgrade-and-compact.log")
+        report["dsh-upgrade-and-compact"] = require_tap(output, expected)
+        print(f"DSH upgrade and compact: {expected}/{expected}", flush=True)
     for host, (version, suites) in NODE_SDKS.items():
         if host not in hosts:
             continue

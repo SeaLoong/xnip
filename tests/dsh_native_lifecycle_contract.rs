@@ -203,6 +203,7 @@ fn real_dsh_failures_after_each_install_phase_restore_original_native_editing() 
             "fresh official profile unexpectedly contains dependencies"
         );
         let mut command = CommandLifecycle {
+            compact_tools: false,
             node: node.clone(),
             driver: repository.join("integrations/dsh-native/lifecycle.mjs"),
             profile: profile.clone(),
@@ -293,6 +294,7 @@ fn real_dsh_failures_after_each_install_phase_restore_original_native_editing() 
         "legacy fixture must start fresh"
     );
     let mut command = CommandLifecycle {
+        compact_tools: false,
         node,
         driver: repository.join("integrations/dsh-native/lifecycle.mjs"),
         profile: profile.clone(),

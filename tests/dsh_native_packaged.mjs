@@ -6,13 +6,14 @@ import { pathToFileURL, fileURLToPath } from 'node:url';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import test from 'node:test';
+import { callTool } from '../integrations/dsh-native/runtime.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const hostRoot = process.env.XNIP_DSH_NATIVE_HOST ?? path.join(root, 'target/native-hosts/dsh-0.2.1-rc.5');
 const executable = process.env.XNIP_TEST_BINARY ?? path.join(root, 'target/debug/xnip');
 const execute = promisify(execFile);
 
-async function validatePackagedProfile({ mcp = false } = {}) {
+async function validatePackagedProfile({ mcp = false, compact = false } = {}) {
   const requireHost = createRequire(path.join(hostRoot, 'package.json'));
   const load = name => import(pathToFileURL(requireHost.resolve(name)).href);
   const [Boot, ProfileBoot, Environment] = await Promise.all([
@@ -55,6 +56,11 @@ async function validatePackagedProfile({ mcp = false } = {}) {
       ['working-directory', 'dsh-working-directory', { defaultDirectory: project }],
       ['tool-fs', 'dsh-tool-fs', { readImage: false }],
     ];
+    const toolsModule = await load('@deepseek-ai/dsh-tools');
+    if (typeof toolsModule.default.prototype.setExecutor === 'function') {
+      plugins.find(row => row[0] === 'tools').splice(2);
+      plugins.push(['native-executor', 'dsh-tool-executor-native']);
+    }
     await fs.writeFile(path.join(basePackage, 'cordis.patch.yml'), JSON.stringify([{ insert: plugins.map(([id, name, config]) => ({
       id, name: '@deepseek-ai/' + name, ...(config ? { config } : {}),
     })) }]));
@@ -87,7 +93,8 @@ async function validatePackagedProfile({ mcp = false } = {}) {
         encoding: 'utf8', timeout: 120000, maxBuffer: 32 * 1024 * 1024 });
     const lifecycle = verb => execute(process.execPath, [path.join(root, 'integrations/dsh-native/lifecycle.mjs'), verb,
       '--profile', profileDir, '--dsh', path.join(hostRoot, 'node_modules/.bin/dsh'),
-      '--plugin', path.join(root, 'integrations/dsh-native'), '--executable', executable, '--stage', stage],
+      '--plugin', path.join(root, 'integrations/dsh-native'), '--executable', executable, '--stage', stage,
+      ...(compact ? ['--compact-tools'] : [])],
     { cwd: root, env: { ...process.env, XNIP_AUTO_UPDATE: '0' }, encoding: 'utf8', timeout: 120000, maxBuffer: 32 * 1024 * 1024 });
     await lifecycle('stage');
     await lifecycle('apply');
@@ -132,11 +139,14 @@ async function validatePackagedProfile({ mcp = false } = {}) {
     handle = await ctx.agents.create({ sessionId: 'installed-default-proof', meta: { cwd: project } });
     const agent = handle.agent;
     await agent.whenIdle();
-    const call = (name, args) => ctx.tools.execute({ signal: new AbortController().signal,
-      callId: 'installed-' + name, name, arguments: args, agent });
+    const call = (name, args) => callTool(ctx, name, args, { callId: 'installed-' + name, agent });
     assert.equal((await call('read', { file_path: target })).isError, false);
     const result = await call('edit', { file_path: target, old_string: 'old', new_string: 'new' });
     assert.equal(result.isError, false, JSON.stringify(result));
+    if (compact) {
+      assert.equal(result.content[0].text, 'edited');
+      assert.equal(ctx.tools.get('edit', agent).parameters.properties.file_path.description, 'File path.');
+    }
     assert.equal(await fs.readFile(target, 'utf8'), 'unchanged\r\nnew\r\n尾巴');
     assert.equal(modelCalls, 0);
     const editor = ctx.fs.editor;
@@ -158,9 +168,8 @@ async function validatePackagedProfile({ mcp = false } = {}) {
       assert.equal(Boolean(running.ctx.fs.editor), false);
       assert.deepEqual(running.ctx.tools.schemas().map(tool => tool.name).sort(), ['read', 'write', 'edit',
         ...['xnip_apply', 'xnip_edit', 'xnip_find', 'xnip_peek', 'xnip_recover'].map(name => 'mcp__xnip__' + name)].sort());
-      const result = await running.ctx.tools.execute({ signal: new AbortController().signal,
-        callId: 'restored-mcp', name: 'mcp__xnip__xnip_edit',
-        arguments: { file: target, old: 'new', text: 'restored' } });
+      const result = await callTool(running.ctx, 'mcp__xnip__xnip_edit',
+        { file: target, old: 'new', text: 'restored' }, { callId: 'restored-mcp' });
       assert.notEqual(result.isError, true, JSON.stringify(result));
       assert.equal(await fs.readFile(target, 'utf8'), 'unchanged\r\nrestored\r\n尾巴');
       assert.equal(restoredModelCalls, 0);
@@ -188,3 +197,6 @@ test('official profile boot loads staged native package defaults without xnip on
 
 test('native package disables existing xnip MCP bundle through official profile composition and boot',
   { timeout: 120000 }, () => validatePackagedProfile({ mcp: true }));
+
+test('official profile boot loads compact tool registrations from the installed bundle',
+  { timeout: 120000 }, () => validatePackagedProfile({ compact: true }));

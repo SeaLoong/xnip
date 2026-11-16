@@ -1,7 +1,7 @@
 """Real npm-installed DSH lifecycle, with every working directory outside checkout.
 
 Prepare the pinned official DSH hosts, build xnip, then run this file. Select one
-host with XNIP_DSH_NATIVE_HOST; otherwise both supported versions execute.
+host with XNIP_DSH_NATIVE_HOST; otherwise all pinned versions execute.
 """
 from __future__ import annotations
 
@@ -16,10 +16,10 @@ import stat
 import subprocess
 import tempfile
 import unittest
+from native_e2e import VERSIONS
 
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSIONS = ("0.2.1-rc.2", "0.2.1-rc.5")
 NODE = shutil.which("node")
 BINARY = Path(os.environ.get("XNIP_TEST_BINARY", ROOT/"target/debug"/("xnip.exe" if os.name == "nt" else "xnip")))
 spec = importlib.util.spec_from_file_location("npm_prepare", ROOT/"npm/prepare.py")
@@ -123,7 +123,8 @@ class InstalledNpmDshLifecycle(unittest.TestCase):
         self.assertIn("real-native-edit", checks)
         if installed:
             detail = checks["profile-governance"]
-            for assertion in ["dsh-rewind-plugin@0.19.2", "real approval rejection and audit pair",
+            rewind = "0.21.2" if report["host_version"].startswith("0.2.2-") else "0.19.2"
+            for assertion in [f"dsh-rewind-plugin@{rewind}", "real approval rejection and audit pair",
                               "real /rewind command", "byte-exact restore", "observation refresh", "zero model calls"]:
                 self.assertIn(assertion, detail)
 
@@ -194,7 +195,7 @@ class InstalledNpmDshLifecycle(unittest.TestCase):
             self.assertLess(snapshot_bytes, (profile/"node_modules/retained-user-package/sentinel.bin").stat().st_size // 4)
         bundle = profile/".xnip-native-package"
         installed_sources = {}
-        for filename in ["index.mjs", "runtime.mjs", "rewind-validation.mjs", "lifecycle.mjs", "editor-client.mjs"]:
+        for filename in ["index.mjs", "runtime.mjs", "compact-tools.mjs", "rewind-validation.mjs", "lifecycle.mjs", "editor-client.mjs"]:
             source = self.package/"integrations"/("native" if filename == "editor-client.mjs" else "dsh-native")/filename
             self.assertEqual(digest(bundle/filename), digest(source), filename)
             installed_sources[filename] = {"installed_source": str(source), "sha256": digest(source)}

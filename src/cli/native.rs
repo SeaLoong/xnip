@@ -59,6 +59,9 @@ struct State {
 
 #[derive(Debug, ClapArgs)]
 struct Host {
+    /// Use compact schemas and mutation receipts for the official filesystem tools.
+    #[arg(long)]
+    compact_tools: bool,
     #[arg(long = "host", default_value = "dsh")]
     framework: String,
     /// Existing DSH profile directory, not a profile name.
@@ -119,6 +122,7 @@ impl Host {
                 dsh: resolve_program(&self.dsh)?,
                 plugin,
                 executable: std::env::current_exe()?,
+                compact_tools: self.compact_tools,
             },
         ))
     }

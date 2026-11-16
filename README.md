@@ -90,15 +90,18 @@ The [native DSH provider](docs/native.md) keeps the host's `read`, `write` and
 `edit` tools, approval, sandbox and optional rewind while calling the same core
 transactions as CLI and MCP. Its profile installer verifies a real edit and
 retains snapshots for restoration.
-`xnip-cli` 0.6.4 bundles its DSH adapter for the
+`xnip-cli` 0.6.5 bundles its DSH adapter for the
 [installed-command lifecycle](docs/native.md#dsh-profile-setup).
 DSH host-lifecycle evidence is on Linux;
 the CLI and MCP have their own cross-platform verification.
+
+Version 0.6.5 adds DSH upgrade revalidation and opt-in `--compact-tools`. See [DSH setup and measured token costs](docs/native.md#compact-tools).
+
 The [Pi native extension](docs/pi-native.md) preserves Pi `1.3.0` tool schemas,
 matching, rendering and hooks through its official extension API.
 The [SDK adapters](docs/native.md) also connect Gemini's local filesystem service,
 Cline's `apply_patch` executor and OpenHands' `file_editor` IO to the same core.
-The [375-check E2E matrix](docs/testing.md#native-host-e2e) starts real registered tools
+The [host E2E matrix](docs/testing.md#native-host-e2e) starts real registered tools
 across the catalog routes and checks file bytes, governance and restoration.
 
 ## Why it saves editing context

@@ -142,7 +142,7 @@ assert.equal(packageRoot, await fs.realpath(process.argv[1]));
 const pluginRoot = path.dirname(require.resolve('xnip-cli/dsh-native/package.json'));
 assert.equal(pluginRoot, path.join(packageRoot, 'integrations', 'dsh-native'));
 assert.deepEqual((await fs.readdir(pluginRoot)).sort(), [
-  'README.md', 'cordis.patch.yml', 'editor-client.mjs', 'index.mjs', 'lifecycle.mjs',
+  'README.md', 'compact-tools.mjs', 'cordis.patch.yml', 'editor-client.mjs', 'index.mjs', 'lifecycle.mjs',
   'package.json', 'rewind-validation.mjs', 'runtime.mjs',
 ].sort());
 const provider = await import(pathToFileURL(require.resolve('xnip-cli/dsh-native')));

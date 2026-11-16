@@ -1,0 +1,1344 @@
+{
+  "methodology": "Official schemas + prompt + one read/edit exchange; content fields are model-visible. UI metadata and canonical values are excluded. No model generations. Tokenizers are proxies, not DeepSeek billing counts.",
+  "tokenizer": "js-tiktoken@1.0.21",
+  "binary_sha256": "dc7d3f8d1cc180d17766671e47e92f5f7494a0b98ae174d9067c7ef6302992fc",
+  "versions": [
+    {
+      "version": "0.2.1-rc.1",
+      "modes": {
+        "native": {
+          "schema_tokens": {
+            "cl100k_base": 507,
+            "o200k_base": 509
+          },
+          "prompt_tokens": {
+            "cl100k_base": 91,
+            "o200k_base": 91
+          },
+          "scenarios": [
+            {
+              "name": "tiny-crlf",
+              "argument_tokens": {
+                "cl100k_base": 59,
+                "o200k_base": 63
+              },
+              "read_tokens": {
+                "cl100k_base": 78,
+                "o200k_base": 78
+              },
+              "edit_tokens": {
+                "cl100k_base": 36,
+                "o200k_base": 37
+              },
+              "result_tokens": {
+                "cl100k_base": 114,
+                "o200k_base": 115
+              },
+              "byte_exact": true
+            },
+            {
+              "name": "bom-mixed-eol",
+              "argument_tokens": {
+                "cl100k_base": 63,
+                "o200k_base": 67
+              },
+              "read_tokens": {
+                "cl100k_base": 77,
+                "o200k_base": 78
+              },
+              "edit_tokens": {
+                "cl100k_base": 38,
+                "o200k_base": 39
+              },
+              "result_tokens": {
+                "cl100k_base": 115,
+                "o200k_base": 117
+              },
+              "byte_exact": true
+            },
+            {
+              "name": "replace-all",
+              "argument_tokens": {
+                "cl100k_base": 61,
+                "o200k_base": 65
+              },
+              "read_tokens": {
+                "cl100k_base": 74,
+                "o200k_base": 75
+              },
+              "edit_tokens": {
+                "cl100k_base": 40,
+                "o200k_base": 41
+              },
+              "result_tokens": {
+                "cl100k_base": 114,
+                "o200k_base": 116
+              },
+              "byte_exact": true
+            },
+            {
+              "name": "long-context",
+              "argument_tokens": {
+                "cl100k_base": 57,
+                "o200k_base": 61
+              },
+              "read_tokens": {
+                "cl100k_base": 1270,
+                "o200k_base": 1271
+              },
+              "edit_tokens": {
+                "cl100k_base": 35,
+                "o200k_base": 36
+              },
+              "result_tokens": {
+                "cl100k_base": 1305,
+                "o200k_base": 1307
+              },
+              "byte_exact": true
+            }
+          ],
+          "model_calls": 0
+        },
+        "compact": {
+          "schema_tokens": {
+            "cl100k_base": 422,
+            "o200k_base": 425
+          },
+          "prompt_tokens": {
+            "cl100k_base": 91,
+            "o200k_base": 91
+          },
+          "scenarios": [
+            {
+              "name": "tiny-crlf",
+              "argument_tokens": {
+                "cl100k_base": 59,
+                "o200k_base": 63
+              },
+              "read_tokens": {
+                "cl100k_base": 78,
+                "o200k_base": 78
+              },
+              "edit_tokens": {
+                "cl100k_base": 11,
+                "o200k_base": 11
+              },
+              "result_tokens": {
+                "cl100k_base": 88,
+                "o200k_base": 88
+              },
+              "byte_exact": true
+            },
+            {
+              "name": "bom-mixed-eol",
+              "argument_tokens": {
+                "cl100k_base": 63,
+                "o200k_base": 67
+              },
+              "read_tokens": {
+                "cl100k_base": 77,
+                "o200k_base": 78
+              },
+              "edit_tokens": {
+                "cl100k_base": 11,
+                "o200k_base": 11
+              },
+              "result_tokens": {
+                "cl100k_base": 87,
+                "o200k_base": 88
+              },
+              "byte_exact": true
+            },
+            {
+              "name": "replace-all",
+              "argument_tokens": {
+                "cl100k_base": 61,
+                "o200k_base": 65
+              },
+              "read_tokens": {
+                "cl100k_base": 74,
+                "o200k_base": 75
+              },
+              "edit_tokens": {
+                "cl100k_base": 11,
+                "o200k_base": 11
+              },
+              "result_tokens": {
+                "cl100k_base": 84,
+                "o200k_base": 85
+              },
+              "byte_exact": true
+            },
+            {
+              "name": "long-context",
+              "argument_tokens": {
+                "cl100k_base": 57,
+                "o200k_base": 61
+              },
+              "read_tokens": {
+                "cl100k_base": 1270,
+                "o200k_base": 1271
+              },
+              "edit_tokens": {
+                "cl100k_base": 11,
+                "o200k_base": 11
+              },
+              "result_tokens": {
+                "cl100k_base": 1280,
+                "o200k_base": 1281
+              },
+              "byte_exact": true
+            }
+          ],
+          "model_calls": 0
+        }
+      }
+    },
+    {
+      "version": "0.2.1-rc.2",
+      "modes": {
+        "native": {
+          "schema_tokens": {
+            "cl100k_base": 507,
+            "o200k_base": 509
+          },
+          "prompt_tokens": {
+            "cl100k_base": 91,
+            "o200k_base": 91
+          },
+          "scenarios": [
+            {
+              "name": "tiny-crlf",
+              "argument_tokens": {
+                "cl100k_base": 59,
+                "o200k_base": 63
+              },
+              "read_tokens": {
+                "cl100k_base": 78,
+                "o200k_base": 78
+              },
+              "edit_tokens": {
+                "cl100k_base": 36,
+                "o200k_base": 37
+              },
+              "result_tokens": {
+                "cl100k_base": 114,
+                "o200k_base": 115
+              },
+              "byte_exact": true
+            },
+            {
+              "name": "bom-mixed-eol",
+              "argument_tokens": {
+                "cl100k_base": 63,
+                "o200k_base": 67
+              },
+              "read_tokens": {
+                "cl100k_base": 77,
+                "o200k_base": 78
+              },
+              "edit_tokens": {
+                "cl100k_base": 38,
+                "o200k_base": 39
+              },
+              "result_tokens": {
+                "cl100k_base": 115,
+                "o200k_base": 117
+              },
+              "byte_exact": true
+            },
+            {
+              "name": "replace-all",
+              "argument_tokens": {
+                "cl100k_base": 61,
+                "o200k_base": 65
+              },
+              "read_tokens": {
+                "cl100k_base": 74,
+                "o200k_base": 75
+              },
+              "edit_tokens": {
+                "cl100k_base": 40,
+                "o200k_base": 41
+              },
+              "result_tokens": {
+                "cl100k_base": 114,
+                "o200k_base": 116
+              },
+              "byte_exact": true
+            },
+            {
+              "name": "long-context",
+              "argument_tokens": {
+                "cl100k_base": 57,
+                "o200k_base": 61
+              },
+              "read_tokens": {
+                "cl100k_base": 1270,
+                "o200k_base": 1271
+              },
+              "edit_tokens": {
+                "cl100k_base": 35,
+                "o200k_base": 36
+              },
+              "result_tokens": {
+                "cl100k_base": 1305,
+                "o200k_base": 1307
+              },
+              "byte_exact": true
+            }
+          ],
+          "model_calls": 0
+        },
+        "compact": {
+          "schema_tokens": {
+            "cl100k_base": 422,
+            "o200k_base": 425
+          },
+          "prompt_tokens": {
+            "cl100k_base": 91,
+            "o200k_base": 91
+          },
+          "scenarios": [
+            {
+              "name": "tiny-crlf",
+              "argument_tokens": {
+                "cl100k_base": 59,
+                "o200k_base": 63
+              },
+              "read_tokens": {
+                "cl100k_base": 78,
+                "o200k_base": 78
+              },
+              "edit_tokens": {
+                "cl100k_base": 11,
+                "o200k_base": 11
+              },
+              "result_tokens": {
+                "cl100k_base": 88,
+                "o200k_base": 88
+              },
+              "byte_exact": true
+            },
+            {
+              "name": "bom-mixed-eol",
+              "argument_tokens": {
+                "cl100k_base": 63,
+                "o200k_base": 67
+              },
+              "read_tokens": {
+                "cl100k_base": 77,
+                "o200k_base": 78
+              },
+              "edit_tokens": {
+                "cl100k_base": 11,
+                "o200k_base": 11
+              },
+              "result_tokens": {
+                "cl100k_base": 87,
+                "o200k_base": 88
+              },
+              "byte_exact": true
+            },
+            {
+              "name": "replace-all",
+              "argument_tokens": {
+                "cl100k_base": 61,
+                "o200k_base": 65
+              },
+              "read_tokens": {
+                "cl100k_base": 74,
+                "o200k_base": 75
+              },
+              "edit_tokens": {
+                "cl100k_base": 11,
+                "o200k_base": 11
+              },
+              "result_tokens": {
+                "cl100k_base": 84,
+                "o200k_base": 85
+              },
+              "byte_exact": true
+            },
+            {
+              "name": "long-context",
+              "argument_tokens": {
+                "cl100k_base": 57,
+                "o200k_base": 61
+              },
+              "read_tokens": {
+                "cl100k_base": 1270,
+                "o200k_base": 1271
+              },
+              "edit_tokens": {
+                "cl100k_base": 11,
+                "o200k_base": 11
+              },
+              "result_tokens": {
+                "cl100k_base": 1280,
+                "o200k_base": 1281
+              },
+              "byte_exact": true
+            }
+          ],
+          "model_calls": 0
+        }
+      }
+    },
+    {
+      "version": "0.2.1-rc.3",
+      "modes": {
+        "native": {
+          "schema_tokens": {
+            "cl100k_base": 507,
+            "o200k_base": 509
+          },
+          "prompt_tokens": {
+            "cl100k_base": 91,
+            "o200k_base": 91
+          },
+          "scenarios": [
+            {
+              "name": "tiny-crlf",
+              "argument_tokens": {
+                "cl100k_base": 59,
+                "o200k_base": 63
+              },
+              "read_tokens": {
+                "cl100k_base": 78,
+                "o200k_base": 78
+              },
+              "edit_tokens": {
+                "cl100k_base": 36,
+                "o200k_base": 37
+              },
+              "result_tokens": {
+                "cl100k_base": 114,
+                "o200k_base": 115
+              },
+              "byte_exact": true
+            },
+            {
+              "name": "bom-mixed-eol",
+              "argument_tokens": {
+                "cl100k_base": 63,
+                "o200k_base": 67
+              },
+              "read_tokens": {
+                "cl100k_base": 77,
+                "o200k_base": 78
+              },
+              "edit_tokens": {
+                "cl100k_base": 38,
+                "o200k_base": 39
+              },
+              "result_tokens": {
+                "cl100k_base": 115,
+                "o200k_base": 117
+              },
+              "byte_exact": true
+            },
+            {
+              "name": "replace-all",
+              "argument_tokens": {
+                "cl100k_base": 61,
+                "o200k_base": 65
+              },
+              "read_tokens": {
+                "cl100k_base": 74,
+                "o200k_base": 75
+              },
+              "edit_tokens": {
+                "cl100k_base": 40,
+                "o200k_base": 41
+              },
+              "result_tokens": {
+                "cl100k_base": 114,
+                "o200k_base": 116
+              },
+              "byte_exact": true
+            },
+            {
+              "name": "long-context",
+              "argument_tokens": {
+                "cl100k_base": 57,
+                "o200k_base": 61
+              },
+              "read_tokens": {
+                "cl100k_base": 1270,
+                "o200k_base": 1271
+              },
+              "edit_tokens": {
+                "cl100k_base": 35,
+                "o200k_base": 36
+              },
+              "result_tokens": {
+                "cl100k_base": 1305,
+                "o200k_base": 1307
+              },
+              "byte_exact": true
+            }
+          ],
+          "model_calls": 0
+        },
+        "compact": {
+          "schema_tokens": {
+            "cl100k_base": 422,
+            "o200k_base": 425
+          },
+          "prompt_tokens": {
+            "cl100k_base": 91,
+            "o200k_base": 91
+          },
+          "scenarios": [
+            {
+              "name": "tiny-crlf",
+              "argument_tokens": {
+                "cl100k_base": 59,
+                "o200k_base": 63
+              },
+              "read_tokens": {
+                "cl100k_base": 78,
+                "o200k_base": 78
+              },
+              "edit_tokens": {
+                "cl100k_base": 11,
+                "o200k_base": 11
+              },
+              "result_tokens": {
+                "cl100k_base": 88,
+                "o200k_base": 88
+              },
+              "byte_exact": true
+            },
+            {
+              "name": "bom-mixed-eol",
+              "argument_tokens": {
+                "cl100k_base": 63,
+                "o200k_base": 67
+              },
+              "read_tokens": {
+                "cl100k_base": 77,
+                "o200k_base": 78
+              },
+              "edit_tokens": {
+                "cl100k_base": 11,
+                "o200k_base": 11
+              },
+              "result_tokens": {
+                "cl100k_base": 87,
+                "o200k_base": 88
+              },
+              "byte_exact": true
+            },
+            {
+              "name": "replace-all",
+              "argument_tokens": {
+                "cl100k_base": 61,
+                "o200k_base": 65
+              },
+              "read_tokens": {
+                "cl100k_base": 74,
+                "o200k_base": 75
+              },
+              "edit_tokens": {
+                "cl100k_base": 11,
+                "o200k_base": 11
+              },
+              "result_tokens": {
+                "cl100k_base": 84,
+                "o200k_base": 85
+              },
+              "byte_exact": true
+            },
+            {
+              "name": "long-context",
+              "argument_tokens": {
+                "cl100k_base": 57,
+                "o200k_base": 61
+              },
+              "read_tokens": {
+                "cl100k_base": 1270,
+                "o200k_base": 1271
+              },
+              "edit_tokens": {
+                "cl100k_base": 11,
+                "o200k_base": 11
+              },
+              "result_tokens": {
+                "cl100k_base": 1280,
+                "o200k_base": 1281
+              },
+              "byte_exact": true
+            }
+          ],
+          "model_calls": 0
+        }
+      }
+    },
+    {
+      "version": "0.2.1-rc.4",
+      "modes": {
+        "native": {
+          "schema_tokens": {
+            "cl100k_base": 507,
+            "o200k_base": 509
+          },
+          "prompt_tokens": {
+            "cl100k_base": 91,
+            "o200k_base": 91
+          },
+          "scenarios": [
+            {
+              "name": "tiny-crlf",
+              "argument_tokens": {
+                "cl100k_base": 59,
+                "o200k_base": 63
+              },
+              "read_tokens": {
+                "cl100k_base": 78,
+                "o200k_base": 78
+              },
+              "edit_tokens": {
+                "cl100k_base": 36,
+                "o200k_base": 37
+              },
+              "result_tokens": {
+                "cl100k_base": 114,
+                "o200k_base": 115
+              },
+              "byte_exact": true
+            },
+            {
+              "name": "bom-mixed-eol",
+              "argument_tokens": {
+                "cl100k_base": 63,
+                "o200k_base": 67
+              },
+              "read_tokens": {
+                "cl100k_base": 77,
+                "o200k_base": 78
+              },
+              "edit_tokens": {
+                "cl100k_base": 38,
+                "o200k_base": 39
+              },
+              "result_tokens": {
+                "cl100k_base": 115,
+                "o200k_base": 117
+              },
+              "byte_exact": true
+            },
+            {
+              "name": "replace-all",
+              "argument_tokens": {
+                "cl100k_base": 61,
+                "o200k_base": 65
+              },
+              "read_tokens": {
+                "cl100k_base": 74,
+                "o200k_base": 75
+              },
+              "edit_tokens": {
+                "cl100k_base": 40,
+                "o200k_base": 41
+              },
+              "result_tokens": {
+                "cl100k_base": 114,
+                "o200k_base": 116
+              },
+              "byte_exact": true
+            },
+            {
+              "name": "long-context",
+              "argument_tokens": {
+                "cl100k_base": 57,
+                "o200k_base": 61
+              },
+              "read_tokens": {
+                "cl100k_base": 1270,
+                "o200k_base": 1271
+              },
+              "edit_tokens": {
+                "cl100k_base": 35,
+                "o200k_base": 36
+              },
+              "result_tokens": {
+                "cl100k_base": 1305,
+                "o200k_base": 1307
+              },
+              "byte_exact": true
+            }
+          ],
+          "model_calls": 0
+        },
+        "compact": {
+          "schema_tokens": {
+            "cl100k_base": 422,
+            "o200k_base": 425
+          },
+          "prompt_tokens": {
+            "cl100k_base": 91,
+            "o200k_base": 91
+          },
+          "scenarios": [
+            {
+              "name": "tiny-crlf",
+              "argument_tokens": {
+                "cl100k_base": 59,
+                "o200k_base": 63
+              },
+              "read_tokens": {
+                "cl100k_base": 78,
+                "o200k_base": 78
+              },
+              "edit_tokens": {
+                "cl100k_base": 11,
+                "o200k_base": 11
+              },
+              "result_tokens": {
+                "cl100k_base": 88,
+                "o200k_base": 88
+              },
+              "byte_exact": true
+            },
+            {
+              "name": "bom-mixed-eol",
+              "argument_tokens": {
+                "cl100k_base": 63,
+                "o200k_base": 67
+              },
+              "read_tokens": {
+                "cl100k_base": 77,
+                "o200k_base": 78
+              },
+              "edit_tokens": {
+                "cl100k_base": 11,
+                "o200k_base": 11
+              },
+              "result_tokens": {
+                "cl100k_base": 87,
+                "o200k_base": 88
+              },
+              "byte_exact": true
+            },
+            {
+              "name": "replace-all",
+              "argument_tokens": {
+                "cl100k_base": 61,
+                "o200k_base": 65
+              },
+              "read_tokens": {
+                "cl100k_base": 74,
+                "o200k_base": 75
+              },
+              "edit_tokens": {
+                "cl100k_base": 11,
+                "o200k_base": 11
+              },
+              "result_tokens": {
+                "cl100k_base": 84,
+                "o200k_base": 85
+              },
+              "byte_exact": true
+            },
+            {
+              "name": "long-context",
+              "argument_tokens": {
+                "cl100k_base": 57,
+                "o200k_base": 61
+              },
+              "read_tokens": {
+                "cl100k_base": 1270,
+                "o200k_base": 1271
+              },
+              "edit_tokens": {
+                "cl100k_base": 11,
+                "o200k_base": 11
+              },
+              "result_tokens": {
+                "cl100k_base": 1280,
+                "o200k_base": 1281
+              },
+              "byte_exact": true
+            }
+          ],
+          "model_calls": 0
+        }
+      }
+    },
+    {
+      "version": "0.2.1-rc.5",
+      "modes": {
+        "native": {
+          "schema_tokens": {
+            "cl100k_base": 507,
+            "o200k_base": 509
+          },
+          "prompt_tokens": {
+            "cl100k_base": 91,
+            "o200k_base": 91
+          },
+          "scenarios": [
+            {
+              "name": "tiny-crlf",
+              "argument_tokens": {
+                "cl100k_base": 59,
+                "o200k_base": 63
+              },
+              "read_tokens": {
+                "cl100k_base": 78,
+                "o200k_base": 78
+              },
+              "edit_tokens": {
+                "cl100k_base": 36,
+                "o200k_base": 37
+              },
+              "result_tokens": {
+                "cl100k_base": 114,
+                "o200k_base": 115
+              },
+              "byte_exact": true
+            },
+            {
+              "name": "bom-mixed-eol",
+              "argument_tokens": {
+                "cl100k_base": 63,
+                "o200k_base": 67
+              },
+              "read_tokens": {
+                "cl100k_base": 77,
+                "o200k_base": 78
+              },
+              "edit_tokens": {
+                "cl100k_base": 38,
+                "o200k_base": 39
+              },
+              "result_tokens": {
+                "cl100k_base": 115,
+                "o200k_base": 117
+              },
+              "byte_exact": true
+            },
+            {
+              "name": "replace-all",
+              "argument_tokens": {
+                "cl100k_base": 61,
+                "o200k_base": 65
+              },
+              "read_tokens": {
+                "cl100k_base": 74,
+                "o200k_base": 75
+              },
+              "edit_tokens": {
+                "cl100k_base": 40,
+                "o200k_base": 41
+              },
+              "result_tokens": {
+                "cl100k_base": 114,
+                "o200k_base": 116
+              },
+              "byte_exact": true
+            },
+            {
+              "name": "long-context",
+              "argument_tokens": {
+                "cl100k_base": 57,
+                "o200k_base": 61
+              },
+              "read_tokens": {
+                "cl100k_base": 1270,
+                "o200k_base": 1271
+              },
+              "edit_tokens": {
+                "cl100k_base": 35,
+                "o200k_base": 36
+              },
+              "result_tokens": {
+                "cl100k_base": 1305,
+                "o200k_base": 1307
+              },
+              "byte_exact": true
+            }
+          ],
+          "model_calls": 0
+        },
+        "compact": {
+          "schema_tokens": {
+            "cl100k_base": 422,
+            "o200k_base": 425
+          },
+          "prompt_tokens": {
+            "cl100k_base": 91,
+            "o200k_base": 91
+          },
+          "scenarios": [
+            {
+              "name": "tiny-crlf",
+              "argument_tokens": {
+                "cl100k_base": 59,
+                "o200k_base": 63
+              },
+              "read_tokens": {
+                "cl100k_base": 78,
+                "o200k_base": 78
+              },
+              "edit_tokens": {
+                "cl100k_base": 11,
+                "o200k_base": 11
+              },
+              "result_tokens": {
+                "cl100k_base": 88,
+                "o200k_base": 88
+              },
+              "byte_exact": true
+            },
+            {
+              "name": "bom-mixed-eol",
+              "argument_tokens": {
+                "cl100k_base": 63,
+                "o200k_base": 67
+              },
+              "read_tokens": {
+                "cl100k_base": 77,
+                "o200k_base": 78
+              },
+              "edit_tokens": {
+                "cl100k_base": 11,
+                "o200k_base": 11
+              },
+              "result_tokens": {
+                "cl100k_base": 87,
+                "o200k_base": 88
+              },
+              "byte_exact": true
+            },
+            {
+              "name": "replace-all",
+              "argument_tokens": {
+                "cl100k_base": 61,
+                "o200k_base": 65
+              },
+              "read_tokens": {
+                "cl100k_base": 74,
+                "o200k_base": 75
+              },
+              "edit_tokens": {
+                "cl100k_base": 11,
+                "o200k_base": 11
+              },
+              "result_tokens": {
+                "cl100k_base": 84,
+                "o200k_base": 85
+              },
+              "byte_exact": true
+            },
+            {
+              "name": "long-context",
+              "argument_tokens": {
+                "cl100k_base": 57,
+                "o200k_base": 61
+              },
+              "read_tokens": {
+                "cl100k_base": 1270,
+                "o200k_base": 1271
+              },
+              "edit_tokens": {
+                "cl100k_base": 11,
+                "o200k_base": 11
+              },
+              "result_tokens": {
+                "cl100k_base": 1280,
+                "o200k_base": 1281
+              },
+              "byte_exact": true
+            }
+          ],
+          "model_calls": 0
+        }
+      }
+    },
+    {
+      "version": "0.2.2-rc.1",
+      "modes": {
+        "native": {
+          "schema_tokens": {
+            "cl100k_base": 507,
+            "o200k_base": 509
+          },
+          "prompt_tokens": {
+            "cl100k_base": 71,
+            "o200k_base": 71
+          },
+          "scenarios": [
+            {
+              "name": "tiny-crlf",
+              "argument_tokens": {
+                "cl100k_base": 59,
+                "o200k_base": 63
+              },
+              "read_tokens": {
+                "cl100k_base": 78,
+                "o200k_base": 78
+              },
+              "edit_tokens": {
+                "cl100k_base": 36,
+                "o200k_base": 37
+              },
+              "result_tokens": {
+                "cl100k_base": 114,
+                "o200k_base": 115
+              },
+              "byte_exact": true
+            },
+            {
+              "name": "bom-mixed-eol",
+              "argument_tokens": {
+                "cl100k_base": 63,
+                "o200k_base": 67
+              },
+              "read_tokens": {
+                "cl100k_base": 77,
+                "o200k_base": 78
+              },
+              "edit_tokens": {
+                "cl100k_base": 38,
+                "o200k_base": 39
+              },
+              "result_tokens": {
+                "cl100k_base": 115,
+                "o200k_base": 117
+              },
+              "byte_exact": true
+            },
+            {
+              "name": "replace-all",
+              "argument_tokens": {
+                "cl100k_base": 61,
+                "o200k_base": 65
+              },
+              "read_tokens": {
+                "cl100k_base": 74,
+                "o200k_base": 75
+              },
+              "edit_tokens": {
+                "cl100k_base": 40,
+                "o200k_base": 41
+              },
+              "result_tokens": {
+                "cl100k_base": 114,
+                "o200k_base": 116
+              },
+              "byte_exact": true
+            },
+            {
+              "name": "long-context",
+              "argument_tokens": {
+                "cl100k_base": 57,
+                "o200k_base": 61
+              },
+              "read_tokens": {
+                "cl100k_base": 1270,
+                "o200k_base": 1271
+              },
+              "edit_tokens": {
+                "cl100k_base": 35,
+                "o200k_base": 36
+              },
+              "result_tokens": {
+                "cl100k_base": 1305,
+                "o200k_base": 1307
+              },
+              "byte_exact": true
+            }
+          ],
+          "model_calls": 0
+        },
+        "compact": {
+          "schema_tokens": {
+            "cl100k_base": 422,
+            "o200k_base": 425
+          },
+          "prompt_tokens": {
+            "cl100k_base": 71,
+            "o200k_base": 71
+          },
+          "scenarios": [
+            {
+              "name": "tiny-crlf",
+              "argument_tokens": {
+                "cl100k_base": 59,
+                "o200k_base": 63
+              },
+              "read_tokens": {
+                "cl100k_base": 78,
+                "o200k_base": 78
+              },
+              "edit_tokens": {
+                "cl100k_base": 11,
+                "o200k_base": 11
+              },
+              "result_tokens": {
+                "cl100k_base": 88,
+                "o200k_base": 88
+              },
+              "byte_exact": true
+            },
+            {
+              "name": "bom-mixed-eol",
+              "argument_tokens": {
+                "cl100k_base": 63,
+                "o200k_base": 67
+              },
+              "read_tokens": {
+                "cl100k_base": 77,
+                "o200k_base": 78
+              },
+              "edit_tokens": {
+                "cl100k_base": 11,
+                "o200k_base": 11
+              },
+              "result_tokens": {
+                "cl100k_base": 87,
+                "o200k_base": 88
+              },
+              "byte_exact": true
+            },
+            {
+              "name": "replace-all",
+              "argument_tokens": {
+                "cl100k_base": 61,
+                "o200k_base": 65
+              },
+              "read_tokens": {
+                "cl100k_base": 74,
+                "o200k_base": 75
+              },
+              "edit_tokens": {
+                "cl100k_base": 11,
+                "o200k_base": 11
+              },
+              "result_tokens": {
+                "cl100k_base": 84,
+                "o200k_base": 85
+              },
+              "byte_exact": true
+            },
+            {
+              "name": "long-context",
+              "argument_tokens": {
+                "cl100k_base": 57,
+                "o200k_base": 61
+              },
+              "read_tokens": {
+                "cl100k_base": 1270,
+                "o200k_base": 1271
+              },
+              "edit_tokens": {
+                "cl100k_base": 11,
+                "o200k_base": 11
+              },
+              "result_tokens": {
+                "cl100k_base": 1280,
+                "o200k_base": 1281
+              },
+              "byte_exact": true
+            }
+          ],
+          "model_calls": 0
+        }
+      }
+    },
+    {
+      "version": "0.2.2-rc.3",
+      "modes": {
+        "native": {
+          "schema_tokens": {
+            "cl100k_base": 507,
+            "o200k_base": 509
+          },
+          "prompt_tokens": {
+            "cl100k_base": 83,
+            "o200k_base": 83
+          },
+          "scenarios": [
+            {
+              "name": "tiny-crlf",
+              "argument_tokens": {
+                "cl100k_base": 59,
+                "o200k_base": 63
+              },
+              "read_tokens": {
+                "cl100k_base": 78,
+                "o200k_base": 78
+              },
+              "edit_tokens": {
+                "cl100k_base": 36,
+                "o200k_base": 37
+              },
+              "result_tokens": {
+                "cl100k_base": 114,
+                "o200k_base": 115
+              },
+              "byte_exact": true
+            },
+            {
+              "name": "bom-mixed-eol",
+              "argument_tokens": {
+                "cl100k_base": 63,
+                "o200k_base": 67
+              },
+              "read_tokens": {
+                "cl100k_base": 77,
+                "o200k_base": 78
+              },
+              "edit_tokens": {
+                "cl100k_base": 38,
+                "o200k_base": 39
+              },
+              "result_tokens": {
+                "cl100k_base": 115,
+                "o200k_base": 117
+              },
+              "byte_exact": true
+            },
+            {
+              "name": "replace-all",
+              "argument_tokens": {
+                "cl100k_base": 61,
+                "o200k_base": 65
+              },
+              "read_tokens": {
+                "cl100k_base": 74,
+                "o200k_base": 75
+              },
+              "edit_tokens": {
+                "cl100k_base": 40,
+                "o200k_base": 41
+              },
+              "result_tokens": {
+                "cl100k_base": 114,
+                "o200k_base": 116
+              },
+              "byte_exact": true
+            },
+            {
+              "name": "long-context",
+              "argument_tokens": {
+                "cl100k_base": 57,
+                "o200k_base": 61
+              },
+              "read_tokens": {
+                "cl100k_base": 1270,
+                "o200k_base": 1271
+              },
+              "edit_tokens": {
+                "cl100k_base": 35,
+                "o200k_base": 36
+              },
+              "result_tokens": {
+                "cl100k_base": 1305,
+                "o200k_base": 1307
+              },
+              "byte_exact": true
+            }
+          ],
+          "model_calls": 0
+        },
+        "compact": {
+          "schema_tokens": {
+            "cl100k_base": 422,
+            "o200k_base": 425
+          },
+          "prompt_tokens": {
+            "cl100k_base": 83,
+            "o200k_base": 83
+          },
+          "scenarios": [
+            {
+              "name": "tiny-crlf",
+              "argument_tokens": {
+                "cl100k_base": 59,
+                "o200k_base": 63
+              },
+              "read_tokens": {
+                "cl100k_base": 78,
+                "o200k_base": 78
+              },
+              "edit_tokens": {
+                "cl100k_base": 11,
+                "o200k_base": 11
+              },
+              "result_tokens": {
+                "cl100k_base": 88,
+                "o200k_base": 88
+              },
+              "byte_exact": true
+            },
+            {
+              "name": "bom-mixed-eol",
+              "argument_tokens": {
+                "cl100k_base": 63,
+                "o200k_base": 67
+              },
+              "read_tokens": {
+                "cl100k_base": 77,
+                "o200k_base": 78
+              },
+              "edit_tokens": {
+                "cl100k_base": 11,
+                "o200k_base": 11
+              },
+              "result_tokens": {
+                "cl100k_base": 87,
+                "o200k_base": 88
+              },
+              "byte_exact": true
+            },
+            {
+              "name": "replace-all",
+              "argument_tokens": {
+                "cl100k_base": 61,
+                "o200k_base": 65
+              },
+              "read_tokens": {
+                "cl100k_base": 74,
+                "o200k_base": 75
+              },
+              "edit_tokens": {
+                "cl100k_base": 11,
+                "o200k_base": 11
+              },
+              "result_tokens": {
+                "cl100k_base": 84,
+                "o200k_base": 85
+              },
+              "byte_exact": true
+            },
+            {
+              "name": "long-context",
+              "argument_tokens": {
+                "cl100k_base": 57,
+                "o200k_base": 61
+              },
+              "read_tokens": {
+                "cl100k_base": 1270,
+                "o200k_base": 1271
+              },
+              "edit_tokens": {
+                "cl100k_base": 11,
+                "o200k_base": 11
+              },
+              "result_tokens": {
+                "cl100k_base": 1280,
+                "o200k_base": 1281
+              },
+              "byte_exact": true
+            }
+          ],
+          "model_calls": 0
+        }
+      }
+    }
+  ]
+}

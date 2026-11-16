@@ -1,5 +1,7 @@
 # Integration and editing benchmarks
 
+The [DSH compact projection measurements](dsh-compact-results.md) compare model-facing schemas and receipts across seven official host versions, with byte-checked tool calls and zero model generations.
+
 Start with the [support matrix](../support.md): it maps current catalog entries
 to their tool surfaces, contracts and reports. Benchmarks execute real host
 tools, plugins, framework SDKs and MCP clients with model generation idle.
@@ -102,7 +104,7 @@ On Windows use the environment's `Scripts/python.exe` and `xnip.exe`.
 `--output-prefix` selects fresh local artifacts; `--scenarios` selects a named
 fixture subset. SDK families use their own virtual environments and locked MCP
 versions. The test guide lists actual measured-runner contracts alongside
-the full 375-check execution matrix.
+the host execution matrix.
 
 ## Earlier provider snapshots
 

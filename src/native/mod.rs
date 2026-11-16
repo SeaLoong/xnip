@@ -98,6 +98,10 @@ pub struct InstallPlan {
 
 /// A host must implement real activation and edit checks, not just inspect a PID.
 pub trait Lifecycle {
+    /// Profile-owned bundles can revalidate current host contracts after upgrades.
+    fn supports_revalidation(&self) -> bool {
+        false
+    }
     fn preflight(&mut self) -> Result<Capabilities>;
     fn observe(&mut self) -> Result<Observation>;
     fn stage(&mut self, directory: &Path) -> Result<()>;
@@ -143,6 +147,9 @@ pub struct Manifest {
     pub installed_observation: Option<Observation>,
     pub preserved_data: Vec<PathBuf>,
     pub verification: Option<Verification>,
+    /// An upgraded host establishes its restored observation by real verification.
+    #[serde(default)]
+    rebased: bool,
     baseline: Snapshot,
     observed: Snapshot,
     installed: Option<Snapshot>,
@@ -474,6 +481,7 @@ pub fn install_with_hook(
         installed_observation: None,
         preserved_data: plan.preserved_data.clone(),
         verification: None,
+        rebased: false,
         baseline,
         observed,
         installed: None,
@@ -587,7 +595,89 @@ fn rollback(state: &Path, manifest: &mut Manifest, lifecycle: &mut dyn Lifecycle
     Ok(())
 }
 
-/// Removal refuses any user modification after installation before calling host.
+/// Revalidate a profile-owned DSH bundle while retaining current user configuration.
+/// Bundle bytes remain immutable; only the installer's bundle-list addition is
+/// removed from the upgraded package when constructing the new rollback target.
+fn revalidate_upgrade(
+    state: &Path,
+    manifest: &mut Manifest,
+    lifecycle: &mut dyn Lifecycle,
+) -> Result<()> {
+    if !lifecycle.supports_revalidation() {
+        return Ok(());
+    }
+    let capabilities = lifecycle.preflight()?;
+    ensure!(
+        capabilities.host == manifest.host && capabilities.supported,
+        "current host requires a compatible filesystem provider contract"
+    );
+    let package = manifest.profile.join("package.json");
+    let bundle = manifest.profile.join(".xnip-native-package");
+    let installed = manifest
+        .installed
+        .as_ref()
+        .context("missing installed snapshot")?;
+    let differences = installed.differences(state)?;
+    if capabilities.version == manifest.host_version
+        && manifest.observed.differences(state)?.is_empty()
+        && differences.is_empty()
+    {
+        return Ok(());
+    }
+    ensure!(
+        manifest.host == "dsh" && installed.roots == [package.clone(), bundle],
+        "upgrade revalidation requires a profile-owned native bundle"
+    );
+    ensure!(
+        differences.iter().all(|path| path == &package),
+        "installed native bundle changed; retain installation evidence for inspection: {differences:?}"
+    );
+    installed.verify_blobs(state)?;
+    manifest.baseline.verify_blobs(state)?;
+    let current = Snapshot::capture(&installed.roots, state)?;
+    let observed = Snapshot::capture(&manifest.observed.roots, state)?;
+    let current_bytes = current.file_bytes(&package, state)?;
+    let installed_bytes = installed.file_bytes(&package, state)?;
+    let mut baseline = manifest.baseline.clone();
+    if current_bytes == installed_bytes && differences.contains(&package) {
+        let bytes = baseline.file_bytes(&package, state)?;
+        baseline.replace_file(&package, &bytes, state, &current)?;
+    }
+    if current_bytes != installed_bytes {
+        let mut value: serde_json::Value = serde_json::from_slice(&current_bytes)?;
+        let bundles = value
+            .pointer_mut("/dsh/profile/bundles")
+            .and_then(serde_json::Value::as_array_mut)
+            .context("current profile requires its native bundle membership")?;
+        let entry = serde_json::Value::String("./.xnip-native-package".into());
+        ensure!(
+            bundles.iter().filter(|item| **item == entry).count() == 1,
+            "current profile requires exactly one native bundle entry"
+        );
+        bundles.retain(|item| *item != entry);
+        let mut bytes = serde_json::to_vec_pretty(&value)?;
+        bytes.push(b'\n');
+        baseline.replace_file(&package, &bytes, state, &current)?;
+    }
+    let verification = lifecycle.verify(true)?;
+    verification.require_pass()?;
+    let observation = lifecycle.observe()?;
+    ensure!(
+        current.differences(state)?.is_empty() && observed.differences(state)?.is_empty(),
+        "profile changed during upgrade revalidation; retry with the current configuration"
+    );
+    manifest.baseline = baseline;
+    manifest.installed = Some(current);
+    manifest.observed = observed;
+    manifest.host_version.clone_from(&capabilities.version);
+    manifest.capabilities = capabilities;
+    manifest.installed_observation = Some(observation);
+    manifest.verification = Some(verification);
+    manifest.rebased = true;
+    save(state, manifest)
+}
+
+/// Removal retains upgrades after successful current-host revalidation.
 pub fn uninstall(state: &Path, lifecycle: &mut dyn Lifecycle) -> Result<NativeReport> {
     let _lock = Lock::acquire(state)?;
     let mut manifest = load(state)?;
@@ -596,6 +686,7 @@ pub fn uninstall(state: &Path, lifecycle: &mut dyn Lifecycle) -> Result<NativeRe
         manifest.phase == Phase::Active,
         "installation is not active; verify/recover its retained manifest first"
     );
+    revalidate_upgrade(state, &mut manifest, lifecycle)?;
     preflight(&manifest.host, &manifest.host_version, lifecycle)?;
     ensure!(
         manifest.observed.differences(state)?.is_empty(),
@@ -626,10 +717,13 @@ pub fn uninstall(state: &Path, lifecycle: &mut dyn Lifecycle) -> Result<NativeRe
         lifecycle.activate(false)?;
         let verification = lifecycle.verify(false)?;
         verification.require_pass()?;
+        let observation = lifecycle.observe()?;
         ensure!(
-            lifecycle.observe()? == manifest.baseline_observation,
+            manifest.rebased || observation == manifest.baseline_observation,
             "restored catalog or prompt differs from preflight"
         );
+        manifest.baseline_observation = observation;
+        manifest.rebased = false;
         ensure!(
             manifest.baseline.differences(state)?.is_empty(),
             "managed files did not return to baseline"
@@ -674,6 +768,9 @@ pub fn verify(state: &Path, lifecycle: &mut dyn Lifecycle, restored: bool) -> Re
     let _lock = Lock::acquire(state)?;
     let mut manifest = load(state)?;
     let _profile_lock = profile_lock(&manifest.profile)?;
+    if !restored && manifest.phase == Phase::Active {
+        revalidate_upgrade(state, &mut manifest, lifecycle)?;
+    }
     ensure!(
         manifest.observed.differences(state)?.is_empty(),
         "read-only user configuration differs from baseline"
@@ -830,6 +927,7 @@ fn validate_plan(plan: &InstallPlan) -> Result<()> {
 /// JSON bridge to the packaged Node lifecycle driver; no shell interpretation.
 #[derive(Debug, Clone)]
 pub struct CommandLifecycle {
+    pub compact_tools: bool,
     pub node: PathBuf,
     pub driver: PathBuf,
     pub profile: PathBuf,
@@ -863,6 +961,9 @@ impl CommandLifecycle {
         }
         if installed {
             command.arg("--installed");
+        }
+        if self.compact_tools {
+            command.arg("--compact-tools");
         }
         let output = command
             .output()
@@ -916,6 +1017,9 @@ impl CommandLifecycle {
 }
 
 impl Lifecycle for CommandLifecycle {
+    fn supports_revalidation(&self) -> bool {
+        true
+    }
     fn preflight(&mut self) -> Result<Capabilities> {
         self.call("preflight", None, false)
     }

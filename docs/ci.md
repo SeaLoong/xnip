@@ -39,9 +39,10 @@ Current host dependencies live under `target/native-hosts`; historical
 source-adapter fixtures retain `target/native-bench`. The same scope classifier
 selects these checks for adapters, shared clients, profiles and benchmark code.
 
-The Ubuntu job also runs the installed-npm DSH journey on rc.2 and rc.5: three
-profile layouts per version exercise the installed command shim, bundled
-adapter discovery and the complete install/verify/restore/clean lifecycle.
+The Ubuntu job also runs the installed-npm DSH journey on 0.2.1 rc.1–rc.5 and
+0.2.2 rc.1/rc.3: three profile layouts per version exercise the installed command
+shim, bundled adapter discovery and the complete install/verify/restore/clean
+lifecycle.
 Shared symlinks and ordinary dependency trees retain their baseline state.
 This DSH host gate records Linux evidence. The Linux/macOS/Windows npm matrix
 separately verifies the CLI/MCP launcher, payload and execution-cache contracts.
@@ -69,13 +70,13 @@ Rust checks keep `--locked` and warnings denied. Installer tests use local fixtu
 
 `publish.yml` looks up `ci.yml` runs by the peeled checkout commit SHA and accepts only a `push` from the same repository's current default branch. It inspects the latest attempt's `ci` job and requires both a successful gate and a successful `Full verification (Rust, integrations, npm, harnesses)` step. A PR/fork run, a different commit, or scoped verification cannot authorize a release.
 
-If the trusted run is still checking, release waits up to 30 minutes for its gate. It can proceed while development artifact builds are still running; their success is not used as evidence of source correctness. A failed/cancelled gate blocks release. No trusted run, an old run without the gate, or a successful scoped gate causes one reusable full verification instead. Manual rehearsal follows the same policy but always sets `publish: false`; complete GitHub/npm packaging and all six native npm-install checks still run and upload the delivery artifact.
+If the trusted run is still checking, release allows 75 minutes of polling for its gate, within an 80-minute release identity job. This covers the scope job, the 60-minute harness job and the final gate; a contract checks that relationship against the workflow timeouts. It can proceed while development artifact builds are still running; their success is not used as evidence of source correctness. A failed/cancelled gate blocks release. No trusted run, an old run without the gate, or a successful scoped gate causes one reusable full verification instead. Manual rehearsal follows the same policy but always sets `publish: false`; complete GitHub/npm packaging and all six native npm-install checks still run and upload the delivery artifact.
 
 An atomic default-branch/code/version/tag push receives full branch verification while the planner suppresses the duplicate development release. The tag workflow can reuse that same gate. Different workflow entry points have separate concurrency groups, avoiding a nested caller cancelling or waiting on itself.
 
 PR updates cancel superseded runs. Default-branch commits and releases are not cancelled by later commits. Publishing the same version stays serialized; published assets remain immutable and incomplete drafts can resume. Keep all six supported target archives and the existing checksum/draft validation.
 
-Job timeouts bound stalled work: scope/contracts 5 minutes, quality/compatibility 15, platform tests 20, Ubuntu harnesses 60, gate 2, release identity/prior-check lookup 35, artifact builds 45 and publication 45. These are ceilings rather than expected durations.
+Job timeouts bound stalled work: scope/contracts 5 minutes, quality/compatibility 15, platform tests 20, Ubuntu harnesses 60, gate 2, release identity/prior-check lookup 80, artifact builds 45 and publication 45. These are ceilings rather than expected durations.
 
 ## Changing CI
 

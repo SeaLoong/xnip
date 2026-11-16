@@ -8,7 +8,8 @@ module.exports = async function verifiedCi({
   core,
   sha,
   wait = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds)),
-  attempts = 120,
+  // Include the initial snapshot plus 75 minutes of 15-second polling waits.
+  attempts = 301,
 }) {
   core.setOutput("reused", "false");
   const { owner, repo } = context.repo;
