@@ -44,3 +44,9 @@ The release review added a ninth upgrade/compact check, bringing the selected DS
 A separate run supplied the actual public `xnip-linux-x64-musl@0.6.4` payload, verified its binary SHA256 and version, installed with the original CLI/adapter, switched to DSH 0.2.2-rc.1 and rewind 0.21.2, and completed current-CLI verification, uninstall and restored verification. It also checked that losing the old bound executable fails verification while preserving installation evidence, then succeeds when that executable returns. The profile's upgraded package fields and lock bytes remain preserved.
 
 The review corrected verification to use the profile-bound executable and propagated the prepared-host parent into focused upgrade/compact tests. An empty custom parent fails; a parent containing only the selected rc.3 host passes one case, with no skips. The release wait window also now covers the configured full CI horizon; remote CI and six-platform publication acceptance remain the release gates.
+
+## 0.6.6 dependency audit follow-up
+
+The remote 0.6.5 gate stopped publication when cargo-deny found new rmcp advisories. Version 0.6.6 locks rmcp/rmcp-macros 3.9.0 and rustix 1.1.6. With the same cargo-deny 0.20.2 used by CI, advisories, bans, licenses and sources all pass; the repository policy and ignore list are unchanged. The local audit configuration changes only the advisory database cache path for this cloud machine.
+
+After that dependency update, Rust 1.89 workspace/all-target checking, 280 Rust tests (including 25 MCP transport checks), Clippy, documentation and npm preparation/consumer contracts passed. All nine real-host upgrade/compact cases passed again, this time with the verified public 0.6.4 native payload supplied for the historical upgrade case. The remote tag workflow performs the full source and six-platform publication gates.

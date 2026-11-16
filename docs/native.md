@@ -57,7 +57,7 @@ separate Linux, macOS and Windows executable support.
 The [pre-release validation record](dsh-validation.md) lists the seven
 host versions, 176 selected checks, artifact identities and upgrade boundaries.
 
-`xnip-cli` 0.6.5 bundles the DSH native adapter. Use Node 24 with npm, an existing
+`xnip-cli` 0.6.6 bundles the DSH native adapter. Use Node 24 with npm, an existing
 DSH profile directory and the installed DSH executable:
 
 ```sh
@@ -114,11 +114,11 @@ uninstall and recovery commands.
 
 ### Compact tools
 
-With xnip-cli 0.6.5, add `--compact-tools` to `native install` to
+With xnip-cli 0.6.6, add `--compact-tools` to `native install` to
 select concise model descriptions and mutation receipts:
 
 ```sh
-npm install --global xnip-cli@0.6.5
+npm install --global xnip-cli@0.6.6
 xnip native install --compact-tools \
   --profile /home/me/.dsh/profiles/dev \
   --dsh /path/to/dsh
@@ -166,7 +166,7 @@ Fresh installations snapshot `package.json` and the private adapter
 directory, hash stored blobs, observe user configuration and lock the profile
 and state directory. Profile lockfiles and dependency-root symlinks remain
 read-only observations. Failed phases restore the baseline; interrupted
-operations retain a recovery manifest. Version 0.6.5 revalidates host
+operations retain a recovery manifest. Version 0.6.6 revalidates host
 and profile upgrades with real editing/governance checks during verify or uninstall.
 The rollback target retains current package fields, lockfiles and dependency links
 and removes only the native bundle membership. Changes inside the private adapter

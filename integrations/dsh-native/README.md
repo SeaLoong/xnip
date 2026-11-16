@@ -5,7 +5,7 @@ the `read`, `write` and `edit` tools, permission checks, observations, diff
 presentation and rewind events. The provider calls xnip's existing core through
 the local `xnip native serve` JSON-lines process.
 
-`xnip-cli` 0.6.5 bundles this adapter. Install it and use its `xnip` launcher with
+`xnip-cli` 0.6.6 bundles this adapter. Install it and use its `xnip` launcher with
 an initialized DSH profile and the intended DSH executable:
 
 ```sh
@@ -19,12 +19,12 @@ The npm launcher selects this bundled adapter. Standalone/source builds select
 the package directory with `--plugin DIRECTORY`; an explicit option takes
 precedence over the npm selection.
 
-Version 0.6.5 also accepts `native install --compact-tools`, selecting
+Version 0.6.6 also accepts `native install --compact-tools`, selecting
 concise model schemas and successful mutation receipts while keeping official
 tool execution, validation, approval, diff metadata and rewind. See the
 [measured token report](../../docs/benchmarks/dsh-compact-results.md) for costs
 and [compact tool setup](../../docs/native.md#compact-tools).
-Version 0.6.5 revalidates profile-owned installations after host upgrades before
+Version 0.6.6 revalidates profile-owned installations after host upgrades before
 verify or uninstall, preserving current user package fields and lockfiles.
 
 Fresh installations stage the adapter in

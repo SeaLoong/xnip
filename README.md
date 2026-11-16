@@ -90,12 +90,12 @@ The [native DSH provider](docs/native.md) keeps the host's `read`, `write` and
 `edit` tools, approval, sandbox and optional rewind while calling the same core
 transactions as CLI and MCP. Its profile installer verifies a real edit and
 retains snapshots for restoration.
-`xnip-cli` 0.6.5 bundles its DSH adapter for the
+`xnip-cli` 0.6.6 bundles its DSH adapter for the
 [installed-command lifecycle](docs/native.md#dsh-profile-setup).
 DSH host-lifecycle evidence is on Linux;
 the CLI and MCP have their own cross-platform verification.
 
-Version 0.6.5 adds DSH upgrade revalidation and opt-in `--compact-tools`. See [DSH setup and measured token costs](docs/native.md#compact-tools).
+Version 0.6.6 adds DSH upgrade revalidation and opt-in `--compact-tools`. See [DSH setup and measured token costs](docs/native.md#compact-tools).
 
 The [Pi native extension](docs/pi-native.md) preserves Pi `1.3.0` tool schemas,
 matching, rendering and hooks through its official extension API.

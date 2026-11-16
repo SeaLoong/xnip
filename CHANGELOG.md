@@ -4,12 +4,18 @@ User-visible changes are recorded here. Versions follow Semantic Versioning; com
 
 ## [Unreleased]
 
-## [0.6.5] - 2026-11-16
+## [0.6.6] - 2026-11-16
+
+- Upgrade rmcp/rmcp-macros to 3.9.0 for RUSTSEC-2026-0457, RUSTSEC-2026-0461 and RUSTSEC-2026-0462, and rustix to 1.1.6 for RUSTSEC-2026-0486. Retain the Rust 1.89 minimum and complete verification policy.
 
 - Revalidate DSH profile-owned installations after host and dependency upgrades, preserving current user package fields, lockfiles and dependency links during removal. Verify installed adapter integrity before adopting a new baseline.
 - Support the official single-call and batch tool executors; expand frozen host fixtures to all five 0.2.1 release candidates and 0.2.2 rc.1/rc.3 with real approval and rewind checks. Resolve temporary-directory aliases before host verification.
 - Verify the executable bound to the installed profile, including retained 0.6.4 adapters, so a missing old binary is reported before adopting an upgraded baseline. Preserve focused testing with a custom prepared-host directory.
 - Add opt-in `native install --compact-tools` with concise schemas and successful mutation receipts, retaining official execution, policy, UI metadata and tool names. Include the module in npm artifact inventory and build fingerprints, with reproducible token measurements.
+
+## [0.6.5] - 2026-11-16 — unpublished
+
+- Publication stopped at the dependency-policy gate. Changes are included in 0.6.6.
 
 ## [0.6.4] - 2026-11-06
 

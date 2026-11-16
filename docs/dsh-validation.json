@@ -350,6 +350,20 @@
     "actual_064_binary_sha256": "d8aa3db890938c20c998c8c770cd4209ee32889d6ecc6fe3531dec666171a02b",
     "actual_064_upgrade_case": "passed",
     "custom_hosts_parent": "empty parent failed; selected-host-only parent passed 1 case",
-    "remote_publication": "pending"
+    "remote_publication": "not published; dependency-policy gate failed"
+  },
+  "release_066_followup": {
+    "version": "0.6.6",
+    "cargo_deny": "0.20.2: advisories/bans/licenses/sources ok",
+    "rmcp": "3.9.0",
+    "rustix": "1.1.6",
+    "minimum_rust": "1.89 passed",
+    "rust_passed": 280,
+    "mcp_transport_passed": 25,
+    "upgrade_compact_passed": 9,
+    "legacy_server": "verified public 0.6.4 payload",
+    "npm_preparation_passed": 20,
+    "npm_consumer_passed": 13,
+    "remote_verification": "tag workflow required"
   }
 }
