@@ -11,7 +11,7 @@ import { parseArgs } from 'node:util';
 import { resolveNpmCli } from './node_runtime.mjs';
 import { createFixture } from '../../integrations/dsh-native/runtime.mjs';
 
-export const VERSIONS = ['0.2.1-rc.1', '0.2.1-rc.2', '0.2.1-rc.3', '0.2.1-rc.4', '0.2.1-rc.5', '0.2.2-rc.1', '0.2.2-rc.3'];
+export const VERSIONS = ['0.2.1-rc.1', '0.2.1-rc.2', '0.2.1-rc.3', '0.2.1-rc.4', '0.2.1-rc.5', '0.2.2-rc.1', '0.2.2-rc.3', '0.2.2-rc.5'];
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '../..');
 const REGISTRY = 'https://registry.npmjs.org';

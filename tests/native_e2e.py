@@ -17,7 +17,7 @@ import sys
 
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSIONS = ("0.2.1-rc.1", "0.2.1-rc.2", "0.2.1-rc.3", "0.2.1-rc.4", "0.2.1-rc.5", "0.2.2-rc.1", "0.2.2-rc.3")
+VERSIONS = ("0.2.1-rc.1", "0.2.1-rc.2", "0.2.1-rc.3", "0.2.1-rc.4", "0.2.1-rc.5", "0.2.2-rc.1", "0.2.2-rc.3", "0.2.2-rc.5")
 SUITES = (
     ("provider", "tests/dsh_native_contract.mjs", 2),
     ("bytes", "tests/dsh_native_bytes.mjs", 13),
@@ -42,7 +42,7 @@ CLINE_SUITES = (
 )
 NODE_SDKS = {
     "pi": ("1.3.0", PI_SUITES),
-    "gemini": ("0.27.2", GEMINI_SUITES),
+    "gemini": ("0.71.1", GEMINI_SUITES),
     "cline": ("0.2.0", CLINE_SUITES),
     "opencode": ("1.19.3", (
         ("registry-permissions-and-tools", "tests/opencode_native_contract.mjs", 11),
@@ -51,15 +51,15 @@ NODE_SDKS = {
     )),
 }
 PYTHON_SUITES = {
-    "openhands": ("1.60.1", "target/native-hosts/openhands-1.60.1/.venv", "tests/openhands_native_contract.py", 24),
+    "openhands": ("1.64.1", "target/native-hosts/openhands-1.64.1/.venv", "tests/openhands_native_contract.py", 24),
     "aider": ("5dc9490", "target/native-hosts/aider-5dc9490/aider-venv", "tests/aider_native_contract.py", 24),
     "python-agents": ("deepagents-langgraph-pydantic-ai", "target/native-hosts/python-agents/.venv", "tests/python_agents_contract.py", 49),
     "agents-sdk": ("0.24.0", "target/native-hosts/agent-sdks-openai-0.24.0-autogen-0.7.5/.venv", "tests/agents_sdk_contract.py", 21),
     "autogen": ("0.7.5", "target/native-hosts/agent-sdks-openai-0.24.0-autogen-0.7.5/.venv", "tests/autogen_contract.py", 21),
     "smolagents": ("1.26.0", "target/native-hosts/smolagents-1.26.0/.venv", "tests/smolagents_contract.py", 22),
     "profiles": ("official-client-profiles", None, "tests/host_profiles_contract.py", 33),
-    "google-adk": ("2.13.0", "target/native-hosts/google-adk-2.13.0/.venv", "tests/google_adk_contract.py", 20),
-    "crewai": ("1.15.36", "target/native-hosts/crewai-1.15.36/.venv", "tests/crewai_contract.py", 18),
+    "google-adk": ("2.15.1", "target/native-hosts/google-adk-2.15.1/.venv", "tests/google_adk_contract.py", 20),
+    "crewai": ("1.15.45", "target/native-hosts/crewai-1.15.45/.venv", "tests/crewai_contract.py", 18),
 }
 
 

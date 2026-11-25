@@ -16,7 +16,7 @@ import sys
 import venv
 
 ROOT = Path(__file__).resolve().parents[2]
-VERSION = "1.60.1"
+VERSION = "1.64.1"
 DEFAULT = ROOT / "target/native-hosts" / f"openhands-{VERSION}"
 LOCK = Path(__file__).with_name("openhands_requirements.txt")
 
@@ -57,7 +57,7 @@ def prepare(directory=DEFAULT, check=False):
     python = python_path(directory)
     if not check:
         if sys.version_info < (3, 12):
-            raise RuntimeError("OpenHands 1.60.1 requires Python 3.12 or later")
+            raise RuntimeError("OpenHands 1.64.1 requires Python 3.12 or later")
         if not python.is_file():
             venv.EnvBuilder(with_pip=True).create(directory / ".venv")
         subprocess.run([str(python), "-m", "pip", "install", "--disable-pip-version-check",

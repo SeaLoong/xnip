@@ -272,15 +272,15 @@ jobs:
           node --test-reporter=tap tests/gemini_provider_bench_contract.mjs
           node --test-reporter=tap tests/cline_provider_bench_contract.mjs
           node --test-reporter=tap tests/opencode_provider_bench_contract.mjs
-          target/native-hosts/openhands-1.60.1/.venv/bin/python tests/openhands_provider_bench_contract.py
+          target/native-hosts/openhands-1.64.1/.venv/bin/python tests/openhands_provider_bench_contract.py
           target/native-hosts/aider-5dc9490/aider-venv/bin/python tests/aider_provider_bench_contract.py
           target/native-hosts/python-agents/.venv/bin/python tests/python_agents_bench_contract.py
           target/native-hosts/agent-sdks-openai-0.24.0-autogen-0.7.5/.venv/bin/python tests/agent_sdk_bench_contract.py
           XNIP_AGENT_SDK_HOST=autogen target/native-hosts/agent-sdks-openai-0.24.0-autogen-0.7.5/.venv/bin/python tests/agent_sdk_bench_contract.py
           XNIP_AGENT_SDK_HOST=smolagents target/native-hosts/smolagents-1.26.0/.venv/bin/python tests/agent_sdk_bench_contract.py
           python tests/host_profiles_bench_contract.py
-          target/native-hosts/google-adk-2.13.0/.venv/bin/python tests/google_adk_bench_contract.py
-          target/native-hosts/crewai-1.15.36/.venv/bin/python tests/crewai_provider_bench_contract.py
+          target/native-hosts/google-adk-2.15.1/.venv/bin/python tests/google_adk_bench_contract.py
+          target/native-hosts/crewai-1.15.45/.venv/bin/python tests/crewai_provider_bench_contract.py
           python tests/integration_catalog_contract.py
 
   compatibility:

@@ -1,7 +1,7 @@
 # xnip for Google ADK
 
 Install this local package with `python -m pip install ./integrations/google-adk`.
-It provides the official Google ADK 2.13.0 `McpToolset` configured for an owned
+It provides the official Google ADK 2.15.1 `McpToolset` configured for an owned
 xnip MCP subprocess. Python 3.11 or later is required.
 
 ```python

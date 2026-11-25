@@ -11,7 +11,7 @@ test('Gemini benchmark executes official registry, policies, host matching and n
     scenarioNames: ['tiny-config', 'same-file-batch', 'global-replace', 'gemini-regex-spacing', 'gemini-reject-missing',
       'gemini-reject-count', 'gemini-noop', 'gemini-write-create', 'gemini-mixed-eol', 'gemini-confirmed-edit', 'gemini-policy-denied'] });
   assert.equal(report.results.length, 22);
-  assert.equal(report.provenance.host.version, '0.27.2');
+  assert.equal(report.provenance.host.version, '0.71.1');
   assert.match(report.provenance.host.dependency_tree_sha256, /^[a-f0-9]{64}$/);
   assert.equal(report.setup.length, 6);
   for (const row of report.results) {

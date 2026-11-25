@@ -9,7 +9,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
 import { resolveNpmCli } from './node_runtime.mjs';
 
-export const VERSION = '0.27.2';
+export const VERSION = '0.71.1';
 const ROOT = path.resolve(import.meta.dirname, '../..');
 const INPUTS = path.join(import.meta.dirname, 'gemini_native');
 const hash = value => createHash('sha256').update(value).digest('hex');

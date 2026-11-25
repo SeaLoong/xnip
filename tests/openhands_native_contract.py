@@ -1,4 +1,4 @@
-"""Real OpenHands 1.60.1 SDK tools and xnip transactions; model calls stay zero."""
+"""Real OpenHands 1.64.1 SDK tools and xnip transactions; model calls stay zero."""
 
 import base64
 import importlib.metadata
@@ -80,8 +80,8 @@ class OpenHandsNativeContract(unittest.TestCase):
         return runtime.agent.tools_map["file_editor"]
 
     def test_registry_schema_renderer_and_default_restoration(self):
-        self.assertEqual(importlib.metadata.version("openhands-sdk"), "1.60.1")
-        self.assertEqual(importlib.metadata.version("openhands-tools"), "1.60.1")
+        self.assertEqual(importlib.metadata.version("openhands-sdk"), "1.64.1")
+        self.assertEqual(importlib.metadata.version("openhands-tools"), "1.64.1")
         baseline = self.host(native=False)
         original = self.initialize(baseline)
         native = self.host()

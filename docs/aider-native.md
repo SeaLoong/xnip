@@ -9,10 +9,12 @@ bind matching to guarded commits.
 
 Support is verified against official commit
 [`5dc9490bb35f9729ef2c95d00a19ccd30c26339c`](https://github.com/Aider-AI/aider/tree/5dc9490bb35f9729ef2c95d00a19ccd30c26339c),
-source version **0.86.3.dev+less**. The shallow source distribution identifies
-itself as `0.1.dev1+g5dc9490bb`. Aider's [scripting documentation](https://github.com/Aider-AI/aider/blob/5dc9490bb35f9729ef2c95d00a19ccd30c26339c/aider/website/docs/scripting.md)
+source version **0.86.3.dev+less**. Aider's [scripting documentation](https://github.com/Aider-AI/aider/blob/5dc9490bb35f9729ef2c95d00a19ccd30c26339c/aider/website/docs/scripting.md)
 describes the Python API as version-sensitive. This SDK integration fixes that
-revision and its complete Python dependency closure.
+revision. The benchmark builds a hash-locked environment from the direct requirements
+at that commit. Its dedicated editable checkout uses those requirements as package
+metadata and verifies the other tracked files against the pinned commit.
+Installing the upstream package directly uses the dependency pins published by Aider.
 
 ## Install in an application
 

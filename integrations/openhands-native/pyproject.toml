@@ -7,7 +7,7 @@ name = "xnip-openhands"
 version = "0.6.4"
 description = "xnip storage for OpenHands SDK file_editor tools"
 requires-python = ">=3.12"
-dependencies = ["xnip-native-client==0.6.4", "openhands-sdk==1.60.1", "openhands-tools==1.60.1"]
+dependencies = ["xnip-native-client==0.6.4", "openhands-sdk==1.64.1", "openhands-tools==1.64.1"]
 
 [tool.setuptools]
 py-modules = ["xnip_openhands"]

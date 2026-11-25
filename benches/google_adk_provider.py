@@ -264,7 +264,7 @@ def render(report):
         lines.append(f"| {case['name']} | {values[0]} | {values[1]} | {projected[0]:,.0f} / {projected[1]:,.0f} | "
                      f"{rows[0]['correct_runs']}/{len(rows[0]['samples'])} / {rows[1]['correct_runs']}/{len(rows[1]['samples'])} |")
     lines += ["", "## Reproduce", "", "```sh", "python benches/native/google_adk_setup.py",
-              "target/native-hosts/google-adk-2.13.0/.venv/bin/python benches/google_adk_provider.py --executable target/release/xnip --repeats 3 --warmups 1", "```", "",
+              "target/native-hosts/google-adk-2.15.1/.venv/bin/python benches/google_adk_provider.py --executable target/release/xnip --repeats 3 --warmups 1", "```", "",
               "[SDK integration and lifecycle](../google-adk.md). The raw JSON retains actual arguments/projections/RPC errors, independent file goals, SDK source hashes and setup costs.", ""]
     return "\n".join(lines)
 

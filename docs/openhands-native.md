@@ -6,8 +6,8 @@ prepares and commits each transaction. OpenHands owns matching, encoding
 detection, history, undo, action/observation schemas, snippets, diff rendering,
 tool hooks, confirmation, secret masking and per-file resource scheduling.
 
-Support is verified with **`openhands-sdk==1.60.1` and
-`openhands-tools==1.60.1`**, using Python 3.12 or later. This is an **L2′ local SDK
+Support is verified with **`openhands-sdk==1.64.1` and
+`openhands-tools==1.64.1`**, using Python 3.12 or later. This is an **L2′ local SDK
 session integration**: a registered factory returns the original
 `FileEditorTool` with a custom executor through the public `set_executor()` API.
 The executor subclasses the official editor's public `read_file()` and
@@ -112,7 +112,7 @@ the core commit receipt determines whether a racing completed write persisted.
 ```sh
 python benches/native/openhands_setup.py
 python benches/native/openhands_setup.py --check
-target/native-hosts/openhands-1.60.1/.venv/bin/python tests/openhands_native_contract.py
+target/native-hosts/openhands-1.64.1/.venv/bin/python tests/openhands_native_contract.py
 ```
 
 Windows uses `.venv/Scripts/python.exe`. Setup creates an isolated Python

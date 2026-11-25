@@ -175,10 +175,10 @@ record the measured components and tokenizer assumptions.
 |---|---|
 | `xnip native install --profile ... --dsh ...` | [DSH 0.2.1 rc.1–rc.5 / 0.2.2 rc.1, rc.3 Linux host journey](https://github.com/SeaLoong/xnip/blob/master/docs/native.md#dsh-profile-setup), using the package's bundled adapter |
 | `xnip-cli/pi-native` | [Pi 1.3.0 same-name tools](https://github.com/SeaLoong/xnip/blob/master/docs/pi-native.md) through its extension loader |
-| `xnip-cli/gemini-native` | [Gemini core 0.27.2](https://github.com/SeaLoong/xnip/blob/master/docs/gemini-native.md) local `Config` filesystem service and per-tool scope |
+| `xnip-cli/gemini-native` | [Gemini core 0.71.1](https://github.com/SeaLoong/xnip/blob/master/docs/gemini-native.md) local `Config` filesystem service and per-tool scope |
 | `xnip-cli/cline-native` | [Cline SDK/core 0.2.0](https://github.com/SeaLoong/xnip/blob/master/docs/cline-native.md) public `apply_patch` tool executor |
 | `xnip-cli/opencode` | [OpenCode plugin tools](https://github.com/SeaLoong/xnip/blob/master/docs/opencode.md): `xnip_edit`, `xnip_write`, `xnip_apply`, `xnip_read` |
-| Local `xnip-openhands` Python package | [OpenHands SDK/tools 1.60.1](https://github.com/SeaLoong/xnip/blob/master/docs/openhands-native.md) `file_editor` factory; Python 3.12+ |
+| Local `xnip-openhands` Python package | [OpenHands SDK/tools 1.64.1](https://github.com/SeaLoong/xnip/blob/master/docs/openhands-native.md) `file_editor` factory; Python 3.12+ |
 
 Each guide covers session construction, host tool execution and restoration.
 The [DSH provider guide](https://github.com/SeaLoong/xnip/blob/master/docs/native.md)

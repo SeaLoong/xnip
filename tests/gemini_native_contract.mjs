@@ -26,7 +26,7 @@ test('real Gemini registry keeps original tools and schemas while IO installs an
   let client;
   const runtime = await fixture(t, { createClient: (binary, cwd) => client = new EditorClient(binary, cwd) });
   const original = await fixture(t, { cwd: runtime.cwd, native: false });
-  assert.equal(VERSION, '0.27.2');
+  assert.equal(VERSION, '0.71.1');
   assert.deepEqual(runtime.tools.map(tool => tool.name).sort(), ['read_file', 'replace', 'write_file']);
   assert.deepEqual(runtime.describe().tools, original.describe().tools);
   const file = path.join(runtime.cwd, 'a.txt');

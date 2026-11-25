@@ -243,7 +243,7 @@ export async function runGeminiBenchmark({ executable = path.join(root, 'target/
   const report = { schema_version: 1, created_at: new Date().toISOString(),
     methodology: { measured_runs_per_scenario: repeats, warmup_runs_per_scenario: warmups, model_calls: 0,
       host: 'official Config, ToolRegistry and read_file/replace/write_file; build, policy/confirmation and execute on each call',
-      scope: 'Gemini SDK 0.27.2 local filesystem configuration; OS sandbox, CLI profiles, model turns and billing have separate boundaries',
+      scope: 'Gemini SDK 0.71.1 local filesystem configuration; OS sandbox, CLI profiles, model turns and billing have separate boundaries',
       matching: 'official matching, occurrence validation, rendering and newline rules; Config disableLLMCorrection=true in both lanes',
       confirmation: 'official policy bus; ask_user invokes generated confirmation and ProceedOnce callback; human interaction delay is outside timing',
       known_inputs: 'fixtures supply literal replacements; global replacement specifies the exact expected_replacements count',
@@ -332,7 +332,7 @@ export function renderGeminiReport(report) {
     '## Reproduce', '', '```sh', 'node benches/native/gemini_native_setup.mjs', 'CARGO_BUILD_JOBS=4 cargo build --release --locked --offline',
     'node benches/gemini_provider.mjs --executable target/release/xnip --repeats 3 --warmups 1',
     'node --test-reporter=tap tests/gemini_provider_bench_contract.mjs', '```', '',
-    'Prepared packages live under target/native-hosts/gemini-0.27.2. The JSON companion records per-call timings, tool and bridge byte counts, exceptions, policy events, expected/actual file hashes, full maintained-source fingerprints and the dependency-tree digest. Existing host and historical representation cohorts retain their own data.', '');
+    'Prepared packages live under target/native-hosts/gemini-0.71.1. The JSON companion records per-call timings, tool and bridge byte counts, exceptions, policy events, expected/actual file hashes, full maintained-source fingerprints and the dependency-tree digest. Existing host and historical representation cohorts retain their own data.', '');
   return lines.join('\n');
 }
 
