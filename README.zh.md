@@ -89,7 +89,7 @@ xnip apply edits.json --format compact
 [原生 DSH provider](docs/native.md) 保留宿主的 `read`、`write`、`edit` 工具及观察、审批、沙箱和 diff 展示，与 CLI、MCP 共用现有 core 事务。按 profile 安装时会验证真实文件字节及这些官方宿主契约，并保留恢复快照。用户插件由宿主管理，xnip 生命周期不加载或校验它们。
 `xnip-cli` 内置 DSH 适配器，通过[安装后的命令](docs/native.md#dsh-profile-setup)管理完整生命周期。DSH 宿主生命周期的证据来自 Linux；CLI、MCP 的跨平台验证分别统计。
 
-DSH 接入支持升级后重新验证，以及可选的 `--compact-tools`；[接入与 token 实测](docs/native.md#compact-tools)说明验证版本、节省范围及安装方法。
+新安装的 DSH 原生适配器可以随 profile 一起迁移。旧安装的迁移步骤见[迁移 DSH profile](docs/native.md#moving-a-dsh-profile)。DSH 接入支持升级后重新验证，以及可选的 `--compact-tools`；[接入与 token 实测](docs/native.md#compact-tools)说明验证版本、节省范围及安装方法。
 
 [Pi 原生扩展](docs/pi-native.md)通过官方 extension API 保留 Pi `1.3.0` 的工具 schema、匹配、渲染和 hooks。
 [SDK 适配](docs/native.md)还支持 Gemini 本地文件系统服务、Cline `apply_patch` 执行器和 OpenHands `file_editor` IO，共用现有 core。[宿主 E2E](docs/testing.md#native-host-e2e)执行真实注册工具，核验文件字节、治理链和恢复行为。

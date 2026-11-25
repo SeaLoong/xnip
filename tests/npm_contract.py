@@ -142,13 +142,14 @@ assert.equal(packageRoot, await fs.realpath(process.argv[1]));
 const pluginRoot = path.dirname(require.resolve('xnip-cli/dsh-native/package.json'));
 assert.equal(pluginRoot, path.join(packageRoot, 'integrations', 'dsh-native'));
 assert.deepEqual((await fs.readdir(pluginRoot)).sort(), [
-  'README.md', 'compact-tools.mjs', 'cordis.patch.yml', 'editor-client.mjs', 'index.mjs', 'lifecycle.mjs',
-  'package.json', 'host-governance.mjs', 'runtime.mjs',
-].sort());
+  'README.md', 'compact-loader.mjs', 'compact-tools.mjs', 'cordis.patch.yml', 'editor-client.mjs',
+  'host-governance.mjs', 'index.mjs', 'lifecycle.mjs', 'package.json', 'runtime.mjs',
+]);
 const provider = await import(pathToFileURL(require.resolve('xnip-cli/dsh-native')));
 assert.equal(provider.default.name, 'xnip-native-fs');
 assert.equal(typeof provider.createXnipPlugin, 'function');
 const load = relative => import(pathToFileURL(path.join(pluginRoot, relative)));
+assert.equal(typeof (await load('compact-loader.mjs')).apply, 'function');
 assert.equal(typeof (await load('runtime.mjs')).createFixture, 'function');
 assert.equal(typeof (await load('host-governance.mjs')).validateHostGovernance, 'function');
 const { EditorClient, clientSource } = await load('editor-client.mjs');

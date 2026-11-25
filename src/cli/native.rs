@@ -42,6 +42,13 @@ enum Command {
     },
     /// Report retained installation state without changing the host.
     Doctor(State),
+    /// Bind retained state to a moved profile after checking its managed files.
+    Rebind {
+        #[arg(long)]
+        profile: PathBuf,
+        #[arg(long)]
+        state_dir: Option<PathBuf>,
+    },
     /// Purge this installer's private snapshots after verified restoration.
     Clean {
         #[command(flatten)]
@@ -172,6 +179,10 @@ pub fn run(args: Args) -> anyhow::Result<u8> {
         Command::Verify { host, restored } => {
             let (state, mut lifecycle) = host.resolve()?;
             serde_json::to_value(native::verify(&state, &mut lifecycle, restored)?)?
+        }
+        Command::Rebind { profile, state_dir } => {
+            let state = state_dir.unwrap_or_else(|| profile.join(".xnip-native"));
+            serde_json::to_value(native::rebind(&state_path(&state)?, &profile)?)?
         }
         Command::Doctor(state) => state_report(&state.state_dir)?,
         Command::Clean {

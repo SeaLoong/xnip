@@ -1242,3 +1242,42 @@ fn clean_retains_the_same_coordination_inode_for_reentry_and_later_installation(
         Phase::Active
     );
 }
+
+#[test]
+fn rebind_checks_destination_bytes_and_leaves_the_original_profile_alone() {
+    let mut original = Fixture::new();
+    native::install(&original.plan, &mut original.lifecycle).unwrap();
+    let mut destination = Fixture::new();
+    let state = &original.plan.state_dir;
+    let record = state.join("install-manifest.json");
+    let before = fs::read(&record).unwrap();
+    assert!(native::rebind(state, &destination.plan.profile).is_err());
+    assert_eq!(fs::read(&record).unwrap(), before);
+
+    native::install(&destination.plan, &mut destination.lifecycle).unwrap();
+    native::rebind(state, &destination.plan.profile).unwrap();
+    assert_eq!(
+        native::installation_profile(state).unwrap(),
+        destination.plan.profile
+    );
+    native::uninstall(state, &mut destination.lifecycle).unwrap();
+    destination.assert_original();
+    assert_eq!(
+        fs::read(original.plan.profile.join("package.json")).unwrap(),
+        INSTALLED_PACKAGE
+    );
+}
+
+#[test]
+fn state_inside_a_profile_cannot_be_rebound_in_place_to_a_different_copy() {
+    let mut original = Fixture::new();
+    original.plan.state_dir = original.plan.profile.join(".xnip-native");
+    native::install(&original.plan, &mut original.lifecycle).unwrap();
+    let mut other = Fixture::new();
+    native::install(&other.plan, &mut other.lifecycle).unwrap();
+    assert!(native::rebind(&original.plan.state_dir, &other.plan.profile).is_err());
+    assert_eq!(
+        native::installation_profile(&original.plan.state_dir).unwrap(),
+        original.plan.profile
+    );
+}

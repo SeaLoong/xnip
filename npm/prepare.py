@@ -154,7 +154,7 @@ def prepare(dist, output, pack=False, host_binary=None, public=False, source_com
                      "integrations/dsh-native/package.json", "integrations/dsh-native/index.mjs",
                      "integrations/dsh-native/editor-client.mjs", "integrations/dsh-native/lifecycle.mjs",
                      "integrations/dsh-native/runtime.mjs", "integrations/dsh-native/host-governance.mjs",
-                     "integrations/dsh-native/compact-tools.mjs",
+                     "integrations/dsh-native/compact-tools.mjs", "integrations/dsh-native/compact-loader.mjs",
                      "integrations/dsh-native/cordis.patch.yml",
                      "integrations/pi/index.mjs", "integrations/pi-native/index.mjs",
                      "integrations/gemini-native/index.mjs", "integrations/cline-native/index.mjs",

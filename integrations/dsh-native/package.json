@@ -18,11 +18,15 @@
     }
   },
   "peerDependencies": {
+    "@deepseek-ai/dsh-tool-fs": ">=0.2.1-0 <0.2.2-0 || >=0.2.2-0 <0.2.3-0",
     "@deepseek-ai/dsh-fs": ">=0.2.1-0 <0.2.2-0 || >=0.2.2-0 <0.2.3-0",
     "@deepseek-ai/dsh-fs-sandbox": ">=0.2.1-0 <0.2.2-0 || >=0.2.2-0 <0.2.3-0",
     "@deepseek-ai/dsh-sandbox": ">=0.2.1-0 <0.2.2-0 || >=0.2.2-0 <0.2.3-0"
   },
   "peerDependenciesMeta": {
+    "@deepseek-ai/dsh-tool-fs": {
+      "optional": true
+    },
     "@deepseek-ai/dsh-fs": {
       "optional": true
     },
