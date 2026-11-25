@@ -9,9 +9,18 @@ import { loadCline } from '../benches/native/cline_native_setup.mjs';
 const root = path.resolve(import.meta.dirname, '..');
 const update = (file = 'a', old = 'old', text = 'new') => ({ input: patch(`*** Update File: ${file}`, '@@', '-' + old, '+' + text) });
 const value = reply => reply.output;
+const resources = new WeakMap();
+function cleanup(t) {
+  if (!resources.has(t)) {
+    const stack = new AsyncDisposableStack();
+    resources.set(t, stack);
+    t.after(() => stack.disposeAsync());
+  }
+  return resources.get(t);
+}
 async function workspace(t, files = { a: 'old\n' }) {
   const cwd = await fs.mkdtemp(path.join(root, 'target/cline-native-contract-'));
-  t.after(() => fs.rm(cwd, { recursive: true, force: true }));
+  cleanup(t).defer(() => fs.rm(cwd, { recursive: true, force: true }));
   for (const [file, content] of Object.entries(files)) {
     await fs.mkdir(path.dirname(path.join(cwd, file)), { recursive: true });
     await fs.writeFile(path.join(cwd, file), content);
@@ -20,7 +29,7 @@ async function workspace(t, files = { a: 'old\n' }) {
 }
 async function fixture(t, options) {
   const runtime = await createClineFixture(options);
-  t.after(() => runtime.close());
+  cleanup(t).defer(() => runtime.close());
   return runtime;
 }
 
