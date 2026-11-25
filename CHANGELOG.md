@@ -4,6 +4,11 @@ User-visible changes are recorded here. Versions follow Semantic Versioning; com
 
 ## [Unreleased]
 
+## [0.6.9] - 2026-11-25
+
+- Load compact filesystem tools from the running DSH installation so a fresh profile can create and resume sessions without manually installing `@deepseek-ai/dsh-tool-fs`.
+- Keep compact preset references and profile-owned installation state portable when moving a DSH profile. Use `xnip native rebind` to recover the state binding for an already moved 0.6.8 installation before reinstalling its private adapter. See [Moving a DSH profile](docs/native.md#moving-a-dsh-profile).
+
 ## [0.6.8] - 2026-11-17
 
 - Fix compact DSH sessions failing to start when a preset loaded `./compact-tools.mjs` relative to the host loader. Installed patches now use the final profile bundle's absolute file URL, including nested preset plugins.
