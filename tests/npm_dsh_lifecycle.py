@@ -183,14 +183,14 @@ class InstalledNpmDshLifecycle(unittest.TestCase):
         self.check_verification(installed, True)
         installation_manifest = json.loads((state/"install-manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(installation_manifest["baseline"]["roots"],
-                         [str(profile/"package.json"), str(profile/".xnip-native-package")])
-        self.assertEqual(str(profile/"node_modules") in installation_manifest["observed"]["roots"], shared)
+                         ["package.json", ".xnip-native-package"])
+        self.assertEqual("node_modules" in installation_manifest["observed"]["roots"], shared)
         snapshot_bytes = sum(file.stat().st_size for file in (state/"blobs").rglob("*") if file.is_file())
         if ordinary:
             self.assertLess(snapshot_bytes, (profile/"node_modules/retained-user-package/sentinel.bin").stat().st_size // 4)
         bundle = profile/".xnip-native-package"
         installed_sources = {}
-        for filename in ["index.mjs", "runtime.mjs", "compact-tools.mjs", "host-governance.mjs", "lifecycle.mjs", "editor-client.mjs"]:
+        for filename in ["index.mjs", "runtime.mjs", "compact-tools.mjs", "compact-loader.mjs", "host-governance.mjs", "lifecycle.mjs", "editor-client.mjs"]:
             source = self.package/"integrations"/("native" if filename == "editor-client.mjs" else "dsh-native")/filename
             self.assertEqual(digest(bundle/filename), digest(source), filename)
             installed_sources[filename] = {"installed_source": str(source), "sha256": digest(source)}

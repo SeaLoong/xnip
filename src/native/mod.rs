@@ -4,8 +4,10 @@
 //! original and installed trees so removal refuses to overwrite subsequent user
 //! changes. Audit logs and editing journals are reported separately.
 
+mod location;
 pub(crate) mod operations;
 mod snapshot;
+pub use location::rebind;
 
 use std::fs::{self, File, OpenOptions};
 use std::path::{Path, PathBuf};
@@ -98,6 +100,10 @@ pub struct InstallPlan {
 
 /// A host must implement real activation and edit checks, not just inspect a PID.
 pub trait Lifecycle {
+    /// Check the selected host against the state binding while holding the state lock.
+    fn check_profile(&self, _profile: &Path) -> Result<()> {
+        Ok(())
+    }
     /// Profile-owned bundles can revalidate current host contracts after upgrades.
     fn supports_revalidation(&self) -> bool {
         false
@@ -344,6 +350,7 @@ pub fn recover(state: &Path, lifecycle: &mut dyn Lifecycle) -> Result<NativeRepo
     load(state)?;
     let _lock = Lock::acquire(state)?;
     let mut manifest = load(state)?;
+    lifecycle.check_profile(&manifest.profile)?;
     let _profile_lock = profile_lock(&manifest.profile)?;
     ensure!(
         !matches!(manifest.phase, Phase::Active | Phase::Restored),
@@ -355,7 +362,7 @@ pub fn recover(state: &Path, lifecycle: &mut dyn Lifecycle) -> Result<NativeRepo
 }
 
 fn save(state: &Path, manifest: &Manifest) -> Result<()> {
-    atomic_json(&state.join(MANIFEST), manifest)
+    atomic_json(&state.join(MANIFEST), &manifest.for_storage(state)?)
 }
 
 fn canonical_state(state: &Path) -> Result<()> {
@@ -387,7 +394,7 @@ fn missing_manifest(state: &Path) -> Result<NativeStateError> {
     Ok(NativeStateError::new(state, NativeStateCode::StateEmpty))
 }
 
-fn load(state: &Path) -> Result<Manifest> {
+fn read_manifest(state: &Path) -> Result<Manifest> {
     canonical_state(state)?;
     let bytes = match fs::read(state.join(MANIFEST)) {
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
@@ -395,13 +402,22 @@ fn load(state: &Path) -> Result<Manifest> {
         }
         result => result?,
     };
-    let manifest: Manifest = serde_json::from_slice(&bytes)?;
+    Ok(serde_json::from_slice(&bytes)?)
+}
+
+fn load(state: &Path) -> Result<Manifest> {
+    let mut manifest = read_manifest(state)?;
+    manifest.resolve_location(state)?;
+    validate_manifest(&manifest, state)?;
+    Ok(manifest)
+}
+
+fn validate_manifest(manifest: &Manifest, state: &Path) -> Result<()> {
     ensure!(
-        manifest.schema_version == 1,
-        "unsupported native manifest schema"
-    );
-    ensure!(
-        fs::canonicalize(&manifest.profile)? == manifest.profile,
+        fs::canonicalize(&manifest.profile).with_context(|| format!(
+            "cannot locate recorded profile {}; for a moved installation use native rebind --profile with its retained state",
+            manifest.profile.display()
+        ))? == manifest.profile,
         "manifest profile is no longer its canonical path"
     );
     manifest.baseline.validate_paths(&manifest.profile, state)?;
@@ -420,7 +436,7 @@ fn load(state: &Path) -> Result<Manifest> {
             "manifest snapshot root mismatch"
         );
     }
-    Ok(manifest)
+    Ok(())
 }
 
 /// The canonical profile associated with retained installation evidence.
@@ -472,7 +488,7 @@ pub fn install_with_hook(
     let baseline = Snapshot::capture(&plan.managed_paths, &plan.state_dir)?;
     let observed = Snapshot::capture(&plan.observed_paths, &plan.state_dir)?;
     let mut manifest = Manifest {
-        schema_version: 1,
+        schema_version: 2,
         host: plan.host.clone(),
         host_version: plan.host_version.clone(),
         xnip_version: crate::VERSION.into(),
@@ -697,6 +713,7 @@ fn revalidate_upgrade(
 pub fn uninstall(state: &Path, lifecycle: &mut dyn Lifecycle) -> Result<NativeReport> {
     let _lock = Lock::acquire(state)?;
     let mut manifest = load(state)?;
+    lifecycle.check_profile(&manifest.profile)?;
     let _profile_lock = profile_lock(&manifest.profile)?;
     ensure!(
         manifest.phase == Phase::Active,
@@ -784,6 +801,7 @@ pub fn uninstall(state: &Path, lifecycle: &mut dyn Lifecycle) -> Result<NativeRe
 pub fn verify(state: &Path, lifecycle: &mut dyn Lifecycle, restored: bool) -> Result<NativeReport> {
     let _lock = Lock::acquire(state)?;
     let mut manifest = load(state)?;
+    lifecycle.check_profile(&manifest.profile)?;
     let _profile_lock = profile_lock(&manifest.profile)?;
     if !restored && manifest.phase == Phase::Active {
         revalidate_upgrade(state, &mut manifest, lifecycle)?;
@@ -1034,6 +1052,14 @@ impl CommandLifecycle {
 }
 
 impl Lifecycle for CommandLifecycle {
+    fn check_profile(&self, profile: &Path) -> Result<()> {
+        ensure!(
+            self.profile == profile,
+            "selected installation state belongs to another profile"
+        );
+        Ok(())
+    }
+
     fn supports_revalidation(&self) -> bool {
         true
     }

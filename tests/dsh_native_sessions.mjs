@@ -58,7 +58,7 @@ async function sessionProbe(options) {
   };
   try {
     if (options.mode === 'seed') {
-      const agent = await create('xnip-existing-session');
+      const agent = await create(options.existingId ?? 'xnip-existing-session');
       agent.session.append('user/message', createUserMessage({
         content: [{ type: 'text', text: 'Preserve the Session created before compact installation.' }],
         source: { kind: 'user' },
@@ -77,9 +77,9 @@ async function sessionProbe(options) {
       }
     } else {
       assert.ok(result.presets.every(preset => !preset.broken), JSON.stringify(result.presets));
-      const restored = await resume('xnip-existing-session');
+      const restored = await resume(options.existingId ?? 'xnip-existing-session');
       assert.deepEqual(restored.session.snapshotEvents().slice(0, options.events.length), options.events);
-      const created = await create('xnip-repaired-new-session');
+      const created = await create(options.newId ?? 'xnip-repaired-new-session');
       let calls = 0;
       for (const [label, agent] of [['restored', restored], ['new', created]]) {
         assert.equal(presetFor(agent), options.preset);
@@ -87,11 +87,11 @@ async function sessionProbe(options) {
         const modules = ctx.agentPresets.inspectCompositions(agent.ctx).flatMap(composition => composition.modules);
         const activeCompact = [...modules.map(module => module.moduleName),
           ...[...ctx.loader.entries()].filter(entry => entry.fiber && !entry.disabled).map(entry => entry.options.name)]
-          .filter(name => name.endsWith('/compact-tools.mjs'));
+          .filter(name => name === 'cordis:xnip-compact-tools' || name.endsWith('/compact-tools.mjs'));
         const installedCompact = pathToFileURL(path.join(process.env.DSH_HOME,
           'profiles/web/.xnip-native-package/compact-tools.mjs')).href;
         assert.ok(activeCompact.length > 0, 'The real Loader must activate the installed compact module');
-        assert.ok(activeCompact.every(name => name === installedCompact), JSON.stringify(activeCompact));
+        assert.ok(activeCompact.every(name => name === 'cordis:xnip-compact-tools' || name === installedCompact), JSON.stringify(activeCompact));
         const schemas = ctx.tools.schemas(agent);
         const edit = schemas.find(tool => tool.name === 'edit');
         assert.equal(edit.parameters.properties.new_string.description, 'Replacement; empty deletes.');
@@ -157,10 +157,11 @@ if (process.argv[2] === '--session-probe') {
       for (const [name, expected] of Object.entries(provenance.files_sha256)) {
         assert.equal(digest(await fs.readFile(path.join(legacy, name))), expected, name);
       }
-      const home = await fs.mkdtemp(path.join(os.tmpdir(), 'xnip native 会话-'));
-      t.after(() => fs.rm(home, { recursive: true, force: true }));
-      const project = path.join(home, 'project');
-      const profile = path.join(home, 'profiles/web');
+      const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'xnip native 会话-'));
+      t.after(() => fs.rm(directory, { recursive: true, force: true }));
+      const home = path.join(directory, 'original');
+      const project = path.join(directory, 'project');
+      let profile = path.join(home, 'profiles/web');
       await fs.mkdir(project);
       const executable = process.env.XNIP_TEST_BINARY ?? path.join(root, 'target/debug/xnip');
       const dsh = path.join(host, 'node_modules/.bin/dsh');
@@ -210,6 +211,24 @@ if (process.argv[2] === '--session-probe') {
       assert.deepEqual(await treeBytes(path.join(profile, '.xnip-native')), retained);
       assert.deepEqual(await fs.readFile(path.join(profile, 'cordis.patch.yml')), patchBefore);
       await assert.rejects(fs.access(path.join(profile, 'node_modules')), { code: 'ENOENT' });
+      const patch = await fs.readFile(path.join(profile, '.xnip-native-package/cordis.patch.yml'), 'utf8');
+      assert.ok(!patch.includes(pathToFileURL(profile).href));
+      const state = await fs.readFile(path.join(nextState, 'install-manifest.json'), 'utf8');
+      assert.ok(!state.includes(profile));
+      // A directly dispatched test tool call is outside an LLM turn. Persist a
+      // fresh, ordinary conversation to exercise replay across the move.
+      const existingId = 'xnip-before-move';
+      const beforeMove = await probe('seed', { existingId });
+      env.DSH_HOME = path.join(directory, 'moved #会话');
+      await fs.rename(home, env.DSH_HOME);
+      profile = path.join(env.DSH_HOME, 'profiles/web');
+      const movedState = ['--state-dir', path.join(profile, path.basename(nextState))];
+      assert.equal((await native('verify', current, movedState)).phase, 'active');
+      const moved = await probe('repaired', { existingId, events: beforeMove.events, preset: beforeMove.preset, newId: 'xnip-moved-new-session' });
+      assert.equal(moved.byte_exact_edits, 2);
+      assert.equal((await native('uninstall', current, movedState)).phase, 'restored');
+      assert.equal((await native('verify', current, ['--restored', ...movedState])).phase, 'restored');
+      assert.deepEqual(await fs.readFile(path.join(profile, 'cordis.patch.yml')), patchBefore);
     });
   }
 }

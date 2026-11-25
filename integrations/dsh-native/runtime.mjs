@@ -2,7 +2,7 @@ import path from 'node:path';
 import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
 import { createXnipPlugin } from './index.mjs';
-import { createCompactToolsPlugin } from './compact-tools.mjs';
+import compactToolsPlugin from './compact-tools.mjs';
 
 /** Resolve only official, installed host modules; no editor or policy substitutes. */
 export async function loadRuntime(hostRoot) {
@@ -29,7 +29,7 @@ export async function callTool(ctx, name, args, { signal = new AbortController()
   return ctx.tools.execute({ signal, callId, name, arguments: args, agent });
 }
 
-export async function createFixture({ hostRoot, cwd, executable, native = true, mode = 'workspace-write', plugin, providerEntries, compact = false, toolConfig = {} }) {
+export async function createFixture({ hostRoot, cwd, executable, native = true, mode = 'workspace-write', plugin, providerEntries, compact = false, compactPlugin = compactToolsPlugin, toolConfig = {} }) {
   const host = await loadRuntime(hostRoot);
   const ctx = new host.cordis.Context();
   try {
@@ -59,7 +59,11 @@ export async function createFixture({ hostRoot, cwd, executable, native = true, 
     else await ctx.plugin(host['dsh-fs-sandbox'].default, { cwd });
     await ctx.plugin(host['dsh-fs-observation-policy']);
     await ctx.plugin(host['dsh-working-directory'].default, { defaultDirectory: cwd });
-    await ctx.plugin(compact ? createCompactToolsPlugin(async () => host['dsh-tool-fs']) : host['dsh-tool-fs'], { ...toolConfig, readImage: false });
+    if (compact) ctx.provide('profileContext', { installAnchor: path.join(hostRoot, 'package.json') });
+    // Older bundles expected the profile resolver to supply this host peer.
+    const adapter = compactPlugin.createCompactToolsPlugin && !compactPlugin.compactBuiltin
+      ? compactPlugin.createCompactToolsPlugin(() => host['dsh-tool-fs']) : compactPlugin;
+    await ctx.plugin(compact ? adapter : host['dsh-tool-fs'], { ...toolConfig, readImage: false });
     const { Session, SESSION_FORMAT_VERSION } = host['dsh-session'];
     const id = 'xnip-native-validation';
     const session = Session.create(id, [], { version: SESSION_FORMAT_VERSION, id, createdAt: 0, cwd, isSeeded: false });

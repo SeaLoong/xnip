@@ -1,3 +1,6 @@
+import { createRequire } from 'node:module';
+import { pathToFileURL } from 'node:url';
+
 /** Compact model projections of official tools; execution and UI stay host-owned. */
 const descriptions = {
   read: 'Read UTF-8 text with line numbers. Read before editing.',
@@ -25,11 +28,19 @@ export function compactDefinition(tool) {
   };
 }
 
-export function createCompactToolsPlugin(loadTools = () => import('@deepseek-ai/dsh-tool-fs')) {
+const toolPackage = '@deepseek-ai/dsh-tool-fs';
+
+function loadOfficialTools(ctx) {
+  const anchor = ctx.get?.('profileContext')?.installAnchor;
+  if (!anchor) return import(toolPackage);
+  return import(pathToFileURL(createRequire(anchor).resolve(toolPackage)).href);
+}
+
+export function createCompactToolsPlugin(loadTools = loadOfficialTools) {
   return {
     name: 'xnip-compact-tools', inject: ['tools', 'fs', 'systemPrompt', 'workingDirectory'],
     async apply(ctx, config = {}) {
-      const official = await loadTools();
+      const official = await loadTools(ctx);
       // Adapt registration at the official plugin boundary. Execution closures
       // retain the live context and its policy services.
       const tools = new Proxy(ctx.tools, { get(target, key) {
@@ -39,10 +50,11 @@ export function createCompactToolsPlugin(loadTools = () => import('@deepseek-ai/
       const context = new Proxy(ctx, { get(target, key, receiver) {
         return key === 'tools' ? tools : Reflect.get(target, key, receiver);
       } });
-      official.apply(context, official.Config(config));
+      return official.apply(context, official.Config(config));
     },
   };
 }
 const plugin = createCompactToolsPlugin();
+export const compactBuiltin = `cordis:${plugin.name}`;
 export const { name, inject, apply } = plugin;
 export default plugin;

@@ -97,7 +97,7 @@ validate them.
 DSH host-lifecycle evidence is on Linux;
 the CLI and MCP have their own cross-platform verification.
 
-The DSH integration provides upgrade revalidation and opt-in `--compact-tools`. See [DSH setup and measured token costs](docs/native.md#compact-tools).
+New DSH native installations can move with their profile. See [moving a profile](docs/native.md#moving-a-dsh-profile) for migration from older versions. The DSH integration provides upgrade revalidation and opt-in `--compact-tools`. See [DSH setup and measured token costs](docs/native.md#compact-tools).
 
 The [Pi native extension](docs/pi-native.md) preserves Pi `1.3.0` tool schemas,
 matching, rendering and hooks through its official extension API.

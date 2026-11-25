@@ -183,6 +183,39 @@ lifecycle commands, including cleanup. Restart the DSH host for the profile
 after reinstalling before opening or resuming sessions. Do not edit retained
 manifests or hashes by hand.
 
+### Moving a DSH profile
+
+Stop DSH, move the profile together with its private adapter and state directory,
+then select the new DSH home. Current compact bundles load the official filesystem
+tools from the running DSH installation. Their nested presets resolve the
+adapter in the active profile. Keep the xnip executable selected at install time
+available at its configured path.
+
+New state stored inside the profile moves automatically when it keeps the same
+relative location. Run `xnip native verify --profile "$profile" --dsh "$dsh"`
+with the new profile and the official DSH executable. Include `--state-dir` for
+a custom state directory.
+
+For an already moved 0.6.8 installation, use a CLI containing the relocation
+fix. Set `profile` to the moved directory and `dsh` to the DSH executable.
+Rebind the retained state, restore the previous configuration, and install the
+updated bundle with a fresh state directory:
+
+```sh
+xnip native rebind --profile "$profile"
+xnip native uninstall --profile "$profile" --dsh "$dsh"
+xnip native verify --restored --profile "$profile" --dsh "$dsh"
+xnip native install --compact-tools --profile "$profile" --dsh "$dsh" \
+  --state-dir "$profile/.xnip-native-updated"
+```
+
+Keep using the new state directory for subsequent commands and restart DSH
+before opening sessions. If the old installation used an external state
+directory, pass its path to `rebind`, `uninstall` and the restoration check.
+For a current bundle with external state, `rebind` followed by `verify`
+suffices. Rebinding checks the selected profile against the recorded managed
+files and verifies the backup blobs before updating the state binding.
+
 ## Restoration and retained state
 
 Use the same host arguments for removal and restoration verification:

@@ -79,6 +79,20 @@ fn set_mode(path: &Path, saved: u32) -> Result<()> {
 }
 
 impl Snapshot {
+    pub(super) fn map_paths(&mut self, map: &impl Fn(&Path) -> Result<PathBuf>) -> Result<()> {
+        for root in &mut self.roots {
+            *root = map(root)?;
+        }
+        let old = std::mem::take(&mut self.entries);
+        for (path, entry) in old {
+            ensure!(
+                self.entries.insert(map(&path)?, entry).is_none(),
+                "duplicate snapshot path"
+            );
+        }
+        Ok(())
+    }
+
     pub fn validate_roots(roots: &[PathBuf], profile: &Path, state: &Path) -> Result<()> {
         ensure!(!roots.is_empty(), "no managed roots declared");
         for (index, path) in roots.iter().enumerate() {
