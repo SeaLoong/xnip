@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import os from 'node:os';
 import test from 'node:test';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
@@ -19,9 +20,12 @@ assert.equal(scenarios.length, 13);
 for (const scenario of scenarios) {
   test(`Gemini native byte fixture: ${scenario.name}`, async t => {
     const cwd = await fs.mkdtemp(path.join(root, 'target/gemini-native-bytes-'));
-    t.after(() => fs.rm(cwd, { recursive: true, force: true }));
-    const runtime = await prepareFixture({ cwd, executable });
-    t.after(() => runtime.close());
+    let runtime;
+    t.after(async () => {
+      try { await runtime?.close(); }
+      finally { await fs.rm(cwd, { recursive: true, force: true }); }
+    });
+    runtime = await prepareFixture({ cwd, executable });
     assert.deepEqual(runtime.tools.map(tool => tool.name).sort(), ['read_file', 'replace', 'write_file']);
     for (const [file, content] of Object.entries(scenario.files)) {
       const file_path = path.join(cwd, file);
@@ -32,16 +36,14 @@ for (const scenario of scenarios) {
     }
     for (const operation of scenario.edits) {
       const file_path = path.join(cwd, operation.file);
-      const expected_replacements = operation.all
-        ? (await fs.readFile(file_path, 'utf8')).split(operation.old).length - 1 : 1;
       const outcome = await runtime.call('replace', {
         file_path, old_string: operation.old, new_string: operation.text,
-        instruction: 'Apply the supplied literal replacement.', expected_replacements,
+        instruction: 'Apply the supplied literal replacement.', allow_multiple: Boolean(operation.all),
       });
       assert.equal(outcome.error, undefined, JSON.stringify(outcome));
     }
     for (const [file, expected] of Object.entries(scenario.expected)) {
-      assert.deepEqual(await fs.readFile(path.join(cwd, file)), Buffer.from(expected));
+      assert.deepEqual(await fs.readFile(path.join(cwd, file)), Buffer.from(expected.replace(/(?<!\r)\n/g, os.EOL)));
     }
     assert.equal(runtime.modelCalls, 0);
   });

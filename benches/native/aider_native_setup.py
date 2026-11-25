@@ -17,7 +17,7 @@ COMMIT = "5dc9490bb35f9729ef2c95d00a19ccd30c26339c"
 REPOSITORY = "https://github.com/Aider-AI/aider"
 DEFAULT = ROOT / "target/native-hosts/aider-5dc9490"
 LOCK = HERE / "aider_requirements.txt"
-UPSTREAM_REQUIREMENTS = HERE / "aider_native/upstream-requirements.txt"
+INPUTS = HERE / "aider_native"
 
 
 def python_path(directory=DEFAULT):
@@ -27,6 +27,11 @@ def python_path(directory=DEFAULT):
 def run(command, **kwargs):
     return subprocess.run([str(part) for part in command], check=True, capture_output=True,
                           text=True, encoding="utf-8", **kwargs)
+
+
+def read_requirements(path):
+    lines = path.read_text(encoding="utf-8").splitlines()
+    return [line for line in lines if line and not line.startswith("#")]
 
 
 def prepare(directory=DEFAULT, check=False):
@@ -44,8 +49,24 @@ def prepare(directory=DEFAULT, check=False):
             run(["git", "-C", source, "checkout", "--quiet", "--detach", "FETCH_HEAD"])
     revision = run(["git", "-C", source, "rev-parse", "HEAD"]).stdout.strip()
     assert revision == COMMIT, "Aider checkout revision differs from the pinned SDK"
-    run(["git", "-C", source, "diff", "--exit-code", "HEAD", "--"])
-    assert (source / "requirements.txt").read_bytes() == UPSTREAM_REQUIREMENTS.read_bytes()
+    # Upstream publishes exact application pins. The benchmark resolves its own
+    # hash lock from the same revision's direct requirements and changes only
+    # distribution metadata in this dedicated checkout.
+    run(["git", "-C", source, "diff", "--exit-code", "HEAD", "--", ".", ":(exclude)requirements.txt"])
+    for name in ("requirements.in", "python-compat.in"):
+        expected = read_requirements(source / "requirements" / name)
+        if name == "requirements.in":
+            expected[expected.index("importlib-metadata<8.0.0")] = "importlib-metadata>=8,<9"
+        assert read_requirements(INPUTS / name) == expected
+    direct = (INPUTS / "requirements.in").read_text().replace(
+        "-r python-compat.in", (INPUTS / "python-compat.in").read_text().strip())
+    metadata = direct + '\naudioop-lts>=0.2.2; python_version >= "3.13"\n'
+    requirements = source / "requirements.txt"
+    if requirements.read_text() != metadata:
+        original = run(["git", "-C", source, "show", "HEAD:requirements.txt"]).stdout
+        if check or requirements.read_text() != original:
+            raise RuntimeError("Unexpected Aider checkout dependency metadata")
+        requirements.write_text(metadata, encoding="utf-8")
     if not check:
         if not python.is_file():
             venv.EnvBuilder(with_pip=True).create(directory / "aider-venv")

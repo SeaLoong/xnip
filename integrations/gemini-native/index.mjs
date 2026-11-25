@@ -13,7 +13,8 @@ export async function installXnipFileSystem(config, {
   executable = nativeExecutable(),
   createClient = (binary, cwd) => new EditorClient(binary, cwd),
 } = {}) {
-  if (config.getSandbox()) {
+  const sandbox = config.getSandbox();
+  if (sandbox && (sandbox.enabled !== false || sandbox.command)) {
     throw new Error('Gemini native IO supports local SDK configurations; retain the configured filesystem service for sandbox sessions.');
   }
   const original = config.getFileSystemService();

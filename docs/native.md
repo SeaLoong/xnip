@@ -11,9 +11,9 @@ CLI, MCP and skills remain available.
 |---|---|---|
 | DSH | L3 filesystem provider; transactional profile installer below | 0.2.1 rc.1–rc.5; 0.2.2 rc.1/rc.3; Linux host journey |
 | Pi | L2′ native tool override; explicit [extension setup](pi-native.md) | `1.3.0` |
-| Gemini SDK | Local `Config` filesystem service; [per-tool execution scope](gemini-native.md) | `@google/gemini-cli-core` `0.27.2` |
+| Gemini SDK | Local `Config` filesystem service; [per-tool execution scope](gemini-native.md) | `@google/gemini-cli-core` `0.71.1` |
 | Cline SDK | `apply_patch` executor with official parsing and tools; [SDK setup](cline-native.md) | `@cline/sdk` `0.2.0` |
-| OpenHands SDK | `file_editor` executor with official matching/history; [Python package](openhands-native.md) | SDK/tools `1.60.1` |
+| OpenHands SDK | `file_editor` executor with official matching/history; [Python package](openhands-native.md) | SDK/tools `1.64.1` |
 | aider | Eight official Coder formats through the [IO adapter](aider-native.md) | Source `5dc9490`, Python 3.13 |
 | DeepAgents | FilesystemMiddleware [file backend](deepagents.md) | `0.7.34` |
 

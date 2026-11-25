@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs/promises';
+import { registerHooks } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
@@ -19,7 +20,20 @@ const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 export async function loadCline(directory = HOST) {
   const base = path.join(directory, 'node_modules/@cline/sdk');
   const manifest = JSON.parse(await fs.readFile(path.join(base, 'package.json'), 'utf8'));
-  return import(pathToFileURL(path.join(base, manifest.exports['.'].import)).href);
+  // Cline imports the v3 default. Use the same factory from the patched v4 package.
+  const core = pathToFileURL(path.join(directory, 'node_modules/@cline/core') + path.sep).href;
+  const hook = registerHooks({ resolve(specifier, context, nextResolve) {
+    const resolved = nextResolve(specifier, context);
+    if (specifier !== 'simple-git' || !context.parentURL?.startsWith(core)) return resolved;
+    const url = JSON.stringify(resolved.url);
+    const bridge = `export * from ${url}; export { simpleGit as default } from ${url};`;
+    return { url: 'data:text/javascript,' + encodeURIComponent(bridge), shortCircuit: true };
+  } });
+  try {
+    return await import(pathToFileURL(path.join(base, manifest.exports['.'].import)).href);
+  } finally {
+    hook.deregister();
+  }
 }
 
 export async function verifyCline(directory = HOST) {

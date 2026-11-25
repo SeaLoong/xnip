@@ -204,7 +204,7 @@ def run_benchmark(executable, repeats=3, warmups=1, names=None, build_profile="r
                               "entry": "Conversation.execute_tool public tool-only API; confirmation is covered by Agent.step E2E",
                               "timing": "action construction and actual SDK execution; counters, receipt drain, fixture IO and oracle outside timing"},
               "provenance": {"binary": {"sha256": binary, "build_profile": build_profile}, "source": source,
-                             "python": platform.python_version(), "platform": platform.platform(), "sdk": "1.60.1",
+                             "python": platform.python_version(), "platform": platform.platform(), "sdk": "1.64.1",
                              "host": host_receipt},
               "bootstrap_ms": (time.perf_counter() - started) * 1000,
               "scenarios": [{"name": s["name"], "cohort": s["cohort"], "read_calls": len(s["files"]),
@@ -249,10 +249,10 @@ def run_benchmark(executable, repeats=3, warmups=1, names=None, build_profile="r
 
 def render_report(report):
     lines = ["# OpenHands SDK storage provider benchmark", "",
-             f"OpenHands SDK/tools 1.60.1; {len(report['scenarios'])} fixtures, {report['methodology']['measured_runs']} measured runs and {report['methodology']['warmup_runs']} warm-up per provider. Zero model calls.", "",
+             f"OpenHands SDK/tools 1.64.1; {len(report['scenarios'])} fixtures, {report['methodology']['measured_runs']} measured runs and {report['methodology']['warmup_runs']} warm-up per provider. Zero model calls.", "",
              "Both providers execute the original file_editor schema, action validation, matching, snippets and history through Conversation.execute_tool. The public tool-only API skips interactive confirmation; the separate Agent.step E2E covers confirmation, hooks, resource scheduling and interruption.", "",
              "Warm execution includes action construction and SDK dispatch. Setup, fixture resets, byte hashing, result serialization accounting and waiting for asynchronous cleanup receipts are separate. Native IPC counters include every actual request/response. Three samples make nearest-rank p95 the maximum.", "",
-             "The independent byte goal preserves untouched storage. Both providers retain OpenHands universal-newline behavior; normalization differences remain visible. Compatibility separately requires identical actual SDK observations and stored bytes.", "",
+             "The independent byte goal preserves untouched storage. OpenHands reads universal newlines. A CRLF first line selects CRLF output, and other files use platform text newlines. Compatibility separately requires identical actual SDK observations and stored bytes.", "",
              f"Binary SHA-256 `{report['provenance']['binary']['sha256']}` ({report['provenance']['binary']['build_profile']}); maintained source `{report['provenance']['source']['sha256']}`.", "",
              "| Fixture | Original mutation median / p95 ms | Native mutation median / p95 ms | Original / native byte-goal runs | Native IPC bytes |",
              "|---|---:|---:|---:|---:|"]
@@ -260,7 +260,7 @@ def render_report(report):
         original, native = [next(row for row in report["results"] if row["provider"] == provider and row["scenario"] == fixture["name"]) for provider in ["openhands-original", "xnip-native"]]
         a, b = original["summary"]["mutation_ms"], native["summary"]["mutation_ms"]
         lines.append(f"| {fixture['name']} | {a['median']:.2f} / {a['p95']:.2f} | {b['median']:.2f} / {b['p95']:.2f} | {sum(s['byte_exact'] for s in original['samples'])}/{len(original['samples'])} / {sum(s['byte_exact'] for s in native['samples'])}/{len(native['samples'])} | {int(statistics.median(s['bridge']['total_bytes'] for s in native['samples'])):,} |")
-    lines += ["", "## Reproduce", "", "```sh", "python benches/native/openhands_setup.py", "target/native-hosts/openhands-1.60.1/.venv/bin/python benches/openhands_provider.py --executable target/release/xnip", "```", ""]
+    lines += ["", "## Reproduce", "", "```sh", "python benches/native/openhands_setup.py", "target/native-hosts/openhands-1.64.1/.venv/bin/python benches/openhands_provider.py --executable target/release/xnip", "```", ""]
     return "\n".join(lines)
 
 

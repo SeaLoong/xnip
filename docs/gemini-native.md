@@ -1,15 +1,15 @@
 # Gemini SDK native file IO
 
-Gemini CLI core **0.27.2** exposes `Config.setFileSystemService()` for SDK hosts.
+Gemini CLI core **0.71.1** exposes `Config.setFileSystemService()` for SDK hosts.
 The xnip adapter installs that service and keeps Gemini's own `read_file`,
 `replace`, and `write_file` tool instances. Gemini continues to own matching,
 path validation, confirmation, diff presentation, read pagination and tool
 results. Text IO uses the existing xnip core through `xnip native serve`.
 
 The upstream interfaces are
-[`Config`](https://github.com/google-gemini/gemini-cli/blob/v0.27.2/packages/core/src/config/config.ts)
+[`Config`](https://github.com/google-gemini/gemini-cli/blob/v0.71.1/packages/core/src/config/config.ts)
 and
-[`FileSystemService`](https://github.com/google-gemini/gemini-cli/blob/v0.27.2/packages/core/src/services/fileSystemService.ts).
+[`FileSystemService`](https://github.com/google-gemini/gemini-cli/blob/v0.71.1/packages/core/src/services/fileSystemService.ts).
 
 This entry targets SDK applications that own their Gemini `Config` and tool
 execution lifecycle. Ordinary Gemini CLI extensions use MCP, skills and hooks;
@@ -20,7 +20,7 @@ the SDK service is selected by the application that constructs the session.
 Use Node 24 and install the packages in the SDK application:
 
 ```sh
-npm install xnip-cli @google/gemini-cli-core@0.27.2
+npm install xnip-cli @google/gemini-cli-core@0.71.1
 ```
 
 Install the service on the same `Config` used by the application's original

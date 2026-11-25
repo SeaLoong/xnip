@@ -322,7 +322,7 @@ def render(report):
         lines.append(f"| {case['name']} | {values[0]} | {values[1]} | {attempts[0]:g} / {attempts[1]:g} | "
                      f"{rows[0]['correct_runs']}/{len(rows[0]['samples'])} / {rows[1]['correct_runs']}/{len(rows[1]['samples'])} |")
     lines += ["", "## Reproduce", "", "```sh", "python benches/native/crewai_setup.py",
-        "target/native-hosts/crewai-1.15.36/.venv/bin/python benches/crewai_provider.py --executable target/release/xnip --repeats 3 --warmups 1", "```", "",
+        "target/native-hosts/crewai-1.15.45/.venv/bin/python benches/crewai_provider.py --executable target/release/xnip --repeats 3 --warmups 1", "```", "",
         "[SDK integration, cache and lifecycle](../crewai.md). Raw JSON includes actual arguments, projections, typed errors, per-attempt results, SDK source hashes, setup and independent file goals.", ""]
     return "\n".join(lines)
 

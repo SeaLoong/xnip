@@ -5,7 +5,7 @@ instances through its public `MCPToolResolver`. CrewAI owns tool schemas,
 argument validation, events, execution, retry policy and result projection.
 The owned stdio MCP process applies edits through xnip's existing Rust engine.
 
-Verified versions are **CrewAI 1.15.36 and MCP 1.30.0**, tested on Python
+Verified versions are **CrewAI 1.15.45 and MCP 1.30.0**, tested on Python
 **3.12 and 3.13**. CrewAI's declared Python range is 3.10–3.13; the frozen test
 environment uses Python 3.12–3.13. CrewAI includes its MCP dependency. This entry point
 serves applications using CrewAI's public Python SDK.
@@ -96,8 +96,8 @@ retry handling. Applications consume that public SDK result or exception.
 ```sh
 python benches/native/crewai_setup.py
 python benches/native/crewai_setup.py --check
-target/native-hosts/crewai-1.15.36/.venv/bin/python tests/crewai_contract.py
-target/native-hosts/crewai-1.15.36/.venv/bin/python tests/crewai_provider_bench_contract.py
+target/native-hosts/crewai-1.15.45/.venv/bin/python tests/crewai_contract.py
+target/native-hosts/crewai-1.15.45/.venv/bin/python tests/crewai_provider_bench_contract.py
 ```
 
 Setup creates an isolated environment under `target`, installs platform-universal
@@ -135,7 +135,7 @@ failure, BOM/CRLF and mixed line endings, preview, and 64 KiB, 1 MiB and
 5 MiB files.
 
 ```sh
-target/native-hosts/crewai-1.15.36/.venv/bin/python benches/crewai_provider.py \
+target/native-hosts/crewai-1.15.45/.venv/bin/python benches/crewai_provider.py \
   --executable target/release/xnip --repeats 3 --warmups 1
 ```
 
@@ -155,5 +155,5 @@ per-call timing and binary/source/SDK hashes. Payload counts describe local
 serialized JSON layers. Model call counts stay at zero; model latency and
 billing belong to application-level measurements.
 
-Official references: [CrewAI 1.15.36 on PyPI](https://pypi.org/project/crewai/1.15.36/)
+Official references: [CrewAI 1.15.45 on PyPI](https://pypi.org/project/crewai/1.15.45/)
 and [CrewAI's repository](https://github.com/crewAIInc/crewAI).

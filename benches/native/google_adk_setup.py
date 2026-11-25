@@ -11,8 +11,8 @@ import sys
 import venv
 
 ROOT = Path(__file__).resolve().parents[2]
-VERSION = "2.13.0"
-DEFAULT = ROOT / "target/native-hosts/google-adk-2.13.0"
+VERSION = "2.15.1"
+DEFAULT = ROOT / "target/native-hosts/google-adk-2.15.1"
 LOCK = Path(__file__).with_name("google_adk_requirements.txt")
 
 

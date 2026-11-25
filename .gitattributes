@@ -9,6 +9,10 @@
 *.ps1 text eol=lf
 *.py text eol=lf
 
+# Native host setup verifies the bytes of these npm manifests and locks.
+benches/native/**/package.json text eol=lf
+benches/native/**/package-lock.json text eol=lf
+
 # Measured evidence is linked by byte hashes; do not rewrite its serialization.
 docs/benchmarks/results.json -text whitespace=cr-at-eol
 docs/benchmarks/relative-results.json -text whitespace=cr-at-eol

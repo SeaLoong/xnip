@@ -2,8 +2,8 @@
   "sdk_version": "0.2.0",
   "registry": "https://registry.npmjs.org",
   "inputs": {
-    "package.json": "f9f240d9ab4e8edc0f5dd83f1520c7d2eba1bd6702703936358655e390c85c18",
-    "package-lock.json": "bbea369582effef2d0178ecddf9097066b2dc2db6a547dc80701c8cf99fe1c65"
+    "package.json": "da9654451375de934e401bf46f67ce9466307b17933c88d77e25b7c24c3d64ae",
+    "package-lock.json": "981ab9b8857f1927c70bd6836b1bd6fae1652956314a278075e78ae7e4c35c2c"
   },
   "packages": {
     "@cline/sdk": {

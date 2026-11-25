@@ -106,9 +106,9 @@ python3 tests/native_byte_contract.py
 The runner uses `--offline` for its Cargo build and lifecycle execution; the
 fetch and compilation above prepare those dependencies. Pi's setup verifies
 its pinned source and locked SDK under `target/native-bench/pi-v1.3.0`.
-Gemini core 0.27.2 and Cline SDK/core 0.2.0 use frozen npm dependencies under
-`target/native-hosts/gemini-0.27.2` and `cline-0.2.0`. OpenHands SDK/tools 1.60.1
-uses a local `.venv` under `target/native-hosts/openhands-1.60.1`, with pip's
+Gemini core 0.71.1 and Cline SDK/core 0.2.0 use frozen npm dependencies under
+`target/native-hosts/gemini-0.71.1` and `cline-0.2.0`. OpenHands SDK/tools 1.64.1
+uses a local `.venv` under `target/native-hosts/openhands-1.64.1`, with pip's
 hashed requirements lock. The full matrix selects that prepared interpreter.
 
 Each Python dependency family has its own virtual environment. OpenHands

@@ -93,14 +93,14 @@ def source_provenance():
         "benches/native/aider_requirements.in", "benches/native/aider_requirements.txt"]]
     for directory in ["src", "integrations/aider-native", "integrations/native-python", "benches/native/aider_native"]:
         files.extend(path for path in (ROOT / directory).rglob("*") if path.is_file()
-                     and path.suffix in (".rs", ".py", ".toml", ".json", ".txt"))
+                     and path.suffix in (".rs", ".py", ".toml", ".json", ".txt", ".in"))
     hashes = {str(path.relative_to(ROOT)): digest(path.read_bytes()) for path in sorted(set(files))}
     return {"sha256": digest(json.dumps(hashes, sort_keys=True).encode()), "files_sha256": hashes}
 
 
 def stored_files(cwd):
     ignored = {".aider-test-model.json", ".aider-test-analytics.json", ".aider-test-anchor"}
-    return sorted(str(path.relative_to(cwd)) for path in cwd.rglob("*")
+    return sorted(path.relative_to(cwd).as_posix() for path in cwd.rglob("*")
                   if path.is_file() and str(path.relative_to(cwd)) not in ignored)
 
 

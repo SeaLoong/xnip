@@ -18,9 +18,11 @@ assert.equal(scenarios.length, 13);
 for (const scenario of scenarios) {
   test(`Cline apply_patch native byte fixture: ${scenario.name}`, async t => {
     const cwd = await fs.mkdtemp(path.join(root, 'target/cline-native-bytes-'));
-    t.after(() => fs.rm(cwd, { recursive: true, force: true }));
+    const resources = new AsyncDisposableStack();
+    t.after(() => resources.disposeAsync());
+    resources.defer(() => fs.rm(cwd, { recursive: true, force: true }));
     const runtime = await createClineFixture({ cwd });
-    t.after(() => runtime.close());
+    resources.defer(() => runtime.close());
     assert.deepEqual(runtime.describe().tools.map(tool => tool.name), ['read_files', 'apply_patch']);
     for (const [file, content] of Object.entries(scenario.files)) {
       await fs.mkdir(path.dirname(path.join(cwd, file)), { recursive: true });

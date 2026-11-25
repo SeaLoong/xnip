@@ -9,7 +9,7 @@ import sys
 import venv
 
 ROOT = Path(__file__).resolve().parents[2]
-VERSION = "1.15.36"
+VERSION = "1.15.45"
 DEFAULT = ROOT / "target/native-hosts" / ("crewai-" + VERSION)
 LOCK = Path(__file__).with_name("crewai_requirements.txt")
 

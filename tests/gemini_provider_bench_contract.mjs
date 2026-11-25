@@ -11,7 +11,7 @@ test('Gemini benchmark executes official registry, policies, host matching and n
     scenarioNames: ['tiny-config', 'same-file-batch', 'global-replace', 'gemini-regex-spacing', 'gemini-reject-missing',
       'gemini-reject-count', 'gemini-noop', 'gemini-write-create', 'gemini-mixed-eol', 'gemini-confirmed-edit', 'gemini-policy-denied'] });
   assert.equal(report.results.length, 22);
-  assert.equal(report.provenance.host.version, '0.27.2');
+  assert.equal(report.provenance.host.version, '0.71.1');
   assert.match(report.provenance.host.dependency_tree_sha256, /^[a-f0-9]{64}$/);
   assert.equal(report.setup.length, 6);
   for (const row of report.results) {
@@ -30,7 +30,7 @@ test('Gemini benchmark executes official registry, policies, host matching and n
   const confirmation = report.results.find(row => row.provider === 'xnip-native' && row.scenario === 'gemini-confirmed-edit');
   assert.ok(confirmation.samples.every(sample => sample.policy_events['confirmation-details'] >= 1));
   const denied = report.results.find(row => row.provider === 'xnip-native' && row.scenario === 'gemini-policy-denied');
-  assert.ok(denied.samples.every(sample => sample.bridge.requests === 0 && sample.calls[0].exception.message.includes('denied by policy')));
+  assert.ok(denied.samples.every(sample => sample.bridge.requests === 0 && sample.calls[0].exception.message.includes('unavailable in the active Gemini registry')));
   const mixed = report.results.filter(row => row.scenario === 'gemini-mixed-eol');
   assert.ok(mixed.every(row => row.byte_exact_runs === 0 && row.outcome_matches_runs === 2));
   assert.ok(renderGeminiReport(report).includes('Zero model calls'));

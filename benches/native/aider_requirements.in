@@ -1,4 +1,6 @@
--r aider_native/upstream-requirements.txt
-setuptools==80.9.0
+-r aider_native/requirements.in
+litellm>=1.95.0
+audioop-lts>=0.2.2; python_version >= "3.13"
+setuptools==84.1.0
 setuptools-scm==9.2.2
-wheel==0.45.1
+wheel==0.48.0

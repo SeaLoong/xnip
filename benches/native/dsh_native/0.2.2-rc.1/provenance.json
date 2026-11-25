@@ -2,12 +2,12 @@
   "version": "0.2.2-rc.1",
   "registry": "https://registry.npmjs.org",
   "source_repository": "https://github.com/deepseek-ai/deepseek-harness",
-  "manifest_sha256": "e60adf8013be204c5c9ff8834031128fd793b4ded091bcfd03dc76b299d3d35e",
-  "lock_sha256": "80916afba5284a094e37674e83db4240ab8b49426b68902ed1303f7599002b41",
+  "manifest_sha256": "d9285df1c59473bcdd7839bd5595ed37360549eed21527511a61852f864f1c48",
+  "lock_sha256": "e8299d12546d806083f764ed7ae53fda33fab57f0e93409e923dcefcee6f540c",
   "npm_lockfile_version": 3,
   "lock_generator": {
-    "node": "v24.22.1",
-    "npm": "11.9.0"
+    "node": "v26.13.1",
+    "npm": "11.20.0"
   },
   "package_sources": {
     "@deepseek-ai/cordis-plugin-group": {

@@ -8,6 +8,13 @@ async function loadOfficialHost() {
   ]);
   return { SandboxedFileSystem: sandbox.default, FsError: fs.FsError, writableRoots: policy.writableRoots };
 }
+// DSH returns the literal /tmp when its POSIX temp root cannot be resolved.
+// On Windows discard that unresolved entry and keep the host's actual temp root.
+function bridgeWritableRoots(policy, writableRoots) {
+  if (policy.mode === 'danger-full-access') return null;
+  const roots = writableRoots(policy);
+  return process.platform === 'win32' ? roots.filter(root => root !== '/tmp') : roots;
+}
 const bytes = text => [...Buffer.from(text, 'utf8')];
 const normalize = text => text.replaceAll('\r\n', '\n');
 const diffText = text => normalize(text.replace(/^\ufeff/, ''));
@@ -97,7 +104,7 @@ export function createXnipPlugin({ loadHost = loadOfficialHost, executable } = {
               if (signal?.aborted) throw new FsError('Operation aborted', 'FS_ABORTED');
               await this.editor.request('commit', {
                 plan_id: plan.plan_id,
-                policy: { read_only: policy.mode === 'read-only', writable_roots: policy.mode === 'danger-full-access' ? null : writableRoots(policy) },
+                policy: { read_only: policy.mode === 'read-only', writable_roots: bridgeWritableRoots(policy, writableRoots) },
               });
               const version = (await this.stat(checked))?.version;
               if (!version) throw new FsError('Written file disappeared before observation', 'FS_IO_ERROR');

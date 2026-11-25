@@ -10,4 +10,4 @@ and pass its actual CrewAI `MCPNativeTool` instances into the application's
 a fresh MCP connection for each invocation.
 
 [Installation, filtering, lifecycle and verification](../../docs/crewai.md)
-include the fixed CrewAI 1.15.36 compatibility contract and benchmark.
+include the fixed CrewAI 1.15.45 compatibility contract and benchmark.

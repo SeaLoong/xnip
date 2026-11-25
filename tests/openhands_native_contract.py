@@ -1,4 +1,4 @@
-"""Real OpenHands 1.60.1 SDK tools and xnip transactions; model calls stay zero."""
+"""Real OpenHands 1.64.1 SDK tools and xnip transactions; model calls stay zero."""
 
 import base64
 import importlib.metadata
@@ -80,8 +80,8 @@ class OpenHandsNativeContract(unittest.TestCase):
         return runtime.agent.tools_map["file_editor"]
 
     def test_registry_schema_renderer_and_default_restoration(self):
-        self.assertEqual(importlib.metadata.version("openhands-sdk"), "1.60.1")
-        self.assertEqual(importlib.metadata.version("openhands-tools"), "1.60.1")
+        self.assertEqual(importlib.metadata.version("openhands-sdk"), "1.64.1")
+        self.assertEqual(importlib.metadata.version("openhands-tools"), "1.64.1")
         baseline = self.host(native=False)
         original = self.initialize(baseline)
         native = self.host()
@@ -190,6 +190,7 @@ with patch.object(LLM,'completion',side_effect=AssertionError('model call')) as 
         target = self.root / "encoding.txt"
         for initial, old, new in [(b"\xef\xbb\xbfhello\r\nend", "hello", "new"),
                                   ("café\n".encode("cp1252"), "café", "café → 尾"),
+                                  (b"one\ntwo\r\nthree\n", "two", "changed"),
                                   (b"one\r\ntwo\nthree\r\n", "two", "changed")]:
             outcomes = []
             for native in [False, True]:
@@ -201,7 +202,7 @@ with patch.object(LLM,'completion',side_effect=AssertionError('model call')) as 
 
     def test_missing_ambiguous_and_noop_error_parity(self):
         target = self.root / "error.txt"
-        target.write_text("old\nold\n")
+        target.write_bytes(b"old\nold\n")
         for old, new in [("missing", "new"), ("old", "new"), ("old", "old")]:
             original = call(self.host(native=False), "str_replace", target, old_str=old, new_str=new)
             native = call(self.host(), "str_replace", target, old_str=old, new_str=new)
@@ -223,12 +224,13 @@ with patch.object(LLM,'completion',side_effect=AssertionError('model call')) as 
         target, link = self.root / "target", self.root / "link"
         target.write_text("old")
         target.chmod(0o754)
+        mode = target.stat().st_mode & 0o777
         link.symlink_to(target)
         result = call(self.host(), "str_replace", link, old_str="old", new_str="new")
         self.assertFalse(result.is_error, result)
         self.assertTrue(link.is_symlink())
         self.assertEqual(target.read_bytes(), b"new")
-        self.assertEqual(target.stat().st_mode & 0o777, 0o754)
+        self.assertEqual(target.stat().st_mode & 0o777, mode)
 
     def test_drift_between_matching_and_storage_is_guarded(self):
         target = self.root / "drift.txt"
@@ -267,8 +269,9 @@ with patch.object(LLM,'completion',side_effect=AssertionError('model call')) as 
         target.write_text("old")
         script = self.root / "policy.py"
         script.write_text('import sys\nsys.stdin.read()\nprint("host policy retained the file",file=sys.stderr)\nsys.exit(2)\n')
+        shell_command = subprocess.list2cmdline if os.name == "nt" else shlex.join
         hook = HookConfig.model_validate({"PreToolUse": [{"matcher": "file_editor", "hooks": [
-            {"type": "command", "command": shlex.join([sys.executable, str(script)])}]}]})
+            {"type": "command", "command": shell_command([sys.executable, str(script)])}]}]})
         runtime = self.host(hooks=hook)
         self.initialize(runtime)
         runtime._on_event(action_event("str_replace", target, old_str="old", new_str="new"))
@@ -279,7 +282,7 @@ with patch.object(LLM,'completion',side_effect=AssertionError('model call')) as 
         post_log = self.root / "post.jsonl"
         post.write_text('import sys,pathlib\np=pathlib.Path(' + repr(str(post_log)) + ')\nwith p.open("a") as f:f.write(sys.stdin.read()+"\\n")\n')
         post_hooks = HookConfig.model_validate({"PostToolUse": [{"matcher": "file_editor", "hooks": [
-            {"type": "command", "command": shlex.join([sys.executable, str(post)])}]}]})
+            {"type": "command", "command": shell_command([sys.executable, str(post)])}]}]})
         plain = self.host(hooks=post_hooks)
         self.initialize(plain)
         second = self.root / "second.txt"
@@ -358,9 +361,11 @@ with patch.object(LLM,'completion',side_effect=AssertionError('model call')) as 
                 receipts.append(result.model_dump(mode="json"))
             files = {name: (self.root / name).read_bytes() for name in case.files}
             expected = {name: text.encode() for name, text in case.expected().items()}
-            # The host's universal-newline policy is retained in both providers.
-            if case.name == "crlf":
-                expected = {name: data.replace(b"\r\n", b"\n") for name, data in expected.items()}
+            # A CRLF first line selects CRLF output, otherwise the host uses platform text IO.
+            for name in {edit["file"] for edit in case.edits}:
+                first, separator, _ = case.files[name].partition("\n")
+                newline = b"\r\n" if separator and first.endswith("\r") else os.linesep.encode()
+                expected[name] = expected[name].replace(b"\r\n", b"\n").replace(b"\n", newline)
             self.assertEqual(files, expected)
             outcomes.append((receipts, files))
         self.assertEqual(*outcomes)

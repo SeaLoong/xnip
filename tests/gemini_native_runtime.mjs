@@ -26,6 +26,7 @@ export async function loadSdk(directory = hostDirectory()) {
 export async function prepareFixture({ cwd, native = true, executable, policyDecision = 'allow',
   createClient, adapterOptions = {}, sandbox, directory = hostDirectory(),
   install = installXnipFileSystem } = {}) {
+  process.env.GEMINI_CLI_HOME ??= path.join(directory, '.fixture-home');
   const sdk = await loadSdk(directory);
   const temporary = await fs.mkdtemp(path.join(os.tmpdir(), 'xnip-gemini-session-'));
   const responses = path.join(temporary, 'responses.jsonl');
@@ -39,6 +40,7 @@ export async function prepareFixture({ cwd, native = true, executable, policyDec
   // The official fake-response option initializes the normal BaseLlmClient.
   // Its empty response file makes any accidental generation fail and increment
   // the SDK's own call counter, without provider credentials or network calls.
+  await config.storage.initialize();
   await config.refreshAuth(undefined);
   const generator = config.getContentGenerator().getWrapped();
   const bus = config.getMessageBus();
@@ -69,7 +71,7 @@ export async function prepareFixture({ cwd, native = true, executable, policyDec
       confirm = sdk.ToolConfirmationOutcome.ProceedOnce } = {}) {
       const execute = async () => {
         const tool = registry.getTool(name);
-        assert.ok(tool, 'registered Gemini tool: ' + name);
+        assert.ok(tool, name + ' is unavailable in the active Gemini registry');
         const invocation = tool.build(structuredClone(args));
         const confirmation = await invocation.shouldConfirmExecute(signal);
         if (confirmation) {
@@ -80,7 +82,7 @@ export async function prepareFixture({ cwd, native = true, executable, policyDec
             return { confirmation, cancelled: true };
           }
         }
-        const result = await invocation.execute(signal);
+        const result = await invocation.execute({ abortSignal: signal });
         assert.equal(generator.callCounter, 0, 'tool execution stays outside model generation');
         return result;
       };
