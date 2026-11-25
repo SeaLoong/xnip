@@ -29,7 +29,7 @@ def run(command, **kwargs):
                           text=True, encoding="utf-8", **kwargs)
 
 
-def requirements(path):
+def read_requirements(path):
     lines = path.read_text(encoding="utf-8").splitlines()
     return [line for line in lines if line and not line.startswith("#")]
 
@@ -54,10 +54,10 @@ def prepare(directory=DEFAULT, check=False):
     # distribution metadata in this dedicated checkout.
     run(["git", "-C", source, "diff", "--exit-code", "HEAD", "--", ".", ":(exclude)requirements.txt"])
     for name in ("requirements.in", "python-compat.in"):
-        expected = requirements(source / "requirements" / name)
+        expected = read_requirements(source / "requirements" / name)
         if name == "requirements.in":
             expected[expected.index("importlib-metadata<8.0.0")] = "importlib-metadata>=8,<9"
-        assert requirements(INPUTS / name) == expected
+        assert read_requirements(INPUTS / name) == expected
     direct = (INPUTS / "requirements.in").read_text().replace(
         "-r python-compat.in", (INPUTS / "python-compat.in").read_text().strip())
     metadata = direct + '\naudioop-lts>=0.2.2; python_version >= "3.13"\n'
