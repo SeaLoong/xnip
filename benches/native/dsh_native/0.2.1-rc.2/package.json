@@ -32,7 +32,7 @@
     "@deepseek-ai/dsh-util-workspace-path": "0.2.1-rc.2",
     "@deepseek-ai/dsh-workflow": "0.2.1-rc.2"
   },
-  "packageManager": "npm@11.9.0",
+  "packageManager": "npm@11.20.0",
   "overrides": {
     "@modelcontextprotocol/client@2": "2.3.0",
     "fflate@0.8": "0.8.3",

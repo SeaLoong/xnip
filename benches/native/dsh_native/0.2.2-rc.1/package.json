@@ -44,7 +44,7 @@
     "@deepseek-ai/dsh-client-ui-settings": "0.2.2-rc.1",
     "@deepseek-ai/dsh-client-ui-plugin-manager": "0.2.2-rc.1"
   },
-  "packageManager": "npm@11.9.0",
+  "packageManager": "npm@11.20.0",
   "overrides": {
     "@modelcontextprotocol/client@2": "2.3.0",
     "fflate@0.8": "0.8.3",

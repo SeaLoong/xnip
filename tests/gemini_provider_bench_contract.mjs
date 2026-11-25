@@ -30,7 +30,7 @@ test('Gemini benchmark executes official registry, policies, host matching and n
   const confirmation = report.results.find(row => row.provider === 'xnip-native' && row.scenario === 'gemini-confirmed-edit');
   assert.ok(confirmation.samples.every(sample => sample.policy_events['confirmation-details'] >= 1));
   const denied = report.results.find(row => row.provider === 'xnip-native' && row.scenario === 'gemini-policy-denied');
-  assert.ok(denied.samples.every(sample => sample.bridge.requests === 0 && sample.calls[0].exception.message.includes('denied by policy')));
+  assert.ok(denied.samples.every(sample => sample.bridge.requests === 0 && sample.calls[0].exception.message.includes('unavailable in the active Gemini registry')));
   const mixed = report.results.filter(row => row.scenario === 'gemini-mixed-eol');
   assert.ok(mixed.every(row => row.byte_exact_runs === 0 && row.outcome_matches_runs === 2));
   assert.ok(renderGeminiReport(report).includes('Zero model calls'));

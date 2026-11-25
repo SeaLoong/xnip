@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import os from 'node:os';
 import test from 'node:test';
 import { prepareFixture, VERSION } from './gemini_native_runtime.mjs';
 import { EditorClient } from '../integrations/native/editor-client.mjs';
@@ -10,9 +11,12 @@ const root = path.resolve(import.meta.dirname, '..');
 const executable = process.env.XNIP_TEST_BINARY ?? path.join(root, 'target/debug/xnip');
 async function fixture(t, options = {}) {
   const cwd = options.cwd ?? await fs.mkdtemp(path.join(root, 'target/gemini-native-contract-'));
-  if (!options.cwd) t.after(() => fs.rm(cwd, { recursive: true, force: true }));
-  const runtime = await prepareFixture({ cwd, executable, ...options });
-  t.after(() => runtime.close());
+  let runtime;
+  t.after(async () => {
+    try { await runtime?.close(); }
+    finally { if (!options.cwd) await fs.rm(cwd, { recursive: true, force: true }); }
+  });
+  runtime = await prepareFixture({ cwd, executable, ...options });
   runtime.cwd = cwd;
   return runtime;
 }
@@ -60,7 +64,8 @@ test('official ASK_USER confirmation and DENY policy own mutation decisions', as
   assert.ok(runtime.events.some(event => event.type === 'confirmation-request'));
   const denied = await fixture(t, { policyDecision: 'deny' });
   await fs.writeFile(path.join(denied.cwd, 'a.txt'), 'old\n');
-  await assert.rejects(denied.call('replace', editArgs(denied)), /denied|policy|rejected/i);
+  assert.equal(denied.registry.getTool('replace'), undefined);
+  await assert.rejects(denied.call('replace', editArgs(denied)), /unavailable in the active Gemini registry/);
   assert.equal(await fs.readFile(path.join(denied.cwd, 'a.txt'), 'utf8'), 'old\n');
   assert.equal(denied.modelCalls, 0);
 });
@@ -103,7 +108,7 @@ test('native UTF-8 and binary reads retain Node decoding and complete write byte
   for (const content of ['\ufeff零\r\n尾巴\0', 'lone=\ud800\n', 'EOF']) {
     await fs.rm(file, { force: true });
     success(await runtime.call('write_file', { file_path: file, content }));
-    assert.deepEqual(await fs.readFile(file), Buffer.from(content));
+    assert.deepEqual(await fs.readFile(file), Buffer.from(content.replace(/(?<!\r)\n/g, os.EOL)));
   }
   const raw = Buffer.from([0xef, 0xbb, 0xbf, 0xff, 0, 13, 10]);
   await fs.writeFile(file, raw);
@@ -119,7 +124,7 @@ test('concurrent real replace invocations retain independent raw snapshots', { t
     const client = new EditorClient(binary, cwd), request = client.request.bind(client);
     client.request = async (action, fields) => {
       const result = await request(action, fields);
-      if (action === 'read' && fields.path.endsWith('a.txt') && reads < 2) {
+      if (action === 'read' && reads < 2) {
         if (++reads === 2) release();
         await gate;
       }
@@ -128,11 +133,20 @@ test('concurrent real replace invocations retain independent raw snapshots', { t
     return client;
   } });
   await fs.writeFile(path.join(runtime.cwd, 'a.txt'), '\ufeffold\r\n');
-  const results = await Promise.all([
-    runtime.call('replace', editArgs(runtime, 'old', 'first')),
-    runtime.call('replace', editArgs(runtime, 'old', 'second')),
+  const second = path.join(runtime.cwd, 'b.txt');
+  await fs.writeFile(second, 'other');
+  const independent = await Promise.all([
+    runtime.call('replace', editArgs(runtime, 'old', 'ready')),
+    runtime.call('replace', editArgs(runtime, 'other', 'done', { file_path: second })),
   ]);
+  independent.forEach(success);
   assert.equal(reads, 2);
+  assert.equal(await fs.readFile(second, 'utf8'), 'done');
+  // The SDK serializes competing edits to the same path.
+  const results = await Promise.all([
+    runtime.call('replace', editArgs(runtime, 'ready', 'first')),
+    runtime.call('replace', editArgs(runtime, 'ready', 'second')),
+  ]);
   assert.equal(results.filter(result => !result.error).length, 1);
   assert.equal(results.filter(result => result.error).length, 1);
   const result = await fs.readFile(path.join(runtime.cwd, 'a.txt'), 'utf8');
@@ -185,11 +199,12 @@ test('existing symlinks update their regular target and ordinary permissions rem
   const runtime = await fixture(t), target = path.join(runtime.cwd, 'a.txt');
   const link = path.join(runtime.cwd, 'alias.txt');
   await fs.writeFile(target, 'old\n', { mode: 0o600 });
+  const mode = (await fs.stat(target)).mode & 0o777;
   await fs.symlink(target, link);
   success(await runtime.call('replace', editArgs(runtime, 'old', 'new', { file_path: link })));
   assert.equal(await fs.readFile(target, 'utf8'), 'new\n');
   assert.equal((await fs.lstat(link)).isSymbolicLink(), true);
-  assert.equal((await fs.stat(target)).mode & 0o777, 0o600);
+  assert.equal((await fs.stat(target)).mode & 0o777, mode);
 });
 
 test('SDK scope, restoration ownership and supported byte-array fallback are explicit', async t => {

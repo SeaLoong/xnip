@@ -2,7 +2,7 @@
   "version": "0.2.2-rc.3",
   "registry": "https://registry.npmjs.org",
   "source_repository": "https://github.com/deepseek-ai/deepseek-harness",
-  "manifest_sha256": "66e2d20425b4ee29bd053e11609db46da3289edbe3d1c9cee7d0a24b3efd48dd",
+  "manifest_sha256": "0eb5ffc87c6cc88010202154a67cb7facf8bf465ae38c323e4e27e35693f971b",
   "lock_sha256": "df2207f67d161d78338692d641e177e81d1b77bf8726f3f80cfc8f0123408b43",
   "npm_lockfile_version": 3,
   "lock_generator": {

@@ -52,7 +52,7 @@ export async function validateHost(directory) {
     assert.deepEqual(tools, ['read_file', 'replace', 'write_file']);
     const file = path.join(cwd, 'roundtrip.txt');
     await config.getFileSystemService().writeTextFile(file, 'official SDK\r\n尾巴');
-    const result = await registry.getTool('read_file').build({ file_path: file }).execute(new AbortController().signal);
+    const result = await registry.getTool('read_file').build({ file_path: file }).execute({ abortSignal: new AbortController().signal });
     assert.equal(result.error, undefined);
     assert.equal(await config.getFileSystemService().readTextFile(file), 'official SDK\r\n尾巴');
     return { package: manifest.name, version: manifest.version, tools, model_calls: 0 };

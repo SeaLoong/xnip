@@ -2,6 +2,6 @@
   "host": "@google/gemini-cli-core",
   "version": "0.71.1",
   "registry": "https://registry.npmjs.org",
-  "manifest_sha256": "8083a0e7c3403a7ce2b6749c0e597714e20745f2ef0ecfdc10451cdc2f42bf63",
-  "lock_sha256": "b85b007072a43d79655f5b765f17b43ae487e4737202c820ccaa712a4cd2c0d7"
+  "manifest_sha256": "4fa3f728fe7f6335e8b3ef674f1b84d7f5d76dec4fa069774eed4b18fb9b56d9",
+  "lock_sha256": "b300ada5eb21e5c1ff4298e0a2a26fa029712d6a4252b6b83f8907763e02f496"
 }

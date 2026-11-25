@@ -52,7 +52,7 @@ export async function geminiScenarios() {
     one('gemini-confirmed-edit', 'old\n', 'old', 'new', 'new\n',
       { policy: 'ask_user', purpose: 'official confirmation details and ProceedOnce callback precede execution' }),
     one('gemini-policy-denied', 'old\n', 'old', 'new', 'old\n',
-      { policy: 'deny', observe: false, exception: 'denied by policy', purpose: 'official policy rejection preserves storage' }),
+      { policy: 'deny', observe: false, exception: 'unavailable in the active Gemini registry', purpose: 'official policy rejection preserves storage' }),
   ];
 }
 
@@ -149,7 +149,8 @@ async function sample(runtime, counter, fixture, directory) {
   for (const edit of fixture.edits) {
     const args = { file_path: path.join(directory, edit.file), instruction: fixture.purpose,
       old_string: edit.old, new_string: edit.text };
-    if (edit.all || fixture.allowMultiple !== undefined) args.allow_multiple = edit.all || fixture.allowMultiple;
+    const allowMultiple = fixture.allowMultiple ?? edit.all;
+    if (allowMultiple !== undefined) args.allow_multiple = allowMultiple;
     await call('mutation', 'replace', args);
   }
   for (const write of fixture.writes ?? []) await call('mutation', 'write_file', { file_path: path.join(directory, write.file), content: write.text });
@@ -275,7 +276,8 @@ export async function runGeminiBenchmark({ executable = path.join(root, 'target/
         try {
           const description = runtime.describe();
           assert.equal(description.model_calls, 0);
-          assert.deepEqual(description.tools.map(tool => tool.name).sort(), ['read_file', 'replace', 'write_file']);
+          const activeTools = policy === 'deny' ? [] : ['read_file', 'replace', 'write_file'];
+          assert.deepEqual(description.tools.map(tool => tool.name).sort(), activeTools);
           if (catalog) assert.deepEqual(description.tools, catalog, 'same registered SDK schemas');
           else catalog = description.tools;
           report.setup.push({ provider, policy, setup_ms, tool_schema_sha256: hash(JSON.stringify(description.tools)), bridge: counter.delta(bridgeStart) });
