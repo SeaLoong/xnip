@@ -80,7 +80,7 @@ test('matching, error results, no-ops and CRLF/BOM rendering match original SDK 
     ['\ufeffold\r\n尾巴', 'old', 'new', {}],
     ['one\r\nold\nend\r\n', 'old', 'new', {}],
     ['old old', 'old', 'new', {}],
-    ['old old', 'old', 'new', { expected_replacements: 2 }],
+    ['old old', 'old', 'new', { allow_multiple: true }],
     ['old', 'missing', 'new', {}],
     ['old', 'old', 'old', {}],
     ['abcde', 'bc', 'XY', {}],
@@ -215,7 +215,7 @@ test('SDK scope, restoration ownership and supported byte-array fallback are exp
   runtime.config.setFileSystemService(owned);
   const standard = await fixture(t, { native: false });
   const original = standard.config.getFileSystemService();
-  const sandbox = { command: 'docker', image: 'host-selected-image' };
+  const sandbox = { enabled: true, command: 'docker', image: 'host-selected-image' };
   await assert.rejects(prepareFixture({ cwd: standard.cwd, executable, sandbox }), /local SDK configurations/);
   assert.equal(standard.config.getFileSystemService(), original);
 });

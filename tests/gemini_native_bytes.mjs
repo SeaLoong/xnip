@@ -32,11 +32,9 @@ for (const scenario of scenarios) {
     }
     for (const operation of scenario.edits) {
       const file_path = path.join(cwd, operation.file);
-      const expected_replacements = operation.all
-        ? (await fs.readFile(file_path, 'utf8')).split(operation.old).length - 1 : 1;
       const outcome = await runtime.call('replace', {
         file_path, old_string: operation.old, new_string: operation.text,
-        instruction: 'Apply the supplied literal replacement.', expected_replacements,
+        instruction: 'Apply the supplied literal replacement.', allow_multiple: Boolean(operation.all),
       });
       assert.equal(outcome.error, undefined, JSON.stringify(outcome));
     }

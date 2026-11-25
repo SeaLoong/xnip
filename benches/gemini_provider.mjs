@@ -27,8 +27,8 @@ export async function geminiScenarios() {
       { error: 'edit_no_occurrence_found', purpose: 'official missing-match result preserves storage' }),
     one('gemini-reject-count', 'old\nold\n', 'old', 'new', 'old\nold\n',
       { error: 'edit_expected_occurrence_mismatch', purpose: 'default occurrence count rejects an ambiguous edit' }),
-    one('gemini-reject-explicit-count', 'old\n', 'old', 'new', 'old\n',
-      { error: 'edit_expected_occurrence_mismatch', expectedReplacements: 2, purpose: 'explicit occurrence count is checked by the host' }),
+    one('gemini-reject-explicit-single', 'old old\n', 'old', 'new', 'old old\n',
+      { error: 'edit_expected_occurrence_mismatch', allowMultiple: false, purpose: 'explicit single-match mode rejects repeated text' }),
     one('gemini-noop', 'old\n', 'old', 'old', 'old\n',
       { error: 'edit_no_change', purpose: 'official identical-edit rejection preserves storage' }),
     { name: 'gemini-edit-create', cohort: 'gemini-extension', files: {},
@@ -149,8 +149,7 @@ async function sample(runtime, counter, fixture, directory) {
   for (const edit of fixture.edits) {
     const args = { file_path: path.join(directory, edit.file), instruction: fixture.purpose,
       old_string: edit.old, new_string: edit.text };
-    if (edit.all) args.expected_replacements = fixture.files[edit.file].split(edit.old).length - 1;
-    if (fixture.expectedReplacements !== undefined) args.expected_replacements = fixture.expectedReplacements;
+    if (edit.all || fixture.allowMultiple !== undefined) args.allow_multiple = edit.all || fixture.allowMultiple;
     await call('mutation', 'replace', args);
   }
   for (const write of fixture.writes ?? []) await call('mutation', 'write_file', { file_path: path.join(directory, write.file), content: write.text });
@@ -246,7 +245,7 @@ export async function runGeminiBenchmark({ executable = path.join(root, 'target/
       scope: 'Gemini SDK 0.71.1 local filesystem configuration; OS sandbox, CLI profiles, model turns and billing have separate boundaries',
       matching: 'official matching, occurrence validation, rendering and newline rules; Config disableLLMCorrection=true in both lanes',
       confirmation: 'official policy bus; ask_user invokes generated confirmation and ProceedOnce callback; human interaction delay is outside timing',
-      known_inputs: 'fixtures supply literal replacements; global replacement specifies the exact expected_replacements count',
+      known_inputs: 'fixtures supply literal replacements; global replacement sets allow_multiple',
       timing: 'sum of performance.now tool durations; fixture creation, serialization counts and independent byte oracle are outside',
       setup: 'SDK verification/import bootstrap once; Config/auth fixture/registry/native handshake timed per provider and policy; persistent fixture warmed per scenario',
       tool_bytes: 'UTF-8 JSON.stringify tool arguments and actual ToolResult; thrown exception message bytes are a separate field and join the local boundary total',
@@ -312,7 +311,7 @@ export function renderGeminiReport(report) {
     `Gemini SDK ${report.provenance.host.version}; ${report.scenarios.length} fixtures, ${runs} measured runs and ${report.methodology.warmup_runs_per_scenario} warm-up per lane. Zero model calls. Measured ${report.created_at}.`, '',
     'Both lanes use official Config and ToolRegistry services with read_file, replace and write_file. Each call builds the official invocation, checks the policy bus, performs any requested confirmation callback and executes the tool. The original service and xnip service retain identical registered schemas, matching, occurrence validation and rendering.', '',
     'This cohort covers local SDK filesystem configurations for the pinned version. Config uses its supported disableLLMCorrection=true option in both lanes. The official empty fake-response generator counts attempted model calls; every measured workflow must keep that counter at zero. CLI profiles, OS sandbox sessions, interactive user delay and model/billing measurements have their own boundaries.', '',
-    'Fixtures supply known inputs. Global edits set expected_replacements to the fixture count; sequential edits use separate replace calls. Every existing file is read first except the policy-denied fixture. SDK bootstrap is timed separately, followed by per-policy provider setup. Warm timing includes the complete tool-call pipeline; fixture reset, JSON byte accounting and independent file verification run outside timing. Three samples make nearest-rank p95 the maximum.', '',
+    'Fixtures supply known inputs. Global edits set allow_multiple to true; sequential edits use separate replace calls. Every existing file is read first except the policy-denied fixture. SDK bootstrap is timed separately, followed by per-policy provider setup. Warm timing includes the complete tool-call pipeline; fixture reset, JSON byte accounting and independent file verification run outside timing. Three samples make nearest-rank p95 the maximum.', '',
     'The byte oracle preserves input bytes outside the requested change. The host newline policy can produce a different stored representation in both lanes; those differences remain visible. Provider compatibility separately requires identical resulting file hashes and actual SDK tool-result hashes. Local tool bytes count arguments, actual ToolResult JSON and separately recorded exception messages. Native bridge bytes count actual child stdin/stdout and describe an additional local boundary.', '',
     `Binary SHA-256 \`${report.provenance.binary.sha256}\` (${report.provenance.binary.build_profile}); maintained source \`${report.provenance.source.sha256}\`. Node ${report.provenance.node}; ${report.provenance.platform}/${report.provenance.arch}; ${report.provenance.cpu_model}. SDK bootstrap ${report.bootstrap_ms.toFixed(2)} ms.`, '',
     '| Policy | Provider | Setup ms | Setup bridge bytes |', '|---|---|---:|---:|'];
