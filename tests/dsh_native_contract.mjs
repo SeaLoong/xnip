@@ -12,11 +12,13 @@ const executable = process.env.XNIP_TEST_BINARY ?? path.join(root, 'target/debug
 
 test('official DSH provider preserves catalog, byte edits, observations, sandbox and disposal', async t => {
   const cwd = await fs.mkdtemp(path.join(root, 'target/dsh-native-'));
-  t.after(() => fs.rm(cwd, { recursive: true, force: true }));
+  const resources = new AsyncDisposableStack();
+  t.after(() => resources.disposeAsync());
+  resources.defer(() => fs.rm(cwd, { recursive: true, force: true }));
   const fixture = await createFixture({ hostRoot, cwd, executable });
-  t.after(() => fixture.close());
+  resources.defer(() => fixture.close());
   const original = await createFixture({ hostRoot, cwd, native: false });
-  t.after(() => original.close());
+  resources.defer(() => original.close());
   const observed = [];
   fixture.ctx.on('fs/observed', (target, observation) => observed.push({ target, observation }));
   const oldCatalog = await original.describe();

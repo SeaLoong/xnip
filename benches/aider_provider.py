@@ -100,7 +100,7 @@ def source_provenance():
 
 def stored_files(cwd):
     ignored = {".aider-test-model.json", ".aider-test-analytics.json", ".aider-test-anchor"}
-    return sorted(str(path.relative_to(cwd)) for path in cwd.rglob("*")
+    return sorted(path.relative_to(cwd).as_posix() for path in cwd.rglob("*")
                   if path.is_file() and str(path.relative_to(cwd)) not in ignored)
 
 

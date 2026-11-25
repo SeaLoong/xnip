@@ -21,9 +21,11 @@ assert.equal(fixtures.length, 13, 'Run every original benchmark byte fixture');
 for (const scenario of fixtures) {
   test(`native provider byte fixture: ${scenario.name}`, async t => {
     const cwd = await fs.mkdtemp(path.join(root, 'target/dsh-native-bytes-'));
-    t.after(() => fs.rm(cwd, { recursive: true, force: true }));
+    const resources = new AsyncDisposableStack();
+    t.after(() => resources.disposeAsync());
+    resources.defer(() => fs.rm(cwd, { recursive: true, force: true }));
     const runtime = await createFixture({ hostRoot, cwd, executable });
-    t.after(() => runtime.close());
+    resources.defer(() => runtime.close());
     assert.deepEqual((await runtime.describe()).tools.map(tool => tool.name), ['read', 'write', 'edit']);
     for (const [file, text] of Object.entries(scenario.files)) {
       await fs.mkdir(path.dirname(path.join(cwd, file)), { recursive: true });
