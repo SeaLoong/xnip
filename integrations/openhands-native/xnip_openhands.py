@@ -94,8 +94,11 @@ class XnipFileEditor(FileEditor):
         try:
             if call.is_cancelled:
                 raise BridgeError("File editor operation cancelled", "cancelled")
-            # The host transcodes an unrepresentable legacy encoding to UTF-8.
-            translated = file_text.replace("\n", os.linesep)
+            # OpenHands uses the first line of the original file to preserve CRLF.
+            newline = os.linesep
+            if call.before and io.BytesIO(call.before).readline().endswith(b"\r\n"):
+                newline = "\r\n"
+            translated = file_text.replace("\n", newline)
             try:
                 content = translated.encode(encoding)
             except UnicodeEncodeError:

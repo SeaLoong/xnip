@@ -190,6 +190,7 @@ with patch.object(LLM,'completion',side_effect=AssertionError('model call')) as 
         target = self.root / "encoding.txt"
         for initial, old, new in [(b"\xef\xbb\xbfhello\r\nend", "hello", "new"),
                                   ("café\n".encode("cp1252"), "café", "café → 尾"),
+                                  (b"one\ntwo\r\nthree\n", "two", "changed"),
                                   (b"one\r\ntwo\nthree\r\n", "two", "changed")]:
             outcomes = []
             for native in [False, True]:
@@ -360,9 +361,11 @@ with patch.object(LLM,'completion',side_effect=AssertionError('model call')) as 
                 receipts.append(result.model_dump(mode="json"))
             files = {name: (self.root / name).read_bytes() for name in case.files}
             expected = {name: text.encode() for name, text in case.expected().items()}
-            # The host reads universal newlines and writes platform text newlines.
+            # A CRLF first line selects CRLF output, otherwise the host uses platform text IO.
             for name in {edit["file"] for edit in case.edits}:
-                expected[name] = expected[name].replace(b"\r\n", b"\n").replace(b"\n", os.linesep.encode())
+                first, separator, _ = case.files[name].partition("\n")
+                newline = b"\r\n" if separator and first.endswith("\r") else os.linesep.encode()
+                expected[name] = expected[name].replace(b"\r\n", b"\n").replace(b"\n", newline)
             self.assertEqual(files, expected)
             outcomes.append((receipts, files))
         self.assertEqual(*outcomes)
